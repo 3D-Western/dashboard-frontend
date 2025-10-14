@@ -3,11 +3,20 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
+    "prepare": "husky install",
     "dev": "next dev --turbopack",
     "build": "next build --turbopack",
+    "format": "prettier --write .",
     "start": "next start",
     "lint": "next lint",
-    "lint:ci": "eslint . --max-warnings=0"
+    "lint:ci": "eslint . --max-warnings=0",
+    "prepare": "husky install"
+  },
+  "lint-staged": {
+    "*.{js,jsx,ts,tsx,json,css,md}": [
+      "prettier --write",
+      "git add"
+    ]
   },
   "dependencies": {
     "clsx": "^2.1.1",
@@ -28,6 +37,9 @@
     "@typescript-eslint/parser": "^8.46.1",
     "eslint": "^9.37.0",
     "eslint-config-next": "15.5.4",
+    "husky": "^8.0.0",
+    "lint-staged": "^16.2.4",
+    "prettier": "^3.6.2",
     "tailwindcss": "^4",
     "typescript": "^5.9.3"
   }
