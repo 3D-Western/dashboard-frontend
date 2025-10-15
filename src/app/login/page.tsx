@@ -105,7 +105,7 @@ export default function Login() {
             {isLoading ? 'LOADING...' : 'PRINT NOW'}
           </Button>
 
-          <Link href="/sign-up">SIGN UP</Link>
+          <Link href="/signup">SIGN UP</Link>
         </form>
 
         <Image src="3dWesternLogo.svg" alt="3D Western Logo" width={750} height={765} />
