@@ -1,7 +1,29 @@
-@import "tailwindcss";
-@import "tw-animate-css";
+@import 'tailwindcss';
+@import 'tw-animate-css';
 
 @custom-variant dark (&:is(.dark *));
+
+@utility container {
+  margin-inline: auto;
+  padding-inline: 2rem;
+  max-width: var(--breakpoint-sm);
+
+  @media (width >= 48rem) {
+    max-width: var(--breakpoint-md);
+  }
+
+  @media (width >= 64rem) {
+    max-width: var(--breakpoint-lg);
+  }
+
+  @media (width >= 80rem) {
+    max-width: var(--breakpoint-xl);
+  }
+
+  @media (width >= 86rem) {
+    max-width: var(--breakpoint-2xl);
+  }
+}
 
 @theme inline {
   --color-background: var(--background);
@@ -41,6 +63,13 @@
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
+
+  /* Container breakpoints */
+  --breakpoint-sm: 40rem;
+  --breakpoint-md: 48rem;
+  --breakpoint-lg: 64rem;
+  --breakpoint-xl: 80rem;
+  --breakpoint-2xl: 86rem;
 }
 
 :root {

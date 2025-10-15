@@ -1,48 +1,41 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import {
-  User,
-  Download,
-  Filter,
-  CheckCircle,
-  Clock,
-  Printer,
-} from "lucide-react";
+import { useState } from 'react';
+import { User, Download, Filter, CheckCircle, Clock, Printer } from 'lucide-react';
 
 interface PrintJob {
   id: number;
-  status: "Completed" | "In queue..." | "Printing...";
+  status: 'Completed' | 'In queue...' | 'Printing...';
   printDate: string;
   stlFile: string;
   fileName: string;
 }
 
 const Dashboard: React.FC = () => {
-  const [filterText, setFilterText] = useState<string>("");
+  const [filterText, setFilterText] = useState<string>('');
   const [selectedPrints, setSelectedPrints] = useState<number[]>([]);
 
   const printJobs: PrintJob[] = [
     {
       id: 1,
-      status: "Completed",
-      printDate: "3/3/2027",
-      stlFile: "jeff_the_shark.stl",
-      fileName: "jeff_the_shark.stl",
+      status: 'Completed',
+      printDate: '3/3/2027',
+      stlFile: 'jeff_the_shark.stl',
+      fileName: 'jeff_the_shark.stl',
     },
     {
       id: 2,
-      status: "In queue...",
-      printDate: "In progress",
-      stlFile: "bulbasaur.stl",
-      fileName: "bulbasaur.stl",
+      status: 'In queue...',
+      printDate: 'In progress',
+      stlFile: 'bulbasaur.stl',
+      fileName: 'bulbasaur.stl',
     },
     {
       id: 3,
-      status: "Printing...",
-      printDate: "3/3/2027",
-      stlFile: "bulbasaur.stl",
-      fileName: "bulbasaur.stl",
+      status: 'Printing...',
+      printDate: '3/3/2027',
+      stlFile: 'bulbasaur.stl',
+      fileName: 'bulbasaur.stl',
     },
   ];
 
@@ -52,19 +45,17 @@ const Dashboard: React.FC = () => {
 
   const handleCheckboxChange = (id: number) => {
     setSelectedPrints((prev) =>
-      prev.includes(id)
-        ? prev.filter((printId) => printId !== id)
-        : [...prev, id],
+      prev.includes(id) ? prev.filter((printId) => printId !== id) : [...prev, id],
     );
   };
 
   const getStatusIcon = (status: string) => {
     switch (status) {
-      case "Completed":
+      case 'Completed':
         return <CheckCircle className="w-4 h-4 text-green-400" />;
-      case "In queue...":
+      case 'In queue...':
         return <Clock className="w-4 h-4 text-yellow-400" />;
-      case "Printing...":
+      case 'Printing...':
         return <Printer className="w-4 h-4 text-blue-400" />;
       default:
         return null;
@@ -73,12 +64,12 @@ const Dashboard: React.FC = () => {
 
   const handleLogout = () => {
     // Logout functionality would go here
-    console.log("Logging out...");
+    console.log('Logging out...');
   };
 
   const handleNewPrint = () => {
     // New print functionality would go here
-    console.log("Creating new print...");
+    console.log('Creating new print...');
   };
 
   const handleDownload = (fileName: string) => {
@@ -98,9 +89,7 @@ const Dashboard: React.FC = () => {
         </button>
 
         <div className="text-center">
-          <h1 className="text-4xl md:text-5xl font-bold text-white">
-            Welcome,
-          </h1>
+          <h1 className="text-4xl md:text-5xl font-bold text-white">Welcome,</h1>
           <h1 className="text-4xl md:text-5xl font-bold text-white">Simon</h1>
         </div>
 
@@ -110,7 +99,7 @@ const Dashboard: React.FC = () => {
       </header>
 
       {/* Main Content */}
-      <main className="px-6 pb-6">
+      <main className="px-6 pb-6 container">
         <div className="bg-gray-900 rounded-2xl border border-gray-700 overflow-hidden">
           {/* Prints Section Header */}
           <div className="flex items-center justify-between p-6 border-b border-gray-700">
@@ -151,15 +140,9 @@ const Dashboard: React.FC = () => {
                       className="w-4 h-4 rounded border-gray-600 bg-gray-800 text-purple-600 focus:ring-purple-500 focus:ring-2"
                     />
                   </th>
-                  <th className="text-left p-4 text-gray-400 font-medium">
-                    Status
-                  </th>
-                  <th className="text-left p-4 text-gray-400 font-medium">
-                    Print Date
-                  </th>
-                  <th className="text-left p-4 text-gray-400 font-medium">
-                    STL file
-                  </th>
+                  <th className="text-left p-4 text-gray-400 font-medium">Status</th>
+                  <th className="text-left p-4 text-gray-400 font-medium">Print Date</th>
+                  <th className="text-left p-4 text-gray-400 font-medium">STL file</th>
                   <th className="text-left p-4 text-gray-400 font-medium"></th>
                 </tr>
               </thead>
