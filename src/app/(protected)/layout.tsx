@@ -13,9 +13,9 @@ export default async function ProtectedLayout({ children }: { children: React.Re
   }
 
   return (
-    <>
+    <div className="min-h-full">
       <DashboardHeader user={currentUser} />
       <UserProvider user={currentUser}>{children}</UserProvider>
-    </>
+    </div>
   );
 }

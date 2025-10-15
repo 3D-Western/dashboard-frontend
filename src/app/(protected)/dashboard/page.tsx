@@ -1,82 +1,44 @@
 'use client';
+import PrintJobsTable from '@/components/PrintJobsTable';
+import { getPrintJobs } from '@/services/print-job-services';
+import { PrintJob, PrintJobStatus } from '@/types/jobs';
+import { useState, useCallback, useEffect } from 'react';
 
-import { useState } from 'react';
-import { User, Download, Filter, CheckCircle, Clock, Printer } from 'lucide-react';
+export default function DashboardPage() {
+  // const [filterText, setFilterText] = useState<string>('');
+  // const [selectedPrints, setSelectedPrints] = useState<number[]>([]);
 
-interface PrintJob {
-  id: number;
-  status: 'Completed' | 'In queue...' | 'Printing...';
-  printDate: string;
-  stlFile: string;
-  fileName: string;
-}
+  const [printJobs, setPrintJobs] = useState<PrintJob[]>([]);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
 
-const Dashboard: React.FC = () => {
-  const [filterText, setFilterText] = useState<string>('');
-  const [selectedPrints, setSelectedPrints] = useState<number[]>([]);
 
-  const printJobs: PrintJob[] = [
-    {
-      id: 1,
-      status: 'Completed',
-      printDate: '3/3/2027',
-      stlFile: 'jeff_the_shark.stl',
-      fileName: 'jeff_the_shark.stl',
-    },
-    {
-      id: 2,
-      status: 'In queue...',
-      printDate: 'In progress',
-      stlFile: 'bulbasaur.stl',
-      fileName: 'bulbasaur.stl',
-    },
-    {
-      id: 3,
-      status: 'Printing...',
-      printDate: '3/3/2027',
-      stlFile: 'bulbasaur.stl',
-      fileName: 'bulbasaur.stl',
-    },
-  ];
+  useEffect(() => {
+    setIsLoading(true);
+    setError(null);
+    getPrintJobs()
+      .then((jobs) => {
+        setPrintJobs(jobs);
+        setIsLoading(false);
+      })
+      .catch(() => {
+        setError('Failed to fetch print jobs');
+        setIsLoading(false);
+      });
+  }, []);
 
-  const filteredPrints = printJobs.filter((job) =>
-    job.fileName.toLowerCase().includes(filterText.toLowerCase()),
+  return (
+    <div className="container p-6 space-y-6">
+      <div className="space-y-2">
+        <div className="font-bold text-4xl">Prints</div>
+        <div className="text-muted-foreground">Manage your prints</div>
+      </div>
+
+      <div className="border">
+        <PrintJobsTable printJobs={printJobs} />
+      </div>
+    </div>
   );
-
-  const handleCheckboxChange = (id: number) => {
-    setSelectedPrints((prev) =>
-      prev.includes(id) ? prev.filter((printId) => printId !== id) : [...prev, id],
-    );
-  };
-
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case 'Completed':
-        return <CheckCircle className="w-4 h-4 text-green-400" />;
-      case 'In queue...':
-        return <Clock className="w-4 h-4 text-yellow-400" />;
-      case 'Printing...':
-        return <Printer className="w-4 h-4 text-blue-400" />;
-      default:
-        return null;
-    }
-  };
-
-  const handleLogout = () => {
-    // Logout functionality would go here
-    console.log('Logging out...');
-  };
-
-  const handleNewPrint = () => {
-    // New print functionality would go here
-    console.log('Creating new print...');
-  };
-
-  const handleDownload = (fileName: string) => {
-    // Download functionality would go here
-    console.log(`Downloading ${fileName}...`);
-  };
-  return <></>;
 
   // return (
   //   <div className="min-h-screen bg-black text-white">
@@ -193,6 +155,4 @@ const Dashboard: React.FC = () => {
   //     </main>
   //   </div>
   // );
-};
-
-export default Dashboard;
+}
