@@ -1,36 +1,24 @@
-'use client';
 import PrintJobsTable from '@/components/PrintJobsTable';
+import { Button } from '@/components/ui/button';
 import { getPrintJobs } from '@/services/print-job-services';
-import { PrintJob } from '@/types/jobs';
-import { useEffect, useState } from 'react';
 
-export default function DashboardPage() {
-  const [printJobs, setPrintJobs] = useState<PrintJob[]>([]);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    setIsLoading(true);
-    setError(null);
-    getPrintJobs()
-      .then((jobs) => {
-        setPrintJobs(jobs);
-        setIsLoading(false);
-      })
-      .catch(() => {
-        setError('Failed to fetch print jobs');
-        setIsLoading(false);
-      });
-  }, []);
+export default async function DashboardPage() {
+  const printJobs = await getPrintJobs();
 
   return (
     <div className="container p-6 space-y-6">
       <div className="space-y-2">
-        <div className="font-bold text-4xl">Prints</div>
-        <div className="text-muted-foreground">Manage your prints</div>
+        <h1 className="font-bold text-2xl sm:text-4xl">Prints</h1>
+        <p className="text-muted-foreground">Manage your prints</p>
+      </div>
+      <div>
+        <Button size={'sm'} aria-disabled="true" title="New Print">
+          New Print
+          <span className="sr-only">New Print</span>
+        </Button>
       </div>
 
-      <div className="">
+      <div>
         <PrintJobsTable printJobs={printJobs} />
       </div>
     </div>

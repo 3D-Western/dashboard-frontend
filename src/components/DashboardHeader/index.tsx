@@ -1,6 +1,6 @@
 import { User } from '@/types/user';
-import LogoutButton from './logout-button';
 import { Avatar, AvatarFallback } from '../ui/avatar';
+import LogoutButton from './LogoutButton';
 
 export default function DashboardHeader({ user }: { user: User }) {
   return (
@@ -10,7 +10,9 @@ export default function DashboardHeader({ user }: { user: User }) {
       <div className="text-2xl font-bold">Welcome {user.firstName}</div>
 
       <Avatar>
-        <AvatarFallback>{user.lastName[0] + user.firstName[0]}</AvatarFallback>
+        <AvatarFallback aria-label={`${user.firstName} ${user.lastName}`}>
+          {user.lastName[0] + user.firstName[0]}
+        </AvatarFallback>
       </Avatar>
     </header>
   );

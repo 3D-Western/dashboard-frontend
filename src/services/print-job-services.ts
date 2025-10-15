@@ -9,7 +9,7 @@ export async function getPrintJobs(): Promise<PrintJob[]> {
       description: 'A cool 3D print',
       name: 'CoolPrint1',
       status: 'IN_QUEUE',
-      stlFile: { id: 'file123', path: '/files/coolprint1.stl' },
+      stlFile: { id: 'file123', name: 'CoolPrint1.stl', path: '/files/coolprint1.stl' },
       kind: 'active-print-job',
     },
     {
@@ -19,7 +19,7 @@ export async function getPrintJobs(): Promise<PrintJob[]> {
       description: 'Another cool 3D print',
       name: 'CoolPrint2',
       status: 'PRINTING',
-      stlFile: { id: 'file456', path: '/files/coolprint2.stl' },
+      stlFile: { id: 'file456', name: 'CoolPrint2.stl', path: '/files/coolprint2.stl' },
       kind: 'active-print-job',
     },
     {
@@ -29,7 +29,7 @@ export async function getPrintJobs(): Promise<PrintJob[]> {
       description: 'Yet another cool 3D print',
       name: 'CoolPrint3',
       status: 'READY',
-      stlFile: { id: 'file789', path: '/files/coolprint3.stl' },
+      stlFile: { id: 'file789', name: 'CoolPrint3.stl', path: '/files/coolprint3.stl' },
       kind: 'active-print-job',
     },
     {
@@ -39,7 +39,7 @@ export async function getPrintJobs(): Promise<PrintJob[]> {
       description: 'A flagged 3D print',
       name: 'FlaggedPrint',
       status: 'FLAGGED',
-      stlFile: { id: 'file101', path: '/files/flaggedprint.stl' },
+      stlFile: { id: 'file101', name: 'FlaggedPrint.stl', path: '/files/flaggedprint.stl' },
       kind: 'active-print-job',
     },
     {
@@ -49,7 +49,7 @@ export async function getPrintJobs(): Promise<PrintJob[]> {
       description: 'A failed 3D print',
       name: 'FailedPrint',
       status: 'ERROR',
-      stlFile: { id: 'file112', path: '/files/failedprint.stl' },
+      stlFile: { id: 'file112', name: 'FailedPrint.stl', path: '/files/failedprint.stl' },
       kind: 'active-print-job',
     },
   ];
