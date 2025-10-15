@@ -1,10 +1,5 @@
 'use client';
 
-import { useLocalTime } from '@/hooks/useLocalTime';
-import { File, PrintJob, PrintJobStatus } from '@/types/jobs';
-import { ColumnDef } from '@tanstack/react-table';
-import { MoreHorizontal } from 'lucide-react';
-
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -14,6 +9,11 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { useLocalTime } from '@/hooks/useLocalTime';
+import { File, PrintJob, PrintJobStatus } from '@/types/jobs';
+import { ColumnDef } from '@tanstack/react-table';
+import { ArrowUpDown, MoreHorizontal } from 'lucide-react';
+import { Checkbox } from '@/components/ui/checkbox';
 
 const mapPrintJobStatusToDisplayLabel = (status: PrintJobStatus) => {
   switch (status) {
@@ -34,24 +34,68 @@ const mapPrintJobStatusToDisplayLabel = (status: PrintJobStatus) => {
 
 export const columns: ColumnDef<PrintJob>[] = [
   {
+    id: 'select',
+    header: ({ table }) => (
+      <Checkbox
+        checked={
+          table.getIsAllPageRowsSelected() || (table.getIsSomePageRowsSelected() && 'indeterminate')
+        }
+        onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
+        aria-label="Select all"
+      />
+    ),
+    cell: ({ row }) => (
+      <Checkbox
+        checked={row.getIsSelected()}
+        onCheckedChange={(value) => row.toggleSelected(!!value)}
+        aria-label="Select row"
+      />
+    ),
+    enableSorting: false,
+    enableHiding: false,
+  },
+  {
     accessorKey: 'name',
-    header: 'Name',
-    cell: ({ row }) => <span>{row.getValue('name') as string}</span>,
+    header: () => {
+      return <div className="w-full text-center">Name</div>;
+    },
+    cell: ({ row }) => (
+      <div className="w-full text-center">
+        <span>{row.getValue('name') as string}</span>
+      </div>
+    ),
   },
   {
     accessorKey: 'status',
-    header: 'Status',
+    header: () => {
+      return <div className="w-full text-center">Status</div>;
+    },
     cell: ({ row }) => {
       const status = row.getValue('status') as PrintJobStatus;
-      return mapPrintJobStatusToDisplayLabel(status);
+      return <div className="w-full text-center">{mapPrintJobStatusToDisplayLabel(status)}</div>;
     },
   },
   {
     accessorKey: 'orderPlaced',
-    header: 'Print Date',
+    header: ({ column }) => {
+      return (
+        <Button
+          variant={'ghost'}
+          className="w-full"
+          onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
+        >
+          Print Date
+          <ArrowUpDown className="ml-2 h-4 w-4" />
+        </Button>
+      );
+    },
     cell: function OrderPlacedCell({ row }) {
       const localTime = useLocalTime(row.getValue('orderPlaced') as string);
-      return <span>{localTime}</span>;
+      return (
+        <div className="w-full text-center">
+          <span>{localTime}</span>
+        </div>
+      );
     },
   },
   {

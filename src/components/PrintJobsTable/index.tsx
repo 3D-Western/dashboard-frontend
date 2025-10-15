@@ -1,5 +1,5 @@
 import { PrintJob } from '@/types/jobs';
-import { DataTable } from '../ui/data-table';
+import { DataTable } from './data-table';
 import { columns } from './columns';
 
 export interface PrintJobsTableProps {
