@@ -13,7 +13,9 @@ export const getUser = cache(async (): Promise<User | null> => {
     firstName: 'John',
     lastName: 'Doe',
     email: 'john.doe@example.com',
-  } as User;
+    role: 'admin',
+    experienceLevel: 'advanced',
+  };
 });
 
 export const logout = async (): Promise<void> => {

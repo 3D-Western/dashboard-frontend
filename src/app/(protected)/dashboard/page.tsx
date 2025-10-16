@@ -1,25 +1,53 @@
-import PrintJobsTable from '@/components/PrintJobsTable';
 import { Button } from '@/components/ui/button';
-import { getPrintJobs } from '@/services/print-job-services';
+import { Printer, LayoutDashboard, Clock } from 'lucide-react';
+import Link from 'next/link';
 
 export default async function DashboardPage() {
-  const printJobs = await getPrintJobs();
-
   return (
     <div className="container p-6 space-y-6">
+      {/* Welcome Section */}
       <div className="space-y-2">
-        <h1 className="font-bold text-2xl sm:text-4xl">Prints</h1>
-        <p className="text-muted-foreground">Manage your prints</p>
-      </div>
-      <div>
-        <Button size={'sm'} aria-disabled="true" title="New Print">
-          New Print
-          <span className="sr-only">New Print</span>
-        </Button>
+        <p className="text-muted-foreground">Welcome to Western 3D Print Club Dashboard</p>
       </div>
 
-      <div>
-        <PrintJobsTable printJobs={printJobs} />
+      {/* Quick Stats - Placeholder for now */}
+      <div className="grid gap-4 md:grid-cols-3">
+        <div className="rounded-lg border p-6 space-y-2">
+          <div className="flex items-center gap-2 text-muted-foreground">
+            <Printer className="h-4 w-4" />
+            <span className="text-sm font-medium">Active Prints</span>
+          </div>
+          <div className="text-3xl font-bold">0</div>
+        </div>
+
+        <div className="rounded-lg border p-6 space-y-2">
+          <div className="flex items-center gap-2 text-muted-foreground">
+            <Clock className="h-4 w-4" />
+            <span className="text-sm font-medium">Pending Prints</span>
+          </div>
+          <div className="text-3xl font-bold">0</div>
+        </div>
+
+        <div className="rounded-lg border p-6 space-y-2">
+          <div className="flex items-center gap-2 text-muted-foreground">
+            <LayoutDashboard className="h-4 w-4" />
+            <span className="text-sm font-medium">Total Prints</span>
+          </div>
+          <div className="text-3xl font-bold">0</div>
+        </div>
+      </div>
+
+      {/* Quick Actions */}
+      <div className="space-y-4">
+        <h2 className="text-lg font-semibold">Quick Actions</h2>
+        <div className="flex gap-4">
+          <Button asChild>
+            <Link href="/print">
+              <Printer className="h-4 w-4 mr-2" />
+              View All Prints
+            </Link>
+          </Button>
+        </div>
       </div>
     </div>
   );
