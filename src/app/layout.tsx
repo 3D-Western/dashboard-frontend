@@ -1,8 +1,7 @@
+import { ThemeProvider } from '@/providers/theme-provider';
 import type { Metadata } from 'next';
 import { Geist, Geist_Mono } from 'next/font/google';
 import './globals.css';
-import { ThemeProvider } from '@/providers/theme-provider';
-import localFont from 'next/font/local';
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
@@ -12,12 +11,6 @@ const geistSans = Geist({
 const geistMono = Geist_Mono({
   variable: '--font-geist-mono',
   subsets: ['latin'],
-});
-
-const jersey = localFont({
-  src: './fonts/Jersey_25/Jersey25-Regular.ttf',
-  variable: '--font-jersey',
-  weight: '400',
 });
 
 export const metadata: Metadata = {
@@ -32,9 +25,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} ${jersey.variable} antialiased`}
-      >
+      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
         <ThemeProvider>{children}</ThemeProvider>
       </body>
     </html>
