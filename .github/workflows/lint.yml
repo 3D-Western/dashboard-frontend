@@ -1,28 +1,22 @@
 name: Lint
-
 on:
   pull_request:
     branches: [main]
   push:
     branches: [main]
-
 jobs:
   lint:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: "npm"
-
+          cache: 'npm'
       - name: Install dependencies
-        run: npm ci
-
+        run: npm ci --include=optional
       - name: Run ESLint
         run: npm run lint:ci
   build:
@@ -33,6 +27,6 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: "npm"
-      - run: npm ci
+          cache: 'npm'
+      - run: npm ci --include=optional
       - run: npm run build
