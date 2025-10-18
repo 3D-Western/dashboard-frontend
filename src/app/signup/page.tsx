@@ -84,11 +84,14 @@ export default function Signup() {
         return;
       }
 
-      // Remove agreedToTerms and convert studentId to number
-      const { agreedToTerms, studentId, ...rest } = values;
+      // Convert studentId to number and prepare data for submission
+      const { studentId, ...rest } = values;
       const submitData = {
         studentId: parseInt(studentId, 10),
-        ...rest,
+        email: rest.email,
+        password: rest.password,
+        firstName: rest.firstName,
+        lastName: rest.lastName,
         experienceLevel: values.experienceLevel,
       };
 
@@ -127,7 +130,7 @@ export default function Signup() {
   }
 
   return (
-    <div className="flex flex-col items-center justify-center w-screen min-h-screen gap-y-[90px] bg-black bg-cover py-10">
+    <div className="flex flex-col items-center justify-center w-screen min-h-screen gap-y-[90px] bg-[url('/signupgraphic.png')] bg-cover py-10">
       <span className="font-jersey text-[96px]">SIGN UP</span>
 
       <Form {...form}>
@@ -266,7 +269,7 @@ export default function Signup() {
                     <Link href="/terms-and-conditions" className="underline">
                       terms and conditions
                     </Link>{' '}
-                    and agree to 3D Western's{' '}
+                    and agree to 3D Western&apos;s{' '}
                     <Link href="/data-policy" className="underline">
                       data policy
                     </Link>

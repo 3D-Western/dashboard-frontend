@@ -139,7 +139,7 @@ export default function Login() {
             </Button>
 
             <span className="font-jersey text-[20px]">
-              Don't have an account?{' '}
+              Don&apos;t have an account?{' '}
               <Link href="/signup" className="underline">
                 Sign up
               </Link>
