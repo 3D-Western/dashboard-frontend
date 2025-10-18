@@ -1,4 +1,6 @@
-import DashboardHeader from '@/components/DashboardHeader';
+import { AppSidebar } from '@/components/AppSidebar';
+import { PageHeader } from '@/components/PageHeader';
+import { SidebarProvider, SidebarInset, SidebarTrigger } from '@/components/ui/sidebar';
 import { getUser } from '@/lib/auth';
 import { UserProvider } from '@/providers/user-provider';
 import { redirect } from 'next/navigation';
@@ -13,9 +15,17 @@ export default async function ProtectedLayout({ children }: { children: React.Re
   }
 
   return (
-    <div className="min-h-full">
-      <DashboardHeader user={currentUser} />
-      <UserProvider user={currentUser}>{children}</UserProvider>
-    </div>
+    <SidebarProvider>
+      <AppSidebar user={currentUser} />
+      <SidebarInset>
+        <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
+          <SidebarTrigger className="-ml-1" />
+          <PageHeader />
+        </header>
+        <div className="flex-1">
+          <UserProvider user={currentUser}>{children}</UserProvider>
+        </div>
+      </SidebarInset>
+    </SidebarProvider>
   );
 }

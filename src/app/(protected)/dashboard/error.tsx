@@ -29,7 +29,7 @@ export default function DashboardError({
           Something went wrong!
         </h2>
         <p id="error-description" className="text-muted-foreground text-center max-w-md">
-          We encountered an error while loading your print jobs. Please try again.
+          We encountered an error while loading your dashboard. Please try again.
         </p>
         {error.message && <p className="text-sm text-muted-foreground">Error: {error.message}</p>}
         <Button onClick={reset} variant="default">
