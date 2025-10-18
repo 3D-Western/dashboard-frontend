@@ -1,115 +1,159 @@
 'use client';
-
-import Link from 'next/link';
+import { useState } from 'react';
+import { toast } from 'sonner';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import Image from 'next/image';
-import { useState, FormEvent } from 'react';
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '@/components/ui/form';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
-const BACKEND_URL = 'http://dev.3dwestern.ca:8080';
+const formSchema = z.object({
+  studentId: z
+    .string()
+    .min(1, 'Student ID is required')
+    .regex(/^\d+$/, 'Student ID must contain only numbers')
+    .refine((val) => {
+      const num = parseInt(val, 10);
+      return num >= 251000000 && num <= 251999999;
+    }, 'Student ID must be between 251000000 and 251999999'),
+  password: z.string().min(1, 'Password is required'),
+});
+
+type FormData = z.infer<typeof formSchema>;
 
 export default function Login() {
-  const [studentId, setStudentId] = useState('');
-  const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState('');
   const router = useRouter();
 
-  const handleSubmit = async (e: FormEvent) => {
-    e.preventDefault();
-    setIsLoading(true);
-    setError('');
+  const form = useForm<FormData>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      studentId: '',
+      password: '',
+    },
+  });
 
-    // Validate inputs
-    if (!studentId.trim() || !password.trim()) {
-      setError('Student ID and password are required');
-      setIsLoading(false);
-      return;
-    }
-
+  async function onSubmit(values: FormData) {
     try {
-      const response = await fetch(`${BACKEND_URL}/api/session/login`, {
+      setIsLoading(true);
+
+      // Convert studentId to number for API
+      const submitData = {
+        studentId: parseInt(values.studentId, 10),
+        password: values.password,
+      };
+
+      // Make API call to login endpoint
+      const response = await fetch('http://dev.3dwestern.ca:8080/login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          studentId: parseInt(studentId, 10),
-          password: password,
-        }),
+        body: JSON.stringify(submitData),
       });
 
-      if (response.status === 200) {
-        // Login successful
-        const data = await response.json();
-        console.log('Login successful. Session token:', data.sessionToken);
-
-        // Store session token (you can use cookies or other storage)
-        sessionStorage.setItem('sessionToken', data.sessionToken);
-
-        // Redirect to dashboard or main page
-        router.push('/dashboard'); // Update this path as needed
-      } else if (response.status === 400) {
-        setError('Invalid request. Please check your input.');
-      } else if (response.status === 401) {
-        setError('Invalid student ID or password.');
-      } else {
-        setError('An unexpected error occurred. Please try again.');
+      // Handle error responses (400-500 status codes)
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ message: 'An error occurred' }));
+        toast.error(errorData.message || `Error: ${response.status} - ${response.statusText}`);
+        return;
       }
-    } catch (err) {
-      // Network error or backend not available
-      setError('Unable to connect to server. Please try again later.');
-      console.error('Login error:', err);
+
+      // Handle successful response (200 status code)
+      const data = await response.json();
+
+      // Store the session token as a cookie
+      document.cookie = `sessionToken=${data.sessionToken}; path=/; max-age=${60 * 60 * 24 * 7}; SameSite=Strict`;
+
+      toast.success('Login successful! Redirecting...');
+
+      // Redirect to dashboard homepage
+      router.push('/dashboard');
+    } catch (error) {
+      console.error('Form submission error', error);
+      toast.error('Failed to connect to the server. Please try again.');
     } finally {
       setIsLoading(false);
     }
-  };
+  }
 
   return (
-    <>
-      <div className="flex items-center justify-center min-h-screen py-2">
-        <form onSubmit={handleSubmit} className="flex flex-col items-center gap-6 mr-20">
-          <span className="font-jersey text-[96px]">LOGIN</span>
+    <div className="flex flex-col items-center justify-center w-screen min-h-screen gap-y-[90px] bg-[url('/logingraphic.png')] bg-cover py-10">
+      <span className="font-jersey text-[96px]">LOGIN</span>
 
-          <Input
-            type="text"
-            placeholder="student ID"
-            className="!bg-white w-[325px] h-[43px] placeholder:text-[20px]"
-            value={studentId}
-            onChange={(e) => setStudentId(e.target.value)}
-            required
-          />
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(onSubmit)} className="w-full max-w-[500px] px-4">
+          <div className="flex flex-col gap-y-[24px] items-center">
+            <FormField
+              control={form.control}
+              name="studentId"
+              render={({ field }) => (
+                <FormItem className="flex flex-col w-[325px]">
+                  <FormLabel className="font-jersey text-[26px]">STUDENT NUMBER</FormLabel>
+                  <FormControl>
+                    <Input
+                      type="number"
+                      placeholder="STUDENT NUMBER"
+                      className="!bg-white w-[325px] h-[43px] placeholder:text-[20px] text-black !text-[20px]"
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
-          <Input
-            type="password"
-            placeholder="password"
-            className="!bg-white w-[325px] h-[43px] placeholder:text-[20px]"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-          />
+            <FormField
+              control={form.control}
+              name="password"
+              render={({ field }) => (
+                <FormItem className="flex flex-col w-[325px]">
+                  <FormLabel className="font-jersey text-[26px]">PASSWORD</FormLabel>
+                  <FormControl>
+                    <Input
+                      type="password"
+                      placeholder="PASSWORD"
+                      className="!bg-white w-[325px] h-[43px] placeholder:text-[20px] text-black !text-[20px]"
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
 
-          {error && <div className="text-red-600 text-sm w-[325px] text-center">{error}</div>}
+          <div className="flex flex-col gap-y-[46px] items-center mt-[60px]">
+            <Button type="submit" className="w-[160px] h-[63px] text-[30px]" disabled={isLoading}>
+              {isLoading ? 'LOADING...' : 'LOGIN'}
+            </Button>
 
-          <Link href="/forgot-password" className="font-jersey underline text-[16px]">
-            Forgot Password?
-          </Link>
+            <span className="font-jersey text-[20px]">
+              Don't have an account?{' '}
+              <Link href="/signup" className="underline">
+                Sign up
+              </Link>
+            </span>
 
-          <Button
-            type="submit"
-            variant="default"
-            className="w-[160px] h-[63px] text-[30px]"
-            disabled={isLoading}
-          >
-            {isLoading ? 'LOADING...' : 'PRINT NOW'}
-          </Button>
-
-          <Link href="/signup">SIGN UP</Link>
+            <span className="font-jersey text-[20px]">
+              Having Issues?{' '}
+              <Link href="/contact-us" className="underline">
+                Contact us
+              </Link>
+            </span>
+          </div>
         </form>
-
-        <Image src="3dWesternLogo.svg" alt="3D Western Logo" width={750} height={765} />
-      </div>
-    </>
+      </Form>
+    </div>
   );
 }
