@@ -7,7 +7,6 @@ import {
   AccordionTrigger,
   AccordionContent,
 } from '@/components/ui/accordion';
-import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
 
 const faqs = [
