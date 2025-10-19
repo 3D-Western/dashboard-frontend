@@ -4,13 +4,13 @@ import { generateErrorResponse, generateSuccessResponse } from './utils';
 import { endpoints } from '../client/endpoints';
 import { ErrorCodes } from '../client/errors';
 
-const apiUri = process.env.API_URI;
+const apiUri = process.env.API_URL;
 
 export const sessionHandlers = [
   http.get(`${apiUri}${endpoints.session.current}`, ({ cookies }) => {
     // TODO: finalize the cookie name for the session id
     // Assuming the session ID is stored in a cookie named 'session'. But for now this will always be valid
-    const sessionId = cookies['sessionId'] || '';
+    const sessionId = cookies['sessionToken'] || '';
 
     const user = db.validateSession(sessionId);
     if (!user) {
@@ -19,13 +19,21 @@ export const sessionHandlers = [
           code: ErrorCodes.SESSION_INVALID,
           message: 'Invalid session',
         }),
-        { status: 403 },
+        {
+          status: 403,
+          headers: {
+            'Content-Type': 'application/json',
+            'Access-Control-Allow-Credentials': 'true',
+            'Set-Cookie': `sessionToken=; path=/; max-age=0; SameSite=Strict`, // Remove the invalid cookie
+          },
+        },
       );
     }
 
-    return HttpResponse.json(generateSuccessResponse(user));
+    return HttpResponse.json(generateSuccessResponse({ user: user }));
   }),
   http.post(`${apiUri}${endpoints.session.login}`, async ({ request }) => {
+    console.log('Login request received');
     const { studentId, password } = (await request.json()) as {
       studentId: number;
       password: string;
@@ -34,7 +42,7 @@ export const sessionHandlers = [
     if (!user) {
       return HttpResponse.json(
         generateErrorResponse({
-          code: ErrorCodes.SESSION_INVALID,
+          code: ErrorCodes.INVALID_CREDENTIALS,
           message: 'Invalid credentials',
         }),
         { status: 401 },

@@ -15,6 +15,7 @@ export const sessionApi = {
   },
   login: async (studentId: number, password: string, options?: RequestInit) => {
     const serverUrl = getBaseUrl();
+    console.log('Fetching current session from:', `${serverUrl}${endpoints.session.current}`);
 
     return apiRequest<ApiLoginResponse>(`${serverUrl}${endpoints.session.login}`, {
       method: 'POST',

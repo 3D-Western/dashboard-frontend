@@ -1,5 +1,3 @@
-'use server';
-
 import { User } from '@/types/user';
 import { sessionApi } from '@/api/client/session';
 
