@@ -5,6 +5,10 @@ import { validateSession } from '@/lib/auth';
 import { UserProvider } from '@/providers/user-provider';
 import { redirect } from 'next/navigation';
 
+// Disable entire protected layout from being statically optimized. Since it will always
+// need to validate the user session on each request.
+export const dynamic = 'force-dynamic';
+
 export default async function ProtectedLayout({ children }: { children: React.ReactNode }) {
   const currentUser = await validateSession();
 
