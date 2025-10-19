@@ -4,4 +4,7 @@ export const endpoints = {
     login: '/api/v1/session/login',
     logout: '/api/v1/session/logout',
   },
+  jobs: {
+    listAllActiveJobs: '/api/v1/jobs',
+  },
 };

@@ -1,4 +1,5 @@
 import { User } from '@/types/user';
+import { PrintJob } from '@/types/jobs';
 
 export interface ApiResponseError {
   code: string;
@@ -18,4 +19,8 @@ export interface ApiGetCurrentSessionResponse {
 
 export interface ApiLoginResponse {
   sessionToken: string;
+}
+
+export interface ApiGetAllActivePrintJobsResponse {
+  jobs: PrintJob[];
 }

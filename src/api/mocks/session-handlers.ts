@@ -1,25 +1,25 @@
 import { http, HttpResponse } from 'msw';
 import db from './database/db';
-import { generateErrorResponse, generateSuccessResponse, invalidSessionResponse } from './utils';
+import { generateErrorResponse, generateSuccessResponse, createInvalidSessionResponse } from './utils';
 import { endpoints } from '../client/endpoints';
 import { ErrorCodes } from '../client/errors';
 
-const apiUri = process.env.API_URL;
+const apiUrl = process.env.API_URL;
 
 export const sessionHandlers = [
-  http.get(`${apiUri}${endpoints.session.current}`, ({ cookies }) => {
+  http.get(`${apiUrl}${endpoints.session.current}`, ({ cookies }) => {
     // TODO: finalize the cookie name for the session id
     // Assuming the session ID is stored in a cookie named 'session'. But for now this will always be valid
     const sessionId = cookies['sessionToken'] || '';
 
     const user = db.validateSession(sessionId);
     if (!user) {
-      return invalidSessionResponse;
+      return createInvalidSessionResponse();
     }
 
     return HttpResponse.json(generateSuccessResponse({ user: user }));
   }),
-  http.post(`${apiUri}${endpoints.session.login}`, async ({ request }) => {
+  http.post(`${apiUrl}${endpoints.session.login}`, async ({ request }) => {
     console.log('Login request received');
     const { studentId, password } = (await request.json()) as {
       studentId: number;
@@ -47,11 +47,11 @@ export const sessionHandlers = [
       },
     });
   }),
-  http.post(`${apiUri}${endpoints.session.logout}`, ({ cookies }) => {
+  http.post(`${apiUrl}${endpoints.session.logout}`, ({ cookies }) => {
     const sessionId = cookies['sessionToken'] || '';
     const user = db.validateSession(sessionId);
     if (!user) {
-      return invalidSessionResponse;
+      return createInvalidSessionResponse();
     }
 
     db.userLogout(sessionId);

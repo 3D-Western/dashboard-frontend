@@ -1,11 +1,14 @@
-import { User } from './types';
+import { PrintJob, User } from './types';
 import { mockUsers } from '../data/users';
+import { mockPrintJobs } from '../data/print-jobs';
 
 class Database {
   private static instance: Database;
   // In-memory storage for users
   private users: Map<number, User> = new Map();
   private sessions: Map<string, number> = new Map(); // sessionId to userId
+  private activePrintJobsUserMap: Map<number, PrintJob[]> = new Map(); // userId to PrintJobs
+  private activePrintJobsIDMap: Map<string, PrintJob> = new Map(); // printJobId to PrintJob
 
   // Singleton pattern to ensure only one instance of Database exists
   constructor() {
@@ -20,6 +23,17 @@ class Database {
     // Load some initial mock users
     mockUsers.forEach((user) => {
       this.users.set(user.id, user);
+    });
+
+    // Load some initial mock print jobs
+    this.users.forEach((user) => {
+      const userJobs: PrintJob[] = [];
+      this.activePrintJobsUserMap.set(user.id, userJobs);
+      mockPrintJobs.forEach((job) => {
+        const userJob = { ...job, studentId: user.id, id: `${user.id}-${job.id}` };
+        userJobs.push(userJob);
+        this.activePrintJobsIDMap.set(userJob.id, userJob);
+      });
     });
   }
 
@@ -50,6 +64,14 @@ class Database {
 
   public userLogout(sessionId: string) {
     this.sessions.delete(sessionId);
+  }
+
+  public getPrintJobsByUserId(userId: number): PrintJob[] {
+    return this.activePrintJobsUserMap.get(userId) || [];
+  }
+
+  public getPrintJobById(printJobId: string): PrintJob | null {
+    return this.activePrintJobsIDMap.get(printJobId) || null;
   }
 }
 

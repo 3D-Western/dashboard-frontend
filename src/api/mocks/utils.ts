@@ -54,22 +54,27 @@ export const debugRequest = async (req: Request) => {
   console.log('\n=== End Debug ===\n');
 };
 
-// Updated for Safari compatibility
-export const invalidSessionResponse = new HttpResponse(
-  JSON.stringify(
-    generateErrorResponse({
-      code: ErrorCodes.SESSION_INVALID,
-      message: 'Invalid session',
-    }),
-  ),
-  {
-    status: 403,
-    headers: {
-      'Content-Type': 'application/json',
-      'Set-Cookie': `sessionToken=; path=/; max-age=0; SameSite=Strict`, // Remove the invalid cookie
+/**
+ * Creates a new invalid session response
+ * Note: This must be a function that returns a new HttpResponse each time,
+ * because HttpResponse streams can only be read once (ReadableStream limitation)
+ */
+export const createInvalidSessionResponse = () =>
+  new HttpResponse(
+    JSON.stringify(
+      generateErrorResponse({
+        code: ErrorCodes.SESSION_INVALID,
+        message: 'Invalid session',
+      }),
+    ),
+    {
+      status: 403,
+      headers: {
+        'Content-Type': 'application/json',
+        'Set-Cookie': `sessionToken=; path=/; max-age=0; SameSite=Strict`, // Remove the invalid cookie
+      },
     },
-  },
-);
+  );
 
 /**
  * Creates a deep copy of an object or array

@@ -3,28 +3,69 @@ import { ApiError, ErrorCodes } from './errors';
 
 const isDev = process.env.NODE_ENV === 'development';
 
+export interface ApiRequestConfig {
+  /**
+   * If true, suppresses throwing ApiError for failed responses
+   * @default false
+   */
+  suppressApiError?: boolean;
+
+  /**
+   * If true, expects the response to be JSON and throws if it's not
+   * If false, returns the Response object for non-JSON responses (e.g., file downloads)
+   * @default true
+   */
+  expectJson?: boolean;
+
+  /**
+   * If true, skips setting the Content-Type header
+   * Useful for multipart/form-data where the browser sets the boundary
+   * @default false
+   */
+  skipContentTypeHeader?: boolean;
+}
+
 export async function apiRequest<T>(
   url: string,
   options: RequestInit = {},
-  suppressApiError = false,
-  expectJson = true,
+  config?: ApiRequestConfig,
 ): Promise<T> {
+  const { suppressApiError = false, expectJson = true, skipContentTypeHeader = false } = config || {};
+
+  // Only set Content-Type header if:
+  // 1. Not explicitly skipped
+  // 2. There's a request body
+  // 3. User hasn't provided their own Content-Type
+  const headers: HeadersInit = { ...options.headers };
+  const headersObj = new Headers(headers);
+
+  if (!skipContentTypeHeader && options.body && !headersObj.has('Content-Type')) {
+    headersObj.set('Content-Type', 'application/json');
+  }
+
   const response = await fetch(url, {
     ...options,
-    headers: {
-      'Content-Type': 'application/json',
-      ...options.headers,
-    },
+    headers: headersObj,
   });
 
-  if (response.headers.get('Content-Type') !== 'application/json') {
+  // Handle 204 No Content (common for DELETE operations)
+  if (response.status === 204) {
+    return undefined as T;
+  }
+
+  const contentType = response.headers.get('Content-Type');
+  const isJson = contentType?.includes('application/json');
+
+  if (!isJson) {
     if (expectJson) {
       throw new ApiError(
         ErrorCodes.RESPONSE_INVALID_CONTENT_TYPE,
-        'Response is not JSON (got ' + response.headers.get('Content-Type') + ')',
+        `Expected JSON but got ${contentType || 'no content-type'}`,
       );
     }
-    return null as unknown as T; // Return null if response is not JSON
+    // For non-JSON responses (file downloads, images, etc.), return the response itself
+    // The caller can then use response.blob(), response.arrayBuffer(), etc.
+    return response as unknown as T;
   }
 
   const data: ApiResponseRaw<T> = await response.json();
