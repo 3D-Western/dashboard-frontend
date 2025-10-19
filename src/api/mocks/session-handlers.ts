@@ -25,4 +25,31 @@ export const sessionHandlers = [
 
     return HttpResponse.json(generateSuccessResponse(user));
   }),
+  http.post(`${apiUri}${endpoints.session.login}`, async ({ request }) => {
+    const { studentId, password } = (await request.json()) as {
+      studentId: number;
+      password: string;
+    };
+    const user = db.authenticateUser(studentId, password);
+    if (!user) {
+      return HttpResponse.json(
+        generateErrorResponse({
+          code: ErrorCodes.SESSION_INVALID,
+          message: 'Invalid credentials',
+        }),
+        { status: 401 },
+      );
+    }
+
+    const sessionToken = db.createSession(user.id);
+    return HttpResponse.json(generateSuccessResponse({ sessionToken: sessionToken }), {
+      headers: {
+        'Content-Type': 'application/json',
+        'Set-Cookie': `sessionToken=${sessionToken}; path=/; max-age=${
+          60 * 60 * 24 * 7
+        }; SameSite=Strict`,
+        'Access-Control-Allow-Credentials': 'true',
+      },
+    });
+  }),
 ];

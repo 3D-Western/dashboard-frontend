@@ -1,3 +1,5 @@
+import { User } from '@/types/user';
+
 export interface ApiResponseError {
   code: string;
   message: string;
@@ -10,6 +12,10 @@ export interface ApiResponseRaw<T> {
   error?: ApiResponseError;
 }
 
-export interface GetCurrentSessionResponse {
-  sessionId: string;
+export interface ApiGetCurrentSessionResponse {
+  user: User | null;
+}
+
+export interface ApiLoginResponse {
+  sessionToken: string;
 }

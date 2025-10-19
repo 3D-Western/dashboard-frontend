@@ -23,16 +23,19 @@ class Database {
     });
   }
 
-  public userLogin(userId: number, password: string) {
-    if (!this.users.has(userId)) {
-      throw new Error('User not found');
+  public authenticateUser(studentId: number, password: string): User | null {
+    const user = this.users.get(studentId);
+    if (!user) {
+      return null;
     }
-    const user = this.users.get(userId)!;
     if (user.password !== password) {
-      throw new Error('Invalid password');
+      return null;
     }
+    return user;
+  }
 
-    const sessionId = `session-${Date.now()}-${userId}`;
+  public createSession(userId: number): string {
+    const sessionId = `session-${Math.random().toString(36)}`;
     this.sessions.set(sessionId, userId);
     return sessionId;
   }

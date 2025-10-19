@@ -1,13 +1,12 @@
 import { AppSidebar } from '@/components/AppSidebar';
 import { PageHeader } from '@/components/PageHeader';
-import { SidebarProvider, SidebarInset, SidebarTrigger } from '@/components/ui/sidebar';
-import { getUser } from '@/lib/auth';
+import { SidebarInset, SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
+import { validateSession } from '@/lib/auth';
 import { UserProvider } from '@/providers/user-provider';
 import { redirect } from 'next/navigation';
 
 export default async function ProtectedLayout({ children }: { children: React.ReactNode }) {
-  // TODO: Add authentication check here to redirect the user if not authenticated.
-  const currentUser = await getUser();
+  const currentUser = await validateSession();
 
   if (!currentUser) {
     // TODO: redirect to login page
