@@ -15,11 +15,18 @@ export const sessionApi = {
   },
   login: async (studentId: number, password: string, options?: RequestInit) => {
     const serverUrl = getBaseUrl();
-    console.log('Fetching current session from:', `${serverUrl}${endpoints.session.current}`);
 
     return apiRequest<ApiLoginResponse>(`${serverUrl}${endpoints.session.login}`, {
       method: 'POST',
       body: JSON.stringify({ studentId, password }),
+      ...options,
+    });
+  },
+  logout: async (options?: RequestInit) => {
+    const serverUrl = getBaseUrl();
+    return apiRequest<void>(`${serverUrl}${endpoints.session.logout}`, {
+      method: 'POST',
+      credentials: 'include',
       ...options,
     });
   },

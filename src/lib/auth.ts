@@ -23,7 +23,7 @@ export const login = async (studentId: number, password: string): Promise<boolea
  * @returns {Promise<void>} Resolves when the logout process is complete.
  */
 export const logout = async (): Promise<void> => {
-  // TODO: Replace with real logout logic
+  await sessionApi.logout();
 };
 
 /**

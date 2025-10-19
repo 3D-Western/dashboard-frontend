@@ -64,6 +64,10 @@ export const invalidSessionResponse = new HttpResponse(
   ),
   {
     status: 403,
+    headers: {
+      'Content-Type': 'application/json',
+      'Set-Cookie': `sessionToken=; path=/; max-age=0; SameSite=Strict`, // Remove the invalid cookie
+    },
   },
 );
 
