@@ -103,8 +103,8 @@ export const useColumns = () => {
                 sortDirection === 'asc'
                   ? 'descending'
                   : sortDirection === 'desc'
-                  ? 'ascending'
-                  : 'ascending'
+                    ? 'ascending'
+                    : 'ascending'
               }`}
             >
               Print Date
