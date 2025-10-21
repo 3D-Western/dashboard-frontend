@@ -8,7 +8,7 @@
     "start": "next start",
     "lint": "next lint",
     "lint:ci": "eslint . --max-warnings=0",
-    "format": "prettier --write ./app"
+    "format": "prettier --write ."
   },
   "lint-staged": {
     "*.{js,jsx,ts,tsx,json,css,md}": [
