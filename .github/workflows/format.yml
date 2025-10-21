@@ -1,0 +1,22 @@
+name: Format
+on: push
+jobs:
+  format-code:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ github.head_ref }}
+      - uses: actions/setup-node@v2
+        with:
+          node-version: "22.x"
+      - run: npm ci
+      - run: npm run format
+        # Commit all changed files back to the repository
+      - name: Commit changes
+        uses: stefanzweifel/git-auto-commit-action@v7
+        with:
+          commit_message: Apply automatic formatting changes
+          branch: ${{ github.head_ref }}
