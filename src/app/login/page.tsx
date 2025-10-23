@@ -1,11 +1,7 @@
 'use client';
-import { useState } from 'react';
-import { toast } from 'sonner';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
+import { ApiError, ErrorCodes } from '@/api/client/errors';
+import { sessionApi } from '@/api/client/session';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import {
   Form,
   FormControl,
@@ -14,9 +10,16 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
+import { Routes } from '@/lib/routes';
+import { zodResolver } from '@hookform/resolvers/zod';
+import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import Image from 'next/image';
+import { useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { toast } from 'sonner';
+import { z } from 'zod';
 
 const formSchema = z.object({
   studentId: z
@@ -55,34 +58,47 @@ export default function Login() {
       };
 
       // Make API call to login endpoint
-      const response = await fetch('http://dev.3dwestern.ca:8080/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(submitData),
-      });
+      // const response = await fetch('http://dev.3dwestern.ca:8080/login', {
+      //   method: 'POST',
+      //   headers: {
+      //     'Content-Type': 'application/json',
+      //   },
+      //   body: JSON.stringify(submitData),
+      // });
 
-      // Handle error responses (400-500 status codes)
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({ message: 'An error occurred' }));
-        toast.error(errorData.message || `Error: ${response.status} - ${response.statusText}`);
-        return;
-      }
+      // // Handle error responses (400-500 status codes)
+      // if (!response.ok) {
+      //   const errorData = await response.json().catch(() => ({ message: 'An error occurred' }));
+      //   toast.error(errorData.message || `Error: ${response.status} - ${response.statusText}`);
+      //   return;
+      // }
 
-      // Handle successful response (200 status code)
-      const data = await response.json();
+      // // Handle successful response (200 status code)
+      // const data = await response.json();
 
-      // Store the session token as a cookie
-      document.cookie = `sessionToken=${data.sessionToken}; path=/; max-age=${60 * 60 * 24 * 7}; SameSite=Strict`;
+      // // Store the session token as a cookie
+      // document.cookie = `sessionToken=${data.sessionToken}; path=/; max-age=${60 * 60 * 24 * 7}; SameSite=Strict`;
+
+      const response = await sessionApi.login(submitData.studentId, submitData.password);
+
+      console.log('Login response:', response);
 
       toast.success('Login successful! Redirecting...');
 
       // Redirect to dashboard homepage
-      router.push('/dashboard');
+      // router.push('/dashboard');
+      router.push(Routes.dashboard);
     } catch (error) {
       console.error('Form submission error', error);
-      toast.error('Failed to connect to the server. Please try again.');
+
+      // Display specific error message if it's an ApiError
+      if (error instanceof ApiError) {
+        if (error.code === ErrorCodes.INVALID_CREDENTIALS) {
+          toast.error('Invalid student ID or password. Please try again.');
+          return;
+        }
+      }
+      toast.error('An unexpected error occurred. Please try again later.');
     } finally {
       setIsLoading(false);
     }

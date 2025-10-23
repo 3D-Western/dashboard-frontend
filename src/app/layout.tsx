@@ -36,6 +36,7 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} ${jersey.variable} antialiased`}
       >
         <ThemeProvider>{children}</ThemeProvider>
+        <Toaster richColors />
       </body>
     </html>
   );
