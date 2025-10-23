@@ -1,0 +1,60 @@
+import { http, HttpResponse } from 'msw';
+import db from './database/db';
+import { generateErrorResponse, generateSuccessResponse, createInvalidSessionResponse } from './utils';
+import { endpoints } from '../client/endpoints';
+import { ErrorCodes } from '../client/errors';
+
+const apiUrl = process.env.API_URL;
+
+export const sessionHandlers = [
+  http.get(`${apiUrl}${endpoints.session.current}`, ({ cookies }) => {
+    // TODO: finalize the cookie name for the session id
+    // Assuming the session ID is stored in a cookie named 'session'. But for now this will always be valid
+    const sessionId = cookies['sessionToken'] || '';
+
+    const user = db.validateSession(sessionId);
+    if (!user) {
+      return createInvalidSessionResponse();
+    }
+
+    return HttpResponse.json(generateSuccessResponse({ user: user }));
+  }),
+  http.post(`${apiUrl}${endpoints.session.login}`, async ({ request }) => {
+    console.log('Login request received');
+    const { studentId, password } = (await request.json()) as {
+      studentId: number;
+      password: string;
+    };
+    const user = db.authenticateUser(studentId, password);
+    if (!user) {
+      return HttpResponse.json(
+        generateErrorResponse({
+          code: ErrorCodes.INVALID_CREDENTIALS,
+          message: 'Invalid credentials',
+        }),
+        { status: 401 },
+      );
+    }
+
+    const sessionToken = db.createSession(user.id);
+    return HttpResponse.json(generateSuccessResponse({ sessionToken: sessionToken }), {
+      headers: {
+        'Content-Type': 'application/json',
+        'Set-Cookie': `sessionToken=${sessionToken}; path=/; max-age=${
+          60 * 60 * 24 * 7
+        }; SameSite=Strict`,
+        'Access-Control-Allow-Credentials': 'true',
+      },
+    });
+  }),
+  http.post(`${apiUrl}${endpoints.session.logout}`, ({ cookies }) => {
+    const sessionId = cookies['sessionToken'] || '';
+    const user = db.validateSession(sessionId);
+    if (!user) {
+      return createInvalidSessionResponse();
+    }
+
+    db.userLogout(sessionId);
+    return HttpResponse.json(generateSuccessResponse({}));
+  }),
+];

@@ -1,14 +1,7 @@
 import { Button } from '@/components/ui/button';
 import { Users } from 'lucide-react';
-import { getUser } from '@/lib/auth';
-import { redirect } from 'next/navigation';
 
 export default async function UserManagementPage() {
-  const user = await getUser();
-
-  if (!user || user.role !== 'admin') {
-    redirect('/dashboard?error=unauthorized');
-  }
   return (
     <div className="container p-6 space-y-6">
       <div className="flex items-center gap-2 text-muted-foreground mb-4">
