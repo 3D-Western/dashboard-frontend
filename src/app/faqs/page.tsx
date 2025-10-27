@@ -53,29 +53,23 @@ export default function Page() {
   );
 
   return (
-    <div className="max-w-2xl mx-auto px-4 py-10">
-      <h1 className="text-3xl font-bold mb-6 text-center">FAQs</h1>
+    <div className="mx-auto max-w-2xl px-4 py-10">
+      <h1 className="mb-6 text-center text-3xl font-bold">FAQs</h1>
 
-      <h2 className="text-2xl font-bold mb-2">What is this</h2>
+      <h2 className="mb-2 text-2xl font-bold">What is this</h2>
 
       <Input
         type="text"
         placeholder="Finding something specific?"
         value={query}
         onChange={(e) => setQuery(e.target.value)}
-        className="
-          selection:bg-primary selection:text-primary-foreground 
-          dark:bg-input/30 
-          focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]
-          aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive
-          mb-6 rounded-xs
-        "
+        className="mb-6 rounded-xs selection:bg-primary selection:text-primary-foreground focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 aria-invalid:border-destructive aria-invalid:ring-destructive/20 dark:bg-input/30 dark:aria-invalid:ring-destructive/40"
       />
 
       <Accordion type="multiple" className="w-full">
         {filteredFaqs.map((faq, index) => (
           <AccordionItem key={index} value={`item-${index}`}>
-            <AccordionTrigger className="font-bold hover:no-underline cursor-pointer">
+            <AccordionTrigger className="cursor-pointer font-bold hover:no-underline">
               {faq.question}
             </AccordionTrigger>
             <AccordionContent className="pr-10 whitespace-pre-line">{faq.answer}</AccordionContent>

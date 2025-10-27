@@ -3,7 +3,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 export default function DashboardLoading() {
   return (
     <div
-      className="container p-6 space-y-6"
+      className="container space-y-6 p-6"
       role="status"
       aria-live="polite"
       aria-label="Loading dashboard"
@@ -16,7 +16,7 @@ export default function DashboardLoading() {
       {/* Stats skeleton */}
       <div className="grid gap-4 md:grid-cols-3">
         {Array.from({ length: 3 }).map((_, i) => (
-          <div key={i} className="rounded-lg border p-6 space-y-2">
+          <div key={i} className="space-y-2 rounded-lg border p-6">
             <Skeleton className="h-4 w-32" />
             <Skeleton className="h-9 w-16" />
           </div>

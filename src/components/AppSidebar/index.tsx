@@ -68,10 +68,10 @@ export function AppSidebar({ user }: AppSidebarProps) {
         <div className="flex items-center gap-3">
           {/* Placeholder for company icon */}
           <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
-            <span className="text-primary font-bold text-lg">W3D</span>
+            <span className="text-lg font-bold text-primary">W3D</span>
           </div>
           <div className="flex flex-col">
-            <span className="font-semibold text-sm">Western 3D Print Club</span>
+            <span className="text-sm font-semibold">Western 3D Print Club</span>
           </div>
         </div>
       </SidebarHeader>
@@ -117,14 +117,14 @@ export function AppSidebar({ user }: AppSidebarProps) {
 
       <SidebarFooter className="border-t p-4">
         <div className="flex items-center justify-between gap-3">
-          <div className="flex items-center gap-3 min-w-0 flex-1">
+          <div className="flex min-w-0 flex-1 items-center gap-3">
             <Avatar className="h-8 w-8">
               <AvatarFallback aria-label={`${user.firstName} ${user.lastName}`}>
                 {user.lastName[0] + user.firstName[0]}
               </AvatarFallback>
             </Avatar>
-            <div className="flex flex-col min-w-0 flex-1">
-              <span className="text-sm font-medium truncate">
+            <div className="flex min-w-0 flex-1 flex-col">
+              <span className="truncate text-sm font-medium">
                 {user.firstName} {user.lastName}
               </span>
               <span className="text-xs text-muted-foreground">ID: {user.id}</span>
@@ -132,7 +132,7 @@ export function AppSidebar({ user }: AppSidebarProps) {
           </div>
           <button
             onClick={handleLogout}
-            className="flex h-8 w-8 items-center justify-center rounded-md hover:bg-accent hover:text-accent-foreground transition-colors"
+            className="flex h-8 w-8 items-center justify-center rounded-md transition-colors hover:bg-accent hover:text-accent-foreground"
             title="Logout"
             aria-label="Logout"
           >

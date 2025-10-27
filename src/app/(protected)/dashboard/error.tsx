@@ -18,7 +18,7 @@ export default function DashboardError({
   return (
     <div className="container p-6">
       <div
-        className="flex flex-col items-center justify-center min-h-[400px] space-y-4"
+        className="flex min-h-[400px] flex-col items-center justify-center space-y-4"
         role="alert"
         aria-live="assertive"
         aria-labelledby="error-heading"
@@ -28,7 +28,7 @@ export default function DashboardError({
         <h2 id="error-heading" className="text-2xl font-bold">
           Something went wrong!
         </h2>
-        <p id="error-description" className="text-muted-foreground text-center max-w-md">
+        <p id="error-description" className="max-w-md text-center text-muted-foreground">
           We encountered an error while loading your dashboard. Please try again.
         </p>
         {error.message && <p className="text-sm text-muted-foreground">Error: {error.message}</p>}
