@@ -105,24 +105,24 @@ export default function Login() {
   }
 
   return (
-    <div className="grid grid-cols-2 h-screen">
+    <div className="grid h-screen grid-cols-2">
       <div className="flex flex-col items-center justify-center gap-y-[90px] py-10">
         <span className="font-jersey text-[96px]">LOGIN</span>
 
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="w-full max-w-[500px] px-4">
-            <div className="flex flex-col gap-y-[24px] items-center">
+            <div className="flex flex-col items-center gap-y-[24px]">
               <FormField
                 control={form.control}
                 name="studentId"
                 render={({ field }) => (
-                  <FormItem className="flex flex-col w-[325px]">
+                  <FormItem className="flex w-[325px] flex-col">
                     <FormLabel className="font-jersey text-[26px]">STUDENT NUMBER</FormLabel>
                     <FormControl>
                       <Input
                         type="number"
                         placeholder="STUDENT NUMBER"
-                        className="!bg-white w-[325px] h-[43px] placeholder:text-[20px] text-black !text-[20px]"
+                        className="h-[43px] w-[325px] !bg-white !text-[20px] text-black placeholder:text-[20px]"
                         {...field}
                       />
                     </FormControl>
@@ -135,13 +135,13 @@ export default function Login() {
                 control={form.control}
                 name="password"
                 render={({ field }) => (
-                  <FormItem className="flex flex-col w-[325px]">
+                  <FormItem className="flex w-[325px] flex-col">
                     <FormLabel className="font-jersey text-[26px]">PASSWORD</FormLabel>
                     <FormControl>
                       <Input
                         type="password"
                         placeholder="PASSWORD"
-                        className="!bg-white w-[325px] h-[43px] placeholder:text-[20px] text-black !text-[20px]"
+                        className="h-[43px] w-[325px] !bg-white !text-[20px] text-black placeholder:text-[20px]"
                         {...field}
                       />
                     </FormControl>
@@ -151,8 +151,8 @@ export default function Login() {
               />
             </div>
 
-            <div className="flex flex-col gap-y-[46px] items-center mt-[60px]">
-              <Button type="submit" className="w-[160px] h-[63px] text-[30px]" disabled={isLoading}>
+            <div className="mt-[60px] flex flex-col items-center gap-y-[46px]">
+              <Button type="submit" className="h-[63px] w-[160px] text-[30px]" disabled={isLoading}>
                 {isLoading ? 'LOADING...' : 'LOGIN'}
               </Button>
 

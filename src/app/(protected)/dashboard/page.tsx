@@ -4,7 +4,7 @@ import Link from 'next/link';
 
 export default async function DashboardPage() {
   return (
-    <div className="container p-6 space-y-6">
+    <div className="container space-y-6 p-6">
       {/* Welcome Section */}
       <div className="space-y-2">
         <p className="text-muted-foreground">Welcome to Western 3D Print Club Dashboard</p>
@@ -12,7 +12,7 @@ export default async function DashboardPage() {
 
       {/* Quick Stats - Placeholder for now */}
       <div className="grid gap-4 md:grid-cols-3">
-        <div className="rounded-lg border p-6 space-y-2">
+        <div className="space-y-2 rounded-lg border p-6">
           <div className="flex items-center gap-2 text-muted-foreground">
             <Printer className="h-4 w-4" />
             <span className="text-sm font-medium">Active Prints</span>
@@ -20,7 +20,7 @@ export default async function DashboardPage() {
           <div className="text-3xl font-bold">0</div>
         </div>
 
-        <div className="rounded-lg border p-6 space-y-2">
+        <div className="space-y-2 rounded-lg border p-6">
           <div className="flex items-center gap-2 text-muted-foreground">
             <Clock className="h-4 w-4" />
             <span className="text-sm font-medium">Pending Prints</span>
@@ -28,7 +28,7 @@ export default async function DashboardPage() {
           <div className="text-3xl font-bold">0</div>
         </div>
 
-        <div className="rounded-lg border p-6 space-y-2">
+        <div className="space-y-2 rounded-lg border p-6">
           <div className="flex items-center gap-2 text-muted-foreground">
             <LayoutDashboard className="h-4 w-4" />
             <span className="text-sm font-medium">Total Prints</span>
@@ -43,7 +43,7 @@ export default async function DashboardPage() {
         <div className="flex gap-4">
           <Button asChild>
             <Link href="/print">
-              <Printer className="h-4 w-4 mr-2" />
+              <Printer className="mr-2 h-4 w-4" />
               View All Prints
             </Link>
           </Button>

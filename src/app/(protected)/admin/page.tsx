@@ -4,15 +4,15 @@ import Link from 'next/link';
 
 export default async function AdminDashboardPage() {
   return (
-    <div className="container p-6 space-y-6">
-      <div className="flex items-center gap-2 mb-4">
+    <div className="container space-y-6 p-6">
+      <div className="mb-4 flex items-center gap-2">
         <Shield className="h-6 w-6" />
         <h1 className="text-2xl font-bold">Admin Dashboard</h1>
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         <Link href="/admin/users">
-          <Card className="hover:bg-accent transition-colors cursor-pointer">
+          <Card className="cursor-pointer transition-colors hover:bg-accent">
             <CardHeader>
               <div className="flex items-center gap-2">
                 <Users className="h-5 w-5 text-muted-foreground" />
@@ -29,7 +29,7 @@ export default async function AdminDashboardPage() {
         </Link>
 
         <Link href="/admin/prints">
-          <Card className="hover:bg-accent transition-colors cursor-pointer">
+          <Card className="cursor-pointer transition-colors hover:bg-accent">
             <CardHeader>
               <div className="flex items-center gap-2">
                 <Printer className="h-5 w-5 text-muted-foreground" />

@@ -131,23 +131,23 @@ export default function Signup() {
 
   return (
     <div className="flex">
-      <div className="flex flex-col items-center justify-center w-screen min-h-screen gap-y-[90px] bg-cover py-10">
+      <div className="flex min-h-screen w-screen flex-col items-center justify-center gap-y-[90px] bg-cover py-10">
         <span className="font-jersey text-[96px]">SIGN UP</span>
 
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="w-full px-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-y-[24px] gap-x-[74px] justify-items-center max-w-[1200px] mx-auto">
+            <div className="mx-auto grid max-w-[1200px] grid-cols-1 justify-items-center gap-x-[74px] gap-y-[24px] md:grid-cols-2 lg:grid-cols-3">
               <FormField
                 control={form.control}
                 name="firstName"
                 render={({ field }) => (
-                  <FormItem className="flex flex-col w-[325px]">
+                  <FormItem className="flex w-[325px] flex-col">
                     <FormLabel className="font-jersey text-[26px]">FIRST NAME</FormLabel>
                     <FormControl>
                       <Input
                         type="text"
                         placeholder="FIRST NAME"
-                        className="!bg-white w-[325px] h-[43px] placeholder:text-[20px] text-black !text-[20px]"
+                        className="h-[43px] w-[325px] !bg-white !text-[20px] text-black placeholder:text-[20px]"
                         {...field}
                       />
                     </FormControl>
@@ -160,13 +160,13 @@ export default function Signup() {
                 control={form.control}
                 name="lastName"
                 render={({ field }) => (
-                  <FormItem className="flex flex-col w-[325px]">
+                  <FormItem className="flex w-[325px] flex-col">
                     <FormLabel className="font-jersey text-[26px]">LAST NAME</FormLabel>
                     <FormControl>
                       <Input
                         type="text"
                         placeholder="LAST NAME"
-                        className="!bg-white w-[325px] h-[43px] placeholder:text-[20px] text-black !text-[20px]"
+                        className="h-[43px] w-[325px] !bg-white !text-[20px] text-black placeholder:text-[20px]"
                         {...field}
                       />
                     </FormControl>
@@ -179,13 +179,13 @@ export default function Signup() {
                 control={form.control}
                 name="email"
                 render={({ field }) => (
-                  <FormItem className="flex flex-col w-[325px]">
+                  <FormItem className="flex w-[325px] flex-col">
                     <FormLabel className="font-jersey text-[26px]">UWO EMAIL</FormLabel>
                     <FormControl>
                       <Input
                         type="email"
                         placeholder="UWO EMAIL"
-                        className="!bg-white w-[325px] h-[43px] placeholder:text-[20px] text-black !text-[20px]"
+                        className="h-[43px] w-[325px] !bg-white !text-[20px] text-black placeholder:text-[20px]"
                         {...field}
                       />
                     </FormControl>
@@ -198,13 +198,13 @@ export default function Signup() {
                 control={form.control}
                 name="password"
                 render={({ field }) => (
-                  <FormItem className="flex flex-col w-[325px]">
+                  <FormItem className="flex w-[325px] flex-col">
                     <FormLabel className="font-jersey text-[26px]">PASSWORD</FormLabel>
                     <FormControl>
                       <Input
                         type="password"
                         placeholder="PASSWORD"
-                        className="!bg-white w-[325px] h-[43px] placeholder:text-[20px] text-black !text-[20px]"
+                        className="h-[43px] w-[325px] !bg-white !text-[20px] text-black placeholder:text-[20px]"
                         {...field}
                       />
                     </FormControl>
@@ -217,13 +217,13 @@ export default function Signup() {
                 control={form.control}
                 name="studentId"
                 render={({ field }) => (
-                  <FormItem className="flex flex-col w-[325px]">
+                  <FormItem className="flex w-[325px] flex-col">
                     <FormLabel className="font-jersey text-[26px]">STUDENT NUMBER</FormLabel>
                     <FormControl>
                       <Input
                         type="number"
                         placeholder="STUDENT NUMBER"
-                        className="!bg-white w-[325px] h-[43px] placeholder:text-[20px] text-black !text-[20px]"
+                        className="h-[43px] w-[325px] !bg-white !text-[20px] text-black placeholder:text-[20px]"
                         {...field}
                       />
                     </FormControl>
@@ -236,11 +236,11 @@ export default function Signup() {
                 control={form.control}
                 name="experienceLevel"
                 render={({ field }) => (
-                  <FormItem className="flex flex-col w-[325px]">
+                  <FormItem className="flex w-[325px] flex-col">
                     <FormLabel className="font-jersey text-[26px]">EXPERIENCE LEVEL</FormLabel>
                     <Select onValueChange={field.onChange} defaultValue={field.value}>
                       <FormControl>
-                        <SelectTrigger className="w-[325px] h-[43px] !bg-white !text-[20px] text-black">
+                        <SelectTrigger className="h-[43px] w-[325px] !bg-white !text-[20px] text-black">
                           <SelectValue placeholder="Experience Level" />
                         </SelectTrigger>
                       </FormControl>
@@ -256,16 +256,16 @@ export default function Signup() {
               />
             </div>
 
-            <div className="flex flex-col gap-y-[46px] items-center mt-[60px]">
+            <div className="mt-[60px] flex flex-col items-center gap-y-[46px]">
               <FormField
                 control={form.control}
                 name="agreedToTerms"
                 render={({ field }) => (
-                  <FormItem className="flex items-center gap-x-[16px] space-y-0">
+                  <FormItem className="flex items-center space-y-0 gap-x-[16px]">
                     <FormControl>
                       <Checkbox checked={field.value} onCheckedChange={field.onChange} />
                     </FormControl>
-                    <FormLabel className="font-jersey text-[20px] !mt-0">
+                    <FormLabel className="!mt-0 font-jersey text-[20px]">
                       I have read the{' '}
                       <Link href="/terms-and-conditions" className="underline">
                         terms and conditions
@@ -281,7 +281,7 @@ export default function Signup() {
               />
               <FormMessage />
 
-              <Button type="submit" className="w-[160px] h-[63px] text-[30px]" disabled={isLoading}>
+              <Button type="submit" className="h-[63px] w-[160px] text-[30px]" disabled={isLoading}>
                 {isLoading ? 'LOADING...' : 'REGISTER'}
               </Button>
 

@@ -30,7 +30,11 @@ export async function apiRequest<T>(
   options: RequestInit = {},
   config?: ApiRequestConfig,
 ): Promise<T> {
-  const { suppressApiError = false, expectJson = true, skipContentTypeHeader = false } = config || {};
+  const {
+    suppressApiError = false,
+    expectJson = true,
+    skipContentTypeHeader = false,
+  } = config || {};
 
   // Only set Content-Type header if:
   // 1. Not explicitly skipped

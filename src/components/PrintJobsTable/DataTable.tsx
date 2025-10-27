@@ -121,7 +121,7 @@ export function DataTable<TData, TValue>({ columns, data }: DataTableProps<TData
         {announcement}
       </div>
 
-      <div className="flex flex-col sm:flex-row gap-4 sm:justify-between sm:items-center">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="w-full sm:max-w-sm">
           <Label htmlFor="search-prints" className="sr-only">
             Search print jobs by name

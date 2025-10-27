@@ -14,9 +14,7 @@ import { redirect } from 'next/navigation';
  * }
  * ```
  */
-export async function withSessionErrorHandling<T>(
-  fn: () => Promise<T>,
-): Promise<T> {
+export async function withSessionErrorHandling<T>(fn: () => Promise<T>): Promise<T> {
   try {
     return await fn();
   } catch (error) {

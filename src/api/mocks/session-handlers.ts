@@ -1,6 +1,10 @@
 import { http, HttpResponse } from 'msw';
 import db from './database/db';
-import { generateErrorResponse, generateSuccessResponse, createInvalidSessionResponse } from './utils';
+import {
+  generateErrorResponse,
+  generateSuccessResponse,
+  createInvalidSessionResponse,
+} from './utils';
 import { endpoints } from '../client/endpoints';
 import { ErrorCodes } from '../client/errors';
 

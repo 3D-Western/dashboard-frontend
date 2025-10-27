@@ -18,7 +18,7 @@ export default function PrintJobsError({
   return (
     <div className="container p-6">
       <div
-        className="flex flex-col items-center justify-center min-h-[400px] space-y-4"
+        className="flex min-h-[400px] flex-col items-center justify-center space-y-4"
         role="alert"
         aria-live="assertive"
         aria-labelledby="error-heading"
@@ -28,12 +28,12 @@ export default function PrintJobsError({
         <h2 id="error-heading" className="text-2xl font-bold">
           Failed to Load Print Jobs
         </h2>
-        <p id="error-description" className="text-muted-foreground text-center max-w-md">
+        <p id="error-description" className="max-w-md text-center text-muted-foreground">
           We couldn&apos;t load your print jobs. This might be due to a network issue or server
           problem.
         </p>
         {error.message && (
-          <p className="text-sm text-muted-foreground font-mono bg-muted px-3 py-1 rounded">
+          <p className="rounded bg-muted px-3 py-1 font-mono text-sm text-muted-foreground">
             {error.message}
           </p>
         )}

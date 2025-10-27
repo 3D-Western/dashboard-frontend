@@ -2,7 +2,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 
 export default function PrintJobsLoading() {
   return (
-    <div className="container p-6 space-y-6">
+    <div className="container space-y-6 p-6">
       <div>
         <Skeleton className="h-9 w-28" />
       </div>
@@ -15,10 +15,10 @@ export default function PrintJobsLoading() {
 
         <div className="rounded-md border">
           <div className="p-4">
-            <Skeleton className="h-12 w-full mb-4" />
-            <Skeleton className="h-12 w-full mb-4" />
-            <Skeleton className="h-12 w-full mb-4" />
-            <Skeleton className="h-12 w-full mb-4" />
+            <Skeleton className="mb-4 h-12 w-full" />
+            <Skeleton className="mb-4 h-12 w-full" />
+            <Skeleton className="mb-4 h-12 w-full" />
+            <Skeleton className="mb-4 h-12 w-full" />
             <Skeleton className="h-12 w-full" />
           </div>
         </div>
