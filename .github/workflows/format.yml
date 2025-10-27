@@ -33,3 +33,4 @@ jobs:
             git add .
             git commit -m "style: auto-format with Prettier"
             git push
+        fi
