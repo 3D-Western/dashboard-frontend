@@ -6,8 +6,9 @@
     "dev": "next dev --turbopack",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint .",
-    "lint:ci": "eslint . --max-warnings=0"
+    "lint": "next lint",
+    "lint:ci": "eslint . --max-warnings=0",
+    "format": "prettier --write ."
   },
   "lint-staged": {
     "*.{js,jsx,ts,tsx,json,css,md}": [
