@@ -1,16 +1,8 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Shield, Users, Printer } from 'lucide-react';
 import Link from 'next/link';
-import { redirect } from 'next/navigation';
-import { getUser } from '@/lib/auth';
 
 export default async function AdminDashboardPage() {
-  const user = await getUser();
-
-  if (!user || user.role !== 'admin') {
-    redirect('/dashboard?error=unauthorized');
-  }
-
   return (
     <div className="container p-6 space-y-6">
       <div className="flex items-center gap-2 mb-4">

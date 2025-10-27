@@ -1,3 +1,13 @@
+export interface User {
+  id: number;
+  lastName: string;
+  firstName: string;
+  password: string;
+  email: string;
+  role: 'admin' | 'user';
+  experience: string;
+}
+
 export interface File {
   id: string;
   name: string;

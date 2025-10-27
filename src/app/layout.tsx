@@ -1,8 +1,9 @@
+import { Toaster } from '@/components/ui/sonner';
+import { ThemeProvider } from '@/providers/theme-provider';
 import type { Metadata } from 'next';
 import { Geist, Geist_Mono } from 'next/font/google';
-import './globals.css';
-import { ThemeProvider } from '@/providers/theme-provider';
 import localFont from 'next/font/local';
+import './globals.css';
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
@@ -15,7 +16,7 @@ const geistMono = Geist_Mono({
 });
 
 const jersey = localFont({
-  src: './fonts/Jersey_25/Jersey25-Regular.ttf',
+  src: '../../public/fonts/Jersey25-Regular.ttf',
   variable: '--font-jersey',
   weight: '400',
 });
@@ -36,6 +37,7 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} ${jersey.variable} antialiased`}
       >
         <ThemeProvider>{children}</ThemeProvider>
+        <Toaster richColors />
       </body>
     </html>
   );
