@@ -1,5 +1,9 @@
 name: Format
-on: push
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
 
 jobs:
   format-code:
@@ -7,24 +11,24 @@ jobs:
     permissions:
       contents: write
     steps:
-      # 1️⃣ Checkout the branch that triggered this workflow
+      # 1️⃣ Checkout the correct branch (PR or direct push)
       - uses: actions/checkout@v5
         with:
           ref: ${{ github.head_ref || github.ref_name }}
 
-      # 2️⃣ Setup Node.js and enable built-in npm caching
+      # 2️⃣ Setup Node.js with caching
       - uses: actions/setup-node@v4
         with:
           node-version: "22"
           cache: 'npm'
 
-      # 3️⃣ Install dependencies (cached)
+      # 3️⃣ Install dependencies (fast because of cache)
       - run: npm ci --include=optional
 
       # 4️⃣ Run Prettier formatting
       - run: npm run format
 
-      # 5️⃣ Commit formatted changes only if any files changed
+      # 5️⃣ Commit only if Prettier changed any files
       - name: Commit formatted changes
         run: |
           if [ -n "$(git status --porcelain)" ]; then
@@ -33,4 +37,4 @@ jobs:
             git add .
             git commit -m "style: auto-format with Prettier"
             git push
-        fi
+          fi
