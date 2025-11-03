@@ -6,5 +6,7 @@ export const endpoints = {
   },
   jobs: {
     listAllActiveJobs: '/api/v1/jobs',
+    updateStatus: (jobId: string) => `/api/v1/jobs/${jobId}/status`,
+    delete: (jobId: string) => `/api/v1/jobs/${jobId}`,
   },
 };

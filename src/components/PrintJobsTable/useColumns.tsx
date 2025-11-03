@@ -8,13 +8,21 @@ import {
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { jobApi } from '@/api/client/job';
 import { File, PrintJob, PrintJobStatus } from '@/types/jobs';
 import { ColumnDef } from '@tanstack/react-table';
 import { ArrowUpDown, MoreHorizontal } from 'lucide-react';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useMemo } from 'react';
 import { DateCell } from './DateCell';
+
+type TableMode = 'user' | 'admin';
 
 const mapPrintJobStatusToDisplayLabel = (status: PrintJobStatus) => {
   switch (status) {
@@ -33,7 +41,9 @@ const mapPrintJobStatusToDisplayLabel = (status: PrintJobStatus) => {
   }
 };
 
-export const useColumns = () => {
+export const useColumns = (mode: TableMode = 'user') => {
+  const router = useRouter();
+
   return useMemo<ColumnDef<PrintJob>[]>(
     () => [
       {
@@ -67,12 +77,51 @@ export const useColumns = () => {
         header: () => {
           return <div className="w-full text-center">Name</div>;
         },
-        cell: ({ row }) => (
-          <div className="w-full text-center">
-            <span>{row.getValue('name') as string}</span>
-          </div>
-        ),
+        cell: ({ row }) => {
+          const name = row.getValue('name') as string;
+          const jobId = row.original.id;
+
+          if (mode === 'admin') {
+            return (
+              <div className="w-full text-center">
+                <Link
+                  href={`/admin/prints/${jobId}`}
+                  className="text-primary underline-offset-4 hover:underline"
+                >
+                  {name}
+                </Link>
+              </div>
+            );
+          }
+
+          return (
+            <div className="w-full text-center">
+              <span>{name}</span>
+            </div>
+          );
+        },
       },
+      ...(mode === 'admin'
+        ? [
+            {
+              accessorKey: 'student',
+              header: () => {
+                return <div className="w-full text-center">Student</div>;
+              },
+              cell: ({ row }) => {
+                const student = row.original.student;
+                if (!student) {
+                  return <div className="w-full text-center text-muted-foreground">-</div>;
+                }
+                return (
+                  <div className="w-full text-center">
+                    <span>{`${student.firstName} ${student.lastName}`}</span>
+                  </div>
+                );
+              },
+            } as ColumnDef<PrintJob>,
+          ]
+        : []),
       {
         accessorKey: 'status',
         header: () => {
@@ -126,6 +175,29 @@ export const useColumns = () => {
         id: 'actions',
         cell: ({ row }) => {
           const printJob = row.original;
+
+          const handleStatusChange = async (newStatus: PrintJobStatus) => {
+            try {
+              await jobApi.updateJobStatus(printJob.id, newStatus);
+              router.refresh();
+            } catch (error) {
+              console.error('Failed to update job status:', error);
+              alert('Failed to update job status. Please try again.');
+            }
+          };
+
+          const handleDelete = async () => {
+            if (window.confirm(`Are you sure you want to delete "${printJob.name}"?`)) {
+              try {
+                await jobApi.deleteJob(printJob.id);
+                router.refresh();
+              } catch (error) {
+                console.error('Failed to delete job:', error);
+                alert('Failed to delete job. Please try again.');
+              }
+            }
+          };
+
           return (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -145,6 +217,35 @@ export const useColumns = () => {
                   Copy Job ID
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
+                {mode === 'admin' && (
+                  <>
+                    <DropdownMenuSub>
+                      <DropdownMenuSubTrigger>Change Status</DropdownMenuSubTrigger>
+                      <DropdownMenuSubContent>
+                        <DropdownMenuItem onClick={() => handleStatusChange('IN_QUEUE')}>
+                          In Queue
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => handleStatusChange('PRINTING')}>
+                          Printing
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => handleStatusChange('READY')}>
+                          Ready
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => handleStatusChange('FLAGGED')}>
+                          Flagged
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => handleStatusChange('ERROR')}>
+                          Error
+                        </DropdownMenuItem>
+                      </DropdownMenuSubContent>
+                    </DropdownMenuSub>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={handleDelete} className="text-destructive">
+                      Delete Job
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                  </>
+                )}
                 <DropdownMenuItem disabled aria-disabled="true">
                   Download STL (Coming soon)
                 </DropdownMenuItem>
@@ -154,6 +255,6 @@ export const useColumns = () => {
         },
       },
     ],
-    [],
+    [mode, router],
   );
 };
