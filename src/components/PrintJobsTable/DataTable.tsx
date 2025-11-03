@@ -51,6 +51,7 @@ const columnLabels: Record<string, string> = {
 };
 
 export function DataTable<TData, TValue>({ columns, data }: DataTableProps<TData, TValue>) {
+  'use no memo';
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [rowSelection, setRowSelection] = useState({});
@@ -86,6 +87,7 @@ export function DataTable<TData, TValue>({ columns, data }: DataTableProps<TData
     localStorage.setItem('printJobsTableColumnVisibility', JSON.stringify(columnVisibility));
   }, [columnVisibility]);
 
+  // eslint-disable-next-line react-hooks/incompatible-library -- TanStack Table is known to be incompatible with React Compiler
   const table = useReactTable({
     data,
     columns,

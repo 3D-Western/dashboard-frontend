@@ -10,24 +10,26 @@ import { formatInTimeZone } from 'date-fns-tz';
  * - Uses date-fns-tz for predictable formatting
  */
 export function useLocalTime(dateString: string, format = 'yyyy-MM-dd HH:mm') {
-  const [localTime, setLocalTime] = useState(() => {
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  // Server-side or before hydration: use UTC
+  if (!isMounted) {
     try {
-      // Fallback to UTC on server
       return formatInTimeZone(dateString, 'UTC', format);
     } catch {
       return dateString;
     }
-  });
+  }
 
-  useEffect(() => {
-    try {
-      const userTZ = Intl.DateTimeFormat().resolvedOptions().timeZone;
-      const formatted = formatInTimeZone(dateString, userTZ, format);
-      setLocalTime(formatted);
-    } catch {
-      // Do nothing on invalid date
-    }
-  }, [dateString, format]);
-
-  return localTime;
+  // Client-side: use local timezone
+  try {
+    const userTZ = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    return formatInTimeZone(dateString, userTZ, format);
+  } catch {
+    return dateString;
+  }
 }

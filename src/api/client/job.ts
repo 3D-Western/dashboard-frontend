@@ -1,4 +1,4 @@
-import { PrintJobStatus } from '@/types/jobs';
+import { PrintJob, PrintJobStatus } from '@/types/jobs';
 import { ApiGetAllActivePrintJobsResponse } from '../types';
 import { apiRequest } from './base';
 import { endpoints } from './endpoints';
@@ -17,7 +17,7 @@ export const jobApi = {
   },
 
   updateJobStatus: async (jobId: string, status: PrintJobStatus, options?: RequestInit) => {
-    return apiRequest<{ job: any }>(`${getBaseUrl()}${endpoints.orders.byId(jobId)}`, {
+    return apiRequest<{ job: PrintJob }>(`${getBaseUrl()}${endpoints.orders.byId(jobId)}`, {
       method: 'PATCH',
       credentials: 'include',
       headers: {
