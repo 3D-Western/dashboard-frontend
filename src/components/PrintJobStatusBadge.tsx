@@ -48,11 +48,7 @@ export interface PrintJobStatusBadgeProps
   status: PrintJobStatus;
 }
 
-export function PrintJobStatusBadge({
-  status,
-  className,
-  ...props
-}: PrintJobStatusBadgeProps) {
+export function PrintJobStatusBadge({ status, className, ...props }: PrintJobStatusBadgeProps) {
   const displayLabel = mapPrintJobStatusToDisplayLabel(status);
 
   return (
