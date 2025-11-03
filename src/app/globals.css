@@ -60,6 +60,25 @@
   --color-popover: var(--popover);
   --color-card-foreground: var(--card-foreground);
   --color-card: var(--card);
+
+  /* Status colors for Tailwind utilities */
+  --color-status-draft: var(--status-draft);
+  --color-status-draft-foreground: var(--status-draft-foreground);
+  --color-status-in-queue: var(--status-in-queue);
+  --color-status-in-queue-foreground: var(--status-in-queue-foreground);
+  --color-status-printing: var(--status-printing);
+  --color-status-printing-foreground: var(--status-printing-foreground);
+  --color-status-ready: var(--status-ready);
+  --color-status-ready-foreground: var(--status-ready-foreground);
+  --color-status-flagged: var(--status-flagged);
+  --color-status-flagged-foreground: var(--status-flagged-foreground);
+  --color-status-error: var(--status-error);
+  --color-status-error-foreground: var(--status-error-foreground);
+  --color-status-success: var(--status-success);
+  --color-status-success-foreground: var(--status-success-foreground);
+  --color-status-fail: var(--status-fail);
+  --color-status-fail-foreground: var(--status-fail-foreground);
+
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
@@ -106,6 +125,24 @@
   --sidebar-accent-foreground: oklch(0.205 0 0);
   --sidebar-border: oklch(0.922 0 0);
   --sidebar-ring: oklch(0.708 0 0);
+
+  /* Print Job Status Colors - Light Theme (WCAG AA compliant) */
+  --status-draft: oklch(0.85 0.01 264); /* Light gray */
+  --status-draft-foreground: oklch(0.35 0.02 264); /* Dark gray text */
+  --status-in-queue: oklch(0.85 0.08 240); /* Light blue */
+  --status-in-queue-foreground: oklch(0.35 0.12 240); /* Dark blue text */
+  --status-printing: oklch(0.85 0.12 290); /* Light purple */
+  --status-printing-foreground: oklch(0.35 0.18 290); /* Dark purple text */
+  --status-ready: oklch(0.85 0.12 140); /* Light green */
+  --status-ready-foreground: oklch(0.30 0.15 140); /* Dark green text */
+  --status-flagged: oklch(0.85 0.12 70); /* Light orange */
+  --status-flagged-foreground: oklch(0.35 0.15 60); /* Dark orange text */
+  --status-error: oklch(0.85 0.12 25); /* Light red */
+  --status-error-foreground: oklch(0.40 0.18 25); /* Dark red text */
+  --status-success: oklch(0.85 0.12 140); /* Light green (same as ready) */
+  --status-success-foreground: oklch(0.30 0.15 140); /* Dark green text */
+  --status-fail: oklch(0.85 0.12 25); /* Light red (same as error) */
+  --status-fail-foreground: oklch(0.40 0.18 25); /* Dark red text */
 }
 
 .dark {
@@ -140,6 +177,24 @@
   --sidebar-accent-foreground: oklch(0.985 0 0);
   --sidebar-border: oklch(1 0 0 / 10%);
   --sidebar-ring: oklch(0.556 0 0);
+
+  /* Print Job Status Colors - Dark Theme (WCAG AA compliant) */
+  --status-draft: oklch(0.30 0.02 264); /* Dark gray */
+  --status-draft-foreground: oklch(0.80 0.01 264); /* Light gray text */
+  --status-in-queue: oklch(0.35 0.12 240); /* Dark blue */
+  --status-in-queue-foreground: oklch(0.85 0.08 240); /* Light blue text */
+  --status-printing: oklch(0.40 0.18 290); /* Dark purple */
+  --status-printing-foreground: oklch(0.85 0.12 290); /* Light purple text */
+  --status-ready: oklch(0.35 0.15 140); /* Dark green */
+  --status-ready-foreground: oklch(0.85 0.12 140); /* Light green text */
+  --status-flagged: oklch(0.40 0.15 60); /* Dark orange */
+  --status-flagged-foreground: oklch(0.88 0.12 70); /* Light orange text */
+  --status-error: oklch(0.45 0.18 25); /* Dark red */
+  --status-error-foreground: oklch(0.90 0.12 25); /* Light red text */
+  --status-success: oklch(0.35 0.15 140); /* Dark green (same as ready) */
+  --status-success-foreground: oklch(0.85 0.12 140); /* Light green text */
+  --status-fail: oklch(0.45 0.18 25); /* Dark red (same as error) */
+  --status-fail-foreground: oklch(0.90 0.12 25); /* Light red text */
 }
 
 @layer base {

@@ -21,25 +21,9 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useMemo } from 'react';
 import { DateCell } from './DateCell';
+import { PrintJobStatusBadge } from '@/components/PrintJobStatusBadge';
 
 type TableMode = 'user' | 'admin';
-
-const mapPrintJobStatusToDisplayLabel = (status: PrintJobStatus) => {
-  switch (status) {
-    case 'IN_QUEUE':
-      return 'In Queue';
-    case 'PRINTING':
-      return 'Printing';
-    case 'READY':
-      return 'Ready';
-    case 'FLAGGED':
-      return 'Flagged';
-    case 'ERROR':
-      return 'Error';
-    default:
-      return 'Unknown';
-  }
-};
 
 export const useColumns = (mode: TableMode = 'user') => {
   const router = useRouter();
@@ -129,12 +113,9 @@ export const useColumns = (mode: TableMode = 'user') => {
         },
         cell: ({ row }) => {
           const status = row.getValue('status') as PrintJobStatus;
-          const statusLabel = mapPrintJobStatusToDisplayLabel(status);
           return (
-            <div className="w-full text-center">
-              <span role="status" aria-label={`Print job status: ${statusLabel}`}>
-                {statusLabel}
-              </span>
+            <div className="w-full flex justify-center">
+              <PrintJobStatusBadge status={status} />
             </div>
           );
         },
