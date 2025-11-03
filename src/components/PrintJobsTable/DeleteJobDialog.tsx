@@ -31,7 +31,10 @@ export function DeleteJobDialog({ open, onOpenChange, jobName, onConfirm }: Dele
         </AlertDialogHeader>
         <AlertDialogFooter>
           <AlertDialogCancel>Cancel</AlertDialogCancel>
-          <AlertDialogAction onClick={onConfirm} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+          <AlertDialogAction
+            onClick={onConfirm}
+            className="text-destructive-foreground bg-destructive hover:bg-destructive/90"
+          >
             Delete Job
           </AlertDialogAction>
         </AlertDialogFooter>

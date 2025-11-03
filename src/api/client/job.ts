@@ -6,14 +6,11 @@ import { getBaseUrl } from './utils';
 
 export const jobApi = {
   listAllJobs: async (options?: RequestInit) => {
-    return apiRequest<ApiGetAllActivePrintJobsResponse>(
-      `${getBaseUrl()}${endpoints.orders.list}`,
-      {
-        method: 'GET',
-        credentials: 'include',
-        ...options,
-      },
-    );
+    return apiRequest<ApiGetAllActivePrintJobsResponse>(`${getBaseUrl()}${endpoints.orders.list}`, {
+      method: 'GET',
+      credentials: 'include',
+      ...options,
+    });
   },
 
   updateJobStatus: async (jobId: string, status: PrintJobStatus, options?: RequestInit) => {
