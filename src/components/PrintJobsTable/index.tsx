@@ -3,13 +3,17 @@
 import { PrintJob } from '@/types/jobs';
 import { DataTable } from './DataTable';
 import { useColumns } from './useColumns';
+import { useState } from 'react';
 
 export interface PrintJobsTableProps {
   printJobs: PrintJob[];
 }
 
 export default function PrintJobsTable({ printJobs }: PrintJobsTableProps) {
-  const columns = useColumns();
+  // keep local state so we can update a single job without a full page refresh
+  const [jobs, setJobs] = useState<PrintJob[]>(printJobs);
 
-  return <DataTable columns={columns} data={printJobs} />;
+  const columns = useColumns({ setPrintJobs: setJobs });
+
+  return <DataTable columns={columns} data={jobs} />;
 }

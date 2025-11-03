@@ -15,4 +15,17 @@ export const printJobHandlers = [
     const jobs = db.getPrintJobsByUserId(user.id);
     return HttpResponse.json(generateSuccessResponse({ jobs: jobs }));
   }),
+  
+  http.post(`${apiUrl}/api/orders/active/cancel/:id`, ({ params, cookies }) => {
+    const sessionId = cookies['sessionToken'] || '';
+    const user = db.validateSession(sessionId);
+    if (!user) {
+      return createInvalidSessionResponse();
+    }
+    const { id } = params; 
+
+    return HttpResponse.json(
+      generateSuccessResponse({ message: `Cancelled job ${id}` })
+    );
+  }),
 ];

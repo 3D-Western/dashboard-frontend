@@ -15,6 +15,8 @@ import { ColumnDef } from '@tanstack/react-table';
 import { ArrowUpDown, MoreHorizontal } from 'lucide-react';
 import { useMemo } from 'react';
 import { DateCell } from './DateCell';
+import CancelPrintRequestButton from './CancelPrintRequestButton';
+
 
 const mapPrintJobStatusToDisplayLabel = (status: PrintJobStatus) => {
   switch (status) {
@@ -28,12 +30,20 @@ const mapPrintJobStatusToDisplayLabel = (status: PrintJobStatus) => {
       return 'Flagged';
     case 'ERROR':
       return 'Error';
+    case 'CANCELLED':
+      return 'Cancelled';
     default:
       return 'Unknown';
   }
 };
 
-export const useColumns = () => {
+interface UseColumnsOptions {
+  setPrintJobs?: (updater: (prev: PrintJob[]) => PrintJob[]) => void;
+}
+
+export const useColumns = (useColumnsOpt?: UseColumnsOptions) => {
+  const { setPrintJobs } = useColumnsOpt ?? {};
+
   return useMemo<ColumnDef<PrintJob>[]>(
     () => [
       {
@@ -144,6 +154,27 @@ export const useColumns = () => {
                 <DropdownMenuItem onClick={() => navigator.clipboard.writeText(printJob.id)}>
                   Copy Job ID
                 </DropdownMenuItem>
+                {printJob.status === 'IN_QUEUE' ? (
+                  <DropdownMenuItem>
+                    <CancelPrintRequestButton
+                      id={printJob.id}
+                      onCancelSuccess={() => {
+                        if (setPrintJobs) {
+                          setPrintJobs((prev) =>
+                            prev.map((job) => (job.id === printJob.id ? { ...job, status: 'CANCELLED' } : job)),
+                          );
+                        } else {
+                          // fallback: mutate original object (not ideal but preserves previous behavior)
+                          printJob.status = 'CANCELLED';
+                        }
+                      }}
+                    />
+                  </DropdownMenuItem>
+                ) : printJob.status === 'CANCELLED' ? (
+                  <DropdownMenuItem>
+                    <span className="text-muted-foreground">Cancelled</span>
+                  </DropdownMenuItem>
+                ) : null}
                 <DropdownMenuSeparator />
                 <DropdownMenuItem disabled aria-disabled="true">
                   Download STL (Coming soon)

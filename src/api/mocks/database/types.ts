@@ -31,6 +31,7 @@ export type PrintJobStatus =
   | 'FLAGGED'
   | 'ERROR'
   | 'SUCCESS'
+  | 'CANCELLED'
   | 'FAIL';
 export type CompletePrintJobStatus = 'SUCCESS' | 'FAIL';
 
