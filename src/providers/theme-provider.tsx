@@ -4,10 +4,8 @@
 import { ThemeProvider as NextThemesProvider } from 'next-themes';
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  // Remove forcedTheme="dark" to enable theme switching
-
   return (
-    <NextThemesProvider attribute="class" forcedTheme="dark">
+    <NextThemesProvider attribute="class" defaultTheme="system" enableSystem>
       {children}
     </NextThemesProvider>
   );

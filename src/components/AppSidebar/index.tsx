@@ -13,6 +13,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from '@/components/ui/sidebar';
+import { ThemeToggle } from '@/components/ThemeToggle';
 import { logout } from '@/lib/auth';
 import { User } from '@/types/user';
 import { LayoutDashboard, LogOut, Printer, Users, Settings, Shield } from 'lucide-react';
@@ -130,14 +131,17 @@ export function AppSidebar({ user }: AppSidebarProps) {
               <span className="text-xs text-muted-foreground">ID: {user.id}</span>
             </div>
           </div>
-          <button
-            onClick={handleLogout}
-            className="flex h-8 w-8 items-center justify-center rounded-md transition-colors hover:bg-accent hover:text-accent-foreground"
-            title="Logout"
-            aria-label="Logout"
-          >
-            <LogOut className="h-4 w-4" />
-          </button>
+          <div className="flex items-center gap-1">
+            <ThemeToggle />
+            <button
+              onClick={handleLogout}
+              className="flex h-8 w-8 items-center justify-center rounded-md transition-colors hover:bg-accent hover:text-accent-foreground"
+              title="Logout"
+              aria-label="Logout"
+            >
+              <LogOut className="h-4 w-4" />
+            </button>
+          </div>
         </div>
       </SidebarFooter>
     </Sidebar>
