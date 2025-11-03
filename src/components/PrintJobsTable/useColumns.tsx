@@ -255,9 +255,7 @@ export const useColumns = (mode: TableMode = 'user') => {
         id: 'actions',
         cell: ({ row }) => {
           const printJob = row.original;
-          return (
-            <ActionsCell printJob={printJob} mode={mode} onRefresh={() => router.refresh()} />
-          );
+          return <ActionsCell printJob={printJob} mode={mode} onRefresh={() => router.refresh()} />;
         },
       },
     ],
