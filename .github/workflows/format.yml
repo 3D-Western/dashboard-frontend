@@ -1,22 +1,40 @@
 name: Format
-on: push
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
 jobs:
   format-code:
     runs-on: ubuntu-latest
     permissions:
       contents: write
     steps:
+      # 1️⃣ Checkout the correct branch (PR or direct push)
       - uses: actions/checkout@v5
         with:
-          ref: ${{ github.head_ref }}
-      - uses: actions/setup-node@v2
+          ref: ${{ github.head_ref || github.ref_name }}
+
+      # 2️⃣ Setup Node.js with caching
+      - uses: actions/setup-node@v4
         with:
-          node-version: "22.x"
-      - run: npm ci
+          node-version: "22"
+          cache: 'npm'
+
+      # 3️⃣ Install dependencies (fast because of cache)
+      - run: npm ci --include=optional
+
+      # 4️⃣ Run Prettier formatting
       - run: npm run format
-        # Commit all changed files back to the repository
-      - name: Commit changes
-        uses: stefanzweifel/git-auto-commit-action@v7
-        with:
-          commit_message: Apply automatic formatting changes
-          branch: ${{ github.head_ref }}
+
+      # 5️⃣ Commit only if Prettier changed any files
+      - name: Commit formatted changes
+        run: |
+          if [ -n "$(git status --porcelain)" ]; then
+            git config user.name "github-actions[bot]"
+            git config user.email "github-actions[bot]@users.noreply.github.com"
+            git add .
+            git commit -m "style: auto-format with Prettier"
+            git push
+          fi
