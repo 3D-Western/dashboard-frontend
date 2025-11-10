@@ -4,7 +4,9 @@ export const endpoints = {
     login: '/api/v1/session/login',
     logout: '/api/v1/session/logout',
   },
-  jobs: {
-    listAllActiveJobs: '/api/v1/jobs',
+  orders: {
+    list: '/api/v1/orders',
+    byId: (orderId: string) => `/api/v1/orders/${orderId}`,
+    create: '/api/v1/orders',
   },
 };

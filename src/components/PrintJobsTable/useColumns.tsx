@@ -8,32 +8,125 @@ import {
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { jobApi } from '@/api/client/job';
 import { File, PrintJob, PrintJobStatus } from '@/types/jobs';
 import { ColumnDef } from '@tanstack/react-table';
 import { ArrowUpDown, MoreHorizontal } from 'lucide-react';
-import { useMemo } from 'react';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { useMemo, useState } from 'react';
 import { DateCell } from './DateCell';
+import { PrintJobStatusBadge } from '@/components/PrintJobStatusBadge';
+import { DeleteJobDialog } from './DeleteJobDialog';
 
-const mapPrintJobStatusToDisplayLabel = (status: PrintJobStatus) => {
-  switch (status) {
-    case 'IN_QUEUE':
-      return 'In Queue';
-    case 'PRINTING':
-      return 'Printing';
-    case 'READY':
-      return 'Ready';
-    case 'FLAGGED':
-      return 'Flagged';
-    case 'ERROR':
-      return 'Error';
-    default:
-      return 'Unknown';
-  }
-};
+type TableMode = 'user' | 'admin';
 
-export const useColumns = () => {
+interface ActionsCellProps {
+  printJob: PrintJob;
+  mode: TableMode;
+  onRefresh: () => void;
+}
+
+function ActionsCell({ printJob, mode, onRefresh }: ActionsCellProps) {
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+
+  const handleStatusChange = async (newStatus: PrintJobStatus) => {
+    try {
+      await jobApi.updateJobStatus(printJob.id, newStatus);
+      onRefresh();
+    } catch (error) {
+      console.error('Failed to update job status:', error);
+      alert('Failed to update job status. Please try again.');
+    }
+  };
+
+  const handleDelete = async () => {
+    try {
+      await jobApi.deleteJob(printJob.id);
+      setDeleteDialogOpen(false);
+      onRefresh();
+    } catch (error) {
+      console.error('Failed to delete job:', error);
+      alert('Failed to delete job. Please try again.');
+    }
+  };
+
+  return (
+    <>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button
+            variant="ghost"
+            className="h-8 w-8 p-0"
+            aria-label={`Actions for ${printJob.name}`}
+            aria-haspopup="menu"
+          >
+            <span className="sr-only">Open menu</span>
+            <MoreHorizontal className="h-4 w-4" aria-hidden="true" />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end">
+          <DropdownMenuLabel>Actions</DropdownMenuLabel>
+          <DropdownMenuItem onClick={() => navigator.clipboard.writeText(printJob.id)}>
+            Copy Job ID
+          </DropdownMenuItem>
+          <DropdownMenuSeparator />
+          {mode === 'admin' && (
+            <>
+              <DropdownMenuSub>
+                <DropdownMenuSubTrigger>Change Status</DropdownMenuSubTrigger>
+                <DropdownMenuSubContent>
+                  <DropdownMenuItem onClick={() => handleStatusChange('IN_QUEUE')}>
+                    In Queue
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => handleStatusChange('PRINTING')}>
+                    Printing
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => handleStatusChange('READY')}>
+                    Ready
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => handleStatusChange('FLAGGED')}>
+                    Flagged
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => handleStatusChange('ERROR')}>
+                    Error
+                  </DropdownMenuItem>
+                </DropdownMenuSubContent>
+              </DropdownMenuSub>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                onClick={() => setDeleteDialogOpen(true)}
+                className="text-destructive"
+              >
+                Delete Job
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+            </>
+          )}
+          <DropdownMenuItem disabled aria-disabled="true">
+            Download STL (Coming soon)
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+
+      <DeleteJobDialog
+        open={deleteDialogOpen}
+        onOpenChange={setDeleteDialogOpen}
+        jobName={printJob.name}
+        onConfirm={handleDelete}
+      />
+    </>
+  );
+}
+
+export const useColumns = (mode: TableMode = 'user') => {
+  const router = useRouter();
+
   return useMemo<ColumnDef<PrintJob>[]>(
     () => [
       {
@@ -67,12 +160,51 @@ export const useColumns = () => {
         header: () => {
           return <div className="w-full text-center">Name</div>;
         },
-        cell: ({ row }) => (
-          <div className="w-full text-center">
-            <span>{row.getValue('name') as string}</span>
-          </div>
-        ),
+        cell: ({ row }) => {
+          const name = row.getValue('name') as string;
+          const jobId = row.original.id;
+
+          if (mode === 'admin') {
+            return (
+              <div className="w-full text-center">
+                <Link
+                  href={`/admin/prints/${jobId}`}
+                  className="text-primary underline-offset-4 hover:underline"
+                >
+                  {name}
+                </Link>
+              </div>
+            );
+          }
+
+          return (
+            <div className="w-full text-center">
+              <span>{name}</span>
+            </div>
+          );
+        },
       },
+      ...(mode === 'admin'
+        ? [
+            {
+              accessorKey: 'student',
+              header: () => {
+                return <div className="w-full text-center">Student</div>;
+              },
+              cell: ({ row }) => {
+                const student = row.original.student;
+                if (!student) {
+                  return <div className="w-full text-center text-muted-foreground">-</div>;
+                }
+                return (
+                  <div className="w-full text-center">
+                    <span>{`${student.firstName} ${student.lastName}`}</span>
+                  </div>
+                );
+              },
+            } as ColumnDef<PrintJob>,
+          ]
+        : []),
       {
         accessorKey: 'status',
         header: () => {
@@ -80,12 +212,9 @@ export const useColumns = () => {
         },
         cell: ({ row }) => {
           const status = row.getValue('status') as PrintJobStatus;
-          const statusLabel = mapPrintJobStatusToDisplayLabel(status);
           return (
-            <div className="w-full text-center">
-              <span role="status" aria-label={`Print job status: ${statusLabel}`}>
-                {statusLabel}
-              </span>
+            <div className="flex w-full justify-center">
+              <PrintJobStatusBadge status={status} />
             </div>
           );
         },
@@ -126,34 +255,10 @@ export const useColumns = () => {
         id: 'actions',
         cell: ({ row }) => {
           const printJob = row.original;
-          return (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  variant="ghost"
-                  className="h-8 w-8 p-0"
-                  aria-label={`Actions for ${printJob.name}`}
-                  aria-haspopup="menu"
-                >
-                  <span className="sr-only">Open menu</span>
-                  <MoreHorizontal className="h-4 w-4" aria-hidden="true" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                <DropdownMenuItem onClick={() => navigator.clipboard.writeText(printJob.id)}>
-                  Copy Job ID
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem disabled aria-disabled="true">
-                  Download STL (Coming soon)
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          );
+          return <ActionsCell printJob={printJob} mode={mode} onRefresh={() => router.refresh()} />;
         },
       },
     ],
-    [],
+    [mode, router],
   );
 };

@@ -73,6 +73,42 @@ class Database {
   public getPrintJobById(printJobId: string): PrintJob | null {
     return this.activePrintJobsIDMap.get(printJobId) || null;
   }
+
+  public updatePrintJobStatus(printJobId: string, status: string): PrintJob | null {
+    const job = this.activePrintJobsIDMap.get(printJobId);
+    if (!job) {
+      return null;
+    }
+    // Update the job status
+    job.status = status as PrintJob['status'];
+    return job;
+  }
+
+  public deletePrintJob(printJobId: string): boolean {
+    const job = this.activePrintJobsIDMap.get(printJobId);
+    if (!job) {
+      return false;
+    }
+    // Remove from ID map
+    this.activePrintJobsIDMap.delete(printJobId);
+    // Remove from user's jobs array
+    const userJobs = this.activePrintJobsUserMap.get(job.studentId);
+    if (userJobs) {
+      const index = userJobs.findIndex((j) => j.id === printJobId);
+      if (index !== -1) {
+        userJobs.splice(index, 1);
+      }
+    }
+    return true;
+  }
+
+  public getAllPrintJobs(): PrintJob[] {
+    return Array.from(this.activePrintJobsIDMap.values());
+  }
+
+  public getUserById(userId: number): User | null {
+    return this.users.get(userId) || null;
+  }
 }
 
 const db = new Database();
