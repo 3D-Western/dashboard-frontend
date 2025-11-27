@@ -27,7 +27,6 @@ import { DeleteJobDialog } from './DeleteJobDialog';
 type TableMode = 'user' | 'admin';
 
 
-// Removed ActionsCell, now handled inline in columns
 
 interface UseColumnsOptions {
   mode?: TableMode;
@@ -166,7 +165,6 @@ export const useColumns = (opts: UseColumnsOptions = {}) => {
         id: 'actions',
         cell: ({ row }) => {
           const printJob = row.original;
-          // Cancel Print button logic
           const canCancel = printJob.status === 'IN_QUEUE';
           const isCancelled = printJob.status === 'CANCELLED';
           return (
@@ -189,10 +187,29 @@ export const useColumns = (opts: UseColumnsOptions = {}) => {
                 </DropdownMenuItem>
                 {canCancel && setJobs && (
                   <DropdownMenuItem
+                  // Uncomment and replace below onclick handle once backend is ready to enable api call
+                    // onClick={async () => {
+                    //   try {
+                    //     console.log('Cancel Print: Attempting to cancel job', printJob.id);
+                    //     const result = await jobApi.cancelJob(printJob.id);
+                    //     console.log('Cancel Print: API result', result);
+                    //     setJobs(prev => {
+                    //       const updated = prev.map(j =>
+                    //         j.id === printJob.id ? { ...j, status: 'CANCELLED' as PrintJobStatus } : j
+                    //       );
+                    //       console.log('Cancel Print: Updated jobs state', updated);
+                    //       return updated;
+                    //     });
+                    //   } catch (e) {
+                    //     console.error('Cancel Print: API error', e);
+                    //   }
+                    // }}
                     onClick={() => {
-                      setJobs(prev => prev.map(j =>
-                        j.id === printJob.id ? { ...j, status: 'CANCELLED' } : j
-                      ));
+                      setJobs(prev =>
+                        prev.map(j =>
+                          j.id === printJob.id ? { ...j, status: 'CANCELLED' as PrintJobStatus } : j
+                        )
+                      );
                     }}
                     disabled={isCancelled}
                   >
