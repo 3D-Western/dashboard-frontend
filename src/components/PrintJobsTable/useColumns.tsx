@@ -26,7 +26,6 @@ import { DeleteJobDialog } from './DeleteJobDialog';
 
 type TableMode = 'user' | 'admin';
 
-
 // Removed ActionsCell, now handled inline in columns
 
 interface UseColumnsOptions {
@@ -190,9 +189,9 @@ export const useColumns = (opts: UseColumnsOptions = {}) => {
                 {canCancel && setJobs && (
                   <DropdownMenuItem
                     onClick={() => {
-                      setJobs(prev => prev.map(j =>
-                        j.id === printJob.id ? { ...j, status: 'CANCELLED' } : j
-                      ));
+                      setJobs((prev) =>
+                        prev.map((j) => (j.id === printJob.id ? { ...j, status: 'CANCELLED' } : j)),
+                      );
                     }}
                     disabled={isCancelled}
                   >
