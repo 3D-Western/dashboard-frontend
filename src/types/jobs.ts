@@ -29,7 +29,8 @@ export type PrintJobStatus =
   | 'FLAGGED'
   | 'ERROR'
   | 'SUCCESS'
-  | 'FAIL';
+  | 'FAIL'
+  | 'CANCELLED';
 export type CompletePrintJobStatus = 'SUCCESS' | 'FAIL';
 
 export interface PrintJob extends BasePrintJob {

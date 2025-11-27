@@ -26,105 +26,16 @@ import { DeleteJobDialog } from './DeleteJobDialog';
 
 type TableMode = 'user' | 'admin';
 
-interface ActionsCellProps {
-  printJob: PrintJob;
-  mode: TableMode;
-  onRefresh: () => void;
+
+// Removed ActionsCell, now handled inline in columns
+
+interface UseColumnsOptions {
+  mode?: TableMode;
+  setJobs?: (updater: (prev: PrintJob[]) => PrintJob[]) => void;
 }
 
-function ActionsCell({ printJob, mode, onRefresh }: ActionsCellProps) {
-  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-
-  const handleStatusChange = async (newStatus: PrintJobStatus) => {
-    try {
-      await jobApi.updateJobStatus(printJob.id, newStatus);
-      onRefresh();
-    } catch (error) {
-      console.error('Failed to update job status:', error);
-      alert('Failed to update job status. Please try again.');
-    }
-  };
-
-  const handleDelete = async () => {
-    try {
-      await jobApi.deleteJob(printJob.id);
-      setDeleteDialogOpen(false);
-      onRefresh();
-    } catch (error) {
-      console.error('Failed to delete job:', error);
-      alert('Failed to delete job. Please try again.');
-    }
-  };
-
-  return (
-    <>
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button
-            variant="ghost"
-            className="h-8 w-8 p-0"
-            aria-label={`Actions for ${printJob.name}`}
-            aria-haspopup="menu"
-          >
-            <span className="sr-only">Open menu</span>
-            <MoreHorizontal className="h-4 w-4" aria-hidden="true" />
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end">
-          <DropdownMenuLabel>Actions</DropdownMenuLabel>
-          <DropdownMenuItem onClick={() => navigator.clipboard.writeText(printJob.id)}>
-            Copy Job ID
-          </DropdownMenuItem>
-          <DropdownMenuSeparator />
-          {mode === 'admin' && (
-            <>
-              <DropdownMenuSub>
-                <DropdownMenuSubTrigger>Change Status</DropdownMenuSubTrigger>
-                <DropdownMenuSubContent>
-                  <DropdownMenuItem onClick={() => handleStatusChange('IN_QUEUE')}>
-                    In Queue
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => handleStatusChange('PRINTING')}>
-                    Printing
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => handleStatusChange('READY')}>
-                    Ready
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => handleStatusChange('FLAGGED')}>
-                    Flagged
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => handleStatusChange('ERROR')}>
-                    Error
-                  </DropdownMenuItem>
-                </DropdownMenuSubContent>
-              </DropdownMenuSub>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem
-                onClick={() => setDeleteDialogOpen(true)}
-                className="text-destructive"
-              >
-                Delete Job
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-            </>
-          )}
-          <DropdownMenuItem disabled aria-disabled="true">
-            Download STL (Coming soon)
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
-
-      <DeleteJobDialog
-        open={deleteDialogOpen}
-        onOpenChange={setDeleteDialogOpen}
-        jobName={printJob.name}
-        onConfirm={handleDelete}
-      />
-    </>
-  );
-}
-
-export const useColumns = (mode: TableMode = 'user') => {
+export const useColumns = (opts: UseColumnsOptions = {}) => {
+  const { mode = 'user', setJobs } = opts;
   const router = useRouter();
 
   return useMemo<ColumnDef<PrintJob>[]>(
@@ -255,7 +166,51 @@ export const useColumns = (mode: TableMode = 'user') => {
         id: 'actions',
         cell: ({ row }) => {
           const printJob = row.original;
-          return <ActionsCell printJob={printJob} mode={mode} onRefresh={() => router.refresh()} />;
+          // Cancel Print button logic
+          const canCancel = printJob.status === 'IN_QUEUE';
+          const isCancelled = printJob.status === 'CANCELLED';
+          return (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="ghost"
+                  className="h-8 w-8 p-0"
+                  aria-label={`Actions for ${printJob.name}`}
+                  aria-haspopup="menu"
+                >
+                  <span className="sr-only">Open menu</span>
+                  <MoreHorizontal className="h-4 w-4" aria-hidden="true" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                <DropdownMenuItem onClick={() => navigator.clipboard.writeText(printJob.id)}>
+                  Copy Job ID
+                </DropdownMenuItem>
+                {canCancel && setJobs && (
+                  <DropdownMenuItem
+                    onClick={() => {
+                      setJobs(prev => prev.map(j =>
+                        j.id === printJob.id ? { ...j, status: 'CANCELLED' } : j
+                      ));
+                    }}
+                    disabled={isCancelled}
+                  >
+                    Cancel Print
+                  </DropdownMenuItem>
+                )}
+                {isCancelled && (
+                  <DropdownMenuItem disabled>
+                    <span className="text-muted-foreground">Cancelled</span>
+                  </DropdownMenuItem>
+                )}
+                <DropdownMenuSeparator />
+                <DropdownMenuItem disabled aria-disabled="true">
+                  Download STL (Coming soon)
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          );
         },
       },
     ],
