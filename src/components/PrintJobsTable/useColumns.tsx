@@ -205,11 +205,12 @@ export const useColumns = (opts: UseColumnsOptions = {}) => {
                     //   }
                     // }}
                     onClick={() => {
-                      setJobs(prev =>
-                        prev.map(j =>
+                      setJobs(prev => {
+                        const updated = prev.map(j =>
                           j.id === printJob.id ? { ...j, status: 'CANCELLED' as PrintJobStatus } : j
-                        )
-                      );
+                        );
+                        return updated;
+                      });
                     }}
                     disabled={isCancelled}
                   >

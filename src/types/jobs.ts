@@ -24,13 +24,13 @@ export interface BasePrintJob {
 export type PrintJobStatus =
   | 'DRAFT'
   | 'IN_QUEUE'
+  | 'CANCELLED'
   | 'PRINTING'
   | 'READY'
   | 'FLAGGED'
   | 'ERROR'
   | 'SUCCESS'
-  | 'FAIL'
-  | 'CANCELLED';
+  | 'FAIL';
 export type CompletePrintJobStatus = 'SUCCESS' | 'FAIL';
 
 export interface PrintJob extends BasePrintJob {
