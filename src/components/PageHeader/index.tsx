@@ -8,6 +8,7 @@ const pageTitles: Record<string, string> = {
   '/dashboard/settings': 'Settings',
   '/admin/users': 'User Management',
   '/admin/prints': 'Print Management',
+  '/dashboard/print/new': 'New Print Request',
 };
 
 export function PageHeader() {
