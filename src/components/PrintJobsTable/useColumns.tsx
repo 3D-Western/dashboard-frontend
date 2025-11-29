@@ -26,8 +26,6 @@ import { DeleteJobDialog } from './DeleteJobDialog';
 
 type TableMode = 'user' | 'admin';
 
-
-
 interface UseColumnsOptions {
   mode?: TableMode;
   setJobs?: (updater: (prev: PrintJob[]) => PrintJob[]) => void;
@@ -187,7 +185,7 @@ export const useColumns = (opts: UseColumnsOptions = {}) => {
                 </DropdownMenuItem>
                 {canCancel && setJobs && (
                   <DropdownMenuItem
-                  // Uncomment and replace below onclick handle once backend is ready to enable api call
+                    // Uncomment and replace below onclick handle once backend is ready to enable api call
                     // onClick={async () => {
                     //   try {
                     //     console.log('Cancel Print: Attempting to cancel job', printJob.id);
@@ -205,9 +203,11 @@ export const useColumns = (opts: UseColumnsOptions = {}) => {
                     //   }
                     // }}
                     onClick={() => {
-                      setJobs(prev => {
-                        const updated = prev.map(j =>
-                          j.id === printJob.id ? { ...j, status: 'CANCELLED' as PrintJobStatus } : j
+                      setJobs((prev) => {
+                        const updated = prev.map((j) =>
+                          j.id === printJob.id
+                            ? { ...j, status: 'CANCELLED' as PrintJobStatus }
+                            : j,
                         );
                         return updated;
                       });
