@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 import { UploadIcon } from 'lucide-react';
 import type { ReactNode } from 'react';
@@ -29,18 +29,12 @@ const renderBytes = (bytes: number) => {
   return `${size.toFixed(2)}${units[unitIndex]}`;
 };
 
-const DropzoneContext = createContext<DropzoneContextType | undefined>(
-  undefined
-);
+const DropzoneContext = createContext<DropzoneContextType | undefined>(undefined);
 
 export type DropzoneProps = Omit<DropzoneOptions, 'onDrop'> & {
   src?: File[];
   className?: string;
-  onDrop?: (
-    acceptedFiles: File[],
-    fileRejections: FileRejection[],
-    event: DropEvent
-  ) => void;
+  onDrop?: (acceptedFiles: File[], fileRejections: FileRejection[], event: DropEvent) => void;
   children?: ReactNode;
 };
 
@@ -84,8 +78,8 @@ export const Dropzone = ({
       <Button
         className={cn(
           'relative h-auto w-full flex-col overflow-hidden p-8',
-          isDragActive && 'outline-none ring-1 ring-ring',
-          className
+          isDragActive && 'ring-1 ring-ring outline-none',
+          className,
         )}
         disabled={disabled}
         type="button"
@@ -117,10 +111,7 @@ export type DropzoneContentProps = {
 
 const maxLabelItems = 3;
 
-export const DropzoneContent = ({
-  children,
-  className,
-}: DropzoneContentProps) => {
+export const DropzoneContent = ({ children, className }: DropzoneContentProps) => {
   const { src } = useDropzoneContext();
   if (!src) {
     return null;
@@ -156,12 +147,12 @@ export const DropzoneContent = ({
   const label =
     src.length > maxLabelItems
       ? `${new Intl.ListFormat('en').format(
-          src.slice(0, maxLabelItems).map((file) => file.name)
+          src.slice(0, maxLabelItems).map((file) => file.name),
         )} and ${src.length - maxLabelItems} more`
       : new Intl.ListFormat('en').format(src.map((file) => file.name));
 
   return (
-    <div className={cn('flex flex-col items-center justify-center relative', className)}>
+    <div className={cn('relative flex flex-col items-center justify-center', className)}>
       <div className="flex items-center justify-center">
         {previewUrl ? (
           <img src={previewUrl} alt={src[0].name} className="max-h-36 object-contain" />
@@ -171,13 +162,18 @@ export const DropzoneContent = ({
           </div>
         )}
       </div>
-      <p className="my-2 w-full truncate font-medium text-sm text-center" title="">{label}</p>
-      <p className="w-full text-wrap text-muted-foreground text-xs text-center">
+      <p className="my-2 w-full truncate text-center text-sm font-medium" title="">
+        {label}
+      </p>
+      <p className="w-full text-center text-xs text-wrap text-muted-foreground">
         Drag and drop or click to replace
       </p>
 
       {/* bottom-right filename overlay */}
-      <div className="absolute right-3 bottom-3 text-xs text-muted-foreground max-w-[60%] truncate text-right bg-background/80 px-2 py-1 rounded" title="">
+      <div
+        className="absolute right-3 bottom-3 max-w-[60%] truncate rounded bg-background/80 px-2 py-1 text-right text-xs text-muted-foreground"
+        title=""
+      >
         {src.map((f) => f.name).join(', ')}
       </div>
     </div>
@@ -189,10 +185,7 @@ export type DropzoneEmptyStateProps = {
   className?: string;
 };
 
-export const DropzoneEmptyState = ({
-  children,
-  className,
-}: DropzoneEmptyStateProps) => {
+export const DropzoneEmptyState = ({ children, className }: DropzoneEmptyStateProps) => {
   const { src, accept, maxSize, minSize, maxFiles } = useDropzoneContext();
 
   if (src) {
@@ -218,15 +211,13 @@ export const DropzoneEmptyState = ({
       <div className="flex size-8 items-center justify-center rounded-md bg-muted text-muted-foreground">
         <UploadIcon size={16} />
       </div>
-      <p className="my-2 w-full truncate text-wrap font-medium text-sm">
+      <p className="my-2 w-full truncate text-sm font-medium text-wrap">
         Upload {maxFiles === 1 ? 'a file' : 'files'}
       </p>
-      <p className="w-full truncate text-wrap text-muted-foreground text-xs">
+      <p className="w-full truncate text-xs text-wrap text-muted-foreground">
         Drag and drop or click to upload
       </p>
-      {caption && (
-        <p className="text-wrap text-muted-foreground text-xs">{caption}.</p>
-      )}
+      {caption && <p className="text-xs text-wrap text-muted-foreground">{caption}.</p>}
     </div>
   );
 };

@@ -8,7 +8,6 @@ export default async function PrintPage() {
   const { jobs: printJobs } = await withSessionErrorHandling(() => jobApi.listAllJobs());
 
   return (
-    
     <div className="container space-y-6 p-6">
       <div>
         <Link href="/dashboard/print/new">
