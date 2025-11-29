@@ -24,6 +24,7 @@ export interface BasePrintJob {
 export type PrintJobStatus =
   | 'DRAFT'
   | 'IN_QUEUE'
+  | 'CANCELLED'
   | 'PRINTING'
   | 'READY'
   | 'FLAGGED'

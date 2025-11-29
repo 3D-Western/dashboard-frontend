@@ -1,3 +1,5 @@
+// ...existing code up to the end of the first jobApi object...
+// Remove duplicate imports and duplicate jobApi object below
 import { PrintJob, PrintJobStatus } from '@/types/jobs';
 import { ApiGetAllActivePrintJobsResponse } from '../types';
 import { apiRequest } from './base';
@@ -28,6 +30,13 @@ export const jobApi = {
   deleteJob: async (jobId: string, options?: RequestInit) => {
     return apiRequest<{ success: boolean }>(`${getBaseUrl()}${endpoints.orders.byId(jobId)}`, {
       method: 'DELETE',
+      credentials: 'include',
+      ...options,
+    });
+  },
+  cancelJob: async (jobId: string, options?: RequestInit) => {
+    return apiRequest<{ job: PrintJob }>(`${getBaseUrl()}${endpoints.orders.cancel(jobId)}`, {
+      method: 'POST',
       credentials: 'include',
       ...options,
     });

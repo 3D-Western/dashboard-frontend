@@ -8,5 +8,6 @@ export const endpoints = {
     list: '/api/v1/orders',
     byId: (orderId: string) => `/api/v1/orders/${orderId}`,
     create: '/api/v1/orders',
+    cancel: (orderId: string) => `/api/v1/orders/active/cancel/${orderId}`,
   },
 };
