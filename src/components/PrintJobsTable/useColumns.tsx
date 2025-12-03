@@ -1,5 +1,6 @@
 'use client';
 
+import { PrintJobStatusBadge } from '@/components/PrintJobStatusBadge';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
@@ -8,21 +9,14 @@ import {
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
-  DropdownMenuSub,
-  DropdownMenuSubContent,
-  DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { jobApi } from '@/api/client/job';
 import { File, PrintJob, PrintJobStatus } from '@/types/jobs';
 import { ColumnDef } from '@tanstack/react-table';
 import { ArrowUpDown, MoreHorizontal } from 'lucide-react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import { useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import { DateCell } from './DateCell';
-import { PrintJobStatusBadge } from '@/components/PrintJobStatusBadge';
-import { DeleteJobDialog } from './DeleteJobDialog';
 
 type TableMode = 'user' | 'admin';
 
@@ -33,7 +27,6 @@ interface UseColumnsOptions {
 
 export const useColumns = (opts: UseColumnsOptions = {}) => {
   const { mode = 'user', setJobs } = opts;
-  const router = useRouter();
 
   return useMemo<ColumnDef<PrintJob>[]>(
     () => [
@@ -232,6 +225,6 @@ export const useColumns = (opts: UseColumnsOptions = {}) => {
         },
       },
     ],
-    [mode, router],
+    [mode, setJobs],
   );
 };
