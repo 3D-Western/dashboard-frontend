@@ -8,10 +8,7 @@ const apiUrl = process.env.API_URL;
 
 // Mock storage for reset codes
 const resetCodes = new Map<number, { code: string; expiresAt: number }>();
-const resetTokens = new Map<
-  string,
-  { studentId: number; expiresAt: number; used: boolean }
->();
+const resetTokens = new Map<string, { studentId: number; expiresAt: number; used: boolean }>();
 
 export const passwordResetHandlers = [
   // Request password reset
@@ -98,11 +95,7 @@ export const passwordResetHandlers = [
     const tokenData = resetTokens.get(resetToken);
 
     // Check if token exists, hasn't expired, and hasn't been used
-    if (
-      !tokenData ||
-      Date.now() > tokenData.expiresAt ||
-      tokenData.used
-    ) {
+    if (!tokenData || Date.now() > tokenData.expiresAt || tokenData.used) {
       return HttpResponse.json(
         generateErrorResponse({
           code: ErrorCodes.INVALID_RESET_TOKEN,

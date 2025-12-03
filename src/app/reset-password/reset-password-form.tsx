@@ -123,9 +123,7 @@ export function ResetPasswordForm({ className, ...props }: React.ComponentProps<
                         <Input placeholder="123456" maxLength={6} {...field} />
                       </FormControl>
                       <FormMessage />
-                      <FieldDescription>
-                        Enter the 6-digit code sent to your email
-                      </FieldDescription>
+                      <FieldDescription>Enter the 6-digit code sent to your email</FieldDescription>
                     </FormItem>
                   )}
                 />
