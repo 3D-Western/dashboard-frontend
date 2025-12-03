@@ -3,4 +3,5 @@ export const Routes = {
   login: '/login',
   signup: '/signup',
   forgotPassword: '/forgot-password',
+  resetPassword: '/reset-password',
 };
