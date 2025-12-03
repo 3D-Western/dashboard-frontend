@@ -147,10 +147,7 @@ export default function SettingsPage() {
           </CardHeader>
           <CardContent>
             <Form {...passwordForm}>
-              <form
-                onSubmit={passwordForm.handleSubmit(onPasswordSubmit)}
-                className="space-y-4"
-              >
+              <form onSubmit={passwordForm.handleSubmit(onPasswordSubmit)} className="space-y-4">
                 <FormField
                   control={passwordForm.control}
                   name="currentPassword"
