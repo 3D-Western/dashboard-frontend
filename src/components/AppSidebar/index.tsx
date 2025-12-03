@@ -13,10 +13,9 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from '@/components/ui/sidebar';
-import { ThemeToggle } from '@/components/ThemeToggle';
-import { logout } from '@/lib/auth';
+import { SettingsPopover } from '@/components/SettingsPopover';
 import { User } from '@/types/user';
-import { LayoutDashboard, LogOut, Printer, Users, Settings, Shield } from 'lucide-react';
+import { LayoutDashboard, Printer, Users, Settings, Shield } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
@@ -57,11 +56,6 @@ interface AppSidebarProps {
 
 export function AppSidebar({ user }: AppSidebarProps) {
   const pathname = usePathname();
-
-  const handleLogout = async () => {
-    await logout();
-    window.location.href = '/login';
-  };
 
   return (
     <Sidebar>
@@ -131,17 +125,7 @@ export function AppSidebar({ user }: AppSidebarProps) {
               <span className="text-xs text-muted-foreground">ID: {user.id}</span>
             </div>
           </div>
-          <div className="flex items-center gap-1">
-            <ThemeToggle />
-            <button
-              onClick={handleLogout}
-              className="flex h-8 w-8 items-center justify-center rounded-md transition-colors hover:bg-accent hover:text-accent-foreground"
-              title="Logout"
-              aria-label="Logout"
-            >
-              <LogOut className="h-4 w-4" />
-            </button>
-          </div>
+          <SettingsPopover />
         </div>
       </SidebarFooter>
     </Sidebar>
