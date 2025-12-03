@@ -105,7 +105,10 @@ export function LoginForm({ className, ...props }: React.ComponentProps<'div'>) 
                     <FormItem>
                       <div className="flex items-center">
                         <FormLabel>Password</FormLabel>
-                        <a href={`${Routes.forgotPassword}`} className="ml-auto text-sm underline-offset-2 hover:underline">
+                        <a
+                          href={`${Routes.forgotPassword}`}
+                          className="ml-auto text-sm underline-offset-2 hover:underline"
+                        >
                           Forgot your password?
                         </a>
                       </div>
