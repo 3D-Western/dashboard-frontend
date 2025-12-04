@@ -1,7 +1,7 @@
-"use client";
+'use client';
 
-import { useState, useEffect, useRef } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useEffect, useRef } from 'react';
+import { useRouter } from 'next/navigation';
 
 import {
   AlertDialog,
@@ -12,7 +12,7 @@ import {
   AlertDialogFooter,
   AlertDialogCancel,
   AlertDialogAction,
-} from "@/components/ui/alert-dialog";
+} from '@/components/ui/alert-dialog';
 
 export function UnsavedChangesGuard({ isDirty }: { isDirty: boolean }) {
   const router = useRouter();
@@ -25,11 +25,11 @@ export function UnsavedChangesGuard({ isDirty }: { isDirty: boolean }) {
 
     const handler = (e: BeforeUnloadEvent) => {
       e.preventDefault();
-      e.returnValue = "";
+      e.returnValue = '';
     };
 
-    window.addEventListener("beforeunload", handler);
-    return () => window.removeEventListener("beforeunload", handler);
+    window.addEventListener('beforeunload', handler);
+    return () => window.removeEventListener('beforeunload', handler);
   }, [isDirty]);
 
   // 2) Intercept <Link> clicks BEFORE navigation
@@ -37,11 +37,11 @@ export function UnsavedChangesGuard({ isDirty }: { isDirty: boolean }) {
     if (!isDirty) return;
 
     const handleClick = (e: MouseEvent) => {
-      const anchor = (e.target as HTMLElement).closest("a");
+      const anchor = (e.target as HTMLElement).closest('a');
       if (!anchor) return;
 
-      const href = anchor.getAttribute("href");
-      if (!href || href.startsWith("#")) return;
+      const href = anchor.getAttribute('href');
+      if (!href || href.startsWith('#')) return;
 
       e.preventDefault();
       e.stopPropagation();
@@ -50,8 +50,8 @@ export function UnsavedChangesGuard({ isDirty }: { isDirty: boolean }) {
       setOpen(true);
     };
 
-    document.addEventListener("click", handleClick, true);
-    return () => document.removeEventListener("click", handleClick, true);
+    document.addEventListener('click', handleClick, true);
+    return () => document.removeEventListener('click', handleClick, true);
   }, [isDirty]);
 
   const confirmLeave = () => {
