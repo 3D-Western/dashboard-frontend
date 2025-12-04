@@ -20,14 +20,15 @@ import { Input } from '../ui/input';
 import { Textarea } from '../ui/textarea';
 import { RadioGroup, RadioGroupItem } from '../ui/radio-group';
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '../ui/select';
+import { UnsavedChangesGuard } from '../ui/unsaved-changes-guard';
 
 export default function NewPrintForm() {
   const router = useRouter();
   // file will be stored in react-hook-form (we don't need a provider)
 
   const formSchema = z.object({
-    'print-name': z.string().min(1).max(30),
-    description: z.string().min(2).max(200),
+    'print-name': z.string().min(1, { message: 'Must have a name for the print request' }).max(30),
+    description: z.string().min(2, { message: 'Must have a description for the print request' }).max(200),
     file: z.any().refine((f) => f instanceof File, { message: 'Please upload an STL file' }),
     'material-1': z.string().min(1, { message: 'Select at least one material' }),
     'color-1': z.string().min(1, { message: 'Select at least one color' }),
@@ -76,8 +77,86 @@ export default function NewPrintForm() {
   const material2Watch = form.watch('material-2');
   const color1Watch = form.watch('color-1');
   const color2Watch = form.watch('color-2');
-  function onSubmit(values: z.infer<typeof formSchema>) {
-    console.log(values);
+
+  const { isDirty, isSubmitting } = form.formState;
+
+  async function onSubmit(values: z.infer<typeof formSchema>) {
+    // Toggle mock mode here for local testing without backend endpoints
+    // When true, the submit flow will simulate upload + order creation with fake IDs
+    const MOCK_MODE = true;
+
+    try {
+      const file = values.file as File;
+      let fileId: string | null = null;
+
+      if (MOCK_MODE) {
+        console.log('MOCK: Simulating file upload for', file?.name);
+        await new Promise((res) => setTimeout(res, 500));
+        if (file) fileId = `mock-file-${Date.now()}`;
+      } else {
+        if (file) {
+          const fd = new FormData();
+          fd.append('file', file, file.name);
+
+          const uploadRes = await fetch('/api/files/upload', {
+            method: 'POST',
+            body: fd,
+          });
+
+          if (!uploadRes.ok) {
+            const text = await uploadRes.text();
+            throw new Error(text || 'File upload failed');
+          }
+
+          const uploadJson = await uploadRes.json();
+          // what does API return for file? { id: string } or { fileId: string }?
+          fileId = (uploadJson.id ?? uploadJson.fileId ?? null) as string | null;
+        }
+      }
+
+      const payload = {
+        printName: values['print-name'],
+        description: values.description,
+        goal: values.goal,
+        durability: values.durability,
+        infill: values.infill,
+        material1: values['material-1'],
+        color1: values['color-1'],
+        material2: values['material-2'],
+        color2: values['color-2'],
+        support: values.support,
+        fileId,
+      };
+
+      if (MOCK_MODE) {
+        console.log('MOCK: Order payload', payload);
+        await new Promise((res) => setTimeout(res, 300));
+        const fakeOrderId = `mock-order-${Date.now()}`;
+        console.log('MOCK: Created order', fakeOrderId);
+        // Navigate to dashboard as if submission succeeded
+        router.push('/dashboard');
+        return;
+      }
+
+      // Real submit flow (use when backend endpoints are available)
+      const submitRes = await fetch('/api/orders/active/submit', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+
+      if (!submitRes.ok) {
+        const text = await submitRes.text();
+        throw new Error(text || 'Submit failed');
+      }
+
+      // success — redirect to dashboard
+      router.push('/dashboard');
+    } catch (err) {
+      console.error('Submit error', err);
+      // Provide a clearer error message for dev
+      alert('Failed to submit print request. ' + (err instanceof Error ? err.message : ''));
+    }
   }
 
   function CustomDropZone({
@@ -126,12 +205,26 @@ export default function NewPrintForm() {
   }
 
   return (
+<<<<<<< HEAD
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="max-w-xl space-y-4">
         <FormField
           control={form.control}
           name="print-name"
           render={({ field }) => (
+=======
+    <div className="flex flex-col items-center justify-center min-h-screen px-4">
+      <div className="text-center mb-6">
+        <h1 className="text-2xl font-semibold">Create New Print Request</h1>
+        <p className="text-muted-foreground mt-2">Fill out the form to submit a 3D Print.</p>
+      </div>
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 max-w-xl w-full">
+     <FormField
+       control={form.control}
+       name="print-name"
+       render={({ field }) => (
+>>>>>>> e90eefc (mock submit and unsaved-changes guard)
             <FormItem>
               <FormLabel className="text-lg">Print Name</FormLabel>
               <FormControl>
@@ -477,6 +570,7 @@ export default function NewPrintForm() {
             </FormItem>
           )}
         />
+<<<<<<< HEAD
         <div className="flex justify-end">
           <div className="flex items-center gap-3">
             <Button type="submit" size="sm" variant="default">
@@ -486,5 +580,34 @@ export default function NewPrintForm() {
         </div>
       </form>
     </Form>
+=======
+      <div className="flex justify-end">
+        <div className="flex items-center gap-3">
+          <Button
+            type="submit"
+            size="sm"
+            variant="default"
+            disabled={form.formState.isSubmitting}
+            aria-busy={form.formState.isSubmitting}
+          >
+            {form.formState.isSubmitting ? (
+              <span className="inline-flex items-center">
+                <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-current" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+                </svg>
+                Submitting...
+              </span>
+            ) : (
+              'Submit'
+            )}
+          </Button>
+        </div>
+      </div>
+        </form>
+      </Form>
+      <UnsavedChangesGuard isDirty={isDirty && !isSubmitting} />
+    </div>
+>>>>>>> e90eefc (mock submit and unsaved-changes guard)
   );
 }

@@ -1,6 +1,7 @@
 import NewPrintForm from '@/components/PrintRequestForm/NewPrintForm';
 
 export default function NewPrintPage() {
+<<<<<<< HEAD
   return (
     <div className="container p-6">
       <h1 className="text-2xl font-semibold">Create New Print Request</h1>
@@ -10,4 +11,13 @@ export default function NewPrintPage() {
       </div>
     </div>
   );
+=======
+	return (
+		<div className="container p-6">
+			<div className="mt-6">
+				<NewPrintForm />
+			</div>
+		</div>
+	);
+>>>>>>> e90eefc (mock submit and unsaved-changes guard)
 }
