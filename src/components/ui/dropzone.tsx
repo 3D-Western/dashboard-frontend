@@ -1,8 +1,9 @@
 'use client';
 
 import { UploadIcon } from 'lucide-react';
+import Image from 'next/image';
 import type { ReactNode } from 'react';
-import { createContext, useContext, useEffect, useState } from 'react';
+import { createContext, useContext, useEffect, useMemo } from 'react';
 import type { DropEvent, DropzoneOptions, FileRejection } from 'react-dropzone';
 import { useDropzone } from 'react-dropzone';
 import { Button } from '@/components/ui/button';
@@ -113,6 +114,30 @@ const maxLabelItems = 3;
 
 export const DropzoneContent = ({ children, className }: DropzoneContentProps) => {
   const { src } = useDropzoneContext();
+
+  // Compute preview URL as derived state
+  const previewUrl = useMemo(() => {
+    if (!src || src.length === 0) {
+      return null;
+    }
+
+    const file = src[0];
+    if (file.type.startsWith('image/')) {
+      return URL.createObjectURL(file as Blob);
+    }
+
+    return null;
+  }, [src]);
+
+  // Clean up object URL when component unmounts or src changes
+  useEffect(() => {
+    return () => {
+      if (previewUrl) {
+        URL.revokeObjectURL(previewUrl);
+      }
+    };
+  }, [previewUrl]);
+
   if (!src) {
     return null;
   }
@@ -120,29 +145,6 @@ export const DropzoneContent = ({ children, className }: DropzoneContentProps) =
   if (children) {
     return children;
   }
-
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (!src || src.length === 0) {
-      setPreviewUrl(null);
-      return;
-    }
-
-    const file = src[0];
-    if (file.type.startsWith('image/')) {
-      const url = URL.createObjectURL(file as Blob);
-      setPreviewUrl(url);
-      return () => {
-        URL.revokeObjectURL(url);
-        setPreviewUrl(null);
-      };
-    }
-
-    // for non-image files (e.g. .stl) we don't create a preview URL
-    setPreviewUrl(null);
-    return;
-  }, [src]);
 
   const label =
     src.length > maxLabelItems
@@ -155,7 +157,13 @@ export const DropzoneContent = ({ children, className }: DropzoneContentProps) =
     <div className={cn('relative flex flex-col items-center justify-center', className)}>
       <div className="flex items-center justify-center">
         {previewUrl ? (
-          <img src={previewUrl} alt={src[0].name} className="max-h-36 object-contain" />
+          <Image
+            src={previewUrl}
+            alt={src[0].name}
+            className="max-h-36 object-contain"
+            width={144}
+            height={144}
+          />
         ) : (
           <div className="flex size-8 items-center justify-center rounded-md bg-muted text-muted-foreground">
             <UploadIcon size={16} />
@@ -186,7 +194,7 @@ export type DropzoneEmptyStateProps = {
 };
 
 export const DropzoneEmptyState = ({ children, className }: DropzoneEmptyStateProps) => {
-  const { src, accept, maxSize, minSize, maxFiles } = useDropzoneContext();
+  const { src, accept: _accept, maxSize, minSize, maxFiles } = useDropzoneContext();
 
   if (src) {
     return null;
