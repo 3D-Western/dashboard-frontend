@@ -1,4 +1,6 @@
-export type UserExperienceLevel = 'beginner' | 'advanced' | 'no-experience';
+import type { ExperienceLevel } from '@/constants/experience-levels';
+
+export type UserExperienceLevel = ExperienceLevel;
 
 export type UserRole = 'user' | 'admin';
 

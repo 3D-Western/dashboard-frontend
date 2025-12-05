@@ -24,6 +24,7 @@ import {
 } from '@/components/ui/select';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { EXPERIENCE_LEVELS, EXPERIENCE_LEVEL_OPTIONS } from '@/constants/experience-levels';
 
 const formSchema = z.object({
   studentId: z
@@ -49,7 +50,9 @@ const formSchema = z.object({
     .regex(/[0-9]/, 'Password must contain at least one number'),
   firstName: z.string().min(1, 'First name is required'),
   lastName: z.string().min(1, 'Last name is required'),
-  experienceLevel: z.enum(['NoExperience', 'Beginner', 'Advanced']).optional(),
+  experienceLevel: z
+    .enum([EXPERIENCE_LEVELS.NO_EXPERIENCE, EXPERIENCE_LEVELS.BEGINNER, EXPERIENCE_LEVELS.ADVANCED])
+    .optional(),
   agreedToTerms: z.boolean().refine((val) => val === true, {
     message: 'You must agree to the terms and conditions',
   }),
@@ -245,9 +248,11 @@ export default function Signup() {
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="NoExperience">No Experience</SelectItem>
-                        <SelectItem value="Beginner">Beginner</SelectItem>
-                        <SelectItem value="Advanced">Advanced</SelectItem>
+                        {EXPERIENCE_LEVEL_OPTIONS.map((option) => (
+                          <SelectItem key={option.value} value={option.value}>
+                            {option.label}
+                          </SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
                     <FormMessage />
