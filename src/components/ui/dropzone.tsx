@@ -125,7 +125,7 @@ export const DropzoneContent = ({ children, className }: DropzoneContentProps) =
     if (file.type.startsWith('image/')) {
       return URL.createObjectURL(file as Blob);
     }
-    
+
     return null;
   }, [src]);
 
@@ -157,7 +157,13 @@ export const DropzoneContent = ({ children, className }: DropzoneContentProps) =
     <div className={cn('relative flex flex-col items-center justify-center', className)}>
       <div className="flex items-center justify-center">
         {previewUrl ? (
-          <Image src={previewUrl} alt={src[0].name} className="max-h-36 object-contain" width={144} height={144} />
+          <Image
+            src={previewUrl}
+            alt={src[0].name}
+            className="max-h-36 object-contain"
+            width={144}
+            height={144}
+          />
         ) : (
           <div className="flex size-8 items-center justify-center rounded-md bg-muted text-muted-foreground">
             <UploadIcon size={16} />
