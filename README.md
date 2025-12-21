@@ -5,27 +5,26 @@ A modern, full-featured dashboard application for managing 3D printing services.
 ## Features
 
 - **User Dashboard**: View and manage print jobs with advanced filtering and sorting
-- **Authentication**: Secure user authentication with session management
+- **Authentication**: Secure session-based authentication with protected routes
+- **Admin Panel**: Administrative interface for managing users and print jobs
 - **Dark Mode**: Full dark/light theme support
 - **Responsive Design**: Mobile-friendly interface built with Tailwind CSS
-- **Real-time Updates**: Toast notifications for user actions and system events
 - **Data Tables**: Interactive tables with sorting, filtering, and selection powered by TanStack Table
-- **Mock API**: Development environment with Mock Service Worker (MSW) for API simulation
+- **Mock API**: Development environment with MSW for API simulation
+- **Comprehensive Testing**: Unit, integration, and E2E tests with Vitest and Playwright
 
 ## Tech Stack
 
-- **Framework**: [Next.js 15.5.5](https://nextjs.org/) with App Router and React Server Components
-- **UI Library**: [shadcn/ui](https://ui.shadcn.com/) (New York style) with Radix UI primitives
-- **Styling**: [Tailwind CSS 4.x](https://tailwindcss.com/) with CSS variables for theming
-- **State Management**: React Context API for user state
-- **Tables**: [TanStack Table v8](https://tanstack.com/table/v8) for data tables
+- **Framework**: [Next.js 15](https://nextjs.org/) with App Router and React Server Components
+- **UI Library**: [shadcn/ui](https://ui.shadcn.com/) with Radix UI primitives
+- **Styling**: [Tailwind CSS 4.x](https://tailwindcss.com/)
+- **State Management**: React Context API
+- **Data Tables**: [TanStack Table v8](https://tanstack.com/table/v8)
 - **Forms**: [React Hook Form](https://react-hook-form.com/) with [Zod](https://zod.dev/) validation
-- **Icons**: [Lucide React](https://lucide.dev/)
-- **Theme**: [next-themes](https://github.com/pacocoursey/next-themes) for dark mode
-- **API Mocking**: [Mock Service Worker](https://mswjs.io/) for development
+- **Testing**: [Vitest](https://vitest.dev) + [Playwright](https://playwright.dev) + [MSW](https://mswjs.io)
 - **TypeScript**: Strict mode enabled
 
-## Getting Started
+## Quick Start
 
 ### Prerequisites
 
@@ -34,44 +33,58 @@ A modern, full-featured dashboard application for managing 3D printing services.
 
 ### Installation
 
-1. Clone the repository:
-
 ```bash
+# Clone the repository
 git clone <repository-url>
 cd dashboard-frontend
-```
 
-2. Install dependencies:
-
-```bash
+# Install dependencies
 npm install
-```
 
-3. Run the development server:
+# Copy environment variables
+cp .env.example .env
 
-```bash
+# Start development server
 npm run dev
 ```
 
-4. Open [http://localhost:3000](http://localhost:3000) in your browser.
+Open [http://localhost:3000](http://localhost:3000) to view the app.
+
+### Environment Variables
+
+Create a `.env` file:
+
+```bash
+# Backend API URL
+API_URL=http://localhost:8000
+
+# Enable mock server (for development without backend)
+MOCK_ENABLED=true
+
+# Frontend URL
+NEXT_PUBLIC_SERVER_URL=http://localhost:3000
+```
+
+## Development
 
 ### Available Scripts
 
 ```bash
-# Start development server with Turbopack
-npm run dev
+# Development
+npm run dev              # Start dev server with Turbopack
+npm run build            # Build for production
+npm run start            # Start production server
 
-# Build for production
-npm run build
+# Code Quality
+npm run lint             # Run ESLint (auto-fix)
+npm run lint:ci          # Run ESLint with zero warnings
+npm run format           # Format with Prettier
 
-# Start production server
-npm start
-
-# Run ESLint
-npm run lint
-
-# Run ESLint with zero warnings (CI mode)
-npm run lint:ci
+# Testing
+npm run test             # Run unit/integration tests
+npm run test:coverage    # Run tests with coverage
+npm run test:e2e         # Run E2E tests
+npm run test:all         # Run all tests
 ```
 
 ## Project Structure
@@ -79,105 +92,134 @@ npm run lint:ci
 ```
 dashboard-frontend/
 ├── src/
-│   ├── app/                      # Next.js App Router
-│   ├── components/               # React components
-│   ├── context/                  # React Context providers
-│   ├── hooks/                    # Custom React hooks
-│   ├── lib/                      # Utility functions
-│   ├── services/                 # Business logic and data fetching
-│   └── types/                    # TypeScript type definitions
-├── public/                       # Static assets
-└── package.json
+│   ├── api/                  # API client and mocks
+│   ├── app/                  # Next.js App Router
+│   │   ├── (home)/           # Public pages
+│   │   ├── (protected)/      # Protected routes
+│   │   └── api/              # API routes
+│   ├── components/           # React components
+│   │   └── ui/               # shadcn/ui components
+│   ├── hooks/                # Custom React hooks
+│   ├── lib/                  # Utilities and helpers
+│   ├── providers/            # React context providers
+│   ├── types/                # TypeScript types
+│   └── __tests__/            # Integration tests
+├── test/                     # Test utilities
+├── e2e/                      # End-to-end tests
+├── docs/                     # Documentation
+└── public/                   # Static assets
 ```
 
-## Key Features
+## Documentation
+
+Comprehensive documentation is available in the `docs/` folder:
+
+- **[Testing Guide](docs/TESTING.md)** - Unit, integration, and E2E testing
+- **[Architecture Guide](docs/ARCHITECTURE.md)** - Project architecture, routing, and API structure
+- **[Development Guide](docs/DEVELOPMENT.md)** - Development workflow and best practices
+
+## Key Concepts
 
 ### Authentication
 
-- Server-side authentication using React Server Components
-- Protected routes with automatic redirect to login
-- Session validation via `/api/me` endpoint
-- Logout functionality with session cleanup
-- User context available throughout the app via `UserProvider`
+The app uses server-side authentication with React Server Components:
 
-### Data Tables
+- Protected routes automatically validate session on every request
+- Server-side `validateSession()` checks authentication status
+- Client-side `useUser()` hook provides user context
 
-- Built with TanStack Table for performance
-- Features:
-  - Column sorting (ascending/descending)
-  - Global search filtering
-  - Row selection
-  - Pagination
-  - Responsive design
-  - Customizable columns
+See [Architecture Guide](docs/ARCHITECTURE.md#authentication) for details.
 
-### Theming
+### Routing
 
-- Light and dark mode support
-- CSS variables for easy customization
-- Persistent theme preference
-- Smooth theme transitions
+Built with Next.js 15 App Router using route groups:
 
-### Mock API (Development)
+- **`(home)/`** - Public landing page
+- **`(protected)/dashboard/`** - User dashboard (requires authentication)
+- **`(protected)/admin/`** - Admin panel (requires admin role)
+- **`login/`, `signup/`** - Authentication pages
 
-The project uses Mock Service Worker (MSW) to simulate backend API calls during development:
+See [Architecture Guide](docs/ARCHITECTURE.md#routing--layouts) for details.
 
-- Mock handlers intercept network requests
-- Returns realistic test data
-- Allows frontend development without a backend
-- Easy to replace with real API endpoints
+### API Integration
 
-## Development Guidelines
-
-### Adding New UI Components
-
-This project uses shadcn/ui components. To add a new component:
-
-```bash
-npx shadcn@latest add <component-name>
-```
-
-Components will be added to `src/components/ui/`.
-
-### Working with Types
-
-- User types: `src/types/user.ts`
-- Print job types: `src/types/jobs.ts`
-- Use discriminated unions with `kind` field for type safety
-
-### Custom Hooks
-
-- `useUser()`: Access authenticated user (must be inside `UserProvider`)
-- `useLocalTime()`: Handle timezone conversions
-- `useToast()`: Display toast notifications
-
-### Path Aliases
-
-The project uses `@/*` path alias mapping to `src/*`:
+Centralized API client with type-safe requests:
 
 ```typescript
-import { Button } from '@/components/ui/button';
-import { useUser } from '@/context/UserContext';
+import { sessionApi } from '@/api/client/session';
+
+const user = await sessionApi.login(studentId, password);
 ```
 
-## API Integration
+Development mode uses MSW for API mocking. Set `MOCK_ENABLED=true` to enable.
 
-### Current Status
+See [Architecture Guide](docs/ARCHITECTURE.md#api-architecture) for details.
 
-The app currently uses MSW for API mocking. Mock handlers are defined for:
+### Testing
 
-- User authentication (`/api/me`)
-- Print jobs data
-- Logout endpoint
+Comprehensive testing strategy:
 
-### Production Backend
+- **Unit Tests**: Test individual functions/components (Vitest)
+- **Integration Tests**: Test component + API interactions (Vitest + MSW)
+- **E2E Tests**: Test complete user workflows (Playwright)
 
-To integrate with a real backend:
+```bash
+npm run test              # Unit/integration tests
+npm run test:e2e          # E2E tests
+npm run test:coverage     # Coverage report
+```
 
-1. Update `src/lib/api.ts` with your API base URL
-2. Replace MSW handlers with real API endpoints
-3. Update `src/lib/auth.ts` with actual authentication logic
-4. Configure CORS settings if needed
+See [Testing Guide](docs/TESTING.md) for details.
+
+## Adding Components
+
+### shadcn/ui Components
+
+Add pre-built components with the CLI:
+
+```bash
+npx shadcn@latest add button
+npx shadcn@latest add dialog
+npx shadcn@latest add dropdown-menu
+```
+
+Components are added to `src/components/ui/` with full TypeScript support.
+
+### Custom Components
+
+Create components in `src/components/`:
+
+```typescript
+// src/components/MyComponent.tsx
+export default function MyComponent() {
+  return <div>My Component</div>;
+}
+```
+
+Use Server Components by default. Add `'use client'` only when needed (state, effects, event handlers).
+
+See [Development Guide](docs/DEVELOPMENT.md#working-with-components) for details.
+
+## Contributing
+
+We follow [Conventional Commits](https://www.conventionalcommits.org/) for commit messages:
+
+```bash
+feat: add new feature
+fix: resolve bug
+docs: update documentation
+test: add tests
+refactor: refactor code
+```
+
+### Workflow
+
+1. Create a feature branch: `git checkout -b feat/my-feature`
+2. Make changes and commit: `git commit -m "feat: add my feature"`
+3. Push and create PR: `git push -u origin feat/my-feature`
+4. Get reviews and merge
+
+See [Development Guide](docs/DEVELOPMENT.md#git-workflow) for details.
 
 ## Deployment
 
@@ -185,75 +227,29 @@ To integrate with a real backend:
 
 ```bash
 npm run build
+npm run start
 ```
 
-The build output will be in the `.next` directory.
+The build output will be in `.next/`.
 
 ### Environment Variables
 
-Configure the following environment variables for production:
-
-```env
-# Add your environment variables here
-# Example:
-# NEXT_PUBLIC_API_URL=https://api.your-domain.com
-# NEXT_PUBLIC_APP_URL=https://your-domain.com
-```
-
-## Contributing
-
-This project follows [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/) for commit messages.
-
-### Commit Message Format
-
-```
-<type>[optional scope]: <description>
-
-[optional body]
-
-[optional footer(s)]
-```
-
-### Types
-
-- **feat**: A new feature
-- **fix**: A bug fix
-- **docs**: Documentation only changes
-- **style**: Changes that don't affect the meaning of the code (white-space, formatting, etc)
-- **refactor**: A code change that neither fixes a bug nor adds a feature
-- **perf**: A code change that improves performance
-- **test**: Adding missing tests or correcting existing tests
-- **build**: Changes that affect the build system or external dependencies
-- **ci**: Changes to CI configuration files and scripts
-- **chore**: Other changes that don't modify src or test files
-
-### Examples
+Configure these for production:
 
 ```bash
-feat(auth): add logout functionality
-fix(dashboard): resolve table sorting issue
-docs: update README with API integration guide
-refactor(components): simplify user avatar logic
+API_URL=https://api.your-domain.com
+NEXT_PUBLIC_SERVER_URL=https://your-domain.com
+MOCK_ENABLED=false
 ```
 
-### Workflow
+## License
 
-1. Create a feature branch from `main`
-2. Make your changes
-3. Commit using conventional commit format
-4. Ensure linting passes: `npm run lint:ci`
-5. Submit a pull request
-
-### Branch Naming Convention
-
-- `feat/*` - New features
-- `fix/*` - Bug fixes
-- `refactor/*` - Code refactoring
-- `docs/*` - Documentation updates
+[Your License Here]
 
 ## Support
 
 For issues and questions:
 
-- Create an issue in the repository
-- Contact the development team
+- Check the [documentation](docs/)
+- Search [existing issues](https://github.com/your-repo/issues)
+- Create a [new issue](https://github.com/your-repo/issues/new)
