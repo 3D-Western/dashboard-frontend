@@ -119,9 +119,7 @@ describe('PrintJobsTable Integration', () => {
       const user = userEvent.setup();
       render(<PrintJobsTable printJobs={mockJobs} />);
 
-      const selectAllCheckbox = screen.getByLabelText(
-        /Select all print jobs on this page/i,
-      );
+      const selectAllCheckbox = screen.getByLabelText(/Select all print jobs on this page/i);
       await user.click(selectAllCheckbox);
 
       const row1Checkbox = screen.getByLabelText('Select print job Test Print 1');
@@ -137,9 +135,7 @@ describe('PrintJobsTable Integration', () => {
       const user = userEvent.setup();
       render(<PrintJobsTable printJobs={mockJobs} />);
 
-      const selectAllCheckbox = screen.getByLabelText(
-        /Select all print jobs on this page/i,
-      );
+      const selectAllCheckbox = screen.getByLabelText(/Select all print jobs on this page/i);
       await user.click(selectAllCheckbox);
       await user.click(selectAllCheckbox);
 

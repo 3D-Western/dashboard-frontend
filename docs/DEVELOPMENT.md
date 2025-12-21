@@ -534,7 +534,7 @@ try {
         // Handle unauthorized
         break;
       default:
-        // Handle other errors
+      // Handle other errors
     }
   }
 }

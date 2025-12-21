@@ -36,12 +36,7 @@ export function renderWithProviders(
 ) {
   function Wrapper({ children }: { children: ReactNode }) {
     return (
-      <ThemeProvider
-        attribute="class"
-        defaultTheme={theme}
-        enableSystem
-        disableTransitionOnChange
-      >
+      <ThemeProvider attribute="class" defaultTheme={theme} enableSystem disableTransitionOnChange>
         <UserProvider user={user}>{children}</UserProvider>
       </ThemeProvider>
     );

@@ -24,11 +24,9 @@ vi.mock('next/navigation', () => ({
 }));
 
 vi.mock('next/image', () => ({
-  default: ({
-    alt,
-    fill: _fill,
-    ...props
-  }: React.ComponentProps<'img'> & { fill?: boolean }) => <img alt={alt} {...props} />,
+  default: ({ alt, fill: _fill, ...props }: React.ComponentProps<'img'> & { fill?: boolean }) => (
+    <img alt={alt} {...props} />
+  ),
 }));
 
 vi.mock('sonner', () => ({
@@ -120,9 +118,7 @@ describe('Password Reset Flow Integration', () => {
     await user.type(screen.getByLabelText(/confirm password/i), 'short');
     await user.click(screen.getByRole('button', { name: /reset password/i }));
 
-    expect(
-      await screen.findByText(/password must be at least 8 characters/i),
-    ).toBeInTheDocument();
+    expect(await screen.findByText(/password must be at least 8 characters/i)).toBeInTheDocument();
   });
 
   it('validates password confirmation match', async () => {

@@ -53,23 +53,18 @@ describe('useLocalTime', () => {
   it('updates when date prop changes', async () => {
     const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
     const nextDate = '2024-02-01T08:30:00Z';
-    const { result, rerender } = renderHook(
-      ({ value }) => useLocalTime(value),
-      { initialProps: { value: dateString } },
-    );
+    const { result, rerender } = renderHook(({ value }) => useLocalTime(value), {
+      initialProps: { value: dateString },
+    });
 
     await waitFor(() => {
-      expect(result.current).toBe(
-        formatInTimeZone(dateString, timeZone, defaultFormat),
-      );
+      expect(result.current).toBe(formatInTimeZone(dateString, timeZone, defaultFormat));
     });
 
     rerender({ value: nextDate });
 
     await waitFor(() => {
-      expect(result.current).toBe(
-        formatInTimeZone(nextDate, timeZone, defaultFormat),
-      );
+      expect(result.current).toBe(formatInTimeZone(nextDate, timeZone, defaultFormat));
     });
   });
 

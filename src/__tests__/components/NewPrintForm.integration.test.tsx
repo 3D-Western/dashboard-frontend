@@ -28,15 +28,11 @@ describe('NewPrintForm Integration', () => {
       expect(screen.getByText(/Upload STL/i)).toBeInTheDocument();
       expect(screen.getByText(/What is the primary goal of this print/i)).toBeInTheDocument();
       expect(screen.getByText(/How strong does the print have to be/i)).toBeInTheDocument();
-      expect(
-        screen.getByText(/Do you have a preferred infill pattern/i),
-      ).toBeInTheDocument();
+      expect(screen.getByText(/Do you have a preferred infill pattern/i)).toBeInTheDocument();
       expect(
         screen.getByText(/Any preferred materials and colors for this print/i),
       ).toBeInTheDocument();
-      expect(
-        screen.getByText(/Do you want to disable print supports/i),
-      ).toBeInTheDocument();
+      expect(screen.getByText(/Do you want to disable print supports/i)).toBeInTheDocument();
     });
 
     it('has submit button', () => {
@@ -56,9 +52,7 @@ describe('NewPrintForm Integration', () => {
       await user.click(submitButton);
 
       await waitFor(() => {
-        expect(
-          screen.getByText(/Must have a name for the print request/i),
-        ).toBeInTheDocument();
+        expect(screen.getByText(/Must have a name for the print request/i)).toBeInTheDocument();
       });
     });
 

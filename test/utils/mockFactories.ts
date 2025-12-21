@@ -74,11 +74,7 @@ export const createMockPrintJobs = (count: number): PrintJob[] =>
  * const file = createMockFile('model.stl', 2048, 'model/stl');
  * ```
  */
-export const createMockFile = (
-  name = 'test.stl',
-  size = 1024,
-  type = 'model/stl',
-): File => {
+export const createMockFile = (name = 'test.stl', size = 1024, type = 'model/stl'): File => {
   const file = new File(['test content'], name, { type });
   Object.defineProperty(file, 'size', { value: size });
   return file;

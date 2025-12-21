@@ -244,9 +244,12 @@ describe('LoginForm Integration', () => {
       await user.click(submitButton);
 
       // Wait a bit for React to process the state update
-      await waitFor(() => {
-        expect(submitButton).toBeDisabled();
-      }, { timeout: 1000 });
+      await waitFor(
+        () => {
+          expect(submitButton).toBeDisabled();
+        },
+        { timeout: 1000 },
+      );
     });
 
     it('shows "Logging in..." text while loading', async () => {

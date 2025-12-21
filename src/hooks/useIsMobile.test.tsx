@@ -68,9 +68,7 @@ describe('useIsMobile', () => {
 
     window.innerWidth = 1024;
     await act(async () => {
-      listeners.forEach((listener) =>
-        listener(new Event('change') as MediaQueryListEvent),
-      );
+      listeners.forEach((listener) => listener(new Event('change') as MediaQueryListEvent));
     });
 
     await waitFor(() => {

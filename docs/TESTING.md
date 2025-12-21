@@ -269,7 +269,7 @@ import {
   mockUnauthenticatedSession,
   mockSuccessfulLogin,
   mockFailedLogin,
-  mockSuccessfulLogout
+  mockSuccessfulLogout,
 } from '@test/utils/authHelpers';
 
 // Mock an authenticated session
@@ -372,7 +372,7 @@ it('handles API error', async () => {
   mockServer.use(
     http.get('/api/me', () => {
       return HttpResponse.json({ error: 'Server error' }, { status: 500 });
-    })
+    }),
   );
 
   // Test error handling...

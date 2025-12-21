@@ -178,7 +178,7 @@ test.describe('Print Jobs E2E', () => {
   });
 
   test.describe('Admin Print Jobs', () => {
-    test('admin can view all users\' jobs', async ({ page }) => {
+    test("admin can view all users' jobs", async ({ page }) => {
       await loginAsAdmin(page);
 
       // Navigate to admin print jobs

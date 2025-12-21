@@ -20,10 +20,7 @@ export default defineConfig({
 
   // Reporter to use
   reporter: process.env.CI
-    ? [
-        ['html'],
-        ['junit', { outputFile: 'test-results/e2e-junit.xml' }],
-      ]
+    ? [['html'], ['junit', { outputFile: 'test-results/e2e-junit.xml' }]]
     : [['html'], ['list']],
 
   // Shared settings for all projects

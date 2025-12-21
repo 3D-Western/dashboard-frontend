@@ -75,9 +75,9 @@ test.describe('Authentication Flow E2E', () => {
 
     // Find and click logout button (might be in a menu)
     // Try different selectors as logout button might be in sidebar or header
-    const logoutButton = page.getByRole('button', { name: /logout/i }).or(
-      page.getByRole('menuitem', { name: /logout/i }),
-    );
+    const logoutButton = page
+      .getByRole('button', { name: /logout/i })
+      .or(page.getByRole('menuitem', { name: /logout/i }));
 
     await logoutButton.click();
 
@@ -94,9 +94,9 @@ test.describe('Authentication Flow E2E', () => {
     await expect(page).toHaveURL('/dashboard');
 
     // Logout
-    const logoutButton = page.getByRole('button', { name: /logout/i }).or(
-      page.getByRole('menuitem', { name: /logout/i }),
-    );
+    const logoutButton = page
+      .getByRole('button', { name: /logout/i })
+      .or(page.getByRole('menuitem', { name: /logout/i }));
     await logoutButton.click();
     await expect(page).toHaveURL('/');
 

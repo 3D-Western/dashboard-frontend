@@ -76,10 +76,9 @@ describe('useColumns', () => {
     });
 
     it('returns new reference when mode changes', () => {
-      const { result, rerender } = renderHook(
-        ({ mode }) => useColumns({ mode }),
-        { initialProps: { mode: 'user' as const } },
-      );
+      const { result, rerender } = renderHook(({ mode }) => useColumns({ mode }), {
+        initialProps: { mode: 'user' as const },
+      });
 
       const userColumns = result.current;
       rerender({ mode: 'admin' as const });
@@ -92,10 +91,9 @@ describe('useColumns', () => {
       const setJobs1 = vi.fn();
       const setJobs2 = vi.fn();
 
-      const { result, rerender } = renderHook(
-        ({ setJobs }) => useColumns({ setJobs }),
-        { initialProps: { setJobs: setJobs1 } },
-      );
+      const { result, rerender } = renderHook(({ setJobs }) => useColumns({ setJobs }), {
+        initialProps: { setJobs: setJobs1 },
+      });
 
       const firstColumns = result.current;
       rerender({ setJobs: setJobs2 });

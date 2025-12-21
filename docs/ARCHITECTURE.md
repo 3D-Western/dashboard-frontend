@@ -253,7 +253,7 @@ File: `src/api/client/base.ts`
 ```typescript
 export async function apiRequest<T>(
   endpoint: string,
-  options?: RequestInit
+  options?: RequestInit,
 ): Promise<ApiResponse<T>> {
   const response = await fetch(endpoint, {
     ...options,
@@ -303,9 +303,15 @@ export const API_ENDPOINTS = {
 
 ```typescript
 export const sessionApi = {
-  async getCurrentSession(): Promise<User | null> { /* ... */ },
-  async login(studentId: number, password: string): Promise<User> { /* ... */ },
-  async logout(): Promise<void> { /* ... */ },
+  async getCurrentSession(): Promise<User | null> {
+    /* ... */
+  },
+  async login(studentId: number, password: string): Promise<User> {
+    /* ... */
+  },
+  async logout(): Promise<void> {
+    /* ... */
+  },
 };
 ```
 
@@ -313,9 +319,15 @@ export const sessionApi = {
 
 ```typescript
 export const jobApi = {
-  async listJobs(): Promise<PrintJob[]> { /* ... */ },
-  async createJob(data: CreateJobData): Promise<PrintJob> { /* ... */ },
-  async getJob(id: string): Promise<PrintJob> { /* ... */ },
+  async listJobs(): Promise<PrintJob[]> {
+    /* ... */
+  },
+  async createJob(data: CreateJobData): Promise<PrintJob> {
+    /* ... */
+  },
+  async getJob(id: string): Promise<PrintJob> {
+    /* ... */
+  },
 };
 ```
 
@@ -438,11 +450,7 @@ export interface User {
 File: `src/types/jobs.ts`
 
 ```typescript
-export type PrintJobStatus =
-  | 'IN_QUEUE'
-  | 'PRINTING'
-  | 'COMPLETED'
-  | 'FAILED';
+export type PrintJobStatus = 'IN_QUEUE' | 'PRINTING' | 'COMPLETED' | 'FAILED';
 
 // Active jobs
 export interface PrintJob {

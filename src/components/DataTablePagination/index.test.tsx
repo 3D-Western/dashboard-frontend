@@ -12,7 +12,6 @@ import {
 } from '@tanstack/react-table';
 import { DataTablePagination } from './index';
 
-
 type RowData = {
   id: number;
   name: string;
@@ -73,29 +72,21 @@ describe('DataTablePagination', () => {
   it('disables previous controls on the first page', () => {
     render(<PaginationHarness data={buildRows(30)} />);
 
-    expect(
-      screen.getByLabelText(/go to previous page, currently on page 1 of 3/i),
-    ).toBeDisabled();
-    expect(
-      screen.getByLabelText(/go to first page, currently on page 1 of 3/i),
-    ).toBeDisabled();
+    expect(screen.getByLabelText(/go to previous page, currently on page 1 of 3/i)).toBeDisabled();
+    expect(screen.getByLabelText(/go to first page, currently on page 1 of 3/i)).toBeDisabled();
   });
 
   it('navigates to the last page and disables next controls', async () => {
     const user = userEvent.setup();
     render(<PaginationHarness data={buildRows(30)} />);
 
-    await user.click(
-      screen.getByLabelText(/go to last page, currently on page 1 of 3/i),
-    );
+    await user.click(screen.getByLabelText(/go to last page, currently on page 1 of 3/i));
 
     await waitFor(() => {
       expect(screen.getAllByText('Page 3 of 3').length).toBeGreaterThan(0);
     });
 
-    expect(
-      screen.getByLabelText(/go to next page, currently on page 3 of 3/i),
-    ).toBeDisabled();
+    expect(screen.getByLabelText(/go to next page, currently on page 3 of 3/i)).toBeDisabled();
   });
 
   it('updates rows per page selection', async () => {
@@ -111,12 +102,7 @@ describe('DataTablePagination', () => {
   });
 
   it('shows selection count when rows are selected', () => {
-    render(
-      <PaginationHarness
-        data={buildRows(30)}
-        initialRowSelection={{ 0: true, 2: true }}
-      />,
-    );
+    render(<PaginationHarness data={buildRows(30)} initialRowSelection={{ 0: true, 2: true }} />);
 
     expect(screen.getByText('2 of 30 row(s) selected.')).toBeInTheDocument();
   });
@@ -128,9 +114,7 @@ describe('DataTablePagination', () => {
     const status = screen.getByRole('status');
     expect(status).toHaveTextContent('Page 1 of 3');
 
-    await user.click(
-      screen.getByLabelText(/go to next page, currently on page 1 of 3/i),
-    );
+    await user.click(screen.getByLabelText(/go to next page, currently on page 1 of 3/i));
 
     await waitFor(() => {
       expect(status).toHaveTextContent('Page 2 of 3');
