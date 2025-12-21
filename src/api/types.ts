@@ -1,5 +1,10 @@
 import { User } from '@/types/user';
 import { PrintJob } from '@/types/jobs';
+import {
+  FileUploadResult,
+  FileMetadata,
+  FileList,
+} from '@/types/file';
 
 export interface ApiResponseError {
   code: string;
@@ -23,4 +28,13 @@ export interface ApiLoginResponse {
 
 export interface ApiGetAllActivePrintJobsResponse {
   jobs: PrintJob[];
+}
+
+// File API Response Types
+export type FileUploadResponse = FileUploadResult;
+export type FileMetadataResponse = FileMetadata;
+export type FileListResponse = FileList;
+
+export interface FileDeleteResponse {
+  success: boolean;
 }

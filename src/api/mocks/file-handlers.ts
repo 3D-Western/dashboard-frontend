@@ -74,7 +74,7 @@ export const fileHandlers = [
         }),
         { status: 201 },
       );
-    } catch (error) {
+    } catch (_) {
       return HttpResponse.json(
         generateErrorResponse({
           code: 'INTERNAL_SERVER_ERROR',
@@ -279,7 +279,7 @@ export const fileHandlers = [
       db.deleteFile(file.id);
 
       return HttpResponse.json(generateSuccessResponse(null));
-    } catch (error) {
+    } catch (_) {
       return HttpResponse.json(
         generateErrorResponse({
           code: 'INTERNAL_SERVER_ERROR',
@@ -337,7 +337,7 @@ export const fileHandlers = [
             'Content-Length': file.size.toString(),
           },
         });
-      } catch (error) {
+      } catch (_) {
         return HttpResponse.json(
           generateErrorResponse({
             code: 'INTERNAL_SERVER_ERROR',
