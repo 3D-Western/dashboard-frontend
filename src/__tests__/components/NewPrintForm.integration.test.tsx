@@ -11,6 +11,8 @@ vi.mock('next/navigation', () => ({
   }),
 }));
 
+const setupUser = () => userEvent.setup({ pointerEventsCheck: 0 });
+
 describe('NewPrintForm Integration', () => {
   beforeEach(() => {
     mockPush.mockClear();
@@ -47,7 +49,7 @@ describe('NewPrintForm Integration', () => {
 
   describe('field validation', () => {
     it('shows error for empty print name', async () => {
-      const user = userEvent.setup();
+      const user = setupUser();
       render(<NewPrintForm />);
 
       const submitButton = screen.getByRole('button', { name: /Submit/i });
@@ -61,7 +63,7 @@ describe('NewPrintForm Integration', () => {
     });
 
     it('shows error for empty description', async () => {
-      const user = userEvent.setup();
+      const user = setupUser();
       render(<NewPrintForm />);
 
       const submitButton = screen.getByRole('button', { name: /Submit/i });
@@ -75,7 +77,7 @@ describe('NewPrintForm Integration', () => {
     });
 
     it('shows error for short description', async () => {
-      const user = userEvent.setup();
+      const user = setupUser();
       render(<NewPrintForm />);
 
       const descriptionField = screen.getByLabelText(/Print Description/i);
@@ -92,7 +94,7 @@ describe('NewPrintForm Integration', () => {
     });
 
     it('shows error for missing STL file upload', async () => {
-      const user = userEvent.setup();
+      const user = setupUser();
       render(<NewPrintForm />);
 
       const submitButton = screen.getByRole('button', { name: /Submit/i });
@@ -104,7 +106,7 @@ describe('NewPrintForm Integration', () => {
     });
 
     it('shows error when Material 1 is not selected', async () => {
-      const user = userEvent.setup();
+      const user = setupUser();
       render(<NewPrintForm />);
 
       const submitButton = screen.getByRole('button', { name: /Submit/i });
@@ -117,7 +119,7 @@ describe('NewPrintForm Integration', () => {
     });
 
     it('shows error when Color 1 is not selected', async () => {
-      const user = userEvent.setup();
+      const user = setupUser();
       render(<NewPrintForm />);
 
       const submitButton = screen.getByRole('button', { name: /Submit/i });
@@ -132,7 +134,7 @@ describe('NewPrintForm Integration', () => {
 
   describe('form interactions', () => {
     it('accepts valid print name input', async () => {
-      const user = userEvent.setup();
+      const user = setupUser();
       render(<NewPrintForm />);
 
       const nameField = screen.getByLabelText(/Print Name/i);
@@ -142,7 +144,7 @@ describe('NewPrintForm Integration', () => {
     });
 
     it('accepts valid description input', async () => {
-      const user = userEvent.setup();
+      const user = setupUser();
       render(<NewPrintForm />);
 
       const descriptionField = screen.getByLabelText(/Print Description/i);
@@ -152,7 +154,7 @@ describe('NewPrintForm Integration', () => {
     });
 
     it('goal radio buttons work', async () => {
-      const user = userEvent.setup();
+      const user = setupUser();
       render(<NewPrintForm />);
 
       const standardRadio = screen.getByLabelText(/Standard/i);
@@ -162,7 +164,7 @@ describe('NewPrintForm Integration', () => {
     });
 
     it('durability radio buttons work', async () => {
-      const user = userEvent.setup();
+      const user = setupUser();
       render(<NewPrintForm />);
 
       const engineeringRadio = screen.getByLabelText(/Engineering project/i);
@@ -172,7 +174,7 @@ describe('NewPrintForm Integration', () => {
     });
 
     it('infill radio buttons work', async () => {
-      const user = userEvent.setup();
+      const user = setupUser();
       render(<NewPrintForm />);
 
       const gyroidRadio = screen.getByLabelText(/Gyroid/i);
@@ -182,7 +184,7 @@ describe('NewPrintForm Integration', () => {
     });
 
     it('support radio buttons work', async () => {
-      const user = userEvent.setup();
+      const user = setupUser();
       render(<NewPrintForm />);
 
       const yesRadio = screen.getByLabelText(/Yes/i);
@@ -206,7 +208,7 @@ describe('NewPrintForm Integration', () => {
 
   describe('form submission', () => {
     it('form submission with all valid data succeeds in mock mode', async () => {
-      const user = userEvent.setup();
+      const user = setupUser();
       render(<NewPrintForm />);
 
       // Fill in required fields
@@ -248,7 +250,7 @@ describe('NewPrintForm Integration', () => {
     });
 
     it('shows submitting state while form is submitting', async () => {
-      const user = userEvent.setup();
+      const user = setupUser();
       render(<NewPrintForm />);
 
       // Fill minimal valid data
@@ -275,7 +277,7 @@ describe('NewPrintForm Integration', () => {
 
   describe('material and color selection logic', () => {
     it('material 1 and material 2 cannot be the same', async () => {
-      const user = userEvent.setup();
+      const user = setupUser();
       render(<NewPrintForm />);
 
       // Select PLA for material 1
@@ -294,7 +296,7 @@ describe('NewPrintForm Integration', () => {
     });
 
     it('color 1 and color 2 cannot be the same', async () => {
-      const user = userEvent.setup();
+      const user = setupUser();
       render(<NewPrintForm />);
 
       // Select Black for color 1
@@ -315,7 +317,7 @@ describe('NewPrintForm Integration', () => {
 
   describe('unsaved changes guard', () => {
     it('activates when form is dirty', async () => {
-      const user = userEvent.setup();
+      const user = setupUser();
       render(<NewPrintForm />);
 
       const nameField = screen.getByLabelText(/Print Name/i);
