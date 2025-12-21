@@ -1,6 +1,6 @@
 import { waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { vi } from 'vitest';
+import { vi, expect } from 'vitest';
 
 /**
  * Setup userEvent for interaction testing

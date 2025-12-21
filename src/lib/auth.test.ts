@@ -1,7 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { validateSession, login, logout } from './auth';
 import { mockAuthenticatedSession, mockUnauthenticatedSession, mockSuccessfulLogin, mockFailedLogin } from '@test/utils/authHelpers';
-import { createMockUser } from '@test/utils/mockFactories';
 import { http, HttpResponse } from 'msw';
 import { mockServer } from '@/api/mocks';
 

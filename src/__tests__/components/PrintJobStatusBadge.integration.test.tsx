@@ -1,7 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { render, screen } from '@test/utils/render';
 import { PrintJobStatusBadge } from '@/components/PrintJobStatusBadge';
-import { PrintJobStatus } from '@/types/jobs';
 
 describe('PrintJobStatusBadge Integration', () => {
   it('renders DRAFT status correctly', () => {
