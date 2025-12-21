@@ -173,7 +173,7 @@ export const useColumns = (opts: UseColumnsOptions = {}) => {
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
                 <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                <DropdownMenuItem onClick={() => navigator.clipboard.writeText(printJob.id)}>
+                <DropdownMenuItem onSelect={() => navigator.clipboard.writeText(printJob.id)}>
                   Copy Job ID
                 </DropdownMenuItem>
                 {canCancel && setJobs && (
