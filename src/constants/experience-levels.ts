@@ -4,9 +4,9 @@
  */
 
 export const EXPERIENCE_LEVELS = {
-  NO_EXPERIENCE: 'NoExperience',
-  BEGINNER: 'Beginner',
-  ADVANCED: 'Advanced',
+  NO_EXPERIENCE: 'no_experience',
+  BEGINNER: 'beginner',
+  ADVANCED: 'advanced',
 } as const;
 
 export type ExperienceLevel = (typeof EXPERIENCE_LEVELS)[keyof typeof EXPERIENCE_LEVELS];

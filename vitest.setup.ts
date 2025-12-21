@@ -80,13 +80,23 @@ if (!HTMLElement.prototype.setPointerCapture) {
 
 // Mock IntersectionObserver
 global.IntersectionObserver = class IntersectionObserver {
-  constructor() {}
-  disconnect() {}
-  observe() {}
-  takeRecords() {
+  private callback: IntersectionObserverCallback;
+  private options?: IntersectionObserverInit;
+
+  constructor(callback: IntersectionObserverCallback, options?: IntersectionObserverInit) {
+    this.callback = callback;
+    this.options = options;
+  }
+
+  disconnect(): void {}
+
+  observe(_target: Element): void {}
+
+  takeRecords(): IntersectionObserverEntry[] {
     return [];
   }
-  unobserve() {}
+
+  unobserve(_target: Element): void {}
 } as unknown as typeof IntersectionObserver;
 
 // Mock ResizeObserver

@@ -173,7 +173,15 @@ export const useColumns = (opts: UseColumnsOptions = {}) => {
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
                 <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                <DropdownMenuItem onSelect={() => navigator.clipboard.writeText(printJob.id)}>
+                <DropdownMenuItem
+                  onSelect={async () => {
+                    try {
+                      await navigator.clipboard.writeText(printJob.id);
+                    } catch (error) {
+                      console.error('Failed to copy Job ID to clipboard', error);
+                    }
+                  }}
+                >
                   Copy Job ID
                 </DropdownMenuItem>
                 {canCancel && setJobs && (

@@ -15,7 +15,7 @@ describe('sessionApi', () => {
         firstName: 'Test',
         lastName: 'User',
         role: 'user',
-        experienceLevel: 'Beginner',
+        experienceLevel: 'beginner',
       });
 
       mockServer.use(

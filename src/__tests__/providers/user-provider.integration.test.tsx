@@ -149,7 +149,7 @@ describe('UserProvider Integration', () => {
       firstName: 'Admin',
       lastName: 'User',
       role: 'admin',
-      experienceLevel: 'Advanced',
+      experienceLevel: 'advanced',
     });
 
     render(
@@ -164,11 +164,11 @@ describe('UserProvider Integration', () => {
 
   it('handles user with different experience levels', () => {
     const beginnerUser = createMockUser({
-      experienceLevel: 'Beginner',
+      experienceLevel: 'beginner',
     });
 
     const advancedUser = createMockUser({
-      experienceLevel: 'Advanced',
+      experienceLevel: 'advanced',
     });
 
     const { rerender } = render(

@@ -12,13 +12,6 @@ import {
 } from '@tanstack/react-table';
 import { DataTablePagination } from './index';
 
-if (!HTMLElement.prototype.hasPointerCapture) {
-  HTMLElement.prototype.hasPointerCapture = () => false;
-}
-
-if (!HTMLElement.prototype.setPointerCapture) {
-  HTMLElement.prototype.setPointerCapture = () => {};
-}
 
 type RowData = {
   id: number;
