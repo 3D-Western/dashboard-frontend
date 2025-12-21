@@ -34,7 +34,4 @@ export interface ApiGetAllActivePrintJobsResponse {
 export type FileUploadResponse = FileUploadResult;
 export type FileMetadataResponse = FileMetadata;
 export type FileListResponse = FileList;
-
-export interface FileDeleteResponse {
-  success: boolean;
-}
+export type FileDeleteResponse = null;
