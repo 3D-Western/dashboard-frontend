@@ -38,10 +38,7 @@ export const fileHandlers = [
       // Validate file
       const validation = FileSystemUtils.validateFile(file.name, file.size);
       if (!validation.valid) {
-        return HttpResponse.json(
-          generateErrorResponse(validation.error!),
-          { status: 400 },
-        );
+        return HttpResponse.json(generateErrorResponse(validation.error!), { status: 400 });
       }
 
       // Save file to disk
@@ -126,10 +123,7 @@ export const fileHandlers = [
     }
 
     // Sort by uploadedAt descending (newest first)
-    files.sort(
-      (a, b) =>
-        new Date(b.uploadedAt).getTime() - new Date(a.uploadedAt).getTime(),
-    );
+    files.sort((a, b) => new Date(b.uploadedAt).getTime() - new Date(a.uploadedAt).getTime());
 
     // Apply pagination
     const totalItems = files.length;
@@ -278,13 +272,10 @@ export const fileHandlers = [
     try {
       // Delete from disk
       await FileSystemUtils.deleteFile(file.diskPath);
-
-    } catch (error) {
-      // Log the underlying error in the mock environment for easier debugging
-      console.error('Failed to delete file in mock handler:', error);
       db.deleteFile(file.id);
 
       return HttpResponse.json(generateSuccessResponse(null));
+
     } catch (_) {
       return HttpResponse.json(
         generateErrorResponse({
@@ -297,52 +288,45 @@ export const fileHandlers = [
   }),
 
   // GET /api/v1/files/{id}/download - Serve actual file content
-  http.get(
-    `${apiUrl}/api/v1/files/:id/download`,
-    async ({ cookies, params }) => {
-      const sessionId = cookies['sessionToken'] || '';
-      const user = db.validateSession(sessionId);
-      if (!user) {
-        return createInvalidSessionResponse();
-      }
+  http.get(`${apiUrl}/api/v1/files/:id/download`, async ({ cookies, params }) => {
+    const sessionId = cookies['sessionToken'] || '';
+    const user = db.validateSession(sessionId);
+    if (!user) {
+      return createInvalidSessionResponse();
+    }
 
-      const { id } = params;
-      const file = db.getFileById(id as string);
+    const { id } = params;
+    const file = db.getFileById(id as string);
 
-      if (!file) {
-        return HttpResponse.json(
-          generateErrorResponse({
-            code: 'FILE_NOT_FOUND',
-            message: `File with ID ${id} not found`,
-          }),
-          { status: 404 },
-        );
-      }
+    if (!file) {
+      return HttpResponse.json(
+        generateErrorResponse({
+          code: 'FILE_NOT_FOUND',
+          message: `File with ID ${id} not found`,
+        }),
+        { status: 404 },
+      );
+    }
 
-      // Access control: users download own files, admins download all
-      if (user.role !== 'admin' && file.uploadedBy !== user.id) {
-        return HttpResponse.json(
-          generateErrorResponse({
-            code: 'FORBIDDEN',
-            message: "Cannot download another user's file",
-          }),
-          { status: 403 },
-        );
-      }
+    // Access control: users download own files, admins download all
+    if (user.role !== 'admin' && file.uploadedBy !== user.id) {
+      return HttpResponse.json(
+        generateErrorResponse({
+          code: 'FORBIDDEN',
+          message: "Cannot download another user's file",
+        }),
+        { status: 403 },
+      );
+    }
 
-      try {
-        // Read file from disk
-        const fileBuffer = await FileSystemUtils.readFile(file.diskPath);
+    try {
+      // Read file from disk
+      const fileBuffer = await FileSystemUtils.readFile(file.diskPath);
 
         // Return file with appropriate headers
         return new HttpResponse(fileBuffer, {
           status: 200,
-      } catch (error) {
-        // Log underlying error in mock environment to aid debugging of download failures
-        console.error(
-          `Failed to read file from disk for download (fileId=${file.id}, diskPath=${file.diskPath}):`,
-          error,
-        );
+          headers: {
             'Content-Type': file.mimeType,
             'Content-Disposition': `attachment; filename="${file.filename}"`,
             'Content-Length': file.size.toString(),

@@ -97,20 +97,14 @@ export class FileSystemUtils {
    */
   static getMimeType(filename: string): string {
     const ext = path.extname(filename).toLowerCase();
-    return (
-      SUPPORTED_FILES[ext as keyof typeof SUPPORTED_FILES] ||
-      'application/octet-stream'
-    );
+    return SUPPORTED_FILES[ext as keyof typeof SUPPORTED_FILES] || 'application/octet-stream';
   }
 
   /**
    * Save uploaded file to tmp/ directory
    * Returns the disk path where file was saved
    */
-  static async saveFile(
-    fileBuffer: ArrayBuffer,
-    originalFilename: string,
-  ): Promise<string> {
+  static async saveFile(fileBuffer: ArrayBuffer, originalFilename: string): Promise<string> {
     const fileId = randomUUID();
     const ext = path.extname(originalFilename);
     const safeName = `${fileId}${ext}`; // Use UUID + extension to avoid collisions
