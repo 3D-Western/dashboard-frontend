@@ -45,3 +45,26 @@ export interface CompletedPrintJob extends BasePrintJob {
   orderFinished: string; // ISO date string
   status: CompletePrintJobStatus;
 }
+
+export interface FileMetadata {
+  id: string; // UUID
+  filename: string;
+  size: number; // bytes
+  mimeType: string;
+  uploadedAt: string; // ISO 8601
+  uploadedBy: number; // User ID
+  diskPath: string; // Internal: path on disk
+}
+
+export interface FileListItem {
+  id: string;
+  filename: string;
+  size: number;
+  mimeType: string;
+  uploadedAt: string;
+  uploadedBy: {
+    studentId: number;
+    firstName: string;
+    lastName: string;
+  };
+}
