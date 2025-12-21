@@ -128,9 +128,7 @@ class Database {
   }
 
   public getFilesByUserId(userId: number): FileMetadata[] {
-    return Array.from(this.files.values()).filter(
-      (file) => file.uploadedBy === userId,
-    );
+    return Array.from(this.files.values()).filter((file) => file.uploadedBy === userId);
   }
 }
 

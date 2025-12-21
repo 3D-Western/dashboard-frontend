@@ -1,10 +1,6 @@
 import { User } from '@/types/user';
 import { PrintJob } from '@/types/jobs';
-import {
-  FileUploadResult,
-  FileMetadata,
-  FileList,
-} from '@/types/file';
+import { FileUploadResult, FileMetadata, FileList } from '@/types/file';
 
 export interface ApiResponseError {
   code: string;

@@ -532,8 +532,12 @@ describe('fileApi', () => {
         click: vi.fn(),
       } as unknown as HTMLAnchorElement;
       const createElementSpy = vi.spyOn(document, 'createElement').mockReturnValue(linkElement);
-      const appendChildSpy = vi.spyOn(document.body, 'appendChild').mockImplementation(() => linkElement);
-      const removeChildSpy = vi.spyOn(document.body, 'removeChild').mockImplementation(() => linkElement);
+      const appendChildSpy = vi
+        .spyOn(document.body, 'appendChild')
+        .mockImplementation(() => linkElement);
+      const removeChildSpy = vi
+        .spyOn(document.body, 'removeChild')
+        .mockImplementation(() => linkElement);
 
       mockServer.use(
         http.get(`${baseUrl}${endpoints.files.download(fileId)}`, () => {
