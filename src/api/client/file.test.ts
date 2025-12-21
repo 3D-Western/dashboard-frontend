@@ -307,7 +307,7 @@ describe('fileApi', () => {
       await expect(fileApi.getMetadata(fileId)).rejects.toThrow(ApiError);
     });
 
-    it('throws FORBIDDEN error when accessing another users file', async () => {
+    it("throws FORBIDDEN error when accessing another user's file", async () => {
       const fileId = 'other-user-file';
 
       mockServer.use(
@@ -492,7 +492,7 @@ describe('fileApi', () => {
       await expect(fileApi.download(fileId)).rejects.toThrow();
     });
 
-    it('throws FORBIDDEN error when downloading another users file', async () => {
+    it("throws FORBIDDEN error when downloading another user's file", async () => {
       const fileId = 'other-user-file';
 
       mockServer.use(

@@ -127,7 +127,7 @@ export class FileSystemUtils {
    */
   static async readFile(diskPath: string): Promise<Buffer> {
     if (!fs.existsSync(diskPath)) {
-      throw new Error('FILE_NOT_FOUND');
+      throw new Error(`File not found at path: ${diskPath}`);
     }
     return await fs.promises.readFile(diskPath);
   }

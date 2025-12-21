@@ -106,9 +106,14 @@ export const fileApi = {
       // Try to parse error response
       try {
         const errorData = await response.json();
-        throw new Error(errorData.error?.message || 'Failed to download file');
+        throw new Error(
+          errorData.error?.message ||
+            `Failed to download file ${fileId}: ${response.status} ${response.statusText}`,
+        );
       } catch {
-        throw new Error(`Failed to download file: ${response.statusText}`);
+        throw new Error(
+          `Failed to download file ${fileId}: ${response.status} ${response.statusText}`,
+        );
       }
     }
 

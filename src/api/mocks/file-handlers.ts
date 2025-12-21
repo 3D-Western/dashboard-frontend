@@ -74,7 +74,11 @@ export const fileHandlers = [
         }),
         { status: 201 },
       );
-    } catch (_) {
+    } catch (error) {
+      // Log error details in mock environment to aid debugging
+      // while still returning a generic error to the client.
+      // eslint-disable-next-line no-console
+      console.error('Mock file upload handler failed:', error);
       return HttpResponse.json(
         generateErrorResponse({
           code: 'INTERNAL_SERVER_ERROR',
@@ -275,7 +279,9 @@ export const fileHandlers = [
       // Delete from disk
       await FileSystemUtils.deleteFile(file.diskPath);
 
-      // Delete from database
+    } catch (error) {
+      // Log the underlying error in the mock environment for easier debugging
+      console.error('Failed to delete file in mock handler:', error);
       db.deleteFile(file.id);
 
       return HttpResponse.json(generateSuccessResponse(null));
@@ -331,7 +337,12 @@ export const fileHandlers = [
         // Return file with appropriate headers
         return new HttpResponse(fileBuffer, {
           status: 200,
-          headers: {
+      } catch (error) {
+        // Log underlying error in mock environment to aid debugging of download failures
+        console.error(
+          `Failed to read file from disk for download (fileId=${file.id}, diskPath=${file.diskPath}):`,
+          error,
+        );
             'Content-Type': file.mimeType,
             'Content-Disposition': `attachment; filename="${file.filename}"`,
             'Content-Length': file.size.toString(),
