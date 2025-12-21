@@ -46,7 +46,8 @@ const mapPrintJobStatusToDisplayLabel = (status: PrintJobStatus): string => {
 };
 
 export interface PrintJobStatusBadgeProps
-  extends Omit<React.ComponentProps<typeof Badge>, 'variant'>,
+  extends
+    Omit<React.ComponentProps<typeof Badge>, 'variant'>,
     VariantProps<typeof statusBadgeVariants> {
   status: PrintJobStatus;
 }
