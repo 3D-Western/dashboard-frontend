@@ -1,4 +1,4 @@
-import { PrintJob, User } from './types';
+import { PrintJob, User, FileMetadata } from './types';
 import { mockUsers } from '../data/users';
 import { mockPrintJobs } from '../data/print-jobs';
 
@@ -9,6 +9,7 @@ class Database {
   private sessions: Map<string, number> = new Map(); // sessionId to userId
   private activePrintJobsUserMap: Map<number, PrintJob[]> = new Map(); // userId to PrintJobs
   private activePrintJobsIDMap: Map<string, PrintJob> = new Map(); // printJobId to PrintJob
+  private files: Map<string, FileMetadata> = new Map(); // fileId to FileMetadata
 
   // Singleton pattern to ensure only one instance of Database exists
   constructor() {
@@ -108,6 +109,26 @@ class Database {
 
   public getUserById(userId: number): User | null {
     return this.users.get(userId) || null;
+  }
+
+  public saveFile(metadata: FileMetadata): void {
+    this.files.set(metadata.id, metadata);
+  }
+
+  public getFileById(fileId: string): FileMetadata | null {
+    return this.files.get(fileId) || null;
+  }
+
+  public getAllFiles(): FileMetadata[] {
+    return Array.from(this.files.values());
+  }
+
+  public deleteFile(fileId: string): boolean {
+    return this.files.delete(fileId);
+  }
+
+  public getFilesByUserId(userId: number): FileMetadata[] {
+    return Array.from(this.files.values()).filter((file) => file.uploadedBy === userId);
   }
 }
 

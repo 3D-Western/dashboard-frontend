@@ -15,4 +15,11 @@ export const endpoints = {
     create: '/api/v1/orders',
     cancel: (orderId: string) => `/api/v1/orders/active/cancel/${orderId}`,
   },
+  files: {
+    upload: '/api/v1/files/upload',
+    list: '/api/v1/files',
+    byId: (fileId: string) => `/api/v1/files/${fileId}`,
+    delete: (fileId: string) => `/api/v1/files/${fileId}`,
+    download: (fileId: string) => `/api/v1/files/${fileId}/download`,
+  },
 };

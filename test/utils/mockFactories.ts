@@ -1,6 +1,7 @@
 import { faker } from '@faker-js/faker';
 import { User, UserRole, UserExperienceLevel } from '@/types/user';
 import { PrintJob, PrintJobStatus } from '@/types/jobs';
+import { FileMetadata, FileUploadResult } from '@/types/file';
 
 /**
  * Creates a mock User object with realistic data
@@ -79,3 +80,44 @@ export const createMockFile = (name = 'test.stl', size = 1024, type = 'model/stl
   Object.defineProperty(file, 'size', { value: size });
   return file;
 };
+
+/**
+ * Creates a mock FileMetadata object
+ *
+ * @example
+ * ```ts
+ * const fileMetadata = createMockFileMetadata({ filename: 'model.stl' });
+ * ```
+ */
+export const createMockFileMetadata = (overrides?: Partial<FileMetadata>): FileMetadata => ({
+  id: faker.string.uuid(),
+  filename: `${faker.system.fileName({ extensionCount: 0 })}.stl`,
+  size: faker.number.int({ min: 1024, max: 10 * 1024 * 1024 }), // 1KB to 10MB
+  mimeType: 'model/stl',
+  uploadedAt: faker.date.recent().toISOString(),
+  uploadedBy: {
+    studentId: faker.number.int({ min: 251000000, max: 251999999 }),
+    firstName: faker.person.firstName(),
+    lastName: faker.person.lastName(),
+  },
+  ...overrides,
+});
+
+/**
+ * Creates a mock FileUploadResult object
+ *
+ * @example
+ * ```ts
+ * const uploadResult = createMockFileUploadResult();
+ * ```
+ */
+export const createMockFileUploadResult = (
+  overrides?: Partial<FileUploadResult>,
+): FileUploadResult => ({
+  id: faker.string.uuid(),
+  filename: `${faker.system.fileName({ extensionCount: 0 })}.stl`,
+  size: faker.number.int({ min: 1024, max: 10 * 1024 * 1024 }),
+  mimeType: 'model/stl',
+  uploadedAt: faker.date.recent().toISOString(),
+  ...overrides,
+});

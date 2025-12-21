@@ -6,6 +6,11 @@ This file provides guidance AI when working with code in this repository.
 
 A Next.js 16 dashboard application for managing 3D printing services. Built with App Router, React Server Components, shadcn/ui, TanStack Table, and comprehensive testing infrastructure using Vitest and Playwright.
 
+### Note
+
+- Do not create example code unless specifically requested.
+- Do not create a readme file unless specifically requested.
+
 ## Development Commands
 
 ```bash
