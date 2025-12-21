@@ -275,7 +275,6 @@ export const fileHandlers = [
       db.deleteFile(file.id);
 
       return HttpResponse.json(generateSuccessResponse(null));
-
     } catch (_) {
       return HttpResponse.json(
         generateErrorResponse({
@@ -323,24 +322,23 @@ export const fileHandlers = [
       // Read file from disk
       const fileBuffer = await FileSystemUtils.readFile(file.diskPath);
 
-        // Return file with appropriate headers
-        return new HttpResponse(fileBuffer, {
-          status: 200,
-          headers: {
-            'Content-Type': file.mimeType,
-            'Content-Disposition': `attachment; filename="${file.filename}"`,
-            'Content-Length': file.size.toString(),
-          },
-        });
-      } catch (_) {
-        return HttpResponse.json(
-          generateErrorResponse({
-            code: 'INTERNAL_SERVER_ERROR',
-            message: 'Failed to generate download URL',
-          }),
-          { status: 500 },
-        );
-      }
-    },
-  ),
+      // Return file with appropriate headers
+      return new HttpResponse(fileBuffer, {
+        status: 200,
+        headers: {
+          'Content-Type': file.mimeType,
+          'Content-Disposition': `attachment; filename="${file.filename}"`,
+          'Content-Length': file.size.toString(),
+        },
+      });
+    } catch (_) {
+      return HttpResponse.json(
+        generateErrorResponse({
+          code: 'INTERNAL_SERVER_ERROR',
+          message: 'Failed to generate download URL',
+        }),
+        { status: 500 },
+      );
+    }
+  }),
 ];
