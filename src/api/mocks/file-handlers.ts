@@ -74,7 +74,6 @@ export const fileHandlers = [
     } catch (error) {
       // Log error details in mock environment to aid debugging
       // while still returning a generic error to the client.
-      // eslint-disable-next-line no-console
       console.error('Mock file upload handler failed:', error);
       return HttpResponse.json(
         generateErrorResponse({
