@@ -2,8 +2,19 @@ import fs from 'fs';
 import path from 'path';
 import { randomUUID } from 'crypto';
 
-// Project root is three levels up from src/api/mocks/utils/
-const PROJECT_ROOT = path.join(__dirname, '../../../..');
+// Get project root - Next.js always runs from project root, so process.cwd() is reliable
+// Validate by checking for package.json
+const PROJECT_ROOT = (() => {
+  const cwd = process.cwd();
+  const packageJsonPath = path.join(cwd, 'package.json');
+  if (!fs.existsSync(packageJsonPath)) {
+    console.warn(
+      `Warning: package.json not found at ${packageJsonPath}. Using ${cwd} as project root.`,
+    );
+  }
+  return cwd;
+})();
+
 const TMP_DIR = path.join(PROJECT_ROOT, 'tmp');
 
 // Supported file extensions and their MIME types
