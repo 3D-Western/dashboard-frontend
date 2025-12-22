@@ -8,7 +8,9 @@ const PROJECT_ROOT = (() => {
   const cwd = process.cwd();
   const packageJsonPath = path.join(cwd, 'package.json');
   if (!fs.existsSync(packageJsonPath)) {
-    console.warn(`Warning: package.json not found at ${packageJsonPath}. Using ${cwd} as project root.`);
+    console.warn(
+      `Warning: package.json not found at ${packageJsonPath}. Using ${cwd} as project root.`,
+    );
   }
   return cwd;
 })();
