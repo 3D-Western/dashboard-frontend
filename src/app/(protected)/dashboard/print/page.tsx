@@ -5,7 +5,12 @@ import { jobApi } from '@/api/client/job';
 import { withSessionErrorHandling } from '@/lib/server-utils';
 
 export default async function PrintPage() {
-  const { jobs: printJobs } = await withSessionErrorHandling(() => jobApi.listAllJobs());
+  // Fetch all user's print jobs with pagination
+  // For now, we fetch with a large pageSize to get all jobs for client-side pagination
+  // TODO: Implement proper server-side pagination with URL search params
+  const { data: printJobs } = await withSessionErrorHandling(() =>
+    jobApi.listAllJobs({ pageSize: 100 }),
+  );
 
   return (
     <div className="container space-y-6 p-6">

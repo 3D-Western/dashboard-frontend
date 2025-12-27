@@ -1,14 +1,36 @@
 // ...existing code up to the end of the first jobApi object...
 // Remove duplicate imports and duplicate jobApi object below
 import { PrintJob, PrintJobStatus } from '@/types/jobs';
-import { ApiGetAllActivePrintJobsResponse } from '../types';
+import { PrintJobListResponse } from '../types';
+import { OrderListParams } from '@/types/common';
 import { apiRequest } from './base';
 import { endpoints } from './endpoints';
 import { getBaseUrl } from './utils';
 
 export const jobApi = {
-  listAllJobs: async (options?: RequestInit) => {
-    return apiRequest<ApiGetAllActivePrintJobsResponse>(`${getBaseUrl()}${endpoints.orders.list}`, {
+  listAllJobs: async (params?: OrderListParams, options?: RequestInit) => {
+    const searchParams = new URLSearchParams();
+
+    if (params?.userId !== undefined) {
+      searchParams.append('userId', params.userId.toString());
+    }
+    if (params?.status !== undefined) {
+      searchParams.append('status', params.status);
+    }
+    if (params?.page !== undefined) {
+      searchParams.append('page', params.page.toString());
+    }
+    if (params?.pageSize !== undefined) {
+      searchParams.append('pageSize', params.pageSize.toString());
+    }
+    if (params?.snapshotCreatedBefore !== undefined) {
+      searchParams.append('snapshotCreatedBefore', params.snapshotCreatedBefore);
+    }
+
+    const queryString = searchParams.toString();
+    const url = `${getBaseUrl()}${endpoints.orders.list}${queryString ? `?${queryString}` : ''}`;
+
+    return apiRequest<PrintJobListResponse>(url, {
       method: 'GET',
       credentials: 'include',
       ...options,

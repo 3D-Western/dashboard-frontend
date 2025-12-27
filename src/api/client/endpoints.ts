@@ -9,6 +9,10 @@ export const endpoints = {
     verify: '/api/v1/password-reset/verify',
     complete: '/api/v1/password-reset/complete',
   },
+  users: {
+    list: '/api/v1/users',
+    byId: (userId: number) => `/api/v1/users/${userId}`,
+  },
   orders: {
     list: '/api/v1/orders',
     byId: (orderId: string) => `/api/v1/orders/${orderId}`,

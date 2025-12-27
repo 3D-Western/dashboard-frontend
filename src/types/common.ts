@@ -25,3 +25,33 @@ export interface PaginatedResponse<T> {
   data: T[];
   pagination: PaginationMetadata;
 }
+
+/**
+ * Base pagination parameters
+ * Common query parameters for paginated list endpoints
+ */
+export interface BasePaginationParams {
+  page?: number;
+  pageSize?: number;
+  snapshotCreatedBefore?: string;
+}
+
+/**
+ * Order list query parameters
+ * Used for fetching paginated list of orders
+ */
+export interface OrderListParams extends BasePaginationParams {
+  userId?: number;
+  status?: string;
+}
+
+/**
+ * User list query parameters
+ * Used for fetching paginated list of users
+ */
+export interface UserListParams extends BasePaginationParams {
+  search?: string;
+  status?: string;
+  trainingLevel?: string;
+  experienceLevel?: string;
+}

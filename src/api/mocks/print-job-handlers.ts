@@ -10,7 +10,7 @@ const ACTIVE_STATUSES = ['IN_QUEUE', 'PRINTING', 'READY', 'FLAGGED', 'ERROR'];
 const COMPLETED_STATUSES = ['SUCCESS', 'FAIL'];
 
 export const orderHandlers = [
-  // GET /orders with query params (status, user_id)
+  // GET /orders with query params (status, userId, pagination)
   http.get(`${apiUrl}${endpoints.orders.list}`, ({ cookies, request }) => {
     const sessionId = cookies['sessionToken'] || '';
     const user = db.validateSession(sessionId);
@@ -20,13 +20,20 @@ export const orderHandlers = [
 
     // Parse query parameters
     const url = new URL(request.url);
-    const statusFilter = url.searchParams.get('status'); // 'active' | 'completed' | null
-    const userIdFilter = url.searchParams.get('user_id');
+    const statusFilter = url.searchParams.get('status');
+    const userIdFilter = url.searchParams.get('userId');
+    const page = parseInt(url.searchParams.get('page') || '1', 10);
+    const pageSize = parseInt(url.searchParams.get('pageSize') || '10', 10);
+    const snapshotCreatedBefore =
+      url.searchParams.get('snapshotCreatedBefore') || new Date().toISOString();
 
     // Get all jobs
     let orders = db.getAllPrintJobs();
 
-    // Filter by user_id if provided
+    // Apply snapshot filter (only orders created before the snapshot)
+    orders = orders.filter((order) => order.orderPlaced <= snapshotCreatedBefore);
+
+    // Filter by userId if provided
     if (userIdFilter) {
       orders = orders.filter((order) => order.studentId === parseInt(userIdFilter));
     } else if (user.role !== 'admin') {
@@ -35,10 +42,8 @@ export const orderHandlers = [
     }
 
     // Filter by status if provided
-    if (statusFilter === 'active') {
-      orders = orders.filter((order) => ACTIVE_STATUSES.includes(order.status));
-    } else if (statusFilter === 'completed') {
-      orders = orders.filter((order) => COMPLETED_STATUSES.includes(order.status));
+    if (statusFilter) {
+      orders = orders.filter((order) => order.status === statusFilter);
     }
 
     // For admin users, populate student info
@@ -59,7 +64,27 @@ export const orderHandlers = [
       });
     }
 
-    return HttpResponse.json(generateSuccessResponse({ jobs: orders }));
+    // Calculate pagination
+    const totalItems = orders.length;
+    const totalPages = Math.ceil(totalItems / pageSize);
+    const startIndex = (page - 1) * pageSize;
+    const endIndex = startIndex + pageSize;
+    const paginatedOrders = orders.slice(startIndex, endIndex);
+
+    return HttpResponse.json(
+      generateSuccessResponse({
+        data: paginatedOrders,
+        pagination: {
+          page,
+          pageSize,
+          totalItems,
+          totalPages,
+          hasNext: page < totalPages,
+          hasPrevious: page > 1,
+          snapshotCreatedBefore,
+        },
+      }),
+    );
   }),
 
   // POST /orders - Create new order
