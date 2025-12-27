@@ -5,3 +5,12 @@ coverage/
 *.min.js
 .github/workflows/
 *.min.css
+
+# Lock files (auto-generated)
+pnpm-lock.yaml
+package-lock.json
+yarn.lock
+
+# Next.js
+.next/
+out/
