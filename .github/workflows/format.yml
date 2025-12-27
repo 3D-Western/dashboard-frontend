@@ -32,28 +32,14 @@ jobs:
           node-version: "24"
           cache: 'pnpm'
 
-      # 4️⃣ Setup pnpm store cache
-      - name: Get pnpm store directory
-        shell: bash
-        id: pnpm-cache
-        run: echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_OUTPUT
-
-      - name: Setup pnpm cache
-        uses: actions/cache@v4
-        with:
-          path: ${{ steps.pnpm-cache.outputs.STORE_PATH }}
-          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
-          restore-keys: |
-            ${{ runner.os }}-pnpm-store-
-
-      # 5️⃣ Install dependencies (fast because of cache)
+      # 4️⃣ Install dependencies (fast because of cache)
       - run: pnpm install --frozen-lockfile
 
-      # 6️⃣ Check code formatting (without modifying files)
+      # 5️⃣ Check code formatting (without modifying files)
       - name: Check formatting with Prettier
         run: pnpm exec prettier --check .
 
-      # 7️⃣ Generate job summary
+      # 6️⃣ Generate job summary
       - name: Generate format summary
         if: always()
         run: |
