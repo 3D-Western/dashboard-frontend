@@ -5,10 +5,6 @@ import { createInvalidSessionResponse, generateSuccessResponse } from './utils';
 
 const apiUrl = process.env.API_URL;
 
-// Active statuses for filtering
-const ACTIVE_STATUSES = ['IN_QUEUE', 'PRINTING', 'READY', 'FLAGGED', 'ERROR'];
-const COMPLETED_STATUSES = ['SUCCESS', 'FAIL'];
-
 export const orderHandlers = [
   // GET /orders with query params (status, userId, pagination)
   http.get(`${apiUrl}${endpoints.orders.list}`, ({ cookies, request }) => {

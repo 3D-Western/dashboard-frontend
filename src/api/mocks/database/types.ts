@@ -6,6 +6,9 @@ export interface User {
   email: string;
   role: 'admin' | 'user';
   experience: string;
+  createdDate?: string;
+  trainingLevel?: string;
+  experienceLevel?: string;
 }
 
 export interface File {

@@ -111,6 +111,10 @@ class Database {
     return this.users.get(userId) || null;
   }
 
+  public getAllUsers(): User[] {
+    return Array.from(this.users.values());
+  }
+
   public saveFile(metadata: FileMetadata): void {
     this.files.set(metadata.id, metadata);
   }

@@ -9,6 +9,9 @@ export const mockUsers: User[] = [
     role: 'admin',
     experience: 'advanced',
     password: 'password',
+    createdDate: new Date('2024-01-01').toISOString(),
+    trainingLevel: 'advanced',
+    experienceLevel: 'advanced',
   },
   {
     id: 251000001,
@@ -18,5 +21,8 @@ export const mockUsers: User[] = [
     role: 'user',
     experience: 'beginner',
     password: 'password',
+    createdDate: new Date('2024-01-15').toISOString(),
+    trainingLevel: 'beginner',
+    experienceLevel: 'beginner',
   },
 ];
