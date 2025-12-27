@@ -6,46 +6,112 @@ on:
   push:
     branches: [main]
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   lint:
     runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
     steps:
       - name: Checkout repository
         uses: actions/checkout@v5
 
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 22
-          cache: 'npm'
+          node-version: 24
+          cache: 'pnpm'
+
+      - name: Get pnpm store directory
+        shell: bash
+        id: pnpm-cache
+        run: echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_OUTPUT
+
+      - name: Setup pnpm cache
+        uses: actions/cache@v4
+        with:
+          path: ${{ steps.pnpm-cache.outputs.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
 
       - name: Install dependencies
-        run: npm ci --include=optional
+        run: pnpm install --frozen-lockfile
 
       - name: Run ESLint
-        run: npm run lint:ci
+        run: pnpm run lint:ci
+
+      - name: Generate lint summary
+        if: always()
+        run: |
+          echo "## Lint Results :mag:" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **Status**: ${{ job.status }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Node Version**: 24" >> $GITHUB_STEP_SUMMARY
+          echo "- **Package Manager**: pnpm 9" >> $GITHUB_STEP_SUMMARY
+          echo "- **Linter**: ESLint with zero warnings" >> $GITHUB_STEP_SUMMARY
 
   build:
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     needs: lint
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@v5
 
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
       - uses: actions/setup-node@v4
         with:
-          node-version: 22
-          cache: 'npm'
+          node-version: 24
+          cache: 'pnpm'
 
-      - run: npm ci --include=optional
+      - name: Get pnpm store directory
+        shell: bash
+        id: pnpm-cache
+        run: echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_OUTPUT
+
+      - name: Setup pnpm cache
+        uses: actions/cache@v4
+        with:
+          path: ${{ steps.pnpm-cache.outputs.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
+
+      - run: pnpm install --frozen-lockfile
 
       # ✅ Cache Next.js build artifacts to speed up builds
       - name: Cache Next.js build output
         uses: actions/cache@v4
         with:
           path: .next/cache
-          key: ${{ runner.os }}-nextjs-${{ hashFiles('package-lock.json') }}
+          key: ${{ runner.os }}-nextjs-${{ hashFiles('pnpm-lock.yaml') }}
           restore-keys: |
             ${{ runner.os }}-nextjs-
 
       - name: Build Next.js app
-        run: npm run build
+        run: pnpm run build
+
+      - name: Generate build summary
+        if: always()
+        run: |
+          echo "## Build Results :package:" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **Status**: ${{ job.status }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Node Version**: 24" >> $GITHUB_STEP_SUMMARY
+          echo "- **Package Manager**: pnpm 9" >> $GITHUB_STEP_SUMMARY
+          echo "- **Framework**: Next.js 16" >> $GITHUB_STEP_SUMMARY
