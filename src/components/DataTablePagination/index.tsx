@@ -19,10 +19,7 @@ interface DataTablePaginationProps<TData> {
   pagination: PaginationMetadata;
 }
 
-export function DataTablePagination<TData>({
-  table,
-  pagination,
-}: DataTablePaginationProps<TData>) {
+export function DataTablePagination<TData>({ table, pagination }: DataTablePaginationProps<TData>) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const currentPage = pagination.page;
@@ -64,7 +61,7 @@ export function DataTablePagination<TData>({
               updatePagination(1, Number(value));
             }}
           >
-            <SelectTrigger className="h-8 w-17.5">
+            <SelectTrigger className="h-8 w-20">
               <SelectValue placeholder={pageSize} />
             </SelectTrigger>
             <SelectContent side="top">
