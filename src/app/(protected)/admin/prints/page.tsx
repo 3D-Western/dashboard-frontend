@@ -3,8 +3,19 @@ import { jobApi } from '@/api/client/job';
 import { withSessionErrorHandling } from '@/lib/server-utils';
 import { Settings } from 'lucide-react';
 
-export default async function PrintManagementPage() {
-  const { jobs: printJobs } = await withSessionErrorHandling(() => jobApi.listAllJobs());
+interface PrintManagementPageProps {
+  searchParams: Promise<{ page?: string; pageSize?: string }>;
+}
+
+export default async function PrintManagementPage({ searchParams }: PrintManagementPageProps) {
+  const params = await searchParams;
+  const page = Number(params.page) || 1;
+  const pageSize = Number(params.pageSize) || 10;
+
+  // Fetch all print jobs with server-side pagination
+  const { data: printJobs, pagination } = await withSessionErrorHandling(() =>
+    jobApi.listAllJobs({ page, pageSize }),
+  );
 
   return (
     <div className="container space-y-6 p-6">
@@ -14,7 +25,7 @@ export default async function PrintManagementPage() {
       </div>
 
       <div>
-        <PrintJobsTable printJobs={printJobs} mode="admin" />
+        <PrintJobsTable printJobs={printJobs} pagination={pagination} mode="admin" />
       </div>
     </div>
   );

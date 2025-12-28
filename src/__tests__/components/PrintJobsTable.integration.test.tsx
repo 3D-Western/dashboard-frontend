@@ -4,6 +4,22 @@ import userEvent from '@testing-library/user-event';
 import PrintJobsTable from '@/components/PrintJobsTable';
 import { createMockPrintJob } from '@/../test/utils/mockFactories';
 import { PrintJob } from '@/types/jobs';
+import { PaginationMetadata } from '@/types/common';
+
+// Helper to create mock pagination metadata
+function createMockPagination(jobs: PrintJob[], page = 1, pageSize = 10): PaginationMetadata {
+  const totalItems = jobs.length;
+  const totalPages = Math.ceil(totalItems / pageSize);
+  return {
+    page,
+    pageSize,
+    totalItems,
+    totalPages,
+    hasNext: page < totalPages,
+    hasPrevious: page > 1,
+    snapshotCreatedBefore: new Date().toISOString(),
+  };
+}
 
 describe('PrintJobsTable Integration', () => {
   let mockJobs: PrintJob[];
@@ -45,7 +61,8 @@ describe('PrintJobsTable Integration', () => {
 
   describe('table rendering', () => {
     it('displays all print jobs in table', () => {
-      render(<PrintJobsTable printJobs={mockJobs} />);
+      const pagination = createMockPagination(mockJobs);
+      render(<PrintJobsTable printJobs={mockJobs} pagination={pagination} />);
 
       expect(screen.getByText('Test Print 1')).toBeInTheDocument();
       expect(screen.getByText('Test Print 2')).toBeInTheDocument();
@@ -53,13 +70,15 @@ describe('PrintJobsTable Integration', () => {
     });
 
     it('shows empty state when no jobs', () => {
-      render(<PrintJobsTable printJobs={[]} />);
+      const pagination = createMockPagination([]);
+      render(<PrintJobsTable printJobs={[]} pagination={pagination} />);
 
       expect(screen.getByText('No results.')).toBeInTheDocument();
     });
 
     it('displays correct number of rows', () => {
-      render(<PrintJobsTable printJobs={mockJobs} />);
+      const pagination = createMockPagination(mockJobs);
+      render(<PrintJobsTable printJobs={mockJobs} pagination={pagination} />);
 
       const rows = screen.getAllByRole('row');
       // 1 header row + 3 data rows
@@ -70,7 +89,8 @@ describe('PrintJobsTable Integration', () => {
   describe('search functionality', () => {
     it('filters rows by name', async () => {
       const user = userEvent.setup();
-      render(<PrintJobsTable printJobs={mockJobs} />);
+      const pagination = createMockPagination(mockJobs);
+      render(<PrintJobsTable printJobs={mockJobs} pagination={pagination} />);
 
       const searchInput = screen.getByPlaceholderText('Search prints...');
       await user.type(searchInput, 'Test Print 1');
@@ -82,7 +102,8 @@ describe('PrintJobsTable Integration', () => {
 
     it('shows all jobs when search is cleared', async () => {
       const user = userEvent.setup();
-      render(<PrintJobsTable printJobs={mockJobs} />);
+      const pagination = createMockPagination(mockJobs);
+      render(<PrintJobsTable printJobs={mockJobs} pagination={pagination} />);
 
       const searchInput = screen.getByPlaceholderText('Search prints...');
       await user.type(searchInput, 'Test Print 1');
@@ -95,7 +116,8 @@ describe('PrintJobsTable Integration', () => {
 
     it('shows empty state when no matches found', async () => {
       const user = userEvent.setup();
-      render(<PrintJobsTable printJobs={mockJobs} />);
+      const pagination = createMockPagination(mockJobs);
+      render(<PrintJobsTable printJobs={mockJobs} pagination={pagination} />);
 
       const searchInput = screen.getByPlaceholderText('Search prints...');
       await user.type(searchInput, 'Nonexistent Job');
@@ -107,7 +129,8 @@ describe('PrintJobsTable Integration', () => {
   describe('row selection', () => {
     it('selects individual row when checkbox clicked', async () => {
       const user = userEvent.setup();
-      render(<PrintJobsTable printJobs={mockJobs} />);
+      const pagination = createMockPagination(mockJobs);
+      render(<PrintJobsTable printJobs={mockJobs} pagination={pagination} />);
 
       const checkbox = screen.getByLabelText('Select print job Test Print 1');
       await user.click(checkbox);
@@ -117,7 +140,8 @@ describe('PrintJobsTable Integration', () => {
 
     it('select all checkbox selects all visible rows', async () => {
       const user = userEvent.setup();
-      render(<PrintJobsTable printJobs={mockJobs} />);
+      const pagination = createMockPagination(mockJobs);
+      render(<PrintJobsTable printJobs={mockJobs} pagination={pagination} />);
 
       const selectAllCheckbox = screen.getByLabelText(/Select all print jobs on this page/i);
       await user.click(selectAllCheckbox);
@@ -133,7 +157,8 @@ describe('PrintJobsTable Integration', () => {
 
     it('deselect all checkbox deselects all rows', async () => {
       const user = userEvent.setup();
-      render(<PrintJobsTable printJobs={mockJobs} />);
+      const pagination = createMockPagination(mockJobs);
+      render(<PrintJobsTable printJobs={mockJobs} pagination={pagination} />);
 
       const selectAllCheckbox = screen.getByLabelText(/Select all print jobs on this page/i);
       await user.click(selectAllCheckbox);
@@ -147,7 +172,8 @@ describe('PrintJobsTable Integration', () => {
   describe('sorting', () => {
     it('allows sorting by print date', async () => {
       const user = userEvent.setup();
-      render(<PrintJobsTable printJobs={mockJobs} />);
+      const pagination = createMockPagination(mockJobs);
+      render(<PrintJobsTable printJobs={mockJobs} pagination={pagination} />);
 
       const sortButton = screen.getByLabelText(/Sort by print date/i);
       await user.click(sortButton);
@@ -160,7 +186,8 @@ describe('PrintJobsTable Integration', () => {
 
     it('toggles sort direction on repeated clicks', async () => {
       const user = userEvent.setup();
-      render(<PrintJobsTable printJobs={mockJobs} />);
+      const pagination = createMockPagination(mockJobs);
+      render(<PrintJobsTable printJobs={mockJobs} pagination={pagination} />);
 
       const sortButton = screen.getByLabelText(/Sort by print date/i);
       await user.click(sortButton); // First click - ascending
@@ -179,12 +206,13 @@ describe('PrintJobsTable Integration', () => {
         }),
       );
 
-      render(<PrintJobsTable printJobs={manyJobs} />);
+      const pagination = createMockPagination(manyJobs);
+      render(<PrintJobsTable printJobs={manyJobs} pagination={pagination} />);
 
-      // Default is 10 items per page
+      // With server-side pagination, we display all jobs passed in
       const rows = screen.getAllByRole('row');
-      // 1 header + 10 data rows
-      expect(rows).toHaveLength(11);
+      // 1 header + 25 data rows (all jobs)
+      expect(rows).toHaveLength(26);
     });
 
     it('navigates to next page', async () => {
@@ -196,7 +224,8 @@ describe('PrintJobsTable Integration', () => {
         }),
       );
 
-      render(<PrintJobsTable printJobs={manyJobs} />);
+      const pagination = createMockPagination(manyJobs);
+      render(<PrintJobsTable printJobs={manyJobs} pagination={pagination} />);
 
       const nextButton = screen.getByRole('button', { name: /go to next page/i });
       await user.click(nextButton);
@@ -208,7 +237,8 @@ describe('PrintJobsTable Integration', () => {
   describe('action menu', () => {
     it('opens action menu for each row', async () => {
       const user = userEvent.setup();
-      render(<PrintJobsTable printJobs={mockJobs} />);
+      const pagination = createMockPagination(mockJobs);
+      render(<PrintJobsTable printJobs={mockJobs} pagination={pagination} />);
 
       const actionButtons = screen.getAllByLabelText(/Actions for/i);
       await user.click(actionButtons[0]);
@@ -218,7 +248,8 @@ describe('PrintJobsTable Integration', () => {
 
     it('copies job ID to clipboard', async () => {
       const user = userEvent.setup();
-      render(<PrintJobsTable printJobs={mockJobs} />);
+      const pagination = createMockPagination(mockJobs);
+      render(<PrintJobsTable printJobs={mockJobs} pagination={pagination} />);
 
       const actionButtons = screen.getAllByLabelText(/Actions for/i);
       await user.click(actionButtons[0]);
@@ -231,7 +262,8 @@ describe('PrintJobsTable Integration', () => {
 
     it('shows cancel option for IN_QUEUE jobs', async () => {
       const user = userEvent.setup();
-      render(<PrintJobsTable printJobs={mockJobs} />);
+      const pagination = createMockPagination(mockJobs);
+      render(<PrintJobsTable printJobs={mockJobs} pagination={pagination} />);
 
       const actionButtons = screen.getAllByLabelText(/Actions for/i);
       await user.click(actionButtons[0]); // First job is IN_QUEUE
@@ -241,7 +273,8 @@ describe('PrintJobsTable Integration', () => {
 
     it('cancel action updates job status to CANCELLED', async () => {
       const user = userEvent.setup();
-      render(<PrintJobsTable printJobs={mockJobs} />);
+      const pagination = createMockPagination(mockJobs);
+      render(<PrintJobsTable printJobs={mockJobs} pagination={pagination} />);
 
       const actionButtons = screen.getAllByLabelText(/Actions for/i);
       await user.click(actionButtons[0]);
@@ -257,7 +290,8 @@ describe('PrintJobsTable Integration', () => {
     it('does not show cancel for non-IN_QUEUE jobs', async () => {
       const user = userEvent.setup();
       const printingJob = createMockPrintJob({ status: 'PRINTING' });
-      render(<PrintJobsTable printJobs={[printingJob]} />);
+      const pagination = createMockPagination([printingJob]);
+      render(<PrintJobsTable printJobs={[printingJob]} pagination={pagination} />);
 
       const actionButton = screen.getByLabelText(/Actions for/i);
       await user.click(actionButton);
@@ -279,14 +313,16 @@ describe('PrintJobsTable Integration', () => {
         }),
       ];
 
-      render(<PrintJobsTable printJobs={adminJobs} mode="admin" />);
+      const pagination = createMockPagination(adminJobs);
+      render(<PrintJobsTable printJobs={adminJobs} pagination={pagination} mode="admin" />);
 
       expect(screen.getByText('Student')).toBeInTheDocument();
       expect(screen.getByText('John Doe')).toBeInTheDocument();
     });
 
     it('does not show student column in user mode', () => {
-      render(<PrintJobsTable printJobs={mockJobs} mode="user" />);
+      const pagination = createMockPagination(mockJobs);
+      render(<PrintJobsTable printJobs={mockJobs} pagination={pagination} mode="user" />);
 
       expect(screen.queryByText('Student')).not.toBeInTheDocument();
     });

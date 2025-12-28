@@ -1,6 +1,7 @@
 import { User } from '@/types/user';
 import { PrintJob } from '@/types/jobs';
 import { FileUploadResult, FileMetadata, FileList } from '@/types/file';
+import { PaginatedResponse } from '@/types/common';
 
 export interface ApiResponseError {
   code: string;
@@ -22,12 +23,15 @@ export interface ApiLoginResponse {
   sessionToken: string;
 }
 
-export interface ApiGetAllActivePrintJobsResponse {
-  jobs: PrintJob[];
-}
+// Print Jobs API Response Types
+export type PrintJobListResponse = PaginatedResponse<PrintJob>;
+export type PrintJobResponse = PrintJob;
 
 // File API Response Types
 export type FileUploadResponse = FileUploadResult;
 export type FileMetadataResponse = FileMetadata;
 export type FileListResponse = FileList;
 export type FileDeleteResponse = null;
+
+// Users API Response Types
+export type UserListResponse = PaginatedResponse<User>;

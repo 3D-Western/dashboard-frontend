@@ -13,7 +13,6 @@ export default async function ProtectedLayout({ children }: { children: React.Re
   const currentUser = await validateSession();
 
   if (!currentUser) {
-    // TODO: redirect to login page
     redirect('/login?error=unauthenticated');
   }
 

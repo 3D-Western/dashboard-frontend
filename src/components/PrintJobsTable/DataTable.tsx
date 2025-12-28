@@ -20,13 +20,11 @@ import {
 import {
   ColumnDef,
   ColumnFiltersState,
-  PaginationState,
   SortingState,
   VisibilityState,
   flexRender,
   getCoreRowModel,
   getFilteredRowModel,
-  getPaginationRowModel,
   getSortedRowModel,
   useReactTable,
 } from '@tanstack/react-table';
@@ -35,10 +33,12 @@ import { useEffect, useState } from 'react';
 import { DataTablePagination } from '../DataTablePagination';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
+import { PaginationMetadata } from '@/types/common';
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
   data: TData[];
+  pagination: PaginationMetadata;
   className?: string;
 }
 
@@ -50,15 +50,15 @@ const columnLabels: Record<string, string> = {
   stlFile: 'STL File',
 };
 
-export function DataTable<TData, TValue>({ columns, data }: DataTableProps<TData, TValue>) {
+export function DataTable<TData, TValue>({
+  columns,
+  data,
+  pagination,
+}: DataTableProps<TData, TValue>) {
   'use no memo';
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [rowSelection, setRowSelection] = useState({});
-  const [pagination, setPagination] = useState<PaginationState>({
-    pageIndex: 0,
-    pageSize: 10,
-  });
   const [announcement, setAnnouncement] = useState('');
 
   // Initialize column visibility with mobile defaults
@@ -97,10 +97,10 @@ export function DataTable<TData, TValue>({ columns, data }: DataTableProps<TData
     onColumnFiltersChange: setColumnFilters,
     getFilteredRowModel: getFilteredRowModel(),
     onRowSelectionChange: setRowSelection,
-    getPaginationRowModel: getPaginationRowModel(),
-    onPaginationChange: setPagination,
     onColumnVisibilityChange: setColumnVisibility,
-    state: { sorting, columnFilters, rowSelection, pagination, columnVisibility },
+    state: { sorting, columnFilters, rowSelection, columnVisibility },
+    // Disable client-side pagination - using server-side pagination
+    manualPagination: true,
   });
 
   // Announce filtered results for screen readers
@@ -153,7 +153,7 @@ export function DataTable<TData, TValue>({ columns, data }: DataTableProps<TData
               View
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-[150px]">
+          <DropdownMenuContent align="end" className="w-37.5">
             <DropdownMenuLabel>Toggle columns</DropdownMenuLabel>
             <DropdownMenuSeparator />
             {table
@@ -221,7 +221,7 @@ export function DataTable<TData, TValue>({ columns, data }: DataTableProps<TData
         </Table>
       </div>
 
-      <DataTablePagination table={table} />
+      <DataTablePagination table={table} pagination={pagination} />
     </div>
   );
 }
