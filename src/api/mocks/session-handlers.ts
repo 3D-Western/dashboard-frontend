@@ -11,19 +11,8 @@ import { ErrorCodes } from '../client/errors';
 const apiUrl = process.env.API_URL;
 
 export const sessionHandlers = [
-  http.get(`${apiUrl}${endpoints.session.current}`, ({ cookies }) => {
-    // TODO: finalize the cookie name for the session id
-    // Assuming the session ID is stored in a cookie named 'session'. But for now this will always be valid
-    const sessionId = cookies['sessionToken'] || '';
-
-    const user = db.validateSession(sessionId);
-    if (!user) {
-      return createInvalidSessionResponse();
-    }
-
-    return HttpResponse.json(generateSuccessResponse({ user: user }));
-  }),
-  http.post(`${apiUrl}${endpoints.session.login}`, async ({ request }) => {
+  // Auth endpoints (matching backend structure)
+  http.post(`${apiUrl}${endpoints.auth.login}`, async ({ request }) => {
     console.log('Login request received');
     const { studentId, password } = (await request.json()) as {
       studentId: number;
@@ -40,18 +29,34 @@ export const sessionHandlers = [
       );
     }
 
-    const sessionToken = db.createSession(user.id);
-    return HttpResponse.json(generateSuccessResponse({ sessionToken: sessionToken }), {
-      headers: {
-        'Content-Type': 'application/json',
-        'Set-Cookie': `sessionToken=${sessionToken}; path=/; max-age=${
-          60 * 60 * 24 * 7
-        }; SameSite=Strict`,
-        'Access-Control-Allow-Credentials': 'true',
+    // Mock MFA flow - return mfaToken instead of sessionToken
+    const mfaToken = 'mock-mfa-token-' + Date.now();
+    const challengeId = 123;
+
+    console.log('\n🔐 ========================================');
+    console.log('📧 MSW: OTP Email Sent (Mock)');
+    console.log('========================================');
+    console.log('📝 OTP Code: 123456');
+    console.log('🆔 Challenge ID:', challengeId);
+    console.log('========================================\n');
+
+    return HttpResponse.json(
+      generateSuccessResponse({
+        mfaToken: mfaToken,
+        requiresMfa: true,
+        challengeId: challengeId,
+      }),
+      {
+        headers: {
+          'Content-Type': 'application/json',
+          'Set-Cookie': `mfaToken=${mfaToken}; path=/; max-age=${15 * 60}; HttpOnly; SameSite=Strict`,
+          'Access-Control-Allow-Credentials': 'true',
+        },
       },
-    });
+    );
   }),
-  http.post(`${apiUrl}${endpoints.session.logout}`, ({ cookies }) => {
+
+  http.post(`${apiUrl}${endpoints.auth.logout}`, ({ cookies }) => {
     const sessionId = cookies['sessionToken'] || '';
     const user = db.validateSession(sessionId);
     if (!user) {
@@ -60,5 +65,17 @@ export const sessionHandlers = [
 
     db.userLogout(sessionId);
     return HttpResponse.json(generateSuccessResponse({}));
+  }),
+
+  // Session endpoints
+  http.get(`${apiUrl}${endpoints.session.current}`, ({ cookies }) => {
+    const sessionId = cookies['sessionToken'] || '';
+
+    const user = db.validateSession(sessionId);
+    if (!user) {
+      return createInvalidSessionResponse();
+    }
+
+    return HttpResponse.json(generateSuccessResponse({ user: user }));
   }),
 ];

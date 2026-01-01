@@ -6,7 +6,7 @@ import { http, HttpResponse } from 'msw';
 import { mockServer } from '@/api/mocks';
 import { endpoints } from '@/api/client/endpoints';
 import { toast } from 'sonner';
-import { LoginForm } from '@/app/login/login-form';
+import { LoginForm } from '@/app/(auth)/login/login-form';
 
 // Mock Next.js router
 const mockPush = vi.fn();
@@ -201,7 +201,7 @@ describe('LoginForm Integration', () => {
       const user = userEvent.setup();
 
       mockServer.use(
-        http.post('*' + endpoints.session.login, () => {
+        http.post('*' + endpoints.auth.login, () => {
           return HttpResponse.error();
         }),
       );
@@ -224,7 +224,7 @@ describe('LoginForm Integration', () => {
 
       // Delay the response to keep loading state visible
       mockServer.use(
-        http.post('*' + endpoints.session.login, async () => {
+        http.post('*' + endpoints.auth.login, async () => {
           await new Promise((resolve) => setTimeout(resolve, 100));
           return HttpResponse.json({
             success: true,
@@ -257,7 +257,7 @@ describe('LoginForm Integration', () => {
 
       // Delay the response to keep loading state visible
       mockServer.use(
-        http.post('*' + endpoints.session.login, async () => {
+        http.post('*' + endpoints.auth.login, async () => {
           await new Promise((resolve) => setTimeout(resolve, 100));
           return HttpResponse.json({
             success: true,

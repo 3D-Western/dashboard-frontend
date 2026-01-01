@@ -4,6 +4,7 @@ import { sessionHandlers } from './session-handlers';
 import { passwordResetHandlers } from './password-reset-handlers';
 import { fileHandlers } from './file-handlers';
 import { userHandlers } from './user-handlers';
+import { mfaHandlers } from './mfa-handlers';
 import { FileSystemUtils } from './utils/fileSystem';
 
 // Initialize tmp/ directory when server module loads
@@ -15,4 +16,5 @@ export const mockServer = setupServer(
   ...orderHandlers,
   ...passwordResetHandlers,
   ...fileHandlers,
+  ...mfaHandlers,
 );

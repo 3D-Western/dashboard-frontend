@@ -1,8 +1,12 @@
 export const endpoints = {
+  auth: {
+    login: '/api/v1/auth/login',
+    logout: '/api/v1/auth/logout',
+    refresh: '/api/v1/auth/refresh',
+    signup: '/api/v1/auth/signup',
+  },
   session: {
     current: '/api/v1/session/current',
-    login: '/api/v1/session/login',
-    logout: '/api/v1/session/logout',
   },
   passwordReset: {
     request: '/api/v1/password-reset/request',
@@ -25,5 +29,9 @@ export const endpoints = {
     byId: (fileId: string) => `/api/v1/files/${fileId}`,
     delete: (fileId: string) => `/api/v1/files/${fileId}`,
     download: (fileId: string) => `/api/v1/files/${fileId}/download`,
+  },
+  mfa: {
+    verifyEmail: '/api/v1/mfa/email/verify',
+    resendEmail: (challengeId: number) => `/api/v1/mfa/email/challenge/${challengeId}/resend`,
   },
 };

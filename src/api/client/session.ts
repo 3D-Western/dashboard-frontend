@@ -35,7 +35,7 @@ export const sessionApi = {
   login: async (studentId: number, password: string, options?: RequestInit) => {
     const serverUrl = getBaseUrl();
 
-    return apiRequest<ApiLoginResponse>(`${serverUrl}${endpoints.session.login}`, {
+    return apiRequest<ApiLoginResponse>(`${serverUrl}${endpoints.auth.login}`, {
       method: 'POST',
       body: JSON.stringify({ studentId, password }),
       ...options,
@@ -43,7 +43,7 @@ export const sessionApi = {
   },
   logout: async (options?: RequestInit) => {
     const serverUrl = getBaseUrl();
-    return apiRequest<void>(`${serverUrl}${endpoints.session.logout}`, {
+    return apiRequest<void>(`${serverUrl}${endpoints.auth.logout}`, {
       method: 'POST',
       credentials: 'include',
       ...options,

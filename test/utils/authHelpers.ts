@@ -75,7 +75,7 @@ export function mockUnauthenticatedSession(): void {
  */
 export function mockSuccessfulLogin(user: User = createMockUser()): User {
   mockServer.use(
-    http.post(`*${endpoints.session.login}`, () => {
+    http.post(`*${endpoints.auth.login}`, () => {
       return HttpResponse.json(
         {
           success: true,
@@ -112,7 +112,7 @@ export function mockSuccessfulLogin(user: User = createMockUser()): User {
  */
 export function mockFailedLogin(): void {
   mockServer.use(
-    http.post(`*${endpoints.session.login}`, () => {
+    http.post(`*${endpoints.auth.login}`, () => {
       return HttpResponse.json(
         {
           success: false,
@@ -142,7 +142,7 @@ export function mockFailedLogin(): void {
  */
 export function mockSuccessfulLogout(): void {
   mockServer.use(
-    http.post(`*${endpoints.session.logout}`, () => {
+    http.post(`*${endpoints.auth.logout}`, () => {
       return HttpResponse.json(
         {
           success: true,
