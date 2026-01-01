@@ -2,37 +2,53 @@ import { http, HttpResponse } from 'msw';
 import { generateErrorResponse, generateSuccessResponse } from './utils';
 import { endpoints } from '../client/endpoints';
 import { ErrorCodes } from '../client/errors';
+import db from './database/db';
 
 const apiUrl = process.env.API_URL;
 
 const VALID_OTP_CODE = '123456';
-const MOCK_SESSION_TOKEN = '550e8400-e29b-41d4-a716-446655440000';
 const MOCK_CHALLENGE_ID = 123;
 
 export const mfaHandlers = [
   http.post(`${apiUrl}${endpoints.mfa.verifyEmail}`, async ({ request }) => {
-    const { challengeId: _challengeId, code } = (await request.json()) as {
+    const { challengeId, code } = (await request.json()) as {
       challengeId: number;
       code: string;
     };
 
-    console.log('MSW MFA: Verifying OTP code:', code, '- Valid:', code === VALID_OTP_CODE);
+    // Validate the MFA challenge exists
+    const userId = db.validateMfaChallenge(challengeId);
+    if (!userId) {
+      return HttpResponse.json(
+        generateErrorResponse({
+          code: ErrorCodes.INVALID_OTP,
+          message: 'Invalid or expired MFA challenge',
+        }),
+        { status: 401 },
+      );
+    }
 
     // Accept only "123456" as valid OTP code
     if (code === VALID_OTP_CODE) {
+      // Create a session in the database
+      const sessionToken = db.createSession(userId);
+
+      // Complete the MFA challenge (remove it from storage)
+      db.completeMfaChallenge(challengeId);
+
+      // Create headers and set multiple cookies using append
+      const headers = new Headers();
+      headers.set('Content-Type', 'application/json');
+      headers.set('Access-Control-Allow-Credentials', 'true');
+      headers.append('Set-Cookie', `sessionToken=${sessionToken}; Path=/; Max-Age=${60 * 60 * 24 * 7}; SameSite=Lax`);
+      headers.append('Set-Cookie', `mfaToken=; Path=/; Max-Age=0; SameSite=Lax`);
+
       return HttpResponse.json(
         generateSuccessResponse({
-          sessionToken: MOCK_SESSION_TOKEN,
+          sessionToken: sessionToken,
         }),
         {
-          headers: {
-            'Content-Type': 'application/json',
-            'Set-Cookie': [
-              `sessionToken=${MOCK_SESSION_TOKEN}; path=/; max-age=${60 * 60 * 24 * 7}; HttpOnly; SameSite=Strict`,
-              `mfaToken=; path=/; max-age=0; HttpOnly; SameSite=Strict`,
-            ].join(', '),
-            'Access-Control-Allow-Credentials': 'true',
-          },
+          headers: headers,
         },
       );
     }

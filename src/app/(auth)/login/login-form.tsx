@@ -56,14 +56,22 @@ export function LoginForm({ className, ...props }: React.ComponentProps<'div'>) 
       const studentIdNumber = parseInt(values.studentId, 10);
       const response = await sessionApi.login(studentIdNumber, values.password);
 
-      console.log('Login response:', response);
+      // Check if MFA is required
+      if (response.requiresMfa && response.challengeId) {
+        // Store MFA data for the MFA page
+        sessionStorage.setItem('mfaChallengeId', response.challengeId.toString());
 
-      toast.success('Login successful! Redirecting...');
+        toast.success('Login successful! Please verify with MFA.');
 
-      // Redirect to dashboard homepage
-      router.push(Routes.dashboard);
+        // Redirect to MFA page
+        router.push(Routes.mfa);
+      } else {
+        toast.success('Login successful! Redirecting...');
+
+        // Redirect to dashboard homepage
+        router.push(Routes.dashboard);
+      }
     } catch (error) {
-      console.error('Login error:', error);
       toast.error('Invalid credentials. Please check your Student ID and password.');
     } finally {
       setIsLoading(false);

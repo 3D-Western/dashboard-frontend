@@ -13,7 +13,6 @@ const apiUrl = process.env.API_URL;
 export const sessionHandlers = [
   // Auth endpoints (matching backend structure)
   http.post(`${apiUrl}${endpoints.auth.login}`, async ({ request }) => {
-    console.log('Login request received');
     const { studentId, password } = (await request.json()) as {
       studentId: number;
       password: string;
@@ -33,12 +32,22 @@ export const sessionHandlers = [
     const mfaToken = 'mock-mfa-token-' + Date.now();
     const challengeId = 123;
 
+    // Store the MFA challenge in the database
+    db.createMfaChallenge(challengeId, user.id);
+
     console.log('\n🔐 ========================================');
     console.log('📧 MSW: OTP Email Sent (Mock)');
     console.log('========================================');
     console.log('📝 OTP Code: 123456');
     console.log('🆔 Challenge ID:', challengeId);
+    console.log('👤 User ID:', user.id);
     console.log('========================================\n');
+
+    // Create headers and set mfaToken cookie
+    const headers = new Headers();
+    headers.set('Content-Type', 'application/json');
+    headers.set('Access-Control-Allow-Credentials', 'true');
+    headers.append('Set-Cookie', `mfaToken=${mfaToken}; Path=/; Max-Age=${15 * 60}; SameSite=Lax`);
 
     return HttpResponse.json(
       generateSuccessResponse({
@@ -47,11 +56,7 @@ export const sessionHandlers = [
         challengeId: challengeId,
       }),
       {
-        headers: {
-          'Content-Type': 'application/json',
-          'Set-Cookie': `mfaToken=${mfaToken}; path=/; max-age=${15 * 60}; HttpOnly; SameSite=Strict`,
-          'Access-Control-Allow-Credentials': 'true',
-        },
+        headers: headers,
       },
     );
   }),
@@ -70,8 +75,8 @@ export const sessionHandlers = [
   // Session endpoints
   http.get(`${apiUrl}${endpoints.session.current}`, ({ cookies }) => {
     const sessionId = cookies['sessionToken'] || '';
-
     const user = db.validateSession(sessionId);
+
     if (!user) {
       return createInvalidSessionResponse();
     }

@@ -1,4 +1,8 @@
-import { ApiGetCurrentSessionResponse, ApiLoginResponse } from '../types';
+import {
+  ApiGetCurrentSessionResponse,
+  ApiLoginResponse,
+  ApiVerifyMfaResponse,
+} from '../types';
 import { apiRequest } from './base';
 import { endpoints } from './endpoints';
 import { getBaseUrl } from './utils';
@@ -10,8 +14,17 @@ export const sessionApi = {
    * Note: This API call suppresses SESSION_INVALID errors since that's an expected state
    * when checking if a user is logged in. Other errors are still thrown.
    */
-  current: async (options?: RequestInit) => {
+  current: async (options?: RequestInit & { cookieHeader?: string }) => {
     const serverUrl = getBaseUrl();
+
+    // Extract custom cookieHeader option if provided
+    const { cookieHeader, ...requestOptions } = options || {};
+
+    // Build headers - include Cookie header for server-side requests
+    const headers: HeadersInit = { ...requestOptions.headers };
+    if (cookieHeader) {
+      (headers as Record<string, string>)['Cookie'] = cookieHeader;
+    }
 
     try {
       return await apiRequest<ApiGetCurrentSessionResponse>(
@@ -19,7 +32,8 @@ export const sessionApi = {
         {
           method: 'GET',
           credentials: 'include',
-          ...options,
+          ...requestOptions,
+          headers,
         },
       );
     } catch (error) {
@@ -38,6 +52,7 @@ export const sessionApi = {
     return apiRequest<ApiLoginResponse>(`${serverUrl}${endpoints.auth.login}`, {
       method: 'POST',
       body: JSON.stringify({ studentId, password }),
+      credentials: 'include',
       ...options,
     });
   },
@@ -45,6 +60,16 @@ export const sessionApi = {
     const serverUrl = getBaseUrl();
     return apiRequest<void>(`${serverUrl}${endpoints.auth.logout}`, {
       method: 'POST',
+      credentials: 'include',
+      ...options,
+    });
+  },
+  verifyMfa: async (challengeId: number, code: string, options?: RequestInit) => {
+    const serverUrl = getBaseUrl();
+
+    return apiRequest<ApiVerifyMfaResponse>(`${serverUrl}${endpoints.mfa.verifyEmail}`, {
+      method: 'POST',
+      body: JSON.stringify({ challengeId, code }),
       credentials: 'include',
       ...options,
     });

@@ -7,6 +7,7 @@ class Database {
   // In-memory storage for users
   private users: Map<number, User> = new Map();
   private sessions: Map<string, number> = new Map(); // sessionId to userId
+  private mfaChallenges: Map<number, number> = new Map(); // challengeId to userId
   private activePrintJobsUserMap: Map<number, PrintJob[]> = new Map(); // userId to PrintJobs
   private activePrintJobsIDMap: Map<string, PrintJob> = new Map(); // printJobId to PrintJob
   private files: Map<string, FileMetadata> = new Map(); // fileId to FileMetadata
@@ -65,6 +66,18 @@ class Database {
 
   public userLogout(sessionId: string) {
     this.sessions.delete(sessionId);
+  }
+
+  public createMfaChallenge(challengeId: number, userId: number): void {
+    this.mfaChallenges.set(challengeId, userId);
+  }
+
+  public validateMfaChallenge(challengeId: number): number | null {
+    return this.mfaChallenges.get(challengeId) || null;
+  }
+
+  public completeMfaChallenge(challengeId: number): void {
+    this.mfaChallenges.delete(challengeId);
   }
 
   public getPrintJobsByUserId(userId: number): PrintJob[] {

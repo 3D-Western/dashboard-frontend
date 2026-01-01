@@ -20,7 +20,8 @@ import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
 import { Routes } from '@/lib/routes';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { sessionApi } from '@/api/client/session';
 
 const formSchema = z.object({
   otp: z.string().min(6, 'Please enter the complete OTP code').max(6),
@@ -29,6 +30,7 @@ const formSchema = z.object({
 export function MFAForm({ className, ...props }: React.ComponentProps<'div'>) {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
+  const [challengeId, setChallengeId] = useState<number | null>(null);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -37,20 +39,40 @@ export function MFAForm({ className, ...props }: React.ComponentProps<'div'>) {
     },
   });
 
+  // Check for MFA challenge ID on component mount
+  useEffect(() => {
+    const storedChallengeId = sessionStorage.getItem('mfaChallengeId');
+    if (!storedChallengeId) {
+      toast.error('No MFA challenge found. Please log in again.');
+      router.push(Routes.login);
+      return;
+    }
+    setChallengeId(parseInt(storedChallengeId, 10));
+  }, [router]);
+
   async function onSubmit(values: z.infer<typeof formSchema>) {
+    if (!challengeId) {
+      toast.error('No MFA challenge found. Please log in again.');
+      router.push(Routes.login);
+      return;
+    }
+
     setIsLoading(true);
     try {
-      // TODO: Add API call to verify OTP
-      console.log('OTP verification:', values.otp);
+      // Call API to verify OTP
+      await sessionApi.verifyMfa(challengeId, values.otp);
+
+      // Clear MFA challenge ID from sessionStorage
+      sessionStorage.removeItem('mfaChallengeId');
 
       toast.success('OTP verified successfully! Redirecting...');
 
-      // Redirect to dashboard homepage
+      // Force router to refresh server-side data and navigate
+      // This ensures the session cookie is validated by the protected layout
+      router.refresh();
       router.push(Routes.dashboard);
     } catch (error) {
-      console.error('OTP verification error:', error);
       toast.error('Invalid OTP code. Please try again.');
-    } finally {
       setIsLoading(false);
     }
   }

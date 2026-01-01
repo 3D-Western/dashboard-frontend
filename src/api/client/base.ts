@@ -50,6 +50,7 @@ export async function apiRequest<T>(
   const response = await fetch(url, {
     ...options,
     headers: headersObj,
+    credentials: 'include', // Important: Always send cookies with requests
   });
 
   // Handle 204 No Content (common for DELETE operations)
