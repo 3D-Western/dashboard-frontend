@@ -16,7 +16,7 @@ import {
 import { InputOTP, InputOTPGroup, InputOTPSlot } from '@/components/ui/input-otp';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useForm } from 'react-hook-form';
+import { useForm, useWatch } from 'react-hook-form';
 import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
 import { Routes } from '@/lib/routes';
@@ -30,7 +30,13 @@ const formSchema = z.object({
 export function MFAForm({ className, ...props }: React.ComponentProps<'div'>) {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
-  const [challengeId, setChallengeId] = useState<number | null>(null);
+  const [challengeId] = useState<number | null>(() => {
+    const storedChallengeId = sessionStorage.getItem('mfaChallengeId');
+    if (!storedChallengeId) {
+      return null;
+    }
+    return parseInt(storedChallengeId, 10);
+  });
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -39,16 +45,19 @@ export function MFAForm({ className, ...props }: React.ComponentProps<'div'>) {
     },
   });
 
+  const otpValue = useWatch({
+    control: form.control,
+    name: 'otp',
+    defaultValue: '',
+  });
+
   // Check for MFA challenge ID on component mount
   useEffect(() => {
-    const storedChallengeId = sessionStorage.getItem('mfaChallengeId');
-    if (!storedChallengeId) {
+    if (!challengeId) {
       toast.error('No MFA challenge found. Please log in again.');
       router.push(Routes.login);
-      return;
     }
-    setChallengeId(parseInt(storedChallengeId, 10));
-  }, [router]);
+  }, [challengeId, router]);
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     if (!challengeId) {
@@ -71,7 +80,7 @@ export function MFAForm({ className, ...props }: React.ComponentProps<'div'>) {
       // This ensures the session cookie is validated by the protected layout
       router.refresh();
       router.push(Routes.dashboard);
-    } catch (error) {
+    } catch (_error) {
       toast.error('Invalid OTP code. Please try again.');
       setIsLoading(false);
     }
@@ -117,7 +126,7 @@ export function MFAForm({ className, ...props }: React.ComponentProps<'div'>) {
                   )}
                 />
 
-                <Button type="submit" disabled={isLoading || form.watch('otp').length !== 6}>
+                <Button type="submit" disabled={isLoading || otpValue.length !== 6}>
                   {isLoading ? 'Verifying...' : 'Verify'}
                 </Button>
 

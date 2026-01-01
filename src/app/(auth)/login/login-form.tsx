@@ -71,7 +71,7 @@ export function LoginForm({ className, ...props }: React.ComponentProps<'div'>) 
         // Redirect to dashboard homepage
         router.push(Routes.dashboard);
       }
-    } catch (error) {
+    } catch (_error) {
       toast.error('Invalid credentials. Please check your Student ID and password.');
     } finally {
       setIsLoading(false);
