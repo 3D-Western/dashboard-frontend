@@ -47,6 +47,19 @@ export async function apiRequest<T>(
     headersObj.set('Content-Type', 'application/json');
   }
 
+  // For server-side requests, manually forward cookies from Next.js headers
+  // This is necessary because credentials: 'include' doesn't work for cross-origin
+  // server-side requests in Next.js
+  if (typeof window === 'undefined' && !headersObj.has('Cookie')) {
+    const { cookies } = await import('next/headers');
+    const cookieStore = await cookies();
+    const sessionToken = cookieStore.get('sessionToken');
+
+    if (sessionToken) {
+      headersObj.set('Cookie', `sessionToken=${sessionToken.value}`);
+    }
+  }
+
   const response = await fetch(url, {
     ...options,
     headers: headersObj,
