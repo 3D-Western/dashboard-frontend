@@ -54,9 +54,19 @@ export async function apiRequest<T>(
     const { cookies } = await import('next/headers');
     const cookieStore = await cookies();
     const sessionToken = cookieStore.get('sessionToken');
+    const mfaToken = cookieStore.get('mfaToken');
 
+    // Build cookie header with all available auth cookies
+    const cookiePairs: string[] = [];
     if (sessionToken) {
-      headersObj.set('Cookie', `sessionToken=${sessionToken.value}`);
+      cookiePairs.push(`sessionToken=${sessionToken.value}`);
+    }
+    if (mfaToken) {
+      cookiePairs.push(`mfaToken=${mfaToken.value}`);
+    }
+
+    if (cookiePairs.length > 0) {
+      headersObj.set('Cookie', cookiePairs.join('; '));
     }
   }
 

@@ -2,7 +2,7 @@ import { User } from '../database/types';
 
 export const mockUsers: User[] = [
   {
-    id: 251000000,
+    studentId: 251000000,
     lastName: 'Doe',
     firstName: 'John',
     email: 'john.doe@example.com',
@@ -14,7 +14,7 @@ export const mockUsers: User[] = [
     experienceLevel: 'advanced',
   },
   {
-    id: 251000001,
+    studentId: 251000001,
     lastName: 'Smith',
     firstName: 'Jane',
     email: 'jane.smith@example.com',

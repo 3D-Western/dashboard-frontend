@@ -10,7 +10,7 @@ import { ErrorCodes } from './errors';
 
 export const sessionApi = {
   /**
-   * Get current authenticated session
+   * Get current authenticated user
    * Note: This API call suppresses SESSION_INVALID errors since that's an expected state
    * when checking if a user is logged in. Other errors are still thrown.
    */
@@ -28,7 +28,7 @@ export const sessionApi = {
 
     try {
       return await apiRequest<ApiGetCurrentSessionResponse>(
-        `${serverUrl}${endpoints.session.current}`,
+        `${serverUrl}${endpoints.users.me}`,
         {
           method: 'GET',
           credentials: 'include',

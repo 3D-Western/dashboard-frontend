@@ -14,6 +14,7 @@ export const endpoints = {
     complete: '/api/v1/password-reset/complete',
   },
   users: {
+    me: '/api/v1/users/me',
     list: '/api/v1/users',
     byId: (userId: number) => `/api/v1/users/${userId}`,
   },

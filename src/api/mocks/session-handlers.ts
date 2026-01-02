@@ -33,14 +33,14 @@ export const sessionHandlers = [
     const challengeId = 123;
 
     // Store the MFA challenge in the database
-    db.createMfaChallenge(challengeId, user.id);
+    db.createMfaChallenge(challengeId, user.studentId);
 
     console.log('\n🔐 ========================================');
     console.log('📧 MSW: OTP Email Sent (Mock)');
     console.log('========================================');
     console.log('📝 OTP Code: 123456');
     console.log('🆔 Challenge ID:', challengeId);
-    console.log('👤 User ID:', user.id);
+    console.log('👤 User ID:', user.studentId);
     console.log('========================================\n');
 
     // Create headers and set mfaToken cookie
@@ -72,8 +72,8 @@ export const sessionHandlers = [
     return HttpResponse.json(generateSuccessResponse({}));
   }),
 
-  // Session endpoints
-  http.get(`${apiUrl}${endpoints.session.current}`, ({ cookies }) => {
+  // Users endpoints
+  http.get(`${apiUrl}${endpoints.users.me}`, ({ cookies }) => {
     const sessionId = cookies['sessionToken'] || '';
     const user = db.validateSession(sessionId);
 

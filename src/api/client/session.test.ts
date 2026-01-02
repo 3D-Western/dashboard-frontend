@@ -19,7 +19,7 @@ describe('sessionApi', () => {
       });
 
       mockServer.use(
-        http.get('*' + endpoints.session.current, () => {
+        http.get('*' + endpoints.users.me, () => {
           return HttpResponse.json({
             success: true,
             data: { user: mockUser },
@@ -34,7 +34,7 @@ describe('sessionApi', () => {
 
     it('suppresses SESSION_INVALID error and returns {user: null}', async () => {
       mockServer.use(
-        http.get('*' + endpoints.session.current, () => {
+        http.get('*' + endpoints.users.me, () => {
           return HttpResponse.json(
             {
               success: false,
@@ -55,7 +55,7 @@ describe('sessionApi', () => {
 
     it('throws error for non-SESSION_INVALID errors', async () => {
       mockServer.use(
-        http.get('*' + endpoints.session.current, () => {
+        http.get('*' + endpoints.users.me, () => {
           return HttpResponse.json(
             {
               success: false,
@@ -76,7 +76,7 @@ describe('sessionApi', () => {
       let requestCredentials: RequestCredentials | undefined;
 
       mockServer.use(
-        http.get('*' + endpoints.session.current, ({ request }) => {
+        http.get('*' + endpoints.users.me, ({ request }) => {
           requestCredentials = request.credentials;
           return HttpResponse.json({
             success: true,
@@ -92,7 +92,7 @@ describe('sessionApi', () => {
 
     it('handles network errors gracefully', async () => {
       mockServer.use(
-        http.get('*' + endpoints.session.current, () => {
+        http.get('*' + endpoints.users.me, () => {
           return HttpResponse.error();
         }),
       );

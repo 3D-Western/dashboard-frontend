@@ -68,7 +68,16 @@ async function proxyRequest(
       // Split multiple Set-Cookie headers if they were concatenated
       const cookies = value.split(',').filter(c => c.trim());
       cookies.forEach(cookie => {
-        nextResponse.headers.append('Set-Cookie', cookie.trim());
+        // Rewrite Path attribute to root (/) so cookies are accessible across all frontend routes
+        // Backend might set Path=/api but we need cookies available at /dashboard, /login, etc.
+        const rewrittenCookie = cookie.trim().replace(/;\s*Path=[^;]*/i, '; Path=/');
+
+        // If no Path was specified, add Path=/
+        if (!rewrittenCookie.toLowerCase().includes('path=')) {
+          nextResponse.headers.append('Set-Cookie', `${rewrittenCookie}; Path=/`);
+        } else {
+          nextResponse.headers.append('Set-Cookie', rewrittenCookie);
+        }
       });
     } else {
       nextResponse.headers.set(key, value);

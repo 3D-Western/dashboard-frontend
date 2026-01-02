@@ -24,15 +24,15 @@ class Database {
   private loadInitialData() {
     // Load some initial mock users
     mockUsers.forEach((user) => {
-      this.users.set(user.id, user);
+      this.users.set(user.studentId, user);
     });
 
     // Load some initial mock print jobs
     this.users.forEach((user) => {
       const userJobs: PrintJob[] = [];
-      this.activePrintJobsUserMap.set(user.id, userJobs);
+      this.activePrintJobsUserMap.set(user.studentId, userJobs);
       mockPrintJobs.forEach((job) => {
-        const userJob = { ...job, studentId: user.id, id: `${user.id}-${job.id}` };
+        const userJob = { ...job, studentId: user.studentId, id: `${user.studentId}-${job.id}` };
         userJobs.push(userJob);
         this.activePrintJobsIDMap.set(userJob.id, userJob);
       });

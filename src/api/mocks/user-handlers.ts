@@ -56,7 +56,7 @@ export const userHandlers = [
           u.firstName.toLowerCase().includes(lowerSearch) ||
           u.lastName.toLowerCase().includes(lowerSearch) ||
           u.email.toLowerCase().includes(lowerSearch) ||
-          u.id.toString().includes(searchTerm),
+          u.studentId.toString().includes(searchTerm),
       );
     }
 
@@ -77,7 +77,7 @@ export const userHandlers = [
 
     // Map to API response format
     const userList = users.map((u) => ({
-      studentId: u.id,
+      studentId: u.studentId,
       email: u.email,
       firstName: u.firstName,
       lastName: u.lastName,
@@ -150,7 +150,7 @@ export const userHandlers = [
 
     return HttpResponse.json(
       generateSuccessResponse({
-        studentId: targetUser.id,
+        studentId: targetUser.studentId,
         email: targetUser.email,
         firstName: targetUser.firstName,
         lastName: targetUser.lastName,

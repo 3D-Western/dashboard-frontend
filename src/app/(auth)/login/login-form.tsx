@@ -61,13 +61,11 @@ export function LoginForm({ className, ...props }: React.ComponentProps<'div'>) 
         // Store MFA data for the MFA page
         sessionStorage.setItem('mfaChallengeId', response.challengeId.toString());
 
-        toast.success('Login successful! Please verify with MFA.');
-
         // Redirect to MFA page
         router.push(Routes.mfa);
       } else {
-        toast.success('Login successful! Redirecting...');
-
+        // Successful login without MFA
+        toast.success('Login successful! Redirecting to dashboard...');
         // Redirect to dashboard homepage
         router.push(Routes.dashboard);
       }

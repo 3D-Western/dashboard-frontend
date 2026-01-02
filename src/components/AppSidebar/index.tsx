@@ -122,7 +122,7 @@ export function AppSidebar({ user }: AppSidebarProps) {
               <span className="truncate text-sm font-medium">
                 {user.firstName} {user.lastName}
               </span>
-              <span className="text-xs text-muted-foreground">ID: {user.id}</span>
+              <span className="text-xs text-muted-foreground">ID: {user.studentId}</span>
             </div>
           </div>
           <SettingsPopover />

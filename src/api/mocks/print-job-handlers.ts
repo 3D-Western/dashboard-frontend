@@ -34,7 +34,7 @@ export const orderHandlers = [
       orders = orders.filter((order) => order.studentId === parseInt(userIdFilter));
     } else if (user.role !== 'admin') {
       // Non-admin users can only see their own orders
-      orders = orders.filter((order) => order.studentId === user.id);
+      orders = orders.filter((order) => order.studentId === user.studentId);
     }
 
     // Filter by status if provided
@@ -50,7 +50,7 @@ export const orderHandlers = [
           ...order,
           student: student
             ? {
-                id: student.id,
+                id: student.studentId,
                 firstName: student.firstName,
                 lastName: student.lastName,
                 email: student.email,
@@ -103,7 +103,7 @@ export const orderHandlers = [
     const newOrder = {
       id: `order-${Date.now()}`,
       kind: 'active-print-job' as const,
-      studentId: user.id,
+      studentId: user.studentId,
       name: body.name,
       description: body.description,
       orderPlaced: new Date().toISOString(),
