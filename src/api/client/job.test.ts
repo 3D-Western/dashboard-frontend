@@ -32,6 +32,54 @@ describe('jobApi', () => {
       expect(result.jobs[0].name).toBe('Job 1');
     });
 
+    it('includes query parameters when provided', async () => {
+      let requestUrl: string | undefined;
+
+      mockServer.use(
+        http.get(`${baseUrl}${endpoints.orders.list}`, ({ request }) => {
+          requestUrl = request.url;
+          return HttpResponse.json({
+            success: true,
+            data: { jobs: [] },
+          });
+        }),
+      );
+
+      await jobApi.listAllJobs({
+        userId: 123,
+        status: 'IN_QUEUE',
+        page: 2,
+        pageSize: 20,
+        snapshotCreatedBefore: '2024-01-01',
+      });
+
+      expect(requestUrl).toContain('userId=123');
+      expect(requestUrl).toContain('status=IN_QUEUE');
+      expect(requestUrl).toContain('page=2');
+      expect(requestUrl).toContain('pageSize=20');
+      expect(requestUrl).toContain('snapshotCreatedBefore=2024-01-01');
+    });
+
+    it('omits undefined query parameters', async () => {
+      let requestUrl: string | undefined;
+
+      mockServer.use(
+        http.get(`${baseUrl}${endpoints.orders.list}`, ({ request }) => {
+          requestUrl = request.url;
+          return HttpResponse.json({
+            success: true,
+            data: { jobs: [] },
+          });
+        }),
+      );
+
+      await jobApi.listAllJobs({ userId: 123 });
+
+      expect(requestUrl).toContain('userId=123');
+      expect(requestUrl).not.toContain('status=');
+      expect(requestUrl).not.toContain('page=');
+    });
+
     it('includes credentials in request', async () => {
       let requestCredentials: RequestCredentials | undefined;
 

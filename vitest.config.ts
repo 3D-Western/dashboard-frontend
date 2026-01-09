@@ -30,6 +30,7 @@ export default defineConfig({
         '**/*.config.*',
         '**/mockData',
         'src/api/mocks/**', // Mock handlers
+        'test/**', // Test utilities
         'e2e/**',
         'playwright/**',
       ],
