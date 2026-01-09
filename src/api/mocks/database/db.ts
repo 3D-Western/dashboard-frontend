@@ -7,6 +7,7 @@ class Database {
   // In-memory storage for users
   private users: Map<number, User> = new Map();
   private sessions: Map<string, number> = new Map(); // sessionId to userId
+  private mfaChallenges: Map<number, number> = new Map(); // challengeId to userId
   private activePrintJobsUserMap: Map<number, PrintJob[]> = new Map(); // userId to PrintJobs
   private activePrintJobsIDMap: Map<string, PrintJob> = new Map(); // printJobId to PrintJob
   private files: Map<string, FileMetadata> = new Map(); // fileId to FileMetadata
@@ -23,15 +24,15 @@ class Database {
   private loadInitialData() {
     // Load some initial mock users
     mockUsers.forEach((user) => {
-      this.users.set(user.id, user);
+      this.users.set(user.studentId, user);
     });
 
     // Load some initial mock print jobs
     this.users.forEach((user) => {
       const userJobs: PrintJob[] = [];
-      this.activePrintJobsUserMap.set(user.id, userJobs);
+      this.activePrintJobsUserMap.set(user.studentId, userJobs);
       mockPrintJobs.forEach((job) => {
-        const userJob = { ...job, studentId: user.id, id: `${user.id}-${job.id}` };
+        const userJob = { ...job, studentId: user.studentId, id: `${user.studentId}-${job.id}` };
         userJobs.push(userJob);
         this.activePrintJobsIDMap.set(userJob.id, userJob);
       });
@@ -65,6 +66,18 @@ class Database {
 
   public userLogout(sessionId: string) {
     this.sessions.delete(sessionId);
+  }
+
+  public createMfaChallenge(challengeId: number, userId: number): void {
+    this.mfaChallenges.set(challengeId, userId);
+  }
+
+  public validateMfaChallenge(challengeId: number): number | null {
+    return this.mfaChallenges.get(challengeId) || null;
+  }
+
+  public completeMfaChallenge(challengeId: number): void {
+    this.mfaChallenges.delete(challengeId);
   }
 
   public getPrintJobsByUserId(userId: number): PrintJob[] {

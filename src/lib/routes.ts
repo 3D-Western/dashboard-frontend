@@ -3,6 +3,7 @@ export const Routes = {
   prints: '/print',
   login: '/login',
   signup: '/signup',
+  mfa: '/mfa',
   dashboardUserSettings: '/dashboard/settings',
   forgotPassword: '/forgot-password',
   resetPassword: '/reset-password',

@@ -53,7 +53,7 @@ export const fileHandlers = [
         size: file.size,
         mimeType: FileSystemUtils.getMimeType(file.name),
         uploadedAt: new Date().toISOString(),
-        uploadedBy: user.id,
+        uploadedBy: user.studentId,
         diskPath,
       };
 
@@ -142,7 +142,7 @@ export const fileHandlers = [
         uploadedAt: file.uploadedAt,
         uploadedBy: uploader
           ? {
-              studentId: uploader.id,
+              studentId: uploader.studentId,
               firstName: uploader.firstName,
               lastName: uploader.lastName,
             }
@@ -188,7 +188,7 @@ export const fileHandlers = [
     }
 
     // Access control: users see own files, admins see all
-    if (user.role !== 'admin' && file.uploadedBy !== user.id) {
+    if (user.role !== 'admin' && file.uploadedBy !== user.studentId) {
       return HttpResponse.json(
         generateErrorResponse({
           code: 'FORBIDDEN',
@@ -210,7 +210,7 @@ export const fileHandlers = [
         uploadedAt: file.uploadedAt,
         uploadedBy: uploader
           ? {
-              studentId: uploader.id,
+              studentId: uploader.studentId,
               firstName: uploader.firstName,
               lastName: uploader.lastName,
             }
@@ -307,7 +307,7 @@ export const fileHandlers = [
     }
 
     // Access control: users download own files, admins download all
-    if (user.role !== 'admin' && file.uploadedBy !== user.id) {
+    if (user.role !== 'admin' && file.uploadedBy !== user.studentId) {
       return HttpResponse.json(
         generateErrorResponse({
           code: 'FORBIDDEN',

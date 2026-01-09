@@ -20,7 +20,7 @@ import { ErrorCodes } from '@/api/client/errors';
  */
 export function mockAuthenticatedSession(user: User = createMockUser()): User {
   mockServer.use(
-    http.get(`*${endpoints.session.current}`, () => {
+    http.get(`*${endpoints.users.me}`, () => {
       return HttpResponse.json({
         success: true,
         data: { user },
@@ -45,7 +45,7 @@ export function mockAuthenticatedSession(user: User = createMockUser()): User {
  */
 export function mockUnauthenticatedSession(): void {
   mockServer.use(
-    http.get(`*${endpoints.session.current}`, () => {
+    http.get(`*${endpoints.users.me}`, () => {
       return HttpResponse.json(
         {
           success: false,
@@ -62,7 +62,7 @@ export function mockUnauthenticatedSession(): void {
 
 /**
  * Mock a successful login response
- * This makes sessionApi.login() succeed and return a session token
+ * This makes sessionApi.login() succeed and return a session token (bypassing MFA)
  *
  * @example
  * ```ts
@@ -75,11 +75,14 @@ export function mockUnauthenticatedSession(): void {
  */
 export function mockSuccessfulLogin(user: User = createMockUser()): User {
   mockServer.use(
-    http.post(`*${endpoints.session.login}`, () => {
+    http.post(`*${endpoints.auth.login}`, () => {
       return HttpResponse.json(
         {
           success: true,
-          data: { sessionToken: 'mock-session-token' },
+          data: {
+            sessionToken: 'mock-session-token',
+            requiresMfa: false, // Bypass MFA for testing
+          },
         },
         {
           headers: {
@@ -112,7 +115,7 @@ export function mockSuccessfulLogin(user: User = createMockUser()): User {
  */
 export function mockFailedLogin(): void {
   mockServer.use(
-    http.post(`*${endpoints.session.login}`, () => {
+    http.post(`*${endpoints.auth.login}`, () => {
       return HttpResponse.json(
         {
           success: false,
@@ -142,7 +145,7 @@ export function mockFailedLogin(): void {
  */
 export function mockSuccessfulLogout(): void {
   mockServer.use(
-    http.post(`*${endpoints.session.logout}`, () => {
+    http.post(`*${endpoints.auth.logout}`, () => {
       return HttpResponse.json(
         {
           success: true,

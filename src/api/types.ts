@@ -20,6 +20,13 @@ export interface ApiGetCurrentSessionResponse {
 }
 
 export interface ApiLoginResponse {
+  sessionToken?: string;
+  mfaToken?: string;
+  requiresMfa?: boolean;
+  challengeId?: number;
+}
+
+export interface ApiVerifyMfaResponse {
   sessionToken: string;
 }
 

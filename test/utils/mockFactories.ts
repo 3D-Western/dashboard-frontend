@@ -12,7 +12,7 @@ import { FileMetadata, FileUploadResult } from '@/types/file';
  * ```
  */
 export const createMockUser = (overrides?: Partial<User>): User => ({
-  id: faker.number.int({ min: 251000000, max: 251999999 }),
+  studentId: faker.number.int({ min: 251000000, max: 251999999 }),
   email: faker.internet.email(),
   firstName: faker.person.firstName(),
   lastName: faker.person.lastName(),

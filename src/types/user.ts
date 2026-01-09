@@ -5,7 +5,7 @@ export type UserExperienceLevel = ExperienceLevel;
 export type UserRole = 'user' | 'admin';
 
 export interface User {
-  id: number;
+  studentId: number;
   email: string;
   firstName: string;
   lastName: string;

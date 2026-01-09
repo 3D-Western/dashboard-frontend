@@ -58,7 +58,7 @@ describe('auth', () => {
     it('calls sessionApi.logout', async () => {
       // Mock successful logout (returns void)
       mockServer.use(
-        http.post('*/api/v1/session/logout', () => {
+        http.post('*/api/v1/auth/logout', () => {
           return new HttpResponse(null, { status: 204 });
         }),
       );

@@ -178,10 +178,10 @@ import Link from 'next/link';
 └──────┬──────────────┘
        │
        ▼
-┌─────────────────────┐
-│ validateSession()   │
-│ Calls /api/me       │
-└──────┬──────────────┘
+┌─────────────────────────────┐
+│ validateSession()           │
+│ Calls /api/v1/users/me      │
+└──────┬──────────────────────┘
        │
        ├─────────────┐
        │             │
@@ -216,14 +216,9 @@ export async function validateSession(): Promise<User | null> {
 
 ### API Endpoint
 
-File: `src/app/api/me/route.ts`
+Backend endpoint: `/api/v1/users/me`
 
-```typescript
-export async function GET() {
-  // Check session/cookie
-  // Return user or 401
-}
-```
+This endpoint is handled by the backend server and returns the current authenticated user or an error if no valid session exists.
 
 ### Client-Side Access
 
@@ -284,10 +279,12 @@ File: `src/api/client/endpoints.ts`
 
 ```typescript
 export const API_ENDPOINTS = {
-  session: {
-    current: '/api/me',
-    login: '/api/auth/login',
-    logout: '/api/auth/logout',
+  users: {
+    me: '/api/v1/users/me',
+  },
+  auth: {
+    login: '/api/v1/auth/login',
+    logout: '/api/v1/auth/logout',
   },
   jobs: {
     list: '/api/jobs',
@@ -346,7 +343,7 @@ The project uses MSW (Mock Service Worker) for development without a backend.
 ```typescript
 // src/api/mocks/session-handlers.ts
 export const sessionHandlers = [
-  http.get('/api/me', () => {
+  http.get('/api/v1/users/me', () => {
     const session = db.getCurrentSession();
     if (!session) {
       return HttpResponse.json({ error: 'Unauthorized' }, { status: 401 });

@@ -19,7 +19,7 @@ describe('sessionApi', () => {
       });
 
       mockServer.use(
-        http.get('*' + endpoints.session.current, () => {
+        http.get('*' + endpoints.users.me, () => {
           return HttpResponse.json({
             success: true,
             data: { user: mockUser },
@@ -34,7 +34,7 @@ describe('sessionApi', () => {
 
     it('suppresses SESSION_INVALID error and returns {user: null}', async () => {
       mockServer.use(
-        http.get('*' + endpoints.session.current, () => {
+        http.get('*' + endpoints.users.me, () => {
           return HttpResponse.json(
             {
               success: false,
@@ -55,7 +55,7 @@ describe('sessionApi', () => {
 
     it('throws error for non-SESSION_INVALID errors', async () => {
       mockServer.use(
-        http.get('*' + endpoints.session.current, () => {
+        http.get('*' + endpoints.users.me, () => {
           return HttpResponse.json(
             {
               success: false,
@@ -76,7 +76,7 @@ describe('sessionApi', () => {
       let requestCredentials: RequestCredentials | undefined;
 
       mockServer.use(
-        http.get('*' + endpoints.session.current, ({ request }) => {
+        http.get('*' + endpoints.users.me, ({ request }) => {
           requestCredentials = request.credentials;
           return HttpResponse.json({
             success: true,
@@ -92,7 +92,7 @@ describe('sessionApi', () => {
 
     it('handles network errors gracefully', async () => {
       mockServer.use(
-        http.get('*' + endpoints.session.current, () => {
+        http.get('*' + endpoints.users.me, () => {
           return HttpResponse.error();
         }),
       );
@@ -106,7 +106,7 @@ describe('sessionApi', () => {
       const expectedToken = 'mock-session-token';
 
       mockServer.use(
-        http.post('*' + endpoints.session.login, () => {
+        http.post('*' + endpoints.auth.login, () => {
           return HttpResponse.json({
             success: true,
             data: { sessionToken: expectedToken },
@@ -122,7 +122,7 @@ describe('sessionApi', () => {
 
     it('throws INVALID_CREDENTIALS error with invalid credentials', async () => {
       mockServer.use(
-        http.post('*' + endpoints.session.login, () => {
+        http.post('*' + endpoints.auth.login, () => {
           return HttpResponse.json(
             {
               success: false,
@@ -143,7 +143,7 @@ describe('sessionApi', () => {
       let requestBody: unknown;
 
       mockServer.use(
-        http.post('*' + endpoints.session.login, async ({ request }) => {
+        http.post('*' + endpoints.auth.login, async ({ request }) => {
           requestBody = await request.json();
           return HttpResponse.json({
             success: true,
@@ -162,7 +162,7 @@ describe('sessionApi', () => {
 
     it('handles server errors', async () => {
       mockServer.use(
-        http.post('*' + endpoints.session.login, () => {
+        http.post('*' + endpoints.auth.login, () => {
           return HttpResponse.json(
             {
               success: false,
@@ -183,7 +183,7 @@ describe('sessionApi', () => {
   describe('logout', () => {
     it('successfully logs out', async () => {
       mockServer.use(
-        http.post('*' + endpoints.session.logout, () => {
+        http.post('*' + endpoints.auth.logout, () => {
           return new HttpResponse(null, { status: 204 });
         }),
       );
@@ -195,7 +195,7 @@ describe('sessionApi', () => {
       let requestCredentials: RequestCredentials | undefined;
 
       mockServer.use(
-        http.post('*' + endpoints.session.logout, ({ request }) => {
+        http.post('*' + endpoints.auth.logout, ({ request }) => {
           requestCredentials = request.credentials;
           return new HttpResponse(null, { status: 204 });
         }),
@@ -208,7 +208,7 @@ describe('sessionApi', () => {
 
     it('handles logout errors', async () => {
       mockServer.use(
-        http.post('*' + endpoints.session.logout, () => {
+        http.post('*' + endpoints.auth.logout, () => {
           return HttpResponse.json(
             {
               success: false,

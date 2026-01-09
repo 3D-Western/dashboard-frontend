@@ -370,7 +370,7 @@ import { http, HttpResponse } from 'msw';
 it('handles API error', async () => {
   // Override default handler for this test
   mockServer.use(
-    http.get('/api/me', () => {
+    http.get('/api/v1/users/me', () => {
       return HttpResponse.json({ error: 'Server error' }, { status: 500 });
     }),
   );

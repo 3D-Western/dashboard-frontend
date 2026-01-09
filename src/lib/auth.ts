@@ -32,8 +32,21 @@ export const logout = async (): Promise<void> => {
  * @returns {Promise<User | null>} Resolves to the user object if authenticated, or null if not.
  */
 export const validateSession = async (): Promise<User | null> => {
+  // For server-side requests, we need to manually forward cookies
+  let cookieHeader: string | undefined;
+  if (typeof window === 'undefined') {
+    // Dynamic import to avoid bundling next/headers in client bundles
+    const { cookies } = await import('next/headers');
+    const cookieStore = await cookies();
+    const sessionToken = cookieStore.get('sessionToken');
+
+    if (sessionToken) {
+      cookieHeader = `sessionToken=${sessionToken.value}`;
+    }
+  }
+
   try {
-    const response = await sessionApi.current();
+    const response = await sessionApi.current({ cookieHeader });
     if (!response.user) {
       return null;
     }

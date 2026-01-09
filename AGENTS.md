@@ -82,15 +82,15 @@ The app uses Next.js 15 App Router with route groups:
 
 Server-side validation happens in protected routes:
 
-1. `validateSession()` (from `src/lib/auth.ts`) calls `/api/me` route
-2. `/api/me/route.ts` returns current user or null
+1. `validateSession()` (from `src/lib/auth.ts`) calls `/api/v1/users/me` endpoint
+2. Backend endpoint `/api/v1/users/me` returns current user or null
 3. If authenticated, `UserProvider` makes user available via `useUser()` hook in client components
 4. If unauthenticated, user is redirected to login
 
 **Key Files:**
 
 - `src/lib/auth.ts` - Server-side `validateSession()` function
-- `src/app/api/me/route.ts` - Session endpoint
+- `src/api/client/endpoints.ts` - API endpoint definitions (includes `users.me`)
 - `src/providers/user-provider.tsx` - Client-side `UserProvider` and `useUser()` hook
 - `src/api/client/session.ts` - `sessionApi` for login, logout, getCurrentSession
 

@@ -47,9 +47,33 @@ export async function apiRequest<T>(
     headersObj.set('Content-Type', 'application/json');
   }
 
+  // For server-side requests, manually forward cookies from Next.js headers
+  // This is necessary because credentials: 'include' doesn't work for cross-origin
+  // server-side requests in Next.js
+  if (typeof window === 'undefined' && !headersObj.has('Cookie')) {
+    const { cookies } = await import('next/headers');
+    const cookieStore = await cookies();
+    const sessionToken = cookieStore.get('sessionToken');
+    const mfaToken = cookieStore.get('mfaToken');
+
+    // Build cookie header with all available auth cookies
+    const cookiePairs: string[] = [];
+    if (sessionToken) {
+      cookiePairs.push(`sessionToken=${sessionToken.value}`);
+    }
+    if (mfaToken) {
+      cookiePairs.push(`mfaToken=${mfaToken.value}`);
+    }
+
+    if (cookiePairs.length > 0) {
+      headersObj.set('Cookie', cookiePairs.join('; '));
+    }
+  }
+
   const response = await fetch(url, {
     ...options,
     headers: headersObj,
+    credentials: 'include', // Important: Always send cookies with requests
   });
 
   // Handle 204 No Content (common for DELETE operations)
