@@ -1,8 +1,4 @@
-import {
-  ApiGetCurrentSessionResponse,
-  ApiLoginResponse,
-  ApiVerifyMfaResponse,
-} from '../types';
+import { ApiGetCurrentSessionResponse, ApiLoginResponse, ApiVerifyMfaResponse } from '../types';
 import { apiRequest } from './base';
 import { endpoints } from './endpoints';
 import { getBaseUrl } from './utils';
@@ -27,15 +23,12 @@ export const sessionApi = {
     }
 
     try {
-      return await apiRequest<ApiGetCurrentSessionResponse>(
-        `${serverUrl}${endpoints.users.me}`,
-        {
-          method: 'GET',
-          credentials: 'include',
-          ...requestOptions,
-          headers,
-        },
-      );
+      return await apiRequest<ApiGetCurrentSessionResponse>(`${serverUrl}${endpoints.users.me}`, {
+        method: 'GET',
+        credentials: 'include',
+        ...requestOptions,
+        headers,
+      });
     } catch (error) {
       // If it's a SESSION_INVALID error, suppress it and return null-like response
       // This allows validateSession() to gracefully return null

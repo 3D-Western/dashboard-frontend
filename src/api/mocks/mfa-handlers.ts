@@ -40,7 +40,10 @@ export const mfaHandlers = [
       const headers = new Headers();
       headers.set('Content-Type', 'application/json');
       headers.set('Access-Control-Allow-Credentials', 'true');
-      headers.append('Set-Cookie', `sessionToken=${sessionToken}; Path=/; Max-Age=${60 * 60 * 24 * 7}; SameSite=Lax`);
+      headers.append(
+        'Set-Cookie',
+        `sessionToken=${sessionToken}; Path=/; Max-Age=${60 * 60 * 24 * 7}; SameSite=Lax`,
+      );
       headers.append('Set-Cookie', `mfaToken=; Path=/; Max-Age=0; SameSite=Lax`);
 
       return HttpResponse.json(
@@ -63,24 +66,21 @@ export const mfaHandlers = [
     );
   }),
 
-  http.post(
-    `${apiUrl}/api/v1/mfa/email/challenge/:challengeId/resend`,
-    async ({ params }) => {
-      const { challengeId: _challengeId } = params;
+  http.post(`${apiUrl}/api/v1/mfa/email/challenge/:challengeId/resend`, async ({ params }) => {
+    const { challengeId: _challengeId } = params;
 
-      console.log('\n🔐 ========================================');
-      console.log('📧 MSW: OTP Email Sent (Mock)');
-      console.log('========================================');
-      console.log('📝 OTP Code:', VALID_OTP_CODE);
-      console.log('🆔 Challenge ID:', MOCK_CHALLENGE_ID);
-      console.log('========================================\n');
+    console.log('\n🔐 ========================================');
+    console.log('📧 MSW: OTP Email Sent (Mock)');
+    console.log('========================================');
+    console.log('📝 OTP Code:', VALID_OTP_CODE);
+    console.log('🆔 Challenge ID:', MOCK_CHALLENGE_ID);
+    console.log('========================================\n');
 
-      // Mock successful resend
-      return HttpResponse.json(
-        generateSuccessResponse({
-          challengeId: MOCK_CHALLENGE_ID,
-        }),
-      );
-    },
-  ),
+    // Mock successful resend
+    return HttpResponse.json(
+      generateSuccessResponse({
+        challengeId: MOCK_CHALLENGE_ID,
+      }),
+    );
+  }),
 ];
