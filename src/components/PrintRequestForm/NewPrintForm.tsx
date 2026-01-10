@@ -22,7 +22,11 @@ import { RadioGroup, RadioGroupItem } from '../ui/radio-group';
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '../ui/select';
 import { UnsavedChangesGuard } from '../ui/unsaved-changes-guard';
 
-export default function NewPrintForm() {
+type NewPrintFormProps = {
+  mockMode?: boolean;
+};
+
+export default function NewPrintForm({ mockMode = true }: NewPrintFormProps = {}) {
   const router = useRouter();
   // file will be stored in react-hook-form (we don't need a provider)
 
@@ -86,7 +90,7 @@ export default function NewPrintForm() {
   async function onSubmit(values: z.infer<typeof formSchema>) {
     // Toggle mock mode here for local testing without backend endpoints
     // When true, the submit flow will simulate upload + order creation with fake IDs
-    const MOCK_MODE = true;
+    const MOCK_MODE = mockMode;
 
     try {
       const file = values.file as File;

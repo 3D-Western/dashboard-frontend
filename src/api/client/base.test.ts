@@ -3,6 +3,13 @@ import { apiRequest } from './base';
 import { ApiError, ErrorCodes } from './errors';
 import { mockServer } from '@/api/mocks';
 import { http, HttpResponse } from 'msw';
+import { cookies } from 'next/headers';
+
+vi.mock('next/headers', () => ({
+  cookies: vi.fn(),
+}));
+
+const cookiesMock = cookies as unknown as ReturnType<typeof vi.fn>;
 
 describe('apiRequest', () => {
   const testUrl = 'http://api.test/endpoint';
@@ -104,6 +111,108 @@ describe('apiRequest', () => {
     });
   });
 
+  describe('server-side cookie forwarding', () => {
+    let originalFetch: typeof global.fetch;
+
+    beforeEach(() => {
+      originalFetch = global.fetch;
+    });
+
+    afterEach(() => {
+      global.fetch = originalFetch;
+      vi.unstubAllGlobals();
+      vi.clearAllMocks();
+    });
+
+    it('adds Cookie header when server-side cookies exist', async () => {
+      vi.stubGlobal('window', undefined as unknown as Window);
+
+      const cookieStore = {
+        get: vi.fn((name: string) => {
+          if (name === 'sessionToken') return { value: 'session-token' };
+          if (name === 'mfaToken') return { value: 'mfa-token' };
+          return undefined;
+        }),
+      };
+
+      cookiesMock.mockResolvedValue(cookieStore);
+
+      let capturedCookie: string | null = null;
+      mockServer.use(
+        http.get(testUrl, ({ request }) => {
+          return HttpResponse.json({ success: true, data: { result: 'ok' } });
+        }),
+      );
+
+      global.fetch = vi.fn((url, options) => {
+        const headers = new Headers(options?.headers);
+        capturedCookie = headers.get('Cookie');
+        return originalFetch(url, options);
+      });
+
+      await apiRequest(testUrl, { method: 'GET' });
+
+      expect(capturedCookie).toBe('sessionToken=session-token; mfaToken=mfa-token');
+    });
+
+    it('does not add Cookie header when no server-side cookies exist', async () => {
+      vi.stubGlobal('window', undefined as unknown as Window);
+
+      const cookieStore = {
+        get: vi.fn(() => undefined),
+      };
+
+      cookiesMock.mockResolvedValue(cookieStore);
+
+      let capturedCookie: string | null = null;
+      mockServer.use(
+        http.get(testUrl, ({ request }) => {
+          return HttpResponse.json({ success: true, data: { result: 'ok' } });
+        }),
+      );
+
+      global.fetch = vi.fn((url, options) => {
+        const headers = new Headers(options?.headers);
+        capturedCookie = headers.get('Cookie');
+        return originalFetch(url, options);
+      });
+
+      await apiRequest(testUrl, { method: 'GET' });
+
+      expect(capturedCookie).toBeNull();
+    });
+
+    it('respects provided Cookie header without overriding', async () => {
+      vi.stubGlobal('window', undefined as unknown as Window);
+
+      const cookieStore = {
+        get: vi.fn(() => ({ value: 'server-token' })),
+      };
+
+      cookiesMock.mockResolvedValue(cookieStore);
+
+      let capturedCookie: string | null = null;
+      mockServer.use(
+        http.get(testUrl, ({ request }) => {
+          return HttpResponse.json({ success: true, data: { result: 'ok' } });
+        }),
+      );
+
+      global.fetch = vi.fn((url, options) => {
+        const headers = new Headers(options?.headers);
+        capturedCookie = headers.get('Cookie');
+        return originalFetch(url, options);
+      });
+
+      await apiRequest(testUrl, {
+        method: 'GET',
+        headers: { Cookie: 'sessionToken=provided-token' },
+      });
+
+      expect(capturedCookie).toBe('sessionToken=provided-token');
+    });
+  });
+
   describe('204 No Content response', () => {
     it('returns undefined for 204 status', async () => {
       mockServer.use(
@@ -142,6 +251,20 @@ describe('apiRequest', () => {
       );
 
       await expect(apiRequest(testUrl, {}, { expectJson: true })).rejects.toThrow(ApiError);
+      await expect(apiRequest(testUrl, {}, { expectJson: true })).rejects.toMatchObject({
+        code: ErrorCodes.RESPONSE_INVALID_CONTENT_TYPE,
+      });
+    });
+
+    it('throws RESPONSE_INVALID_CONTENT_TYPE when content-type is missing', async () => {
+      mockServer.use(
+        http.get(testUrl, () => {
+          return new HttpResponse('No content type', {
+            headers: { 'Content-Type': '' },
+          });
+        }),
+      );
+
       await expect(apiRequest(testUrl, {}, { expectJson: true })).rejects.toMatchObject({
         code: ErrorCodes.RESPONSE_INVALID_CONTENT_TYPE,
       });

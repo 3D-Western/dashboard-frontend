@@ -99,6 +99,32 @@ describe('sessionApi', () => {
 
       await expect(sessionApi.current()).rejects.toThrow();
     });
+
+    it('forwards cookieHeader when provided', async () => {
+      let capturedCookie: string | null = null;
+      const originalFetch = global.fetch;
+
+      mockServer.use(
+        http.get('*' + endpoints.users.me, () => {
+          return HttpResponse.json({
+            success: true,
+            data: { user: createMockUser() },
+          });
+        }),
+      );
+
+      global.fetch = vi.fn((url, options) => {
+        const headers = new Headers(options?.headers);
+        capturedCookie = headers.get('Cookie');
+        return originalFetch(url, options);
+      });
+
+      await sessionApi.current({ cookieHeader: 'sessionToken=server-token' });
+
+      global.fetch = originalFetch;
+
+      expect(capturedCookie).toBe('sessionToken=server-token');
+    });
   });
 
   describe('login', () => {
@@ -223,6 +249,27 @@ describe('sessionApi', () => {
       );
 
       await expect(sessionApi.logout()).rejects.toThrow();
+    });
+  });
+
+  describe('verifyMfa', () => {
+    it('sends correct request body and returns response', async () => {
+      const expected = { verified: true };
+
+      mockServer.use(
+        http.post('*' + endpoints.mfa.verifyEmail, async ({ request }) => {
+          const body = await request.json();
+          expect(body).toEqual({ challengeId: 123, code: '123456' });
+          return HttpResponse.json({
+            success: true,
+            data: expected,
+          });
+        }),
+      );
+
+      const result = await sessionApi.verifyMfa(123, '123456');
+
+      expect(result).toEqual(expected);
     });
   });
 });

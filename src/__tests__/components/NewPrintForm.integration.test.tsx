@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import NewPrintForm from '@/components/PrintRequestForm/NewPrintForm';
 
@@ -12,6 +12,17 @@ vi.mock('next/navigation', () => ({
 }));
 
 const setupUser = () => userEvent.setup({ pointerEventsCheck: 0 });
+const selectComboboxOption = async (
+  user: ReturnType<typeof setupUser>,
+  index: number,
+  label: string,
+) => {
+  const trigger = screen.getAllByRole('combobox')[index];
+  await user.click(trigger);
+  const listbox = await screen.findByRole('listbox');
+  const option = within(listbox).getByRole('option', { name: label });
+  await user.click(option);
+};
 
 describe('NewPrintForm Integration', () => {
   beforeEach(() => {
@@ -201,6 +212,50 @@ describe('NewPrintForm Integration', () => {
   });
 
   describe('form submission', () => {
+    const fillRequiredFields = async (user: ReturnType<typeof setupUser>) => {
+      const nameField = screen.getByLabelText(/Print Name/i);
+      await user.type(nameField, 'Test Print Job');
+
+      const descriptionField = screen.getByLabelText(/Print Description/i);
+      await user.type(descriptionField, 'This is a test description');
+
+      const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
+      const file = new File(['dummy'], 'model.stl', { type: 'model/stl' });
+      await user.upload(fileInput, file);
+
+      await selectComboboxOption(user, 0, 'PLA');
+      await selectComboboxOption(user, 1, 'Black');
+      await selectComboboxOption(user, 2, 'ABS');
+      await selectComboboxOption(user, 3, 'White');
+    };
+
+    it('uploads STL file and shows filename', async () => {
+      const user = setupUser();
+      const { container } = render(<NewPrintForm />);
+
+      const fileInput = container.querySelector('input[type="file"]') as HTMLInputElement;
+      expect(fileInput).toBeInTheDocument();
+
+      const file = new File(['dummy'], 'model.stl', { type: 'model/stl' });
+      await user.upload(fileInput, file);
+
+      expect(screen.getAllByText('model.stl').length).toBeGreaterThan(0);
+    });
+
+    it('submits valid data and redirects in mock mode', async () => {
+      const user = setupUser();
+      render(<NewPrintForm />);
+
+      await fillRequiredFields(user);
+
+      const submitButton = screen.getByRole('button', { name: /Submit/i });
+      await user.click(submitButton);
+
+      await waitFor(() => {
+        expect(mockPush).toHaveBeenCalledWith('/dashboard');
+      });
+    });
+
     it('form submission with all valid data succeeds in mock mode', async () => {
       const user = setupUser();
       render(<NewPrintForm />);
@@ -267,6 +322,234 @@ describe('NewPrintForm Integration', () => {
       // Initially not disabled (since form is not submitting)
       expect(submitButton).not.toBeDisabled();
     });
+
+    it('submits real flow when mockMode is false', async () => {
+      const user = setupUser();
+      const fetchSpy = vi.spyOn(global, 'fetch');
+
+      fetchSpy
+        .mockResolvedValueOnce(
+          new Response(JSON.stringify({ id: 'file-123' }), {
+            status: 200,
+            headers: { 'Content-Type': 'application/json' },
+          }),
+        )
+        .mockResolvedValueOnce(new Response(null, { status: 200 }));
+
+      render(<NewPrintForm mockMode={false} />);
+      await fillRequiredFields(user);
+
+      const submitButton = screen.getByRole('button', { name: /Submit/i });
+      await user.click(submitButton);
+
+      await waitFor(() => {
+        expect(fetchSpy).toHaveBeenCalledTimes(2);
+      });
+
+      const submitCall = fetchSpy.mock.calls[1];
+      const submitOptions = submitCall[1] as RequestInit;
+      const payload = JSON.parse(submitOptions.body as string);
+      expect(payload.fileId).toBe('file-123');
+      expect(mockPush).toHaveBeenCalledWith('/dashboard');
+
+      fetchSpy.mockRestore();
+    });
+
+    it('uses uploadJson.fileId when id is missing', async () => {
+      const user = setupUser();
+      const fetchSpy = vi.spyOn(global, 'fetch');
+
+      fetchSpy
+        .mockResolvedValueOnce(
+          new Response(JSON.stringify({ fileId: 'file-abc' }), {
+            status: 200,
+            headers: { 'Content-Type': 'application/json' },
+          }),
+        )
+        .mockResolvedValueOnce(new Response(null, { status: 200 }));
+
+      render(<NewPrintForm mockMode={false} />);
+      await fillRequiredFields(user);
+
+      const submitButton = screen.getByRole('button', { name: /Submit/i });
+      await user.click(submitButton);
+
+      await waitFor(() => {
+        expect(fetchSpy).toHaveBeenCalledTimes(2);
+      });
+
+      const submitCall = fetchSpy.mock.calls[1];
+      const submitOptions = submitCall[1] as RequestInit;
+      const payload = JSON.parse(submitOptions.body as string);
+      expect(payload.fileId).toBe('file-abc');
+
+      fetchSpy.mockRestore();
+    });
+
+    it('uses null fileId when upload response has no id fields', async () => {
+      const user = setupUser();
+      const fetchSpy = vi.spyOn(global, 'fetch');
+
+      fetchSpy
+        .mockResolvedValueOnce(
+          new Response(JSON.stringify({}), {
+            status: 200,
+            headers: { 'Content-Type': 'application/json' },
+          }),
+        )
+        .mockResolvedValueOnce(new Response(null, { status: 200 }));
+
+      render(<NewPrintForm mockMode={false} />);
+      await fillRequiredFields(user);
+
+      const submitButton = screen.getByRole('button', { name: /Submit/i });
+      await user.click(submitButton);
+
+      await waitFor(() => {
+        expect(fetchSpy).toHaveBeenCalledTimes(2);
+      });
+
+      const submitCall = fetchSpy.mock.calls[1];
+      const submitOptions = submitCall[1] as RequestInit;
+      const payload = JSON.parse(submitOptions.body as string);
+      expect(payload.fileId).toBeNull();
+
+      fetchSpy.mockRestore();
+    });
+
+    it('handles upload failure in real flow', async () => {
+      const user = setupUser();
+      const fetchSpy = vi.spyOn(global, 'fetch');
+      const alertSpy = vi.fn();
+      vi.stubGlobal('alert', alertSpy);
+
+      fetchSpy.mockResolvedValueOnce(new Response('Upload failed', { status: 400 }));
+
+      render(<NewPrintForm mockMode={false} />);
+      await fillRequiredFields(user);
+
+      const submitButton = screen.getByRole('button', { name: /Submit/i });
+      await user.click(submitButton);
+
+      await waitFor(() => {
+        expect(alertSpy).toHaveBeenCalledWith(
+          expect.stringContaining('Upload failed'),
+        );
+      });
+
+      expect(mockPush).not.toHaveBeenCalled();
+      fetchSpy.mockRestore();
+      vi.unstubAllGlobals();
+    });
+
+    it('uses fallback upload error message when response is empty', async () => {
+      const user = setupUser();
+      const fetchSpy = vi.spyOn(global, 'fetch');
+      const alertSpy = vi.fn();
+      vi.stubGlobal('alert', alertSpy);
+
+      fetchSpy.mockResolvedValueOnce(new Response('', { status: 400 }));
+
+      render(<NewPrintForm mockMode={false} />);
+      await fillRequiredFields(user);
+
+      const submitButton = screen.getByRole('button', { name: /Submit/i });
+      await user.click(submitButton);
+
+      await waitFor(() => {
+        expect(alertSpy).toHaveBeenCalledWith(
+          expect.stringContaining('File upload failed'),
+        );
+      });
+
+      fetchSpy.mockRestore();
+      vi.unstubAllGlobals();
+    });
+
+    it('handles submit failure in real flow', async () => {
+      const user = setupUser();
+      const fetchSpy = vi.spyOn(global, 'fetch');
+      const alertSpy = vi.fn();
+      vi.stubGlobal('alert', alertSpy);
+
+      fetchSpy
+        .mockResolvedValueOnce(
+          new Response(JSON.stringify({ fileId: 'file-456' }), {
+            status: 200,
+            headers: { 'Content-Type': 'application/json' },
+          }),
+        )
+        .mockResolvedValueOnce(new Response('Submit failed', { status: 400 }));
+
+      render(<NewPrintForm mockMode={false} />);
+      await fillRequiredFields(user);
+
+      const submitButton = screen.getByRole('button', { name: /Submit/i });
+      await user.click(submitButton);
+
+      await waitFor(() => {
+        expect(alertSpy).toHaveBeenCalledWith(
+          expect.stringContaining('Submit failed'),
+        );
+      });
+
+      expect(mockPush).not.toHaveBeenCalled();
+      fetchSpy.mockRestore();
+      vi.unstubAllGlobals();
+    });
+
+    it('uses fallback submit error message when response is empty', async () => {
+      const user = setupUser();
+      const fetchSpy = vi.spyOn(global, 'fetch');
+      const alertSpy = vi.fn();
+      vi.stubGlobal('alert', alertSpy);
+
+      fetchSpy
+        .mockResolvedValueOnce(
+          new Response(JSON.stringify({ id: 'file-789' }), {
+            status: 200,
+            headers: { 'Content-Type': 'application/json' },
+          }),
+        )
+        .mockResolvedValueOnce(new Response('', { status: 400 }));
+
+      render(<NewPrintForm mockMode={false} />);
+      await fillRequiredFields(user);
+
+      const submitButton = screen.getByRole('button', { name: /Submit/i });
+      await user.click(submitButton);
+
+      await waitFor(() => {
+        expect(alertSpy).toHaveBeenCalledWith(
+          expect.stringContaining('Submit failed'),
+        );
+      });
+
+      fetchSpy.mockRestore();
+      vi.unstubAllGlobals();
+    });
+
+    it('handles non-Error throw in submit flow', async () => {
+      const user = setupUser();
+      const fetchSpy = vi.spyOn(global, 'fetch');
+      const alertSpy = vi.fn();
+      vi.stubGlobal('alert', alertSpy);
+
+      fetchSpy.mockRejectedValueOnce('boom');
+
+      render(<NewPrintForm mockMode={false} />);
+      await fillRequiredFields(user);
+
+      const submitButton = screen.getByRole('button', { name: /Submit/i });
+      await user.click(submitButton);
+
+      await waitFor(() => {
+        expect(alertSpy).toHaveBeenCalledWith('Failed to submit print request. ');
+      });
+
+      fetchSpy.mockRestore();
+      vi.unstubAllGlobals();
+    });
   });
 
   describe('material and color selection logic', () => {
@@ -275,10 +558,7 @@ describe('NewPrintForm Integration', () => {
       render(<NewPrintForm />);
 
       // Select PLA for material 1
-      const material1Trigger = screen.getAllByRole('combobox')[0];
-      await user.click(material1Trigger);
-      const pla1 = (await screen.findAllByText('PLA'))[0];
-      await user.click(pla1);
+      await selectComboboxOption(user, 0, 'PLA');
 
       // Try to select material 2 - PLA should not be in the list
       const material2Trigger = screen.getAllByRole('combobox')[2];
@@ -294,10 +574,7 @@ describe('NewPrintForm Integration', () => {
       render(<NewPrintForm />);
 
       // Select Black for color 1
-      const color1Trigger = screen.getAllByRole('combobox')[1];
-      await user.click(color1Trigger);
-      const black1 = (await screen.findAllByText('Black'))[0];
-      await user.click(black1);
+      await selectComboboxOption(user, 1, 'Black');
 
       // Try to select color 2 - Black should not be in the list
       const color2Trigger = screen.getAllByRole('combobox')[3];
@@ -306,6 +583,19 @@ describe('NewPrintForm Integration', () => {
       // We should still have color options available, just not Black
       const whiteOptions = await screen.findAllByText('White');
       expect(whiteOptions.length).toBeGreaterThan(0);
+    });
+
+    it('filters second choice options based on first choice', async () => {
+      const user = setupUser();
+      render(<NewPrintForm />);
+
+      await selectComboboxOption(user, 0, 'PLA');
+
+      const material2Trigger = screen.getAllByRole('combobox')[2];
+      await user.click(material2Trigger);
+      const listbox2 = await screen.findByRole('listbox');
+
+      expect(within(listbox2).queryByRole('option', { name: 'PLA' })).not.toBeInTheDocument();
     });
   });
 
