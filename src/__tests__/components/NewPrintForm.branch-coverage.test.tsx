@@ -1,4 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
+import type { ReactNode } from 'react';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import NewPrintForm from '@/components/PrintRequestForm/NewPrintForm';
@@ -11,12 +12,10 @@ vi.mock('next/navigation', () => ({
 }));
 
 vi.mock('@hookform/resolvers/zod', () => ({
-  zodResolver:
-    () =>
-    async (values: unknown) => ({
-      values,
-      errors: {},
-    }),
+  zodResolver: () => async (values: unknown) => ({
+    values,
+    errors: {},
+  }),
 }));
 
 vi.mock('react-hook-form', async () => {
@@ -38,7 +37,6 @@ vi.mock('react-hook-form', async () => {
 });
 
 vi.mock('@/components/ui/select', () => {
-  const React = require('react') as typeof import('react');
   let counter = 0;
 
   const Select = ({
@@ -46,12 +44,16 @@ vi.mock('@/components/ui/select', () => {
     children,
   }: {
     onValueChange?: (val: string) => void;
-    children: React.ReactNode;
+    children: ReactNode;
   }) => {
     const id = counter++;
     return (
       <div>
-        <button type="button" data-testid={`select-undefined-${id}`} onClick={() => onValueChange?.(undefined as unknown as string)}>
+        <button
+          type="button"
+          data-testid={`select-undefined-${id}`}
+          onClick={() => onValueChange?.(undefined as unknown as string)}
+        >
           set-undefined
         </button>
         {children}
@@ -59,10 +61,10 @@ vi.mock('@/components/ui/select', () => {
     );
   };
 
-  const SelectTrigger = ({ children }: { children: React.ReactNode }) => <>{children}</>;
+  const SelectTrigger = ({ children }: { children: ReactNode }) => <>{children}</>;
   const SelectValue = () => null;
-  const SelectContent = ({ children }: { children: React.ReactNode }) => <>{children}</>;
-  const SelectItem = ({ children }: { children: React.ReactNode }) => <>{children}</>;
+  const SelectContent = ({ children }: { children: ReactNode }) => <>{children}</>;
+  const SelectItem = ({ children }: { children: ReactNode }) => <>{children}</>;
 
   return {
     __esModule: true,
@@ -100,7 +102,9 @@ describe('NewPrintForm branch coverage (fallbacks)', () => {
 
   it('submits without file in real mode', async () => {
     const user = setupUser();
-    const fetchSpy = vi.spyOn(global, 'fetch').mockResolvedValueOnce(new Response(null, { status: 200 }));
+    const fetchSpy = vi
+      .spyOn(global, 'fetch')
+      .mockResolvedValueOnce(new Response(null, { status: 200 }));
 
     render(<NewPrintForm mockMode={false} />);
 

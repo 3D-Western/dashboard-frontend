@@ -432,9 +432,7 @@ describe('NewPrintForm Integration', () => {
       await user.click(submitButton);
 
       await waitFor(() => {
-        expect(alertSpy).toHaveBeenCalledWith(
-          expect.stringContaining('Upload failed'),
-        );
+        expect(alertSpy).toHaveBeenCalledWith(expect.stringContaining('Upload failed'));
       });
 
       expect(mockPush).not.toHaveBeenCalled();
@@ -457,9 +455,7 @@ describe('NewPrintForm Integration', () => {
       await user.click(submitButton);
 
       await waitFor(() => {
-        expect(alertSpy).toHaveBeenCalledWith(
-          expect.stringContaining('File upload failed'),
-        );
+        expect(alertSpy).toHaveBeenCalledWith(expect.stringContaining('File upload failed'));
       });
 
       fetchSpy.mockRestore();
@@ -488,9 +484,7 @@ describe('NewPrintForm Integration', () => {
       await user.click(submitButton);
 
       await waitFor(() => {
-        expect(alertSpy).toHaveBeenCalledWith(
-          expect.stringContaining('Submit failed'),
-        );
+        expect(alertSpy).toHaveBeenCalledWith(expect.stringContaining('Submit failed'));
       });
 
       expect(mockPush).not.toHaveBeenCalled();
@@ -520,9 +514,7 @@ describe('NewPrintForm Integration', () => {
       await user.click(submitButton);
 
       await waitFor(() => {
-        expect(alertSpy).toHaveBeenCalledWith(
-          expect.stringContaining('Submit failed'),
-        );
+        expect(alertSpy).toHaveBeenCalledWith(expect.stringContaining('Submit failed'));
       });
 
       fetchSpy.mockRestore();

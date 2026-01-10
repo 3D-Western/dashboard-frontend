@@ -30,9 +30,9 @@ describe('cn utility', () => {
 
   it('handles objects with boolean values', () => {
     const result = cn({
-      'class1': true,
-      'class2': false,
-      'class3': true,
+      class1: true,
+      class2: false,
+      class3: true,
     });
     expect(result).toContain('class1');
     expect(result).not.toContain('class2');
@@ -62,11 +62,10 @@ describe('cn utility', () => {
   });
 
   it('handles complex class combinations', () => {
-    const result = cn(
-      'flex items-center',
-      { 'bg-blue-500': true, 'bg-red-500': false },
-      ['hover:bg-blue-600', 'cursor-pointer'],
-    );
+    const result = cn('flex items-center', { 'bg-blue-500': true, 'bg-red-500': false }, [
+      'hover:bg-blue-600',
+      'cursor-pointer',
+    ]);
     expect(result).toContain('flex');
     expect(result).toContain('items-center');
     expect(result).toContain('bg-blue-500');

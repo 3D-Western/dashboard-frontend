@@ -1,10 +1,21 @@
 import { describe, it, expect, vi } from 'vitest';
+import type { ReactNode } from 'react';
 import { render, screen } from '@testing-library/react';
 import { ThemeProvider } from './theme-provider';
 
 // Mock next-themes
 vi.mock('next-themes', () => ({
-  ThemeProvider: ({ children, attribute, defaultTheme, enableSystem }: any) => {
+  ThemeProvider: ({
+    children,
+    attribute,
+    defaultTheme,
+    enableSystem,
+  }: {
+    children: ReactNode;
+    attribute?: string;
+    defaultTheme?: string;
+    enableSystem?: boolean;
+  }) => {
     return (
       <div
         data-testid="theme-provider"

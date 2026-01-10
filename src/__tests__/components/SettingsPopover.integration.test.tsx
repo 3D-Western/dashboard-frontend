@@ -11,11 +11,7 @@ vi.mock('@/lib/auth', () => ({
 }));
 
 vi.mock('next/link', () => ({
-  default: ({
-    href,
-    children,
-    ...props
-  }: React.ComponentProps<'a'> & { href: string }) => (
+  default: ({ href, children, ...props }: React.ComponentProps<'a'> & { href: string }) => (
     <a href={href} {...props}>
       {children}
     </a>
@@ -23,7 +19,6 @@ vi.mock('next/link', () => ({
 }));
 
 vi.mock('@/components/ui/popover', () => {
-  const React = require('react');
   const PopoverContext = React.createContext<{
     open: boolean;
     onOpenChange?: (open: boolean) => void;
@@ -39,9 +34,7 @@ vi.mock('@/components/ui/popover', () => {
     children: React.ReactNode;
   }) => {
     return (
-      <PopoverContext.Provider value={{ open, onOpenChange }}>
-        {children}
-      </PopoverContext.Provider>
+      <PopoverContext.Provider value={{ open, onOpenChange }}>{children}</PopoverContext.Provider>
     );
   };
 

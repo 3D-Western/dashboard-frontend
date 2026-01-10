@@ -264,11 +264,11 @@ describe('passwordResetApi', () => {
         }),
       );
 
-      await expect(
-        passwordResetApi.resetPassword('reset-token-123', 'weak'),
-      ).rejects.toMatchObject({
-        code: ErrorCodes.VALIDATION_FAILED,
-      });
+      await expect(passwordResetApi.resetPassword('reset-token-123', 'weak')).rejects.toMatchObject(
+        {
+          code: ErrorCodes.VALIDATION_FAILED,
+        },
+      );
     });
 
     it('passes custom options to apiRequest', async () => {

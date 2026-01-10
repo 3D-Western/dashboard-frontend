@@ -12,7 +12,13 @@ vi.mock('next/navigation', () => ({
 }));
 
 vi.mock('@/components/ui/dropzone', () => {
-  const Dropzone = ({ onDrop, children }: { onDrop?: (files: File[]) => void; children?: any }) => {
+  const Dropzone = ({
+    onDrop,
+    children,
+  }: {
+    onDrop?: (files: File[]) => void;
+    children?: React.ReactNode;
+  }) => {
     return (
       <div>
         <button type="button" onClick={() => onDrop?.([])}>
@@ -53,8 +59,6 @@ vi.mock('@/components/ui/dropzone', () => {
 });
 
 vi.mock('@/components/ui/select', () => {
-  const React = require('react') as typeof import('react');
-
   const SelectItem = ({ value, children }: { value: string; children: React.ReactNode }) => {
     return React.createElement('option', { value }, children);
   };
@@ -112,9 +116,13 @@ vi.mock('@/components/ui/select', () => {
     const isColorSelect = colorValues.some((val) => itemValues.has(val));
 
     const options = isMaterialSelect
-      ? materialValues.map((val) => React.createElement('option', { key: val, value: val }, labels[val]))
+      ? materialValues.map((val) =>
+          React.createElement('option', { key: val, value: val }, labels[val]),
+        )
       : isColorSelect
-        ? colorValues.map((val) => React.createElement('option', { key: val, value: val }, labels[val]))
+        ? colorValues.map((val) =>
+            React.createElement('option', { key: val, value: val }, labels[val]),
+          )
         : items.map((item) =>
             React.cloneElement(item, {
               key: item.props.value,

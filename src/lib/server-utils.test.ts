@@ -29,7 +29,9 @@ describe('withSessionErrorHandling', () => {
   });
 
   it('redirects to login for SESSION_INVALID error', async () => {
-    const fn = vi.fn().mockRejectedValue(new ApiError(ErrorCodes.SESSION_INVALID, 'Invalid session'));
+    const fn = vi
+      .fn()
+      .mockRejectedValue(new ApiError(ErrorCodes.SESSION_INVALID, 'Invalid session'));
 
     await expect(withSessionErrorHandling(fn)).rejects.toThrow();
 
@@ -93,16 +95,16 @@ describe('withSessionErrorHandling', () => {
   });
 
   it('passes through function execution context', async () => {
-    let capturedThis: unknown;
     const context = { test: 'context' };
-    const fn = vi.fn(function (this: unknown) {
-      capturedThis = this;
-      return Promise.resolve('result');
-    }).bind(context);
+    const fn = vi
+      .fn(function (this: unknown) {
+        return Promise.resolve(this);
+      })
+      .bind(context);
 
-    await withSessionErrorHandling(fn);
+    const result = await withSessionErrorHandling(fn);
 
-    expect(capturedThis).toBe(context);
+    expect(result).toBe(context);
   });
 
   it('handles promise rejections correctly', async () => {

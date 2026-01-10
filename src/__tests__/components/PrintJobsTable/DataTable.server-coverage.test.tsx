@@ -6,8 +6,22 @@ import { PaginationMetadata } from '@/types/common';
 
 let mockTable: {
   getColumn: () => { getFilterValue: () => string; setFilterValue: (value: string) => void };
-  getAllColumns: () => Array<{ id: string; accessorFn?: () => unknown; getCanHide: () => boolean; getIsVisible: () => boolean; toggleVisibility: (value: boolean) => void }>;
-  getHeaderGroups: () => Array<{ id: string; headers: Array<{ id: string; isPlaceholder: boolean; column: { columnDef: { header?: React.ReactNode } }; getContext: () => unknown }> }>;
+  getAllColumns: () => Array<{
+    id: string;
+    accessorFn?: () => unknown;
+    getCanHide: () => boolean;
+    getIsVisible: () => boolean;
+    toggleVisibility: (value: boolean) => void;
+  }>;
+  getHeaderGroups: () => Array<{
+    id: string;
+    headers: Array<{
+      id: string;
+      isPlaceholder: boolean;
+      column: { columnDef: { header?: React.ReactNode } };
+      getContext: () => unknown;
+    }>;
+  }>;
   getRowModel: () => { rows: unknown[] };
   getFilteredRowModel: () => { rows: unknown[] };
   getFilteredSelectedRowModel: () => { rows: unknown[] };
@@ -44,7 +58,9 @@ vi.mock('@/components/ui/input', () => ({
 }));
 
 vi.mock('@/components/ui/label', () => ({
-  Label: ({ children, ...props }: React.ComponentProps<'label'>) => <label {...props}>{children}</label>,
+  Label: ({ children, ...props }: React.ComponentProps<'label'>) => (
+    <label {...props}>{children}</label>
+  ),
 }));
 
 vi.mock('@/components/ui/table', () => ({

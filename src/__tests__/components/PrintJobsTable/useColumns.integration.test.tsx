@@ -1,9 +1,9 @@
 import React from 'react';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen } from '@test/utils/render';
+import { renderHook } from '@testing-library/react';
 import { useColumns } from '@/components/PrintJobsTable/useColumns';
 import { PrintJob } from '@/types/jobs';
-import { ColumnDef } from '@tanstack/react-table';
 
 vi.mock('@/components/ui/dropdown-menu', () => ({
   DropdownMenu: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
@@ -36,15 +36,8 @@ vi.mock('@/components/ui/button', () => ({
 
 describe('useColumns', () => {
   const getColumns = (options?: Parameters<typeof useColumns>[0]) => {
-    let captured: ColumnDef<PrintJob>[] = [];
-
-    function Harness() {
-      captured = useColumns(options);
-      return null;
-    }
-
-    render(<Harness />);
-    return captured;
+    const { result } = renderHook(() => useColumns(options));
+    return result.current;
   };
 
   beforeEach(() => {

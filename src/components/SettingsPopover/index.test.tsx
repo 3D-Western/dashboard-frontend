@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import type { ComponentProps } from 'react';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { SettingsPopover } from './index';
@@ -15,7 +16,7 @@ vi.mock('next-themes', () => ({
 
 // Mock next/link
 vi.mock('next/link', () => ({
-  default: ({ children, href, onClick, ...props }: any) => (
+  default: ({ children, href, onClick, ...props }: ComponentProps<'a'> & { href: string }) => (
     <a href={href} onClick={onClick} {...props}>
       {children}
     </a>
@@ -36,12 +37,19 @@ describe('SettingsPopover', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockTheme.mockReturnValue('light');
-    delete (window as any).location;
-    window.location = { ...originalLocation, href: '' } as any;
+    Object.defineProperty(window, 'location', {
+      value: { ...originalLocation, href: '' },
+      writable: true,
+      configurable: true,
+    });
   });
 
   afterEach(() => {
-    window.location = originalLocation;
+    Object.defineProperty(window, 'location', {
+      value: originalLocation,
+      writable: true,
+      configurable: true,
+    });
   });
 
   it('renders settings button', () => {

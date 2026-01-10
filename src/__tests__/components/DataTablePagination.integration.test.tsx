@@ -15,7 +15,6 @@ vi.mock('next/navigation', () => ({
 }));
 
 vi.mock('@/components/ui/select', () => {
-  const React = require('react');
   const SelectContent = ({ children }: { children: React.ReactNode }) => <>{children}</>;
   const SelectItem = ({ value, children }: { value: string; children: React.ReactNode }) => (
     <option value={value}>{children}</option>

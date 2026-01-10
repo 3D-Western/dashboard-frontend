@@ -139,7 +139,7 @@ describe('apiRequest', () => {
 
       let capturedCookie: string | null = null;
       mockServer.use(
-        http.get(testUrl, ({ request }) => {
+        http.get(testUrl, () => {
           return HttpResponse.json({ success: true, data: { result: 'ok' } });
         }),
       );
@@ -166,7 +166,7 @@ describe('apiRequest', () => {
 
       let capturedCookie: string | null = null;
       mockServer.use(
-        http.get(testUrl, ({ request }) => {
+        http.get(testUrl, () => {
           return HttpResponse.json({ success: true, data: { result: 'ok' } });
         }),
       );
@@ -193,7 +193,7 @@ describe('apiRequest', () => {
 
       let capturedCookie: string | null = null;
       mockServer.use(
-        http.get(testUrl, ({ request }) => {
+        http.get(testUrl, () => {
           return HttpResponse.json({ success: true, data: { result: 'ok' } });
         }),
       );

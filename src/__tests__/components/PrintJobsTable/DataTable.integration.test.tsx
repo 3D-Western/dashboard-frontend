@@ -15,7 +15,9 @@ type MockColumn = {
 };
 
 let mockTable: {
-  getColumn: (id: string) => { getFilterValue: () => string; setFilterValue: (value: string) => void } | undefined;
+  getColumn: (
+    id: string,
+  ) => { getFilterValue: () => string; setFilterValue: (value: string) => void } | undefined;
   getAllColumns: () => MockColumn[];
   getHeaderGroups: () => Array<{
     id: string;
@@ -26,7 +28,17 @@ let mockTable: {
       getContext: () => unknown;
     }>;
   }>;
-  getRowModel: () => { rows: Array<{ id: string; getIsSelected: () => boolean; getVisibleCells: () => Array<{ id: string; column: { columnDef: { cell?: React.ReactNode } }; getContext: () => unknown }> }> };
+  getRowModel: () => {
+    rows: Array<{
+      id: string;
+      getIsSelected: () => boolean;
+      getVisibleCells: () => Array<{
+        id: string;
+        column: { columnDef: { cell?: React.ReactNode } };
+        getContext: () => unknown;
+      }>;
+    }>;
+  };
   getFilteredRowModel: () => { rows: unknown[] };
   getFilteredSelectedRowModel: () => { rows: unknown[] };
 };
@@ -78,11 +90,15 @@ vi.mock('@/components/ui/input', () => ({
 }));
 
 vi.mock('@/components/ui/label', () => ({
-  Label: ({ children, ...props }: React.ComponentProps<'label'>) => <label {...props}>{children}</label>,
+  Label: ({ children, ...props }: React.ComponentProps<'label'>) => (
+    <label {...props}>{children}</label>
+  ),
 }));
 
 vi.mock('@/components/ui/table', () => ({
-  Table: ({ children, ...props }: React.ComponentProps<'table'>) => <table {...props}>{children}</table>,
+  Table: ({ children, ...props }: React.ComponentProps<'table'>) => (
+    <table {...props}>{children}</table>
+  ),
   TableBody: ({ children }: { children: React.ReactNode }) => <tbody>{children}</tbody>,
   TableCell: ({ children, ...props }: React.ComponentProps<'td'>) => <td {...props}>{children}</td>,
   TableHead: ({ children, ...props }: React.ComponentProps<'th'>) => <th {...props}>{children}</th>,
