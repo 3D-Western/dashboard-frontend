@@ -124,6 +124,33 @@ describe('LoginForm Integration', () => {
       });
     });
 
+    it('redirects to MFA when required and stores challenge ID', async () => {
+      const user = userEvent.setup();
+
+      mockServer.use(
+        http.post(`*${endpoints.auth.login}`, () => {
+          return HttpResponse.json({
+            success: true,
+            data: {
+              requiresMfa: true,
+              challengeId: 123456,
+            },
+          });
+        }),
+      );
+
+      render(<LoginForm />);
+
+      await user.type(screen.getByLabelText(/student id/i), '251000001');
+      await user.type(screen.getByLabelText(/password/i), 'password123');
+      await user.click(screen.getByRole('button', { name: /login/i }));
+
+      await waitFor(() => {
+        expect(sessionStorage.getItem('mfaChallengeId')).toBe('123456');
+        expect(mockPush).toHaveBeenCalledWith('/mfa');
+      });
+    });
+
     it('clears form errors on successful submission', async () => {
       const user = userEvent.setup();
       mockSuccessfulLogin();

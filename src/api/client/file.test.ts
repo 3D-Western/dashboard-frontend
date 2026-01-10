@@ -190,6 +190,37 @@ describe('fileApi', () => {
       expect(requestUrl).toContain('pageSize=20');
     });
 
+    it('includes snapshotCreatedBefore when provided', async () => {
+      let requestUrl: string | undefined;
+      const snapshot = new Date('2024-01-01T12:00:00Z').toISOString();
+
+      mockServer.use(
+        http.get(`${baseUrl}${endpoints.files.list}`, ({ request }) => {
+          requestUrl = request.url;
+          return HttpResponse.json({
+            success: true,
+            data: {
+              data: [],
+              pagination: {
+                page: 1,
+                pageSize: 10,
+                totalItems: 0,
+                totalPages: 0,
+                hasNext: false,
+                hasPrevious: false,
+                snapshotCreatedBefore: snapshot,
+              },
+            },
+          });
+        }),
+      );
+
+      await fileApi.list({ snapshotCreatedBefore: snapshot });
+
+      const url = new URL(requestUrl ?? '');
+      expect(url.searchParams.get('snapshotCreatedBefore')).toBe(snapshot);
+    });
+
     it('includes credentials in request', async () => {
       let requestCredentials: RequestCredentials | undefined;
 
@@ -492,6 +523,20 @@ describe('fileApi', () => {
       await expect(fileApi.download(fileId)).rejects.toThrow();
     });
 
+    it('uses fallback error message when response lacks error details', async () => {
+      const fileId = 'missing-error-details';
+
+      mockServer.use(
+        http.get(`${baseUrl}${endpoints.files.download(fileId)}`, () => {
+          return HttpResponse.json({}, { status: 500 });
+        }),
+      );
+
+      await expect(fileApi.download(fileId)).rejects.toThrow(
+        `Failed to download file ${fileId}: 500 Internal Server Error`,
+      );
+    });
+
     it("throws FORBIDDEN error when downloading another user's file", async () => {
       const fileId = 'other-user-file';
 
@@ -607,6 +652,47 @@ describe('fileApi', () => {
       await fileApi.downloadAndSave(fileId);
 
       expect(linkElement.download).toBe('from-metadata.stl');
+    });
+
+    it('falls back to default filename when metadata is empty', async () => {
+      const fileId = 'empty-metadata-filename';
+      const fileContent = 'mock file content';
+      const mockMetadata = createMockFileMetadata({
+        id: fileId,
+        filename: '',
+      });
+
+      global.URL.createObjectURL = vi.fn(() => 'blob:mock-url');
+      global.URL.revokeObjectURL = vi.fn();
+      const linkElement = {
+        href: '',
+        download: '',
+        click: vi.fn(),
+      } as unknown as HTMLAnchorElement;
+      vi.spyOn(document, 'createElement').mockReturnValue(linkElement);
+      vi.spyOn(document.body, 'appendChild').mockImplementation(() => linkElement);
+      vi.spyOn(document.body, 'removeChild').mockImplementation(() => linkElement);
+
+      mockServer.use(
+        http.get(`${baseUrl}${endpoints.files.byId(fileId)}`, () => {
+          return HttpResponse.json({
+            success: true,
+            data: mockMetadata,
+          });
+        }),
+        http.get(`${baseUrl}${endpoints.files.download(fileId)}`, () => {
+          return new HttpResponse(fileContent, {
+            status: 200,
+            headers: {
+              'Content-Type': 'model/stl',
+            },
+          });
+        }),
+      );
+
+      await fileApi.downloadAndSave(fileId);
+
+      expect(linkElement.download).toBe('download');
     });
   });
 });

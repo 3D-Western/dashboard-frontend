@@ -31,12 +31,21 @@ export class FileSystemUtils {
    * Initialize tmp directory - called when MSW server starts
    */
   static initTmpDirectory(): void {
-    // Clean existing tmp/ directory
+    // Best-effort cleanup to avoid flaky parallel test runs on Windows.
     if (fs.existsSync(TMP_DIR)) {
-      fs.rmSync(TMP_DIR, { recursive: true, force: true });
+      try {
+        fs.rmSync(TMP_DIR, { recursive: true, force: true });
+      } catch (error) {
+        console.warn('Warning: unable to remove tmp directory', error);
+      }
     }
-    // Create fresh tmp/ directory
-    fs.mkdirSync(TMP_DIR, { recursive: true });
+    try {
+      fs.mkdirSync(TMP_DIR, { recursive: true });
+    } catch (error) {
+      if (!fs.existsSync(TMP_DIR)) {
+        throw error;
+      }
+    }
   }
 
   /**

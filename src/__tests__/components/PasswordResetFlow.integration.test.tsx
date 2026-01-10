@@ -70,6 +70,28 @@ describe('Password Reset Flow Integration', () => {
     expect(await screen.findByText(/check your email/i)).toBeInTheDocument();
   });
 
+  it('shows loading state while sending reset code', async () => {
+    const user = userEvent.setup();
+    mockServer.use(
+      http.post(`*${endpoints.passwordReset.request}`, async () => {
+        await new Promise((resolve) => setTimeout(resolve, 100));
+        return HttpResponse.json({
+          success: true,
+          data: { message: 'ok' },
+        });
+      }),
+    );
+
+    render(<ForgotPasswordForm />);
+
+    await user.type(screen.getByLabelText(/student id/i), '251000001');
+    await user.click(screen.getByRole('button', { name: /send reset code/i }));
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: /sending/i })).toBeDisabled();
+    });
+  });
+
   it('shows success message even when request fails', async () => {
     const user = userEvent.setup();
     const restoreConsole = suppressConsoleError();
@@ -93,6 +115,28 @@ describe('Password Reset Flow Integration', () => {
 
     expect(await screen.findByText(/check your email/i)).toBeInTheDocument();
     restoreConsole();
+  });
+
+  it('returns to login from success state in ForgotPasswordForm', async () => {
+    const user = userEvent.setup();
+    mockServer.use(
+      http.post(`*${endpoints.passwordReset.request}`, () => {
+        return HttpResponse.json({
+          success: true,
+          data: { message: 'ok' },
+        });
+      }),
+    );
+
+    render(<ForgotPasswordForm />);
+
+    await user.type(screen.getByLabelText(/student id/i), '251000001');
+    await user.click(screen.getByRole('button', { name: /send reset code/i }));
+
+    const returnButton = await screen.findByRole('button', { name: /return to login/i });
+    await user.click(returnButton);
+
+    expect(mockPush).toHaveBeenCalledWith(Routes.login);
   });
 
   it('validates reset code in ResetPasswordForm', async () => {
@@ -194,6 +238,43 @@ describe('Password Reset Flow Integration', () => {
       );
       expect(mockPush).toHaveBeenCalledWith(Routes.login);
     });
+  });
+
+  it('shows loading state while resetting password', async () => {
+    const user = userEvent.setup();
+    mockServer.use(
+      http.post(`*${endpoints.passwordReset.verify}`, async () => {
+        await new Promise((resolve) => setTimeout(resolve, 100));
+        return HttpResponse.json({
+          success: true,
+          data: { message: 'Verified', resetToken: 'reset-token-loading' },
+        });
+      }),
+      http.post(`*${endpoints.passwordReset.complete}`, () => {
+        return HttpResponse.json({
+          success: true,
+          data: { message: 'Reset complete' },
+        });
+      }),
+    );
+
+    render(<ResetPasswordForm />);
+
+    await user.type(screen.getByLabelText(/student id/i), '251000001');
+    await user.type(screen.getByLabelText(/reset code/i), '123456');
+    await user.type(screen.getByLabelText(/new password/i), 'password123');
+    await user.type(screen.getByLabelText(/confirm password/i), 'password123');
+    await user.click(screen.getByRole('button', { name: /reset password/i }));
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: /resetting/i })).toBeDisabled();
+    });
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: /reset password/i })).toBeEnabled();
+    });
+
+    mockServer.resetHandlers();
   });
 
   it('completes the full password reset flow', async () => {

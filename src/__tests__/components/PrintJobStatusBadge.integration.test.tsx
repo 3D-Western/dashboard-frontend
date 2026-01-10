@@ -27,6 +27,18 @@ describe('PrintJobStatusBadge Integration', () => {
     expect(screen.getByText('Ready')).toBeInTheDocument();
   });
 
+  it('renders FLAGGED status correctly', () => {
+    render(<PrintJobStatusBadge status="FLAGGED" />);
+
+    expect(screen.getByText('Flagged')).toBeInTheDocument();
+  });
+
+  it('renders ERROR status correctly', () => {
+    render(<PrintJobStatusBadge status="ERROR" />);
+
+    expect(screen.getByText('Error')).toBeInTheDocument();
+  });
+
   it('renders CANCELLED status correctly', () => {
     render(<PrintJobStatusBadge status="CANCELLED" />);
 
@@ -43,6 +55,12 @@ describe('PrintJobStatusBadge Integration', () => {
     render(<PrintJobStatusBadge status="FAIL" />);
 
     expect(screen.getByText('Failed')).toBeInTheDocument();
+  });
+
+  it('falls back to Unknown label for unexpected status', () => {
+    render(<PrintJobStatusBadge status={'UNKNOWN_STATUS' as never} />);
+
+    expect(screen.getByText('Unknown')).toBeInTheDocument();
   });
 
   it('applies correct styling classes', () => {
