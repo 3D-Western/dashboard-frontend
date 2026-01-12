@@ -98,6 +98,21 @@ class Database {
     return job;
   }
 
+  public addPrintJob(printJob: PrintJob): PrintJob {
+    // Add to ID map
+    this.activePrintJobsIDMap.set(printJob.id, printJob);
+    
+    // Add to user's jobs array
+    let userJobs = this.activePrintJobsUserMap.get(printJob.studentId);
+    if (!userJobs) {
+      userJobs = [];
+      this.activePrintJobsUserMap.set(printJob.studentId, userJobs);
+    }
+    userJobs.push(printJob);
+    
+    return printJob;
+  }
+
   public deletePrintJob(printJobId: string): boolean {
     const job = this.activePrintJobsIDMap.get(printJobId);
     if (!job) {

@@ -26,7 +26,7 @@ type NewPrintFormProps = {
   mockMode?: boolean;
 };
 
-export default function NewPrintForm({ mockMode = true }: NewPrintFormProps = {}) {
+export default function NewPrintForm({ mockMode = false }: NewPrintFormProps = {}) {
   const router = useRouter();
   // file will be stored in react-hook-form (we don't need a provider)
 
@@ -105,7 +105,7 @@ export default function NewPrintForm({ mockMode = true }: NewPrintFormProps = {}
           const fd = new FormData();
           fd.append('file', file, file.name);
 
-          const uploadRes = await fetch('/api/files/upload', {
+          const uploadRes = await fetch('/api/v1/files/upload', {
             method: 'POST',
             body: fd,
           });
@@ -122,7 +122,7 @@ export default function NewPrintForm({ mockMode = true }: NewPrintFormProps = {}
       }
 
       const payload = {
-        printName: values['print-name'],
+        name: values['print-name'],
         description: values.description,
         goal: values.goal,
         durability: values.durability,
@@ -132,7 +132,8 @@ export default function NewPrintForm({ mockMode = true }: NewPrintFormProps = {}
         material2: values['material-2'],
         color2: values['color-2'],
         support: values.support,
-        fileId,
+        stlFileId: fileId!,
+        reprint: null, // You might want to add reprint logic later
       };
 
       if (MOCK_MODE) {
@@ -146,7 +147,7 @@ export default function NewPrintForm({ mockMode = true }: NewPrintFormProps = {}
       }
 
       // Real submit flow (use when backend endpoints are available)
-      const submitRes = await fetch('/api/orders/active/submit', {
+      const submitRes = await fetch('/api/v1/orders', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
@@ -157,8 +158,8 @@ export default function NewPrintForm({ mockMode = true }: NewPrintFormProps = {}
         throw new Error(text || 'Submit failed');
       }
 
-      // success — redirect to dashboard
-      router.push('/dashboard');
+      // success — redirect to print jobs page
+      router.push('/dashboard/print');
     } catch (err) {
       console.error('Submit error', err);
       // Provide a clearer error message for dev

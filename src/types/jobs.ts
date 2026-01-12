@@ -37,6 +37,15 @@ export interface PrintJob extends BasePrintJob {
   kind: 'active-print-job'; // For type checking
   status: PrintJobStatus;
   stlFile: File;
+  // Additional form fields
+  goal?: string;
+  durability?: string;
+  infill?: string;
+  material1?: string;
+  color1?: string;
+  material2?: string;
+  color2?: string;
+  support?: string;
 }
 
 export interface CompletedPrintJob extends BasePrintJob {

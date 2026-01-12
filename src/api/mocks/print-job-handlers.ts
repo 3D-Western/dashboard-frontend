@@ -67,6 +67,9 @@ export const orderHandlers = [
     const endIndex = startIndex + pageSize;
     const paginatedOrders = orders.slice(startIndex, endIndex);
 
+    console.log('GET /orders - User:', user.studentId, 'Role:', user.role, 'Total orders:', totalItems, 'Returning:', paginatedOrders.length);
+    console.log('Order IDs:', paginatedOrders.map(o => ({ id: o.id, studentId: o.studentId, name: o.name })));
+
     return HttpResponse.json(
       generateSuccessResponse({
         data: paginatedOrders,
@@ -91,15 +94,24 @@ export const orderHandlers = [
       return createInvalidSessionResponse();
     }
 
+    console.log('Creating print job for user:', user.studentId, user.firstName, user.lastName);
+
     const body = (await request.json()) as {
       name: string;
       description: string;
+      goal?: string;
+      durability?: string;
+      infill?: string;
+      material1: string;
+      color1: string;
+      material2?: string;
+      color2?: string;
+      support?: string;
       stlFileId: string;
       reprint?: string | null;
     };
 
-    // TODO: Implement order creation in database
-    // For now, return a mock response
+    // Create new order and add to database
     const newOrder = {
       id: `order-${Date.now()}`,
       kind: 'active-print-job' as const,
@@ -114,7 +126,18 @@ export const orderHandlers = [
         path: '/uploads/file.stl',
       },
       reprint: body.reprint,
+      // Store additional form fields
+      goal: body.goal,
+      durability: body.durability,
+      infill: body.infill,
+      material1: body.material1,
+      color1: body.color1,
+      material2: body.material2,
+      color2: body.color2,
+      support: body.support,
     };
+    db.addPrintJob(newOrder);
+    console.log('Print job created and added to database:', newOrder.id, 'for student:', newOrder.studentId);
 
     return HttpResponse.json(generateSuccessResponse({ order: newOrder }));
   }),
