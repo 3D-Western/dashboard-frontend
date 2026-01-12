@@ -162,8 +162,11 @@ export default function NewPrintForm({ mockMode = false }: NewPrintFormProps = {
       router.push('/dashboard/print');
     } catch (err) {
       console.error('Submit error', err);
-      // Provide a clearer error message for dev
-      alert('Failed to submit print request. ' + (err instanceof Error ? err.message : ''));
+      if (typeof window !== 'undefined' && typeof window.alert === 'function') {
+        alert('Failed to submit print request. ' + (err instanceof Error ? err.message : ''));
+      } else {
+        console.error('Failed to submit print request.', err);
+      }
     }
   }
 
