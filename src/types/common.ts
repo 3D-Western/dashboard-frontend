@@ -43,6 +43,7 @@ export interface BasePaginationParams {
 export interface OrderListParams extends BasePaginationParams {
   userId?: number;
   status?: string;
+  search?: string;
 }
 
 /**

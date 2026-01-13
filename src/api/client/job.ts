@@ -17,6 +17,9 @@ export const jobApi = {
     if (params?.status !== undefined) {
       searchParams.append('status', params.status);
     }
+    if (params?.search !== undefined) {
+      searchParams.append('search', params.search);
+    }
     if (params?.page !== undefined) {
       searchParams.append('page', params.page.toString());
     }

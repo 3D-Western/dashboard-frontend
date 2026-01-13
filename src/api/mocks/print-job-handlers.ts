@@ -17,6 +17,7 @@ export const orderHandlers = [
     // Parse query parameters
     const url = new URL(request.url);
     const statusFilter = url.searchParams.get('status');
+    const searchFilter = url.searchParams.get('search');
     const userIdFilter = url.searchParams.get('userId');
     const page = parseInt(url.searchParams.get('page') || '1', 10);
     const pageSize = parseInt(url.searchParams.get('pageSize') || '10', 10);
@@ -36,6 +37,7 @@ export const orderHandlers = [
     let orders = db.getPrintJobs({
       userId: userIdForFilter,
       status: statusFilter || undefined,
+      search: searchFilter || undefined,
       snapshotCreatedBefore,
     });
 
