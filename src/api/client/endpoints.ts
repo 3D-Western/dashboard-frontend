@@ -17,6 +17,7 @@ export const endpoints = {
     me: '/api/v1/users/me',
     list: '/api/v1/users',
     byId: (userId: number) => `/api/v1/users/${userId}`,
+    orders: '/api/v1/users/me/print-jobs',
   },
   orders: {
     list: '/api/v1/orders',

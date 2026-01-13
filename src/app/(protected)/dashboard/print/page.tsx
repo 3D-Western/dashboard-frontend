@@ -1,8 +1,8 @@
 import PrintJobsTable from '@/components/PrintJobsTable';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { jobApi } from '@/api/client/job';
 import { withSessionErrorHandling } from '@/lib/server-utils';
+import { userApi } from '@/api/client/user';
 
 interface PrintPageProps {
   searchParams: Promise<{ page?: string; pageSize?: string }>;
@@ -15,7 +15,7 @@ export default async function PrintPage({ searchParams }: PrintPageProps) {
 
   // Fetch user's print jobs with server-side pagination
   const { data: printJobs, pagination } = await withSessionErrorHandling(() =>
-    jobApi.listAllJobs({ page, pageSize }),
+    userApi.getCurrentUserOrders({ page, pageSize }),
   );
 
   return (

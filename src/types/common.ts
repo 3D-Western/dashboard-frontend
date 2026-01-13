@@ -55,3 +55,8 @@ export interface UserListParams extends BasePaginationParams {
   trainingLevel?: string;
   experienceLevel?: string;
 }
+
+export interface CurrentUserORderListParams extends BasePaginationParams {
+  status?: string;
+  search?: string;
+}

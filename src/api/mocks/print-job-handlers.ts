@@ -23,24 +23,21 @@ export const orderHandlers = [
     const snapshotCreatedBefore =
       url.searchParams.get('snapshotCreatedBefore') || new Date().toISOString();
 
-    // Get all jobs
-    let orders = db.getAllPrintJobs();
-
-    // Apply snapshot filter (only orders created before the snapshot)
-    orders = orders.filter((order) => order.orderPlaced <= snapshotCreatedBefore);
-
-    // Filter by userId if provided
+    // Determine the userId filter based on role
+    let userIdForFilter: number | undefined;
     if (userIdFilter) {
-      orders = orders.filter((order) => order.studentId === parseInt(userIdFilter));
+      userIdForFilter = parseInt(userIdFilter);
     } else if (user.role !== 'admin') {
       // Non-admin users can only see their own orders
-      orders = orders.filter((order) => order.studentId === user.studentId);
+      userIdForFilter = user.studentId;
     }
 
-    // Filter by status if provided
-    if (statusFilter) {
-      orders = orders.filter((order) => order.status === statusFilter);
-    }
+    // Get print jobs using the shared function with filters
+    let orders = db.getPrintJobs({
+      userId: userIdForFilter,
+      status: statusFilter || undefined,
+      snapshotCreatedBefore,
+    });
 
     // For admin users, populate student info
     if (user.role === 'admin') {
