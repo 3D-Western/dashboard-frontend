@@ -40,4 +40,3 @@ export default async function PrintPage({ searchParams }: PrintPageProps) {
     </div>
   );
 }
-

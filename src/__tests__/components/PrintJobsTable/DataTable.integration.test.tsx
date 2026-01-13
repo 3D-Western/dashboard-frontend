@@ -1,7 +1,6 @@
 import React from 'react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, waitFor } from '@test/utils/render';
-import userEvent from '@testing-library/user-event';
 import { DataTable } from '@/components/PrintJobsTable/DataTable';
 import { PaginationMetadata } from '@/types/common';
 
