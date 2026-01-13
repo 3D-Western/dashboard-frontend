@@ -49,7 +49,7 @@ export const orderHandlers = [
           ...order,
           student: student
             ? {
-                id: student.studentId,
+                studentId: student.studentId,
                 firstName: student.firstName,
                 lastName: student.lastName,
                 email: student.email,

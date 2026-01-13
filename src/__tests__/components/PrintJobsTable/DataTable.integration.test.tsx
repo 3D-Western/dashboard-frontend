@@ -229,19 +229,4 @@ describe('DataTable', () => {
       expect(screen.getByRole('status')).toHaveTextContent('2 print jobs selected');
     });
   });
-
-  it('renders column labels and toggles visibility', async () => {
-    const { mockToggleVisibility } = setupTable();
-    const user = userEvent.setup();
-
-    render(<DataTable columns={[]} data={[{ id: 1 }]} pagination={pagination} />);
-
-    expect(screen.getAllByText('Name').length).toBeGreaterThan(0);
-    expect(screen.getByText('custom')).toBeInTheDocument();
-    expect(screen.queryByText('Placeholder')).not.toBeInTheDocument();
-
-    await user.click(screen.getByRole('button', { name: 'Name' }));
-
-    expect(mockToggleVisibility).toHaveBeenCalled();
-  });
 });

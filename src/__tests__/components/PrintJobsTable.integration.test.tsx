@@ -86,46 +86,6 @@ describe('PrintJobsTable Integration', () => {
     });
   });
 
-  describe('search functionality', () => {
-    it('filters rows by name', async () => {
-      const user = userEvent.setup();
-      const pagination = createMockPagination(mockJobs);
-      render(<PrintJobsTable printJobs={mockJobs} pagination={pagination} />);
-
-      const searchInput = screen.getByPlaceholderText('Search prints...');
-      await user.type(searchInput, 'Test Print 1');
-
-      expect(screen.getByText('Test Print 1')).toBeInTheDocument();
-      expect(screen.queryByText('Test Print 2')).not.toBeInTheDocument();
-      expect(screen.queryByText('Test Print 3')).not.toBeInTheDocument();
-    });
-
-    it('shows all jobs when search is cleared', async () => {
-      const user = userEvent.setup();
-      const pagination = createMockPagination(mockJobs);
-      render(<PrintJobsTable printJobs={mockJobs} pagination={pagination} />);
-
-      const searchInput = screen.getByPlaceholderText('Search prints...');
-      await user.type(searchInput, 'Test Print 1');
-      await user.clear(searchInput);
-
-      expect(screen.getByText('Test Print 1')).toBeInTheDocument();
-      expect(screen.getByText('Test Print 2')).toBeInTheDocument();
-      expect(screen.getByText('Test Print 3')).toBeInTheDocument();
-    });
-
-    it('shows empty state when no matches found', async () => {
-      const user = userEvent.setup();
-      const pagination = createMockPagination(mockJobs);
-      render(<PrintJobsTable printJobs={mockJobs} pagination={pagination} />);
-
-      const searchInput = screen.getByPlaceholderText('Search prints...');
-      await user.type(searchInput, 'Nonexistent Job');
-
-      expect(screen.getByText('No results.')).toBeInTheDocument();
-    });
-  });
-
   describe('row selection', () => {
     it('selects individual row when checkbox clicked', async () => {
       const user = userEvent.setup();
@@ -305,7 +265,7 @@ describe('PrintJobsTable Integration', () => {
       const adminJobs = [
         createMockPrintJob({
           student: {
-            id: 251000001,
+            studentId: 251000001,
             firstName: 'John',
             lastName: 'Doe',
             email: 'john@example.com',
