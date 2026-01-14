@@ -22,11 +22,7 @@ import { RadioGroup, RadioGroupItem } from '../ui/radio-group';
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '../ui/select';
 import { UnsavedChangesGuard } from '../ui/unsaved-changes-guard';
 
-type NewPrintFormProps = {
-  mockMode?: boolean;
-};
-
-export default function NewPrintForm({ mockMode = true }: NewPrintFormProps = {}) {
+export default function NewPrintForm() {
   const router = useRouter();
   // file will be stored in react-hook-form (we don't need a provider)
 
@@ -88,41 +84,15 @@ export default function NewPrintForm({ mockMode = true }: NewPrintFormProps = {}
   const { isDirty, isSubmitting } = form.formState;
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    // Toggle mock mode here for local testing without backend endpoints
-    // When true, the submit flow will simulate upload + order creation with fake IDs
-    const MOCK_MODE = mockMode;
-
     try {
       const file = values.file as File;
       let fileId: string | null = null;
 
-      if (MOCK_MODE) {
-        console.log('MOCK: Simulating file upload for', file?.name);
-        await new Promise((res) => setTimeout(res, 500));
-        if (file) fileId = `mock-file-${Date.now()}`;
-      } else {
-        if (file) {
-          const fd = new FormData();
-          fd.append('file', file, file.name);
-
-          const uploadRes = await fetch('/api/files/upload', {
-            method: 'POST',
-            body: fd,
-          });
-
-          if (!uploadRes.ok) {
-            const text = await uploadRes.text();
-            throw new Error(text || 'File upload failed');
-          }
-
-          const uploadJson = await uploadRes.json();
-          // what does API return for file? { id: string } or { fileId: string }?
-          fileId = (uploadJson.id ?? uploadJson.fileId ?? null) as string | null;
-        }
-      }
+      await new Promise((res) => setTimeout(res, 500));
+      if (file) fileId = `mock-file-${Date.now()}`;
 
       const payload = {
-        printName: values['print-name'],
+        name: values['print-name'],
         description: values.description,
         goal: values.goal,
         durability: values.durability,
@@ -132,21 +102,11 @@ export default function NewPrintForm({ mockMode = true }: NewPrintFormProps = {}
         material2: values['material-2'],
         color2: values['color-2'],
         support: values.support,
-        fileId,
+        stlFileId: fileId || '',
+        reprint: null,
       };
 
-      if (MOCK_MODE) {
-        console.log('MOCK: Order payload', payload);
-        await new Promise((res) => setTimeout(res, 300));
-        const fakeOrderId = `mock-order-${Date.now()}`;
-        console.log('MOCK: Created order', fakeOrderId);
-        // Navigate to dashboard as if submission succeeded
-        router.push('/dashboard');
-        return;
-      }
-
-      // Real submit flow (use when backend endpoints are available)
-      const submitRes = await fetch('/api/orders/active/submit', {
+      const submitRes = await fetch('/api/v1/orders', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
@@ -154,14 +114,17 @@ export default function NewPrintForm({ mockMode = true }: NewPrintFormProps = {}
 
       if (!submitRes.ok) {
         const text = await submitRes.text();
-        throw new Error(text || 'Submit failed');
+        throw new Error(text || 'Mock submit failed');
       }
 
-      // success — redirect to dashboard
-      router.push('/dashboard');
+      const result = await submitRes.json();
+      console.log('MOCK: Created order', result.data?.order?.id);
+      
+      // Navigate to dashboard and force refresh to show new data
+      router.push('/dashboard/print');
+      router.refresh(); // Force server component to re-run
     } catch (err) {
       console.error('Submit error', err);
-      // Provide a clearer error message for dev
       alert('Failed to submit print request. ' + (err instanceof Error ? err.message : ''));
     }
   }
