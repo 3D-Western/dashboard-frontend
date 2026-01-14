@@ -36,7 +36,7 @@ type RequestConfig = {
 };
 
 const REQUEST_CONFIGS: Record<RequestType, RequestConfig> = {
-  'cnc': {
+  cnc: {
     title: 'CNC Machining',
     description: 'Precision machining from solid materials',
     fileTypes: {
@@ -113,16 +113,13 @@ const REQUEST_CONFIGS: Record<RequestType, RequestConfig> = {
 
 export default function NewOtherRequestForm() {
   const router = useRouter();
-  
+
   const formSchema = z.object({
     requestType: z.enum(['cnc', 'laser-cutting', 'water-jet']).optional(),
     name: z.string().min(1, { message: 'Must have a name for the request' }).max(50),
-    description: z
-      .string()
-      .min(2, { message: 'Must have a description for the request' })
-      .max(500),
+    description: z.string().min(2, { message: 'Must have a description for the request' }).max(500),
     material: z.string().min(1, { message: 'Please select a material' }),
-    file: z.any().optional(), 
+    file: z.any().optional(),
   });
 
   const form = useForm<z.infer<typeof formSchema>>({
@@ -137,10 +134,10 @@ export default function NewOtherRequestForm() {
   });
 
   const { isDirty, isSubmitting } = form.formState;
-  
+
   const selectedRequestType = form.watch('requestType');
-  const selectedFile = form.watch('file');
-  
+  const selectedFile = form.watch('file') as File | undefined;
+
   const currentConfig = selectedRequestType ? REQUEST_CONFIGS[selectedRequestType] : null;
 
   useEffect(() => {
@@ -154,7 +151,7 @@ export default function NewOtherRequestForm() {
     const fileName = file.name.toLowerCase();
     const config = REQUEST_CONFIGS[requestType];
     const allowedExtensions = Object.values(config.fileTypes.accept).flat();
-    return allowedExtensions.some(ext => fileName.endsWith(ext.toLowerCase()));
+    return allowedExtensions.some((ext) => fileName.endsWith(ext.toLowerCase()));
   };
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
@@ -164,7 +161,7 @@ export default function NewOtherRequestForm() {
     }
 
     const config = REQUEST_CONFIGS[values.requestType];
-    
+
     if (!values.file || !(values.file instanceof File)) {
       alert(config.fileTypes.validation);
       return;
@@ -172,7 +169,7 @@ export default function NewOtherRequestForm() {
 
     try {
       const file = values.file as File;
-      
+
       if (!validateFileType(file, values.requestType)) {
         throw new Error(config.fileTypes.validation);
       }
@@ -189,10 +186,9 @@ export default function NewOtherRequestForm() {
         fileId: fileId || '',
         requestType: values.requestType,
         priority: 'standard',
-        urgency: 'normal',    
+        urgency: 'normal',
       };
 
-      
       const submitRes = await fetch(config.apiEndpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -206,7 +202,7 @@ export default function NewOtherRequestForm() {
 
       const result = await submitRes.json();
       console.log(`MOCK: Created ${values.requestType} order`, result.data?.order?.id);
-      
+
       router.push('/dashboard');
       if (typeof router.refresh === 'function') {
         router.refresh();
@@ -214,7 +210,10 @@ export default function NewOtherRequestForm() {
     } catch (err) {
       console.error(`${values.requestType} submit error`, err);
       if (typeof window !== 'undefined') {
-        alert(`Failed to submit ${values.requestType} request. ` + (err instanceof Error ? err.message : ''));
+        alert(
+          `Failed to submit ${values.requestType} request. ` +
+            (err instanceof Error ? err.message : ''),
+        );
       }
     }
   }
@@ -259,7 +258,7 @@ export default function NewOtherRequestForm() {
           }
 
           const file = acceptedFiles[0];
-          
+
           // Additional client-side validation
           if (!validateFileType(file, requestType)) {
             alert(config.fileTypes.validation);
@@ -280,13 +279,15 @@ export default function NewOtherRequestForm() {
     <div className="flex min-h-screen flex-col items-center justify-center px-4">
       <div className="mb-6 text-center">
         <h1 className="text-2xl font-semibold">
-          {currentConfig ? `Create New ${currentConfig.title} Request` : 'Create Manufacturing Request'}
+          {currentConfig
+            ? `Create New ${currentConfig.title} Request`
+            : 'Create Manufacturing Request'}
         </h1>
         <p className="mt-2 text-muted-foreground">
           {currentConfig ? currentConfig.description : 'Choose a request type to get started'}
         </p>
       </div>
-      
+
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="w-full max-w-xl space-y-4">
           {/* Request Type Selection */}
@@ -339,18 +340,18 @@ export default function NewOtherRequestForm() {
               <FormItem>
                 <FormLabel className="text-lg">Description</FormLabel>
                 <FormDescription>
-                  {selectedRequestType 
+                  {selectedRequestType
                     ? `Describe your ${selectedRequestType} requirements, dimensions, tolerances, etc.`
-                    : 'Describe your manufacturing requirements'
-                  }
+                    : 'Describe your manufacturing requirements'}
                 </FormDescription>
                 <FormControl>
-                  <Textarea 
-                    placeholder={selectedRequestType 
-                      ? `Describe your ${selectedRequestType} request in detail...`
-                      : 'Describe your request in detail...'
+                  <Textarea
+                    placeholder={
+                      selectedRequestType
+                        ? `Describe your ${selectedRequestType} request in detail...`
+                        : 'Describe your request in detail...'
                     }
-                    {...field} 
+                    {...field}
                   />
                 </FormControl>
                 <FormMessage />
@@ -366,10 +367,9 @@ export default function NewOtherRequestForm() {
               <FormItem>
                 <FormLabel className="text-lg">Preferred Material</FormLabel>
                 <FormDescription>
-                  {selectedRequestType 
+                  {selectedRequestType
                     ? `Select your preferred material for ${selectedRequestType}`
-                    : 'Select your preferred material'
-                  }
+                    : 'Select your preferred material'}
                 </FormDescription>
                 <FormControl>
                   <Select value={field.value} onValueChange={field.onChange}>
@@ -377,11 +377,13 @@ export default function NewOtherRequestForm() {
                       <SelectValue placeholder="Select a material" />
                     </SelectTrigger>
                     <SelectContent>
-                      {currentConfig?.materials.map((material: { value: string; label: string }) => (
-                        <SelectItem key={material.value} value={material.value}>
-                          {material.label}
-                        </SelectItem>
-                      )) || (
+                      {currentConfig?.materials.map(
+                        (material: { value: string; label: string }) => (
+                          <SelectItem key={material.value} value={material.value}>
+                            {material.label}
+                          </SelectItem>
+                        ),
+                      ) || (
                         <SelectItem disabled value="no-request-type-selected">
                           Please select a request type first
                         </SelectItem>
@@ -402,10 +404,9 @@ export default function NewOtherRequestForm() {
               <FormItem>
                 <FormLabel className="text-lg">Design File</FormLabel>
                 <FormDescription>
-                  {currentConfig 
+                  {currentConfig
                     ? `${currentConfig.fileTypes.description} - ${currentConfig.fileTypes.validation}`
-                    : 'Select a request type to see accepted file types'
-                  }
+                    : 'Select a request type to see accepted file types'}
                 </FormDescription>
                 <FormControl>
                   <CustomDropZone
@@ -417,10 +418,8 @@ export default function NewOtherRequestForm() {
                   />
                 </FormControl>
                 {/* Show filename preview when present */}
-                {form.watch('file') && (
-                  <div className="mt-2 text-sm text-muted-foreground">
-                    {(form.watch('file') as File).name}
-                  </div>
+                {selectedFile && (
+                  <div className="mt-2 text-sm text-muted-foreground">{selectedFile.name}</div>
                 )}
                 <FormMessage />
               </FormItem>
@@ -460,16 +459,16 @@ export default function NewOtherRequestForm() {
                   </svg>
                   Submitting...
                 </span>
+              ) : selectedRequestType ? (
+                `Submit`
               ) : (
-                selectedRequestType 
-                  ? `Submit`
-                  : 'Select Request Type'
+                'Select Request Type'
               )}
             </Button>
           </div>
         </form>
       </Form>
-      
+
       <UnsavedChangesGuard isDirty={isDirty && !isSubmitting} />
     </div>
   );
