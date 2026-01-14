@@ -244,6 +244,15 @@ describe('NewPrintForm Integration', () => {
 
     it('submits valid data and redirects in mock mode', async () => {
       const user = setupUser();
+
+      // Mock fetch to bypass MSW authentication
+      const fetchSpy = vi.spyOn(global, 'fetch').mockResolvedValueOnce(
+        new Response(JSON.stringify({ success: true, data: { order: { id: 'test-order' } } }), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        }),
+      );
+
       render(<NewPrintForm />);
 
       await fillRequiredFields(user);
@@ -252,8 +261,10 @@ describe('NewPrintForm Integration', () => {
       await user.click(submitButton);
 
       await waitFor(() => {
-        expect(mockPush).toHaveBeenCalledWith('/dashboard');
+        expect(mockPush).toHaveBeenCalledWith('/dashboard/print');
       });
+
+      fetchSpy.mockRestore();
     });
 
     it('form submission with all valid data succeeds in mock mode', async () => {
@@ -334,7 +345,12 @@ describe('NewPrintForm Integration', () => {
             headers: { 'Content-Type': 'application/json' },
           }),
         )
-        .mockResolvedValueOnce(new Response(null, { status: 200 }));
+        .mockResolvedValueOnce(
+          new Response(JSON.stringify({ success: true, data: { order: { id: 'order-123' } } }), {
+            status: 200,
+            headers: { 'Content-Type': 'application/json' },
+          }),
+        );
 
       render(<NewPrintForm mockMode={false} />);
       await fillRequiredFields(user);
@@ -349,8 +365,8 @@ describe('NewPrintForm Integration', () => {
       const submitCall = fetchSpy.mock.calls[1];
       const submitOptions = submitCall[1] as RequestInit;
       const payload = JSON.parse(submitOptions.body as string);
-      expect(payload.fileId).toBe('file-123');
-      expect(mockPush).toHaveBeenCalledWith('/dashboard');
+      expect(payload.stlFileId).toBe('file-123');
+      expect(mockPush).toHaveBeenCalledWith('/dashboard/print');
 
       fetchSpy.mockRestore();
     });
@@ -366,7 +382,12 @@ describe('NewPrintForm Integration', () => {
             headers: { 'Content-Type': 'application/json' },
           }),
         )
-        .mockResolvedValueOnce(new Response(null, { status: 200 }));
+        .mockResolvedValueOnce(
+          new Response(JSON.stringify({ success: true, data: { order: { id: 'order-abc' } } }), {
+            status: 200,
+            headers: { 'Content-Type': 'application/json' },
+          }),
+        );
 
       render(<NewPrintForm mockMode={false} />);
       await fillRequiredFields(user);
@@ -381,7 +402,7 @@ describe('NewPrintForm Integration', () => {
       const submitCall = fetchSpy.mock.calls[1];
       const submitOptions = submitCall[1] as RequestInit;
       const payload = JSON.parse(submitOptions.body as string);
-      expect(payload.fileId).toBe('file-abc');
+      expect(payload.stlFileId).toBe('file-abc');
 
       fetchSpy.mockRestore();
     });
@@ -397,7 +418,12 @@ describe('NewPrintForm Integration', () => {
             headers: { 'Content-Type': 'application/json' },
           }),
         )
-        .mockResolvedValueOnce(new Response(null, { status: 200 }));
+        .mockResolvedValueOnce(
+          new Response(JSON.stringify({ success: true, data: { order: { id: 'order-null' } } }), {
+            status: 200,
+            headers: { 'Content-Type': 'application/json' },
+          }),
+        );
 
       render(<NewPrintForm mockMode={false} />);
       await fillRequiredFields(user);
@@ -412,7 +438,7 @@ describe('NewPrintForm Integration', () => {
       const submitCall = fetchSpy.mock.calls[1];
       const submitOptions = submitCall[1] as RequestInit;
       const payload = JSON.parse(submitOptions.body as string);
-      expect(payload.fileId).toBeNull();
+      expect(payload.stlFileId).toBe('');
 
       fetchSpy.mockRestore();
     });
