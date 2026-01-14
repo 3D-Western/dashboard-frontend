@@ -6,8 +6,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { ArrowLeft, Printer, Settings } from 'lucide-react';
 import NewPrintForm from '@/components/PrintRequestForm/NewPrintForm';
 // import NewOtherForm from '@/components/OtherRequestForm/NewOtherForm';
-{/* uncomment this when form is merged */}
-
+{
+  /* uncomment this when form is merged */
+}
 
 type PrintRequestType = 'normal' | 'manufacturing' | null;
 
@@ -65,7 +66,7 @@ export default function NewPrintPage() {
 
         <div className="grid gap-6 md:grid-cols-2">
           {/* Normal 3D Print Option */}
-          <Card className="cursor-pointer transition-all hover:shadow-lg hover:scale-[1.02]">
+          <Card className="select-none transition-all hover:scale-[1.02] hover:shadow-lg">
             <CardHeader className="text-center">
               <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-blue-100 dark:bg-blue-900">
                 <Printer className="h-8 w-8 text-blue-600 dark:text-blue-400" />
@@ -90,7 +91,7 @@ export default function NewPrintPage() {
               </div>
               <Button
                 onClick={() => setSelectedType('normal')}
-                className="w-full"
+                className="w-full cursor-pointer"
                 size="lg"
               >
                 Create 3D Print Request
@@ -99,7 +100,7 @@ export default function NewPrintPage() {
           </Card>
 
           {/* CNC/WaterJet/LaserCutting Option */}
-          <Card className="cursor-pointer transition-all hover:shadow-lg hover:scale-[1.02]">
+          <Card className="select-none transition-all hover:scale-[1.02] hover:shadow-lg">
             <CardHeader className="text-center">
               <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-orange-100 dark:bg-orange-900">
                 <Settings className="h-8 w-8 text-orange-600 dark:text-orange-400" />
@@ -110,21 +111,28 @@ export default function NewPrintPage() {
             <CardContent className="space-y-4">
               <div className="text-sm text-muted-foreground">
                 <p className="mb-3">
-                  Professional manufacturing for precision parts and custom cuts from various materials.
+                  Professional manufacturing for precision parts and custom cuts from various
+                  materials.
                 </p>
                 <div className="space-y-2">
                   <h4 className="font-medium text-foreground">Available Services:</h4>
                   <ul className="list-inside list-disc space-y-1">
-                    <li><strong>CNC Machining:</strong> Precision parts from solid materials</li>
-                    <li><strong>Laser Cutting:</strong> Clean cuts in thin materials</li>
-                    <li><strong>Water Jet:</strong> High-pressure cutting for thick materials</li>
+                    <li>
+                      <strong>CNC Machining:</strong> Precision parts from solid materials
+                    </li>
+                    <li>
+                      <strong>Laser Cutting:</strong> Clean cuts in thin materials
+                    </li>
+                    <li>
+                      <strong>Water Jet:</strong> High-pressure cutting for thick materials
+                    </li>
                     <li>Wide range of materials (metals, plastics, composites)</li>
                   </ul>
                 </div>
               </div>
               <Button
                 onClick={() => setSelectedType('manufacturing')}
-                className="w-full"
+                className="w-full cursor-pointer"
                 size="lg"
                 variant="secondary"
               >

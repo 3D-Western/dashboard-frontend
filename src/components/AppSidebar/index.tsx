@@ -34,7 +34,7 @@ const navigationItems = [
     title: 'New Prints',
     url: '/dashboard/print/new',
     icon: FilePlus,
-  }
+  },
 ];
 
 const adminNavigationItems = [
