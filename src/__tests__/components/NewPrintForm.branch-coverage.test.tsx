@@ -99,14 +99,12 @@ describe('NewPrintForm branch coverage (fallbacks)', () => {
     const user = setupUser();
 
     // Mock fetch to bypass MSW authentication
-    const fetchSpy = vi
-      .spyOn(global, 'fetch')
-      .mockResolvedValueOnce(
-        new Response(JSON.stringify({ success: true, data: { order: { id: 'test-order' } } }), {
-          status: 200,
-          headers: { 'Content-Type': 'application/json' },
-        }),
-      );
+    const fetchSpy = vi.spyOn(global, 'fetch').mockResolvedValueOnce(
+      new Response(JSON.stringify({ success: true, data: { order: { id: 'test-order' } } }), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      }),
+    );
 
     render(<NewPrintForm />);
 
@@ -123,14 +121,12 @@ describe('NewPrintForm branch coverage (fallbacks)', () => {
 
   it('submits without file using fetch directly', async () => {
     const user = setupUser();
-    const fetchSpy = vi
-      .spyOn(global, 'fetch')
-      .mockResolvedValueOnce(
-        new Response(JSON.stringify({ success: true, data: { order: { id: 'test-123' } } }), {
-          status: 200,
-          headers: { 'Content-Type': 'application/json' },
-        }),
-      );
+    const fetchSpy = vi.spyOn(global, 'fetch').mockResolvedValueOnce(
+      new Response(JSON.stringify({ success: true, data: { order: { id: 'test-123' } } }), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      }),
+    );
 
     render(<NewPrintForm />);
 

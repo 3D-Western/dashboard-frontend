@@ -98,7 +98,6 @@ class Database {
     return job;
   }
 
-
   public addPrintJob(printJob: PrintJob): PrintJob {
     // Add to ID map
     this.activePrintJobsIDMap.set(printJob.id, printJob);
