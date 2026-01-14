@@ -1,13 +1,15 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import type { ReactNode } from 'react';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import NewPrintForm from '@/components/PrintRequestForm/NewPrintForm';
 
 const mockPush = vi.fn();
+const mockRefresh = vi.fn();
 vi.mock('next/navigation', () => ({
   useRouter: () => ({
     push: mockPush,
+    refresh: mockRefresh,
   }),
 }));
 
@@ -79,6 +81,11 @@ vi.mock('@/components/ui/select', () => {
 const setupUser = () => userEvent.setup({ pointerEventsCheck: 0 });
 
 describe('NewPrintForm branch coverage (fallbacks)', () => {
+  beforeEach(() => {
+    mockPush.mockClear();
+    mockRefresh.mockClear();
+  });
+
   it('uses radio fallbacks when field values are undefined', () => {
     render(<NewPrintForm />);
 
@@ -90,23 +97,42 @@ describe('NewPrintForm branch coverage (fallbacks)', () => {
 
   it('submits without file in mock mode', async () => {
     const user = setupUser();
+
+    // Mock fetch to bypass MSW authentication
+    const fetchSpy = vi
+      .spyOn(global, 'fetch')
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ success: true, data: { order: { id: 'test-order' } } }), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        }),
+      );
+
     render(<NewPrintForm />);
 
     const submitButton = screen.getByRole('button', { name: /Submit/i });
     await user.click(submitButton);
 
     await waitFor(() => {
-      expect(mockPush).toHaveBeenCalledWith('/dashboard');
+      expect(mockPush).toHaveBeenCalledWith('/dashboard/print');
+      expect(mockRefresh).toHaveBeenCalled();
     });
+
+    fetchSpy.mockRestore();
   });
 
-  it('submits without file in real mode', async () => {
+  it('submits without file using fetch directly', async () => {
     const user = setupUser();
     const fetchSpy = vi
       .spyOn(global, 'fetch')
-      .mockResolvedValueOnce(new Response(null, { status: 200 }));
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ success: true, data: { order: { id: 'test-123' } } }), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        }),
+      );
 
-    render(<NewPrintForm mockMode={false} />);
+    render(<NewPrintForm />);
 
     const submitButton = screen.getByRole('button', { name: /Submit/i });
     await user.click(submitButton);

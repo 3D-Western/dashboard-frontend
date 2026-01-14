@@ -21,8 +21,13 @@ import { Textarea } from '../ui/textarea';
 import { RadioGroup, RadioGroupItem } from '../ui/radio-group';
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '../ui/select';
 import { UnsavedChangesGuard } from '../ui/unsaved-changes-guard';
+import { endpoints } from '@/api/client/endpoints';
 
-export default function NewPrintForm() {
+type NewPrintFormProps = {
+  mockMode?: boolean;
+};
+
+export default function NewPrintForm({ mockMode = true }: NewPrintFormProps = {}) {
   const router = useRouter();
   // file will be stored in react-hook-form (we don't need a provider)
 
@@ -88,9 +93,34 @@ export default function NewPrintForm() {
       const file = values.file as File;
       let fileId: string | null = null;
 
-      await new Promise((res) => setTimeout(res, 500));
-      if (file) fileId = `mock-file-${Date.now()}`;
+      // Handle file upload based on mode
+      if (mockMode) {
+        // Mock mode: simulate file upload
+        console.log('MOCK: Simulating file upload for', file?.name);
+        await new Promise((res) => setTimeout(res, 500));
+        if (file) fileId = `mock-file-${Date.now()}`;
+      } else {
+        // Real mode: actually upload the file
+        if (file) {
+          const fd = new FormData();
+          fd.append('file', file, file.name);
 
+          const uploadRes = await fetch(endpoints.files.upload, {
+            method: 'POST',
+            body: fd,
+          });
+
+          if (!uploadRes.ok) {
+            const text = await uploadRes.text();
+            throw new Error(text || 'File upload failed');
+          }
+
+          const uploadJson = await uploadRes.json();
+          fileId = (uploadJson.id ?? uploadJson.fileId ?? null) as string | null;
+        }
+      }
+
+      // Prepare order payload
       const payload = {
         name: values['print-name'],
         description: values.description,
@@ -106,7 +136,8 @@ export default function NewPrintForm() {
         reprint: null,
       };
 
-      const submitRes = await fetch('/api/v1/orders', {
+      // Submit order
+      const submitRes = await fetch(endpoints.orders.create, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
@@ -114,18 +145,24 @@ export default function NewPrintForm() {
 
       if (!submitRes.ok) {
         const text = await submitRes.text();
-        throw new Error(text || 'Mock submit failed');
+        throw new Error(text || 'Submit failed');
       }
 
       const result = await submitRes.json();
       console.log('MOCK: Created order', result.data?.order?.id);
-      
+
       // Navigate to dashboard and force refresh to show new data
       router.push('/dashboard/print');
-      router.refresh(); // Force server component to re-run
+      if (typeof router.refresh === 'function') {
+        router.refresh(); // Force server component to re-run
+      }
     } catch (err) {
       console.error('Submit error', err);
-      alert('Failed to submit print request. ' + (err instanceof Error ? err.message : ''));
+      if (typeof window !== 'undefined' && typeof window.alert === 'function') {
+        window.alert(
+          'Failed to submit print request. ' + (err instanceof Error ? err.message : ''),
+        );
+      }
     }
   }
 
