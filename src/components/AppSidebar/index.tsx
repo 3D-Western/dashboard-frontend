@@ -15,7 +15,7 @@ import {
 } from '@/components/ui/sidebar';
 import { SettingsPopover } from '@/components/SettingsPopover';
 import { User } from '@/types/user';
-import { LayoutDashboard, Printer, Users, Settings, Shield } from 'lucide-react';
+import { LayoutDashboard, Printer, Users, Settings, Shield, FilePlus } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
@@ -30,6 +30,11 @@ const navigationItems = [
     url: '/dashboard/print',
     icon: Printer,
   },
+  {
+    title: 'New Prints',
+    url: '/dashboard/print/new',
+    icon: FilePlus,
+  }
 ];
 
 const adminNavigationItems = [
