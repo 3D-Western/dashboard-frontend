@@ -70,11 +70,29 @@ export async function apiRequest<T>(
     }
   }
 
-  const response = await fetch(url, {
-    ...options,
-    headers: headersObj,
-    credentials: 'include', // Important: Always send cookies with requests
-  });
+  let response: Response;
+
+  try {
+    response = await fetch(url, {
+      ...options,
+      headers: headersObj,
+      credentials: 'include', // Important: Always send cookies with requests
+    });
+  } catch (error) {
+    // Handle network-level errors (connection refused, DNS failures, etc.)
+    // These are common when the backend is down or during HMR issues
+    if (isDev) {
+      console.error('[apiRequest] Network error:', {
+        url,
+        error: error instanceof Error ? error.message : String(error),
+      });
+    }
+    throw new ApiError(
+      ErrorCodes.REQUEST_FAILED,
+      `Network request failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
+      { url, originalError: error },
+    );
+  }
 
   // Handle 204 No Content (common for DELETE operations)
   if (response.status === 204) {
@@ -96,7 +114,26 @@ export async function apiRequest<T>(
     return response as unknown as T;
   }
 
-  const data: ApiResponseRaw<T> = await response.json();
+  let data: ApiResponseRaw<T>;
+
+  try {
+    data = await response.json();
+  } catch (error) {
+    // Handle JSON parsing errors
+    if (isDev) {
+      console.error('[apiRequest] JSON parsing error:', {
+        url,
+        status: response.status,
+        contentType,
+        error: error instanceof Error ? error.message : String(error),
+      });
+    }
+    throw new ApiError(
+      ErrorCodes.RESPONSE_INVALID_CONTENT_TYPE,
+      'Failed to parse response as JSON',
+      { url, status: response.status, contentType },
+    );
+  }
 
   if (isDev) console.log(data);
 

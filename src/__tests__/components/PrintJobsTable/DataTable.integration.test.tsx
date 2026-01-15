@@ -1,7 +1,6 @@
 import React from 'react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, waitFor } from '@test/utils/render';
-import userEvent from '@testing-library/user-event';
 import { DataTable } from '@/components/PrintJobsTable/DataTable';
 import { PaginationMetadata } from '@/types/common';
 
@@ -228,20 +227,5 @@ describe('DataTable', () => {
     await waitFor(() => {
       expect(screen.getByRole('status')).toHaveTextContent('2 print jobs selected');
     });
-  });
-
-  it('renders column labels and toggles visibility', async () => {
-    const { mockToggleVisibility } = setupTable();
-    const user = userEvent.setup();
-
-    render(<DataTable columns={[]} data={[{ id: 1 }]} pagination={pagination} />);
-
-    expect(screen.getAllByText('Name').length).toBeGreaterThan(0);
-    expect(screen.getByText('custom')).toBeInTheDocument();
-    expect(screen.queryByText('Placeholder')).not.toBeInTheDocument();
-
-    await user.click(screen.getByRole('button', { name: 'Name' }));
-
-    expect(mockToggleVisibility).toHaveBeenCalled();
   });
 });

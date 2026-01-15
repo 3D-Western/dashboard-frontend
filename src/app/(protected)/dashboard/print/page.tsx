@@ -1,21 +1,25 @@
 import PrintJobsTable from '@/components/PrintJobsTable';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { jobApi } from '@/api/client/job';
 import { withSessionErrorHandling } from '@/lib/server-utils';
+import { userApi } from '@/api/client/user';
+import { PrintPageFilters } from './components/PrintPageFilters';
+import { PrintJobStatus } from '@/types/jobs';
 
 interface PrintPageProps {
-  searchParams: Promise<{ page?: string; pageSize?: string }>;
+  searchParams: Promise<{ page?: string; pageSize?: string; status?: string; search?: string }>;
 }
 
 export default async function PrintPage({ searchParams }: PrintPageProps) {
   const params = await searchParams;
   const page = Number(params.page) || 1;
   const pageSize = Number(params.pageSize) || 10;
+  const status = params.status as PrintJobStatus | undefined;
+  const search = params.search;
 
-  // Fetch user's print jobs with server-side pagination
+  // Fetch user's print jobs with server-side pagination and filters
   const { data: printJobs, pagination } = await withSessionErrorHandling(() =>
-    jobApi.listAllJobs({ page, pageSize }),
+    userApi.getCurrentUserOrders({ page, pageSize, status, search }),
   );
 
   return (
@@ -27,6 +31,8 @@ export default async function PrintPage({ searchParams }: PrintPageProps) {
           </Button>
         </Link>
       </div>
+
+      <PrintPageFilters />
 
       <div>
         <PrintJobsTable printJobs={printJobs} pagination={pagination} />
