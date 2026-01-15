@@ -1,6 +1,6 @@
 import { User } from '@/types/user';
 import { PrintJobListResponse, UserListResponse } from '../types';
-import { CurrentUserORderListParams, UserListParams } from '@/types/common';
+import { CurrentUserOrderListParams, UserListParams } from '@/types/common';
 import { apiRequest } from './base';
 import { endpoints } from './endpoints';
 import { getBaseUrl } from './utils';
@@ -49,7 +49,7 @@ export const userApi = {
     });
   },
 
-  getCurrentUserOrders: async (params?: CurrentUserORderListParams, options?: RequestInit) => {
+  getCurrentUserOrders: async (params?: CurrentUserOrderListParams, options?: RequestInit) => {
     const searchParams = new URLSearchParams();
 
     if (params?.status !== undefined) {
@@ -70,8 +70,6 @@ export const userApi = {
 
     const queryString = searchParams.toString();
     const url = `${getBaseUrl()}${endpoints.users.orders}${queryString ? `?${queryString}` : ''}`;
-
-    console.log('Fetching current user orders with URL:', url);
 
     return apiRequest<PrintJobListResponse>(url, {
       method: 'GET',
