@@ -7,6 +7,8 @@ export const Routes = {
   dashboardUserSettings: '/dashboard/settings',
   forgotPassword: '/forgot-password',
   resetPassword: '/reset-password',
+  checkEmail: '/check-email',
+  verifyEmail: '/verify-email',
 
   // Admin routes
   adminUsersManagement: '/admin/users',
