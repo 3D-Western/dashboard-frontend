@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { withSessionErrorHandling } from '@/lib/server-utils';
 import { userApi } from '@/api/client/user';
-import { PrintPageFilters } from './_components/PrintPageFilters';
+import { PrintPageFilters } from './components/PrintPageFilters';
 import { PrintJobStatus } from '@/types/jobs';
 
 interface PrintPageProps {

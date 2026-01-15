@@ -2,7 +2,7 @@ import PrintJobsTable from '@/components/PrintJobsTable';
 import { jobApi } from '@/api/client/job';
 import { withSessionErrorHandling } from '@/lib/server-utils';
 import { Settings } from 'lucide-react';
-import { AdminPrintFilters } from './_components/AdminPrintFilters';
+import { AdminPrintFilters } from './components/AdminPrintFilters';
 import { PrintJobStatus } from '@/types/jobs';
 
 interface PrintManagementPageProps {
