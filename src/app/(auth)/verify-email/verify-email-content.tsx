@@ -8,9 +8,22 @@ import { cn } from '@/lib/utils';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Routes } from '@/lib/routes';
-import { Loader2, CheckCircle2, XCircle } from 'lucide-react';
+import { Mail, CheckCircle2, XCircle } from 'lucide-react';
 
 type VerificationStatus = 'loading' | 'success' | 'error' | 'invalid-token';
+
+function LoadingIndicator() {
+  return (
+    <div className="relative flex h-14 w-14 items-center justify-center">
+      {/* Outer ring - slow rotation */}
+      <div className="absolute inset-0 animate-[spin_3s_linear_infinite] rounded-full border-2 border-muted-foreground/20 border-t-primary" />
+      {/* Inner ring - opposite rotation */}
+      <div className="absolute inset-2 animate-[spin_2s_linear_infinite_reverse] rounded-full border-2 border-muted-foreground/10 border-b-primary/60" />
+      {/* Center icon */}
+      <Mail className="h-5 w-5 text-primary" />
+    </div>
+  );
+}
 
 export function VerifyEmailContent({ className, ...props }: React.ComponentProps<'div'>) {
   const searchParams = useSearchParams();
@@ -46,64 +59,70 @@ export function VerifyEmailContent({ className, ...props }: React.ComponentProps
       <Card className="overflow-hidden p-0">
         <CardContent className="grid p-0 md:grid-cols-2">
           <div className="flex items-center p-6 md:p-8">
-            <div className="grid gap-6">
+            <div className="grid w-full gap-6">
               {status === 'loading' && (
-                <>
-                  <div className="flex flex-col items-center gap-4 text-center">
-                    <Loader2 className="h-12 w-12 animate-spin text-primary" />
+                <div className="flex animate-in fade-in-0 flex-col items-center gap-4 text-center duration-300">
+                  <LoadingIndicator />
+                  <div className="space-y-2">
                     <h1 className="text-2xl font-bold">Verifying your email</h1>
                     <p className="text-balance text-muted-foreground">
                       Please wait while we verify your email address...
                     </p>
                   </div>
-                </>
+                </div>
               )}
 
               {status === 'success' && (
-                <>
-                  <div className="flex flex-col items-center gap-4 text-center">
-                    <CheckCircle2 className="h-12 w-12 text-green-500" />
+                <div className="flex animate-in fade-in-0 slide-in-from-bottom-2 flex-col items-center gap-6 text-center duration-300">
+                  <div className="flex h-14 w-14 items-center justify-center rounded-full bg-green-500/10">
+                    <CheckCircle2 className="h-8 w-8 text-green-500" />
+                  </div>
+                  <div className="space-y-2">
                     <h1 className="text-2xl font-bold">Email verified</h1>
                     <p className="text-balance text-muted-foreground">
                       Your email has been successfully verified. You can now log in to your account.
                     </p>
                   </div>
-                  <Button asChild>
+                  <Button asChild className="w-full">
                     <Link href={Routes.login}>Continue to Login</Link>
                   </Button>
-                </>
+                </div>
               )}
 
               {status === 'error' && (
-                <>
-                  <div className="flex flex-col items-center gap-4 text-center">
-                    <XCircle className="h-12 w-12 text-destructive" />
+                <div className="flex animate-in fade-in-0 slide-in-from-bottom-2 flex-col items-center gap-6 text-center duration-300">
+                  <div className="flex h-14 w-14 items-center justify-center rounded-full bg-destructive/10">
+                    <XCircle className="h-8 w-8 text-destructive" />
+                  </div>
+                  <div className="space-y-2">
                     <h1 className="text-2xl font-bold">Verification failed</h1>
                     <p className="text-balance text-muted-foreground">
                       We couldn&apos;t verify your email. The link may have expired or already been
                       used.
                     </p>
                   </div>
-                  <Button asChild>
+                  <Button asChild className="w-full">
                     <Link href={Routes.login}>Return to Login</Link>
                   </Button>
-                </>
+                </div>
               )}
 
               {status === 'invalid-token' && (
-                <>
-                  <div className="flex flex-col items-center gap-4 text-center">
-                    <XCircle className="h-12 w-12 text-destructive" />
+                <div className="flex animate-in fade-in-0 slide-in-from-bottom-2 flex-col items-center gap-6 text-center duration-300">
+                  <div className="flex h-14 w-14 items-center justify-center rounded-full bg-destructive/10">
+                    <XCircle className="h-8 w-8 text-destructive" />
+                  </div>
+                  <div className="space-y-2">
                     <h1 className="text-2xl font-bold">Invalid link</h1>
                     <p className="text-balance text-muted-foreground">
                       This verification link is invalid. Please check your email for the correct
                       link.
                     </p>
                   </div>
-                  <Button asChild>
+                  <Button asChild className="w-full">
                     <Link href={Routes.login}>Return to Login</Link>
                   </Button>
-                </>
+                </div>
               )}
             </div>
           </div>
