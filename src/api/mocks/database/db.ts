@@ -99,7 +99,7 @@ class Database {
   }
 
   public addPrintJob(printJob: PrintJob): PrintJob {
-    // Add to job ID map
+    // Add to ID map
     this.activePrintJobsIDMap.set(printJob.id, printJob);
 
     // Add to user's jobs array
@@ -133,6 +133,43 @@ class Database {
 
   public getAllPrintJobs(): PrintJob[] {
     return Array.from(this.activePrintJobsIDMap.values());
+  }
+
+  public getPrintJobs(filters?: {
+    userId?: number;
+    status?: string;
+    search?: string;
+    snapshotCreatedBefore?: string;
+  }): PrintJob[] {
+    let jobs = Array.from(this.activePrintJobsIDMap.values());
+
+    // Apply snapshot filter (only jobs created before the snapshot)
+    if (filters?.snapshotCreatedBefore) {
+      jobs = jobs.filter((job) => job.orderPlaced <= filters.snapshotCreatedBefore!);
+    }
+
+    // Filter by userId if provided
+    if (filters?.userId !== undefined) {
+      jobs = jobs.filter((job) => job.studentId === filters.userId);
+    }
+
+    // Filter by status if provided
+    if (filters?.status) {
+      jobs = jobs.filter((job) => job.status === filters.status);
+    }
+
+    // Apply search filter (search in name, description, id)
+    if (filters?.search) {
+      const lowerSearch = filters.search.toLowerCase();
+      jobs = jobs.filter(
+        (job) =>
+          job.name.toLowerCase().includes(lowerSearch) ||
+          job.description.toLowerCase().includes(lowerSearch) ||
+          job.id.toLowerCase().includes(lowerSearch),
+      );
+    }
+
+    return jobs;
   }
 
   public getUserById(userId: number): User | null {
