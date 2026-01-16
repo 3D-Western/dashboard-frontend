@@ -1,4 +1,10 @@
+import type { Metadata } from 'next';
 import { VerifyEmailContent } from './verify-email-content';
+
+export const metadata: Metadata = {
+  title: 'Verify Email',
+  description: 'Confirming your email address',
+};
 
 export default function VerifyEmailPage() {
   return (

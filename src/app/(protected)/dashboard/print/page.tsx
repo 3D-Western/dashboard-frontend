@@ -1,3 +1,4 @@
+import type { Metadata } from 'next';
 import PrintJobsTable from '@/components/PrintJobsTable';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
@@ -5,6 +6,11 @@ import { withSessionErrorHandling } from '@/lib/server-utils';
 import { userApi } from '@/api/client/user';
 import { PrintPageFilters } from './components/PrintPageFilters';
 import { PrintJobStatus } from '@/types/jobs';
+
+export const metadata: Metadata = {
+  title: 'My Print Jobs',
+  description: 'View and manage your 3D print jobs',
+};
 
 interface PrintPageProps {
   searchParams: Promise<{ page?: string; pageSize?: string; status?: string; search?: string }>;

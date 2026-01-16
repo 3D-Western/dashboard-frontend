@@ -1,9 +1,15 @@
+import type { Metadata } from 'next';
 import PrintJobsTable from '@/components/PrintJobsTable';
 import { jobApi } from '@/api/client/job';
 import { withSessionErrorHandling } from '@/lib/server-utils';
 import { Settings } from 'lucide-react';
 import { AdminPrintFilters } from './components/AdminPrintFilters';
 import { PrintJobStatus } from '@/types/jobs';
+
+export const metadata: Metadata = {
+  title: 'Print Management',
+  description: 'Manage all print jobs across users',
+};
 
 interface PrintManagementPageProps {
   searchParams: Promise<{ page?: string; pageSize?: string; status?: string; search?: string }>;

@@ -1,6 +1,12 @@
+import type { Metadata } from 'next';
 import { Button } from '@/components/ui/button';
 import { Printer, LayoutDashboard, Clock } from 'lucide-react';
 import Link from 'next/link';
+
+export const metadata: Metadata = {
+  title: 'Dashboard',
+  description: 'Your 3D Western dashboard overview',
+};
 
 export default async function DashboardPage() {
   return (

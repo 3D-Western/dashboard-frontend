@@ -1,8 +1,14 @@
+import type { Metadata } from 'next';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Routes } from '@/lib/routes';
+
+export const metadata: Metadata = {
+  title: 'Check Your Email',
+  description: 'Verify your email address to complete registration',
+};
 
 export default function CheckEmailPage() {
   return (

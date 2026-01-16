@@ -1,4 +1,10 @@
+import type { Metadata } from 'next';
 import NewPrintForm from '@/components/PrintRequestForm/NewPrintForm';
+
+export const metadata: Metadata = {
+  title: 'New Print Job',
+  description: 'Submit a new 3D print request',
+};
 
 export default function NewPrintPage() {
   return (
