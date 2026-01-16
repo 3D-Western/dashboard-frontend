@@ -3,6 +3,26 @@ import { ApiError, ErrorCodes } from './errors';
 
 const isDev = process.env.NODE_ENV === 'development';
 
+type MswState = typeof globalThis & {
+  __mswServerStarted?: boolean;
+  __mswFetch?: typeof globalThis.fetch;
+};
+
+async function ensureMockServer(): Promise<void> {
+  if (typeof window !== 'undefined') return;
+  if (process.env.MOCK_ENABLED !== 'true') return;
+
+  const globalWithMsw = globalThis as MswState;
+  const currentFetch = globalThis.fetch;
+
+  if (!globalWithMsw.__mswServerStarted || globalWithMsw.__mswFetch !== currentFetch) {
+    const { mockServer } = await import('@/api/mocks');
+    mockServer.listen();
+    globalWithMsw.__mswServerStarted = true;
+    globalWithMsw.__mswFetch = currentFetch;
+  }
+}
+
 export interface ApiRequestConfig {
   /**
    * If true, suppresses throwing ApiError for failed responses
@@ -73,6 +93,7 @@ export async function apiRequest<T>(
   let response: Response;
 
   try {
+    await ensureMockServer();
     response = await fetch(url, {
       ...options,
       headers: headersObj,
