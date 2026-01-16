@@ -31,8 +31,8 @@ const navigationItems = [
     icon: Printer,
   },
   {
-    title: 'New Prints',
-    url: '/dashboard/print/new',
+    title: 'New Order',
+    url: '/dashboard/orders/new',
     icon: FilePlus,
   },
 ];
