@@ -46,8 +46,7 @@ export function VerifyEmailContent({ className, ...props }: React.ComponentProps
 
         // Stub: simulate success (in real implementation, this would depend on API response)
         setStatus('success');
-      } catch (error) {
-        console.error('Email verification failed:', error);
+      } catch {
         setStatus('error');
       }
     }
