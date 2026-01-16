@@ -73,7 +73,7 @@ export default function NewPrintPage() {
 
         <div className="grid gap-6 md:grid-cols-2">
           {/* Normal 3D Print Option */}
-          <Card className="select-none transition-all hover:scale-[1.02] hover:shadow-lg">
+          <Card className="transition-all select-none hover:scale-[1.02] hover:shadow-lg">
             <CardHeader className="text-center">
               <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-blue-100 dark:bg-blue-900">
                 <Printer className="h-8 w-8 text-blue-600 dark:text-blue-400" />
@@ -107,7 +107,7 @@ export default function NewPrintPage() {
           </Card>
 
           {/* CNC/WaterJet/LaserCutting Option */}
-          <Card className="select-none transition-all hover:scale-[1.02] hover:shadow-lg">
+          <Card className="transition-all select-none hover:scale-[1.02] hover:shadow-lg">
             <CardHeader className="text-center">
               <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-orange-100 dark:bg-orange-900">
                 <Settings className="h-8 w-8 text-orange-600 dark:text-orange-400" />
