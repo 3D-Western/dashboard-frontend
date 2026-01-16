@@ -46,7 +46,8 @@ export function VerifyEmailContent({ className, ...props }: React.ComponentProps
 
         // Stub: simulate success (in real implementation, this would depend on API response)
         setStatus('success');
-      } catch (_error) {
+      } catch (error) {
+        console.error('Email verification failed:', error);
         setStatus('error');
       }
     }
@@ -61,7 +62,7 @@ export function VerifyEmailContent({ className, ...props }: React.ComponentProps
           <div className="flex items-center p-6 md:p-8">
             <div className="grid w-full gap-6">
               {status === 'loading' && (
-                <div className="flex animate-in fade-in-0 flex-col items-center gap-4 text-center duration-300">
+                <div className="flex animate-in flex-col items-center gap-4 text-center duration-300 fade-in-0">
                   <LoadingIndicator />
                   <div className="space-y-2">
                     <h1 className="text-2xl font-bold">Verifying your email</h1>
@@ -73,7 +74,7 @@ export function VerifyEmailContent({ className, ...props }: React.ComponentProps
               )}
 
               {status === 'success' && (
-                <div className="flex animate-in fade-in-0 slide-in-from-bottom-2 flex-col items-center gap-6 text-center duration-300">
+                <div className="flex animate-in flex-col items-center gap-6 text-center duration-300 fade-in-0 slide-in-from-bottom-2">
                   <div className="flex h-14 w-14 items-center justify-center rounded-full bg-green-500/10">
                     <CheckCircle2 className="h-8 w-8 text-green-500" />
                   </div>
@@ -90,7 +91,7 @@ export function VerifyEmailContent({ className, ...props }: React.ComponentProps
               )}
 
               {status === 'error' && (
-                <div className="flex animate-in fade-in-0 slide-in-from-bottom-2 flex-col items-center gap-6 text-center duration-300">
+                <div className="flex animate-in flex-col items-center gap-6 text-center duration-300 fade-in-0 slide-in-from-bottom-2">
                   <div className="flex h-14 w-14 items-center justify-center rounded-full bg-destructive/10">
                     <XCircle className="h-8 w-8 text-destructive" />
                   </div>
@@ -108,7 +109,7 @@ export function VerifyEmailContent({ className, ...props }: React.ComponentProps
               )}
 
               {status === 'invalid-token' && (
-                <div className="flex animate-in fade-in-0 slide-in-from-bottom-2 flex-col items-center gap-6 text-center duration-300">
+                <div className="flex animate-in flex-col items-center gap-6 text-center duration-300 fade-in-0 slide-in-from-bottom-2">
                   <div className="flex h-14 w-14 items-center justify-center rounded-full bg-destructive/10">
                     <XCircle className="h-8 w-8 text-destructive" />
                   </div>

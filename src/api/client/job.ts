@@ -1,5 +1,3 @@
-// ...existing code up to the end of the first jobApi object...
-// Remove duplicate imports and duplicate jobApi object below
 import { PrintJob, PrintJobStatus } from '@/types/jobs';
 import { PrintJobListResponse } from '../types';
 import { OrderListParams } from '@/types/common';
