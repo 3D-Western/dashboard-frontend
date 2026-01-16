@@ -1,14 +1,5 @@
 'use client';
 
-import { Button } from '@/components/ui/button';
-import {
-  DropdownMenu,
-  DropdownMenuCheckboxItem,
-  DropdownMenuContent,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
 import {
   Table,
   TableBody,
@@ -21,18 +12,14 @@ import {
   ColumnDef,
   ColumnFiltersState,
   SortingState,
-  VisibilityState,
   flexRender,
   getCoreRowModel,
   getFilteredRowModel,
   getSortedRowModel,
   useReactTable,
 } from '@tanstack/react-table';
-import { Settings2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { DataTablePagination } from '../DataTablePagination';
-import { Input } from '../ui/input';
-import { Label } from '../ui/label';
 import { PaginationMetadata } from '@/types/common';
 
 interface DataTableProps<TData, TValue> {
@@ -41,14 +28,6 @@ interface DataTableProps<TData, TValue> {
   pagination: PaginationMetadata;
   className?: string;
 }
-
-const columnLabels: Record<string, string> = {
-  name: 'Name',
-  student: 'Student',
-  status: 'Status',
-  orderPlaced: 'Print Date',
-  stlFile: 'STL File',
-};
 
 export function DataTable<TData, TValue>({
   columns,
@@ -61,32 +40,6 @@ export function DataTable<TData, TValue>({
   const [rowSelection, setRowSelection] = useState({});
   const [announcement, setAnnouncement] = useState('');
 
-  // Initialize column visibility with mobile defaults
-  const getInitialColumnVisibility = (): VisibilityState => {
-    if (typeof window === 'undefined') return {};
-
-    const saved = localStorage.getItem('printJobsTableColumnVisibility');
-    if (saved) {
-      return JSON.parse(saved);
-    }
-
-    // Set mobile defaults: hide stlFile and orderPlaced on screens < 768px
-    const isMobile = window.innerWidth < 768;
-    return {
-      stlFile: !isMobile,
-      orderPlaced: !isMobile,
-    };
-  };
-
-  const [columnVisibility, setColumnVisibility] = useState<VisibilityState>(
-    getInitialColumnVisibility,
-  );
-
-  // Save column visibility to localStorage
-  useEffect(() => {
-    localStorage.setItem('printJobsTableColumnVisibility', JSON.stringify(columnVisibility));
-  }, [columnVisibility]);
-
   // eslint-disable-next-line react-hooks/incompatible-library -- TanStack Table is known to be incompatible with React Compiler
   const table = useReactTable({
     data,
@@ -97,8 +50,7 @@ export function DataTable<TData, TValue>({
     onColumnFiltersChange: setColumnFilters,
     getFilteredRowModel: getFilteredRowModel(),
     onRowSelectionChange: setRowSelection,
-    onColumnVisibilityChange: setColumnVisibility,
-    state: { sorting, columnFilters, rowSelection, columnVisibility },
+    state: { sorting, columnFilters, rowSelection },
     // Disable client-side pagination - using server-side pagination
     manualPagination: true,
   });
@@ -122,57 +74,6 @@ export function DataTable<TData, TValue>({
       {/* Live region for screen reader announcements */}
       <div role="status" aria-live="polite" aria-atomic="true" className="sr-only">
         {announcement}
-      </div>
-
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div className="w-full sm:max-w-sm">
-          <Label htmlFor="search-prints" className="sr-only">
-            Search print jobs by name
-          </Label>
-          <Input
-            id="search-prints"
-            placeholder="Search prints..."
-            value={(table.getColumn('name')?.getFilterValue() as string) ?? ''}
-            onChange={(event) => table.getColumn('name')?.setFilterValue(event.target.value)}
-            className="w-full"
-            aria-describedby="search-help"
-          />
-          <span id="search-help" className="sr-only">
-            Filter print jobs by typing the name
-          </span>
-        </div>
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button
-              variant="outline"
-              size="sm"
-              className="ml-auto h-8"
-              aria-label="Toggle column visibility"
-            >
-              <Settings2 className="mr-2 h-4 w-4" aria-hidden="true" />
-              View
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-37.5">
-            <DropdownMenuLabel>Toggle columns</DropdownMenuLabel>
-            <DropdownMenuSeparator />
-            {table
-              .getAllColumns()
-              .filter((column) => typeof column.accessorFn !== 'undefined' && column.getCanHide())
-              .map((column) => {
-                return (
-                  <DropdownMenuCheckboxItem
-                    key={column.id}
-                    className="capitalize"
-                    checked={column.getIsVisible()}
-                    onCheckedChange={(value) => column.toggleVisibility(!!value)}
-                  >
-                    {columnLabels[column.id] || column.id}
-                  </DropdownMenuCheckboxItem>
-                );
-              })}
-          </DropdownMenuContent>
-        </DropdownMenu>
       </div>
 
       <div className="overflow-hidden rounded-md border">

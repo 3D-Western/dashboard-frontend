@@ -1,6 +1,12 @@
+import type { Metadata } from 'next';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Shield, Users, Printer } from 'lucide-react';
 import Link from 'next/link';
+
+export const metadata: Metadata = {
+  title: 'Admin Dashboard',
+  description: 'Administrative dashboard for 3D Western',
+};
 
 export default async function AdminDashboardPage() {
   return (

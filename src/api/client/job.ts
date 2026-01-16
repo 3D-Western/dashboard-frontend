@@ -1,5 +1,3 @@
-// ...existing code up to the end of the first jobApi object...
-// Remove duplicate imports and duplicate jobApi object below
 import { PrintJob, PrintJobStatus } from '@/types/jobs';
 import { PrintJobListResponse } from '../types';
 import { OrderListParams } from '@/types/common';
@@ -16,6 +14,9 @@ export const jobApi = {
     }
     if (params?.status !== undefined) {
       searchParams.append('status', params.status);
+    }
+    if (params?.search !== undefined) {
+      searchParams.append('search', params.search);
     }
     if (params?.page !== undefined) {
       searchParams.append('page', params.page.toString());

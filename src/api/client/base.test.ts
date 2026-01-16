@@ -29,7 +29,7 @@ describe('apiRequest', () => {
         body: JSON.stringify({ test: 'data' }),
       });
 
-      expect(capturedHeaders?.get('Content-Type')).toBe('application/json');
+      expect((capturedHeaders as Headers | null)?.get('Content-Type')).toBe('application/json');
     });
 
     it('does not set Content-Type when skipContentTypeHeader is true', async () => {
@@ -50,7 +50,7 @@ describe('apiRequest', () => {
         { skipContentTypeHeader: true },
       );
 
-      expect(capturedHeaders?.get('Content-Type')).not.toBe('application/json');
+      expect((capturedHeaders as Headers | null)?.get('Content-Type')).not.toBe('application/json');
     });
 
     it('does not override user-provided Content-Type', async () => {
@@ -70,7 +70,7 @@ describe('apiRequest', () => {
         },
       });
 
-      expect(capturedHeaders?.get('Content-Type')).toBe('text/plain');
+      expect((capturedHeaders as Headers | null)?.get('Content-Type')).toBe('text/plain');
     });
 
     it('does not set Content-Type when there is no body', async () => {
@@ -84,7 +84,7 @@ describe('apiRequest', () => {
 
       await apiRequest(testUrl, { method: 'GET' });
 
-      expect(capturedHeaders?.get('Content-Type')).toBeNull();
+      expect((capturedHeaders as Headers | null)?.get('Content-Type')).toBeNull();
     });
   });
 
@@ -481,6 +481,108 @@ describe('apiRequest', () => {
       );
 
       expect(result).toEqual(mockData);
+    });
+  });
+
+  describe('network error handling', () => {
+    let originalFetch: typeof global.fetch;
+
+    beforeEach(() => {
+      originalFetch = global.fetch;
+    });
+
+    afterEach(() => {
+      global.fetch = originalFetch;
+    });
+
+    it('throws ApiError with REQUEST_FAILED when network request fails', async () => {
+      global.fetch = vi.fn().mockRejectedValue(new Error('Network connection failed'));
+
+      await expect(apiRequest(testUrl)).rejects.toThrow(ApiError);
+      await expect(apiRequest(testUrl)).rejects.toMatchObject({
+        code: ErrorCodes.REQUEST_FAILED,
+        message: expect.stringContaining('Network request failed'),
+      });
+    });
+
+    it('includes original error in ApiError details when network fails', async () => {
+      const networkError = new Error('Connection timeout');
+      global.fetch = vi.fn().mockRejectedValue(networkError);
+
+      try {
+        await apiRequest(testUrl);
+        expect.fail('Should have thrown an error');
+      } catch (error) {
+        expect(error).toBeInstanceOf(ApiError);
+        expect((error as ApiError).details).toMatchObject({
+          url: testUrl,
+          originalError: networkError,
+        });
+      }
+    });
+
+    it('handles non-Error network failures gracefully', async () => {
+      global.fetch = vi.fn().mockRejectedValue('String error');
+
+      await expect(apiRequest(testUrl)).rejects.toMatchObject({
+        code: ErrorCodes.REQUEST_FAILED,
+        message: expect.stringContaining('Network request failed'),
+      });
+    });
+  });
+
+  describe('JSON parsing error handling', () => {
+    it('throws ApiError when JSON parsing fails', async () => {
+      mockServer.use(
+        http.get(testUrl, () => {
+          return new HttpResponse('Invalid JSON{', {
+            headers: { 'Content-Type': 'application/json' },
+          });
+        }),
+      );
+
+      await expect(apiRequest(testUrl)).rejects.toThrow(ApiError);
+      await expect(apiRequest(testUrl)).rejects.toMatchObject({
+        code: ErrorCodes.RESPONSE_INVALID_CONTENT_TYPE,
+        message: expect.stringContaining('Failed to parse response as JSON'),
+      });
+    });
+
+    it('includes response details in error when JSON parsing fails', async () => {
+      mockServer.use(
+        http.get(testUrl, () => {
+          return new HttpResponse('Not valid JSON', {
+            status: 200,
+            headers: { 'Content-Type': 'application/json' },
+          });
+        }),
+      );
+
+      try {
+        await apiRequest(testUrl);
+        expect.fail('Should have thrown an error');
+      } catch (error) {
+        expect(error).toBeInstanceOf(ApiError);
+        expect((error as ApiError).details).toMatchObject({
+          url: testUrl,
+          status: 200,
+          contentType: 'application/json',
+        });
+      }
+    });
+
+    it('handles malformed JSON response gracefully', async () => {
+      mockServer.use(
+        http.get(testUrl, () => {
+          return new HttpResponse('{incomplete:', {
+            headers: { 'Content-Type': 'application/json' },
+          });
+        }),
+      );
+
+      await expect(apiRequest(testUrl)).rejects.toMatchObject({
+        code: ErrorCodes.RESPONSE_INVALID_CONTENT_TYPE,
+      });
     });
   });
 });

@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { userApi } from './user';
 import { mockServer } from '@/api/mocks';
 import { http, HttpResponse } from 'msw';
@@ -10,15 +10,20 @@ describe('userApi', () => {
   describe('listAllUsers', () => {
     it('returns paginated user list successfully', async () => {
       const mockUsers = [
-        createMockUser({ id: 251000001, firstName: 'John', lastName: 'Doe' }),
-        createMockUser({ id: 251000002, firstName: 'Jane', lastName: 'Smith' }),
+        createMockUser({ studentId: 251000001, firstName: 'John', lastName: 'Doe' }),
+        createMockUser({ studentId: 251000002, firstName: 'Jane', lastName: 'Smith' }),
       ];
       const mockResponse = {
-        items: mockUsers,
-        total: 2,
-        page: 1,
-        pageSize: 10,
-        totalPages: 1,
+        data: mockUsers,
+        pagination: {
+          page: 1,
+          pageSize: 10,
+          totalItems: 2,
+          totalPages: 1,
+          hasNext: false,
+          hasPrevious: false,
+          snapshotCreatedBefore: new Date().toISOString(),
+        },
       };
 
       mockServer.use(
@@ -33,7 +38,7 @@ describe('userApi', () => {
       const result = await userApi.listAllUsers();
 
       expect(result).toEqual(mockResponse);
-      expect(result.items).toHaveLength(2);
+      expect(result.data).toHaveLength(2);
     });
 
     it('includes search query parameter when provided', async () => {
@@ -43,7 +48,18 @@ describe('userApi', () => {
           capturedUrl = request.url;
           return HttpResponse.json({
             success: true,
-            data: { items: [], total: 0, page: 1, pageSize: 10, totalPages: 0 },
+            data: {
+              data: [],
+              pagination: {
+                page: 1,
+                pageSize: 10,
+                totalItems: 0,
+                totalPages: 0,
+                hasNext: false,
+                hasPrevious: false,
+                snapshotCreatedBefore: new Date().toISOString(),
+              },
+            },
           });
         }),
       );
@@ -60,7 +76,18 @@ describe('userApi', () => {
           capturedUrl = request.url;
           return HttpResponse.json({
             success: true,
-            data: { items: [], total: 0, page: 1, pageSize: 10, totalPages: 0 },
+            data: {
+              data: [],
+              pagination: {
+                page: 1,
+                pageSize: 10,
+                totalItems: 0,
+                totalPages: 0,
+                hasNext: false,
+                hasPrevious: false,
+                snapshotCreatedBefore: new Date().toISOString(),
+              },
+            },
           });
         }),
       );
@@ -77,7 +104,18 @@ describe('userApi', () => {
           capturedUrl = request.url;
           return HttpResponse.json({
             success: true,
-            data: { items: [], total: 0, page: 1, pageSize: 10, totalPages: 0 },
+            data: {
+              data: [],
+              pagination: {
+                page: 1,
+                pageSize: 10,
+                totalItems: 0,
+                totalPages: 0,
+                hasNext: false,
+                hasPrevious: false,
+                snapshotCreatedBefore: new Date().toISOString(),
+              },
+            },
           });
         }),
       );
@@ -94,7 +132,18 @@ describe('userApi', () => {
           capturedUrl = request.url;
           return HttpResponse.json({
             success: true,
-            data: { items: [], total: 0, page: 1, pageSize: 10, totalPages: 0 },
+            data: {
+              data: [],
+              pagination: {
+                page: 1,
+                pageSize: 10,
+                totalItems: 0,
+                totalPages: 0,
+                hasNext: false,
+                hasPrevious: false,
+                snapshotCreatedBefore: new Date().toISOString(),
+              },
+            },
           });
         }),
       );
@@ -111,7 +160,18 @@ describe('userApi', () => {
           capturedUrl = request.url;
           return HttpResponse.json({
             success: true,
-            data: { items: [], total: 0, page: 2, pageSize: 10, totalPages: 3 },
+            data: {
+              data: [],
+              pagination: {
+                page: 2,
+                pageSize: 10,
+                totalItems: 0,
+                totalPages: 3,
+                hasNext: true,
+                hasPrevious: true,
+                snapshotCreatedBefore: new Date().toISOString(),
+              },
+            },
           });
         }),
       );
@@ -128,7 +188,18 @@ describe('userApi', () => {
           capturedUrl = request.url;
           return HttpResponse.json({
             success: true,
-            data: { items: [], total: 0, page: 1, pageSize: 25, totalPages: 0 },
+            data: {
+              data: [],
+              pagination: {
+                page: 1,
+                pageSize: 25,
+                totalItems: 0,
+                totalPages: 0,
+                hasNext: false,
+                hasPrevious: false,
+                snapshotCreatedBefore: new Date().toISOString(),
+              },
+            },
           });
         }),
       );
@@ -145,7 +216,18 @@ describe('userApi', () => {
           capturedUrl = request.url;
           return HttpResponse.json({
             success: true,
-            data: { items: [], total: 0, page: 1, pageSize: 10, totalPages: 0 },
+            data: {
+              data: [],
+              pagination: {
+                page: 1,
+                pageSize: 10,
+                totalItems: 0,
+                totalPages: 0,
+                hasNext: false,
+                hasPrevious: false,
+                snapshotCreatedBefore: new Date().toISOString(),
+              },
+            },
           });
         }),
       );
@@ -162,7 +244,18 @@ describe('userApi', () => {
           capturedUrl = request.url;
           return HttpResponse.json({
             success: true,
-            data: { items: [], total: 0, page: 1, pageSize: 10, totalPages: 0 },
+            data: {
+              data: [],
+              pagination: {
+                page: 1,
+                pageSize: 10,
+                totalItems: 0,
+                totalPages: 0,
+                hasNext: false,
+                hasPrevious: false,
+                snapshotCreatedBefore: new Date().toISOString(),
+              },
+            },
           });
         }),
       );
@@ -187,7 +280,18 @@ describe('userApi', () => {
           capturedUrl = request.url;
           return HttpResponse.json({
             success: true,
-            data: { items: [], total: 0, page: 1, pageSize: 10, totalPages: 0 },
+            data: {
+              data: [],
+              pagination: {
+                page: 1,
+                pageSize: 10,
+                totalItems: 0,
+                totalPages: 0,
+                hasNext: false,
+                hasPrevious: false,
+                snapshotCreatedBefore: new Date().toISOString(),
+              },
+            },
           });
         }),
       );
@@ -211,7 +315,18 @@ describe('userApi', () => {
         http.get('*' + endpoints.users.list, () => {
           return HttpResponse.json({
             success: true,
-            data: { items: [], total: 0, page: 1, pageSize: 10, totalPages: 0 },
+            data: {
+              data: [],
+              pagination: {
+                page: 1,
+                pageSize: 10,
+                totalItems: 0,
+                totalPages: 0,
+                hasNext: false,
+                hasPrevious: false,
+                snapshotCreatedBefore: new Date().toISOString(),
+              },
+            },
           });
         }),
       );
@@ -266,7 +381,18 @@ describe('userApi', () => {
           capturedHeaders = request.headers;
           return HttpResponse.json({
             success: true,
-            data: { items: [], total: 0, page: 1, pageSize: 10, totalPages: 0 },
+            data: {
+              data: [],
+              pagination: {
+                page: 1,
+                pageSize: 10,
+                totalItems: 0,
+                totalPages: 0,
+                hasNext: false,
+                hasPrevious: false,
+                snapshotCreatedBefore: new Date().toISOString(),
+              },
+            },
           });
         }),
       );
@@ -275,14 +401,14 @@ describe('userApi', () => {
         headers: { 'X-Custom-Header': 'test' },
       });
 
-      expect(capturedHeaders?.get('X-Custom-Header')).toBe('test');
+      expect((capturedHeaders as Headers | null)?.get('X-Custom-Header')).toBe('test');
     });
   });
 
   describe('getUserById', () => {
     it('returns user by ID successfully', async () => {
       const mockUser = createMockUser({
-        id: 251000001,
+        studentId: 251000001,
         firstName: 'John',
         lastName: 'Doe',
         email: 'john@example.com',
@@ -300,7 +426,7 @@ describe('userApi', () => {
       const result = await userApi.getUserById(251000001);
 
       expect(result).toEqual(mockUser);
-      expect(result.id).toBe(251000001);
+      expect(result.studentId).toBe(251000001);
     });
 
     it('uses correct endpoint with user ID', async () => {
@@ -310,7 +436,7 @@ describe('userApi', () => {
           capturedUrl = request.url;
           return HttpResponse.json({
             success: true,
-            data: createMockUser({ id: 251000001 }),
+            data: createMockUser({ studentId: 251000001 }),
           });
         }),
       );
@@ -332,7 +458,7 @@ describe('userApi', () => {
         http.get('*' + endpoints.users.byId(251000001), () => {
           return HttpResponse.json({
             success: true,
-            data: createMockUser({ id: 251000001 }),
+            data: createMockUser({ studentId: 251000001 }),
           });
         }),
       );
@@ -387,7 +513,7 @@ describe('userApi', () => {
           capturedHeaders = request.headers;
           return HttpResponse.json({
             success: true,
-            data: createMockUser({ id: 251000001 }),
+            data: createMockUser({ studentId: 251000001 }),
           });
         }),
       );
@@ -396,7 +522,349 @@ describe('userApi', () => {
         headers: { 'X-Custom-Header': 'test' },
       });
 
-      expect(capturedHeaders?.get('X-Custom-Header')).toBe('test');
+      expect((capturedHeaders as Headers | null)?.get('X-Custom-Header')).toBe('test');
+    });
+  });
+
+  describe('getCurrentUserOrders', () => {
+    it('returns paginated print job list for current user successfully', async () => {
+      const mockJobs = [
+        { id: '1', name: 'Job 1', status: 'pending' },
+        { id: '2', name: 'Job 2', status: 'in-progress' },
+      ];
+      const mockResponse = {
+        data: mockJobs,
+        pagination: {
+          page: 1,
+          pageSize: 10,
+          totalItems: 2,
+          totalPages: 1,
+          hasNext: false,
+          hasPrevious: false,
+          snapshotCreatedBefore: new Date().toISOString(),
+        },
+      };
+
+      mockServer.use(
+        http.get('*' + endpoints.users.orders, () => {
+          return HttpResponse.json({
+            success: true,
+            data: mockResponse,
+          });
+        }),
+      );
+
+      const result = await userApi.getCurrentUserOrders();
+
+      expect(result).toEqual(mockResponse);
+      expect(result.data).toHaveLength(2);
+    });
+
+    it('includes status query parameter when provided', async () => {
+      let capturedUrl: string | null = null;
+      mockServer.use(
+        http.get('*' + endpoints.users.orders, ({ request }) => {
+          capturedUrl = request.url;
+          return HttpResponse.json({
+            success: true,
+            data: {
+              data: [],
+              pagination: {
+                page: 1,
+                pageSize: 10,
+                totalItems: 0,
+                totalPages: 0,
+                hasNext: false,
+                hasPrevious: false,
+                snapshotCreatedBefore: new Date().toISOString(),
+              },
+            },
+          });
+        }),
+      );
+
+      await userApi.getCurrentUserOrders({ status: 'completed' });
+
+      expect(capturedUrl).toContain('status=completed');
+    });
+
+    it('includes search query parameter when provided', async () => {
+      let capturedUrl: string | null = null;
+      mockServer.use(
+        http.get('*' + endpoints.users.orders, ({ request }) => {
+          capturedUrl = request.url;
+          return HttpResponse.json({
+            success: true,
+            data: {
+              data: [],
+              pagination: {
+                page: 1,
+                pageSize: 10,
+                totalItems: 0,
+                totalPages: 0,
+                hasNext: false,
+                hasPrevious: false,
+                snapshotCreatedBefore: new Date().toISOString(),
+              },
+            },
+          });
+        }),
+      );
+
+      await userApi.getCurrentUserOrders({ search: 'test job' });
+
+      expect(capturedUrl).toContain('search=test+job');
+    });
+
+    it('includes page query parameter when provided', async () => {
+      let capturedUrl: string | null = null;
+      mockServer.use(
+        http.get('*' + endpoints.users.orders, ({ request }) => {
+          capturedUrl = request.url;
+          return HttpResponse.json({
+            success: true,
+            data: {
+              data: [],
+              pagination: {
+                page: 2,
+                pageSize: 10,
+                totalItems: 0,
+                totalPages: 3,
+                hasNext: true,
+                hasPrevious: true,
+                snapshotCreatedBefore: new Date().toISOString(),
+              },
+            },
+          });
+        }),
+      );
+
+      await userApi.getCurrentUserOrders({ page: 2 });
+
+      expect(capturedUrl).toContain('page=2');
+    });
+
+    it('includes pageSize query parameter when provided', async () => {
+      let capturedUrl: string | null = null;
+      mockServer.use(
+        http.get('*' + endpoints.users.orders, ({ request }) => {
+          capturedUrl = request.url;
+          return HttpResponse.json({
+            success: true,
+            data: {
+              data: [],
+              pagination: {
+                page: 1,
+                pageSize: 25,
+                totalItems: 0,
+                totalPages: 0,
+                hasNext: false,
+                hasPrevious: false,
+                snapshotCreatedBefore: new Date().toISOString(),
+              },
+            },
+          });
+        }),
+      );
+
+      await userApi.getCurrentUserOrders({ pageSize: 25 });
+
+      expect(capturedUrl).toContain('pageSize=25');
+    });
+
+    it('includes snapshotCreatedBefore query parameter when provided', async () => {
+      let capturedUrl: string | null = null;
+      mockServer.use(
+        http.get('*' + endpoints.users.orders, ({ request }) => {
+          capturedUrl = request.url;
+          return HttpResponse.json({
+            success: true,
+            data: {
+              data: [],
+              pagination: {
+                page: 1,
+                pageSize: 10,
+                totalItems: 0,
+                totalPages: 0,
+                hasNext: false,
+                hasPrevious: false,
+                snapshotCreatedBefore: new Date().toISOString(),
+              },
+            },
+          });
+        }),
+      );
+
+      await userApi.getCurrentUserOrders({ snapshotCreatedBefore: '2024-01-01T00:00:00Z' });
+
+      expect(capturedUrl).toContain('snapshotCreatedBefore=2024-01-01T00%3A00%3A00Z');
+    });
+
+    it('includes multiple query parameters when provided', async () => {
+      let capturedUrl: string | null = null;
+      mockServer.use(
+        http.get('*' + endpoints.users.orders, ({ request }) => {
+          capturedUrl = request.url;
+          return HttpResponse.json({
+            success: true,
+            data: {
+              data: [],
+              pagination: {
+                page: 1,
+                pageSize: 10,
+                totalItems: 0,
+                totalPages: 0,
+                hasNext: false,
+                hasPrevious: false,
+                snapshotCreatedBefore: new Date().toISOString(),
+              },
+            },
+          });
+        }),
+      );
+
+      await userApi.getCurrentUserOrders({
+        status: 'pending',
+        search: 'job',
+        page: 2,
+        pageSize: 25,
+      });
+
+      expect(capturedUrl).toContain('status=pending');
+      expect(capturedUrl).toContain('search=job');
+      expect(capturedUrl).toContain('page=2');
+      expect(capturedUrl).toContain('pageSize=25');
+    });
+
+    it('omits undefined query parameters', async () => {
+      let capturedUrl: string | null = null;
+      mockServer.use(
+        http.get('*' + endpoints.users.orders, ({ request }) => {
+          capturedUrl = request.url;
+          return HttpResponse.json({
+            success: true,
+            data: {
+              data: [],
+              pagination: {
+                page: 1,
+                pageSize: 10,
+                totalItems: 0,
+                totalPages: 0,
+                hasNext: false,
+                hasPrevious: false,
+                snapshotCreatedBefore: new Date().toISOString(),
+              },
+            },
+          });
+        }),
+      );
+
+      await userApi.getCurrentUserOrders({ page: 1 });
+
+      expect(capturedUrl).toContain('page=1');
+      expect(capturedUrl).not.toContain('status=');
+      expect(capturedUrl).not.toContain('search=');
+    });
+
+    it('includes credentials in request', async () => {
+      let capturedCredentials: RequestCredentials | undefined;
+      const originalFetch = global.fetch;
+      global.fetch = vi.fn((url, options) => {
+        capturedCredentials = options?.credentials;
+        return originalFetch(url, options);
+      });
+
+      mockServer.use(
+        http.get('*' + endpoints.users.orders, () => {
+          return HttpResponse.json({
+            success: true,
+            data: {
+              data: [],
+              pagination: {
+                page: 1,
+                pageSize: 10,
+                totalItems: 0,
+                totalPages: 0,
+                hasNext: false,
+                hasPrevious: false,
+                snapshotCreatedBefore: new Date().toISOString(),
+              },
+            },
+          });
+        }),
+      );
+
+      await userApi.getCurrentUserOrders();
+
+      expect(capturedCredentials).toBe('include');
+
+      global.fetch = originalFetch;
+    });
+
+    it('throws FORBIDDEN error when user is not authenticated', async () => {
+      mockServer.use(
+        http.get('*' + endpoints.users.orders, () => {
+          return HttpResponse.json({
+            success: false,
+            error: {
+              code: ErrorCodes.FORBIDDEN,
+              message: 'Authentication required',
+            },
+          });
+        }),
+      );
+
+      await expect(userApi.getCurrentUserOrders()).rejects.toMatchObject({
+        code: ErrorCodes.FORBIDDEN,
+      });
+    });
+
+    it('handles network errors', async () => {
+      mockServer.use(
+        http.get('*' + endpoints.users.orders, () => {
+          return HttpResponse.json({
+            success: false,
+            error: {
+              code: ErrorCodes.REQUEST_FAILED,
+              message: 'Network error',
+            },
+          });
+        }),
+      );
+
+      await expect(userApi.getCurrentUserOrders()).rejects.toMatchObject({
+        code: ErrorCodes.REQUEST_FAILED,
+      });
+    });
+
+    it('passes custom options to apiRequest', async () => {
+      let capturedHeaders: Headers | null = null;
+      mockServer.use(
+        http.get('*' + endpoints.users.orders, ({ request }) => {
+          capturedHeaders = request.headers;
+          return HttpResponse.json({
+            success: true,
+            data: {
+              data: [],
+              pagination: {
+                page: 1,
+                pageSize: 10,
+                totalItems: 0,
+                totalPages: 0,
+                hasNext: false,
+                hasPrevious: false,
+                snapshotCreatedBefore: new Date().toISOString(),
+              },
+            },
+          });
+        }),
+      );
+
+      await userApi.getCurrentUserOrders(undefined, {
+        headers: { 'X-Custom-Header': 'test' },
+      });
+
+      expect((capturedHeaders as Headers | null)?.get('X-Custom-Header')).toBe('test');
     });
   });
 });
