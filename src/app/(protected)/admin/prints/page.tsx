@@ -1,20 +1,30 @@
+import type { Metadata } from 'next';
 import PrintJobsTable from '@/components/PrintJobsTable';
 import { jobApi } from '@/api/client/job';
 import { withSessionErrorHandling } from '@/lib/server-utils';
 import { Settings } from 'lucide-react';
+import { AdminPrintFilters } from './components/AdminPrintFilters';
+import { PrintJobStatus } from '@/types/jobs';
+
+export const metadata: Metadata = {
+  title: 'Print Management',
+  description: 'Manage all print jobs across users',
+};
 
 interface PrintManagementPageProps {
-  searchParams: Promise<{ page?: string; pageSize?: string }>;
+  searchParams: Promise<{ page?: string; pageSize?: string; status?: string; search?: string }>;
 }
 
 export default async function PrintManagementPage({ searchParams }: PrintManagementPageProps) {
   const params = await searchParams;
   const page = Number(params.page) || 1;
   const pageSize = Number(params.pageSize) || 10;
+  const status = params.status as PrintJobStatus | undefined;
+  const search = params.search;
 
-  // Fetch all print jobs with server-side pagination
+  // Fetch all print jobs with server-side pagination and filters
   const { data: printJobs, pagination } = await withSessionErrorHandling(() =>
-    jobApi.listAllJobs({ page, pageSize }),
+    jobApi.listAllJobs({ page, pageSize, status, search }),
   );
 
   return (
@@ -23,6 +33,8 @@ export default async function PrintManagementPage({ searchParams }: PrintManagem
         <Settings className="h-5 w-5" />
         <span className="text-sm">Manage all print jobs across users</span>
       </div>
+
+      <AdminPrintFilters />
 
       <div>
         <PrintJobsTable printJobs={printJobs} pagination={pagination} mode="admin" />

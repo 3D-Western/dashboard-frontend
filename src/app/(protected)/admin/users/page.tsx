@@ -1,5 +1,11 @@
+import type { Metadata } from 'next';
 import { Button } from '@/components/ui/button';
 import { Users } from 'lucide-react';
+
+export const metadata: Metadata = {
+  title: 'User Management',
+  description: 'Manage user accounts and permissions',
+};
 
 export default async function UserManagementPage() {
   return (

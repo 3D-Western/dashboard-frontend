@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import type { Metadata } from 'next';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { ArrowLeft, Printer, Settings } from 'lucide-react';
@@ -11,6 +12,12 @@ import NewPrintForm from '@/components/PrintRequestForm/NewPrintForm';
 }
 
 type PrintRequestType = 'normal' | 'manufacturing' | null;
+
+// Note: metadata cannot be exported from client components
+// export const metadata: Metadata = {
+//   title: 'New Print Job',
+//   description: 'Submit a new 3D print request',
+// };
 
 export default function NewPrintPage() {
   const [selectedType, setSelectedType] = useState<PrintRequestType>(null);

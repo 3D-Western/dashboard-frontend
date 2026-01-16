@@ -12,5 +12,5 @@ export default async function AuthLayout({ children }: { children: React.ReactNo
     redirect('/dashboard');
   }
 
-  return <>{children}</>;
+  return <div className="bg-muted">{children}</div>;
 }

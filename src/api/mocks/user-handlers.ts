@@ -161,4 +161,51 @@ export const userHandlers = [
       }),
     );
   }),
+
+  http.get(`${apiUrl}${endpoints.users.orders}`, ({ cookies, request }) => {
+    const sessionId = cookies['sessionToken'] || '';
+    const user = db.validateSession(sessionId);
+    if (!user) {
+      return createInvalidSessionResponse();
+    }
+
+    // Parse query parameters
+    const url = new URL(request.url);
+    const statusFilter = url.searchParams.get('status');
+    const searchTerm = url.searchParams.get('search');
+    const page = parseInt(url.searchParams.get('page') || '1', 10);
+    const pageSize = parseInt(url.searchParams.get('pageSize') || '10', 10);
+    const snapshotCreatedBefore =
+      url.searchParams.get('snapshotCreatedBefore') || new Date().toISOString();
+
+    // Get print jobs using the shared function with filters
+    const printJobs = db.getPrintJobs({
+      userId: user.studentId,
+      status: statusFilter || undefined,
+      search: searchTerm || undefined,
+      snapshotCreatedBefore,
+    });
+
+    // Calculate pagination
+    const totalItems = printJobs.length;
+    const totalPages = Math.ceil(totalItems / pageSize);
+    const startIndex = (page - 1) * pageSize;
+    const endIndex = startIndex + pageSize;
+    const paginatedJobs = printJobs.slice(startIndex, endIndex);
+
+    return HttpResponse.json(
+      generateSuccessResponse({
+        data: paginatedJobs,
+        pagination: {
+          page,
+          pageSize,
+          totalItems,
+          totalPages,
+          hasNext: page < totalPages,
+          hasPrevious: page > 1,
+          snapshotCreatedBefore,
+        },
+      }),
+    );
+  }),
 ];
