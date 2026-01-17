@@ -31,9 +31,9 @@ export default async function PrintPage({ searchParams }: PrintPageProps) {
   return (
     <div className="container space-y-6 p-6">
       <div>
-        <Link href="/dashboard/orders/new">
-          <Button size={'sm'} title="New Order">
-            New Order
+        <Link href="/dashboard/print/new">
+          <Button size={'sm'} title="New Print">
+            New Print
           </Button>
         </Link>
       </div>

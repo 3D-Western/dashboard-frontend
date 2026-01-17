@@ -15,12 +15,13 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from '../../../../../../../components/ui/form';
-import { Input } from '../../../../../../../components/ui/input';
-import { Textarea } from '../../../../../../../components/ui/textarea';
-import { RadioGroup, RadioGroupItem } from '../../../../../../../components/ui/radio-group';
-import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '../../../../../../../components/ui/select';
-import { UnsavedChangesGuard } from '../../../../../../../components/ui/unsaved-changes-guard';
+} from '../ui/form';
+import { Input } from '../ui/input';
+import { Textarea } from '../ui/textarea';
+import { RadioGroup, RadioGroupItem } from '../ui/radio-group';
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '../ui/select';
+import { UnsavedChangesGuard } from '../ui/unsaved-changes-guard';
+import { endpoints } from '@/api/client/endpoints';
 
 type NewPrintFormProps = {
   mockMode?: boolean;
@@ -88,24 +89,23 @@ export default function NewPrintForm({ mockMode = true }: NewPrintFormProps = {}
   const { isDirty, isSubmitting } = form.formState;
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    // Toggle mock mode here for local testing without backend endpoints
-    // When true, the submit flow will simulate upload + order creation with fake IDs
-    const MOCK_MODE = mockMode;
-
     try {
       const file = values.file as File;
       let fileId: string | null = null;
 
-      if (MOCK_MODE) {
+      // Handle file upload based on mode
+      if (mockMode) {
+        // Mock mode: simulate file upload
         console.log('MOCK: Simulating file upload for', file?.name);
         await new Promise((res) => setTimeout(res, 500));
         if (file) fileId = `mock-file-${Date.now()}`;
       } else {
+        // Real mode: actually upload the file
         if (file) {
           const fd = new FormData();
           fd.append('file', file, file.name);
 
-          const uploadRes = await fetch('/api/files/upload', {
+          const uploadRes = await fetch(endpoints.files.upload, {
             method: 'POST',
             body: fd,
           });
@@ -116,13 +116,13 @@ export default function NewPrintForm({ mockMode = true }: NewPrintFormProps = {}
           }
 
           const uploadJson = await uploadRes.json();
-          // what does API return for file? { id: string } or { fileId: string }?
           fileId = (uploadJson.id ?? uploadJson.fileId ?? null) as string | null;
         }
       }
 
+      // Prepare order payload
       const payload = {
-        printName: values['print-name'],
+        name: values['print-name'],
         description: values.description,
         goal: values.goal,
         durability: values.durability,
@@ -132,21 +132,12 @@ export default function NewPrintForm({ mockMode = true }: NewPrintFormProps = {}
         material2: values['material-2'],
         color2: values['color-2'],
         support: values.support,
-        fileId,
+        stlFileId: fileId || '',
+        reprint: null,
       };
 
-      if (MOCK_MODE) {
-        console.log('MOCK: Order payload', payload);
-        await new Promise((res) => setTimeout(res, 300));
-        const fakeOrderId = `mock-order-${Date.now()}`;
-        console.log('MOCK: Created order', fakeOrderId);
-        // Navigate to dashboard as if submission succeeded
-        router.push('/dashboard');
-        return;
-      }
-
-      // Real submit flow (use when backend endpoints are available)
-      const submitRes = await fetch('/api/orders/active/submit', {
+      // Submit order
+      const submitRes = await fetch(endpoints.orders.create, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
@@ -157,12 +148,21 @@ export default function NewPrintForm({ mockMode = true }: NewPrintFormProps = {}
         throw new Error(text || 'Submit failed');
       }
 
-      // success — redirect to dashboard
-      router.push('/dashboard');
+      const result = await submitRes.json();
+      console.log('MOCK: Created order', result.data?.order?.id);
+
+      // Navigate to dashboard and force refresh to show new data
+      router.push('/dashboard/print');
+      if (typeof router.refresh === 'function') {
+        router.refresh(); // Force server component to re-run
+      }
     } catch (err) {
       console.error('Submit error', err);
-      // Provide a clearer error message for dev
-      alert('Failed to submit print request. ' + (err instanceof Error ? err.message : ''));
+      if (typeof window !== 'undefined' && typeof window.alert === 'function') {
+        window.alert(
+          'Failed to submit print request. ' + (err instanceof Error ? err.message : ''),
+        );
+      }
     }
   }
 
