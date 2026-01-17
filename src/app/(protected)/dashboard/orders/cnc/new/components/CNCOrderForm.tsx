@@ -20,6 +20,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select';
 import { UnsavedChangesGuard } from '@/components/ui/unsaved-changes-guard';
+import { endpoints } from '@/api/client/endpoints';
 
 const CNC_MATERIALS = [
   { value: 'aluminum', label: 'Aluminum' },
@@ -88,6 +89,7 @@ export default function CNCOrderForm() {
       if (file) fileId = `mock-cnc-file-${Date.now()}`;
 
       const payload = {
+        category: 'cnc',
         name: values.name,
         description: values.description,
         material: values.material,
@@ -96,7 +98,7 @@ export default function CNCOrderForm() {
         urgency: 'normal',
       };
 
-      const submitRes = await fetch('/api/v1/cnc-orders', {
+      const submitRes = await fetch(endpoints.orders.create, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),

@@ -20,6 +20,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select';
 import { UnsavedChangesGuard } from '@/components/ui/unsaved-changes-guard';
+import { endpoints } from '@/api/client/endpoints';
 
 const WATERJET_MATERIALS = [
   { value: 'steel', label: 'Steel' },
@@ -92,6 +93,7 @@ export default function WaterJetForm() {
       if (file) fileId = `mock-waterjet-file-${Date.now()}`;
 
       const payload = {
+        category: 'water-jet',
         name: values.name,
         description: values.description,
         material: values.material,
@@ -100,7 +102,7 @@ export default function WaterJetForm() {
         urgency: 'normal',
       };
 
-      const submitRes = await fetch('/api/v1/waterjet-orders', {
+      const submitRes = await fetch(endpoints.orders.create, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),

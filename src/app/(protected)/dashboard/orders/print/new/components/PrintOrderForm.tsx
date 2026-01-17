@@ -15,12 +15,12 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-}from '../../../../../../../components/ui/form';
-import { Input } from '../../../../../../../components/ui/input';
-import { Textarea } from '../../../../../../../components/ui/textarea';
-import { RadioGroup, RadioGroupItem } from '../../../../../../../components/ui/radio-group';
-import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '../../../../../../../components/ui/select';
-import { UnsavedChangesGuard } from '../../../../../../../components/ui/unsaved-changes-guard';
+} from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select';
+import { UnsavedChangesGuard } from '@/components/ui/unsaved-changes-guard';
 import { endpoints } from '@/api/client/endpoints';
 
 type NewPrintFormProps = {
@@ -122,6 +122,7 @@ export default function NewPrintForm({ mockMode = true }: NewPrintFormProps = {}
 
       // Prepare order payload
       const payload = {
+        category: '3d-print',
         name: values['print-name'],
         description: values.description,
         goal: values.goal,

@@ -20,6 +20,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select';
 import { UnsavedChangesGuard } from '@/components/ui/unsaved-changes-guard';
+import { endpoints } from '@/api/client/endpoints';
 
 const LASER_MATERIALS = [
   { value: 'acrylic', label: 'Acrylic' },
@@ -91,6 +92,7 @@ export default function LaserCuttingOrderForm() {
       if (file) fileId = `mock-laser-file-${Date.now()}`;
 
       const payload = {
+        category: 'laser-cutting',
         name: values.name,
         description: values.description,
         material: values.material,
@@ -99,7 +101,7 @@ export default function LaserCuttingOrderForm() {
         urgency: 'normal',
       };
 
-      const submitRes = await fetch('/api/v1/laser-orders', {
+      const submitRes = await fetch(endpoints.orders.create, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
