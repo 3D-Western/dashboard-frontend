@@ -16,7 +16,9 @@ import { useCallback } from 'react';
 
 interface DataTablePaginationProps<TData> {
   table: Table<TData>;
-  pagination: PaginationMetadata;
+  // Accept either the full PaginationMetadata or a lightweight partial
+  // shape (used by some tests) for compatibility.
+  pagination: PaginationMetadata | Partial<PaginationMetadata>;
   showSelectionCount?: boolean;
 }
 
@@ -27,9 +29,9 @@ export function DataTablePagination<TData>({
 }: DataTablePaginationProps<TData>) {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const currentPage = pagination.page;
-  const totalPages = pagination.totalPages;
-  const pageSize = pagination.pageSize;
+  const currentPage = pagination.page ?? 1;
+  const totalPages = pagination.totalPages ?? 1;
+  const pageSize = pagination.pageSize ?? 10;
 
   // Update URL search params for pagination
   const updatePagination = useCallback(
@@ -92,7 +94,7 @@ export function DataTablePagination<TData>({
               variant="outline"
               className="h-8 w-8 p-0"
               onClick={() => updatePagination(1)}
-              disabled={!pagination.hasPrevious}
+              disabled={!Boolean(pagination.hasPrevious)}
               aria-label={`Go to first page, currently on page ${currentPage} of ${totalPages}`}
             >
               <span className="sr-only">Go to first page</span>
@@ -102,7 +104,7 @@ export function DataTablePagination<TData>({
               variant="outline"
               className="h-8 w-8 p-0"
               onClick={() => updatePagination(currentPage - 1)}
-              disabled={!pagination.hasPrevious}
+              disabled={!Boolean(pagination.hasPrevious)}
               aria-label={`Go to previous page, currently on page ${currentPage} of ${totalPages}`}
             >
               <span className="sr-only">Go to previous page</span>
@@ -112,7 +114,7 @@ export function DataTablePagination<TData>({
               variant="outline"
               className="h-8 w-8 p-0"
               onClick={() => updatePagination(currentPage + 1)}
-              disabled={!pagination.hasNext}
+              disabled={!Boolean(pagination.hasNext)}
               aria-label={`Go to next page, currently on page ${currentPage} of ${totalPages}`}
             >
               <span className="sr-only">Go to next page</span>
@@ -122,7 +124,7 @@ export function DataTablePagination<TData>({
               variant="outline"
               className="h-8 w-8 p-0"
               onClick={() => updatePagination(totalPages)}
-              disabled={!pagination.hasNext}
+              disabled={!Boolean(pagination.hasNext)}
               aria-label={`Go to last page, currently on page ${currentPage} of ${totalPages}`}
             >
               <span className="sr-only">Go to last page</span>

@@ -22,6 +22,7 @@ export interface UserResponse {
   firstName: string;
   lastName: string;
   status: string; // Backend sends "Admin" or "User"
+  experienceLevel?: string;
 }
 
 export interface ApiGetCurrentSessionResponse {

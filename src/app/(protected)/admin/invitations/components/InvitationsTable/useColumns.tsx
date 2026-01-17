@@ -8,8 +8,9 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Invitation, InvitationStatus } from '@/types/invitation';
-import { ColumnDef } from '@tanstack/react-table';
+import { InvitationStatus } from '@/types/invitation';
+import type { ColumnDef, Row, Column } from '@tanstack/react-table';
+import type { Invitation } from '@/types/invitation';
 import { ArrowUpDown, MoreHorizontal } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { DateCell } from './DateCell';
@@ -33,7 +34,7 @@ export const useColumns = (opts: UseColumnsOptions = {}) => {
       {
         accessorKey: 'studentId',
         header: () => <div className="w-full text-center">Student ID</div>,
-        cell: ({ row }) => {
+        cell: ({ row }: { row: Row<Invitation> }) => {
           const studentId = row.getValue('studentId') as number;
           return <div className="w-full text-center font-medium">{studentId}</div>;
         },
@@ -41,7 +42,7 @@ export const useColumns = (opts: UseColumnsOptions = {}) => {
       {
         accessorKey: 'email',
         header: () => <div className="w-full text-center">Email</div>,
-        cell: ({ row }) => {
+        cell: ({ row }: { row: Row<Invitation> }) => {
           const email = row.getValue('email') as string;
           return <EmailCell email={email} />;
         },
@@ -49,7 +50,7 @@ export const useColumns = (opts: UseColumnsOptions = {}) => {
       {
         accessorKey: 'invitationCode',
         header: () => <div className="w-full text-center">Invitation Code</div>,
-        cell: ({ row }) => {
+        cell: ({ row }: { row: Row<Invitation> }) => {
           const code = row.getValue('invitationCode') as string;
           return <InvitationCodeCell code={code} />;
         },
@@ -57,7 +58,7 @@ export const useColumns = (opts: UseColumnsOptions = {}) => {
       {
         accessorKey: 'status',
         header: () => <div className="w-full text-center">Status</div>,
-        cell: ({ row }) => {
+        cell: ({ row }: { row: Row<Invitation> }) => {
           const status = row.getValue('status') as InvitationStatus;
           return (
             <div className="flex w-full justify-center">
@@ -68,7 +69,7 @@ export const useColumns = (opts: UseColumnsOptions = {}) => {
       },
       {
         accessorKey: 'createdAt',
-        header: ({ column }) => {
+        header: ({ column }: { column: Column<Invitation> }) => {
           const sortDirection = column.getIsSorted();
           return (
             <Button
@@ -88,11 +89,11 @@ export const useColumns = (opts: UseColumnsOptions = {}) => {
             </Button>
           );
         },
-        cell: ({ row }) => <DateCell date={row.getValue('createdAt') as string} />,
+        cell: ({ row }: { row: Row<Invitation> }) => <DateCell date={row.getValue('createdAt') as string} />,
       },
       {
         accessorKey: 'expiredAt',
-        header: ({ column }) => {
+        header: ({ column }: { column: Column<Invitation> }) => {
           const sortDirection = column.getIsSorted();
           return (
             <Button
@@ -112,11 +113,11 @@ export const useColumns = (opts: UseColumnsOptions = {}) => {
             </Button>
           );
         },
-        cell: ({ row }) => <DateCell date={row.getValue('expiredAt') as string} />,
+        cell: ({ row }: { row: Row<Invitation> }) => <DateCell date={row.getValue('expiredAt') as string} />,
       },
       {
         id: 'actions',
-        cell: function ActionsCell({ row }) {
+        cell: function ActionsCell({ row }: { row: Row<Invitation> }) {
           const invitation = row.original;
           const canRevoke = invitation.status === 'PENDING';
           const [showRevokeDialog, setShowRevokeDialog] = useState(false);
@@ -129,6 +130,7 @@ export const useColumns = (opts: UseColumnsOptions = {}) => {
               await invitationApi.revokeInvitation(invitation.id);
               onRevoke?.(invitation.id);
               setShowRevokeDialog(false);
+              toast.success('Invitation revoked successfully.');
             } catch (error) {
               toast.error('Failed to revoke invitation. Please try again.');
               console.error('Failed to revoke invitation:', error);
@@ -156,25 +158,13 @@ export const useColumns = (opts: UseColumnsOptions = {}) => {
                     More Info
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
-                  {canRevoke && (
-                    <DropdownMenuItem
-                      onSelect={() => setShowRevokeDialog(true)}
-                      className="text-destructive focus:text-destructive"
-                    >
-                      Revoke Invitation
-                    </DropdownMenuItem>
-                  )}
-                  {!canRevoke && (
-                    <DropdownMenuItem disabled>
-                      <span className="text-muted-foreground">
-                        {invitation.status === 'REVOKED'
-                          ? 'Already Revoked'
-                          : invitation.status === 'ACCEPTED'
-                            ? 'Already Accepted'
-                            : 'Expired'}
-                      </span>
-                    </DropdownMenuItem>
-                  )}
+                  <DropdownMenuItem
+                    onSelect={() => canRevoke && setShowRevokeDialog(true)}
+                    disabled={!canRevoke}
+                    className={canRevoke ? 'text-destructive focus:text-destructive' : ''}
+                  >
+                    Revoke Invitation
+                  </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
 

@@ -8,7 +8,9 @@ import { useColumns } from './useColumns';
 
 interface InvitationsTableProps {
   invitations: Invitation[];
-  pagination: PaginationMetadata;
+  // Accept either the full PaginationMetadata or a lightweight partial
+  // shape (used by some tests) for compatibility.
+  pagination: PaginationMetadata | Partial<PaginationMetadata>;
   onRevokeSuccess?: (invitationId: number) => void;
 }
 

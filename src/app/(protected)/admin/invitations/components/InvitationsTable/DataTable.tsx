@@ -18,14 +18,16 @@ import {
   getSortedRowModel,
   useReactTable,
 } from '@tanstack/react-table';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { DataTablePagination } from '@/components/DataTablePagination';
 import { PaginationMetadata } from '@/types/common';
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
   data: TData[];
-  pagination: PaginationMetadata;
+  // Accept either the full PaginationMetadata or a lightweight partial
+  // shape (used by some tests) for compatibility.
+  pagination: PaginationMetadata | Partial<PaginationMetadata>;
 }
 
 export function DataTable<TData, TValue>({
@@ -36,7 +38,6 @@ export function DataTable<TData, TValue>({
   'use no memo';
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
-  const [announcement, setAnnouncement] = useState('');
 
   // eslint-disable-next-line react-hooks/incompatible-library -- TanStack Table is known to be incompatible with React Compiler
   const table = useReactTable({
@@ -51,24 +52,8 @@ export function DataTable<TData, TValue>({
     manualPagination: true,
   });
 
-  // Announce filtered results for screen readers
-  useEffect(() => {
-    const filteredCount = table.getFilteredRowModel().rows.length;
-
-    if (filteredCount !== data.length) {
-      setAnnouncement(`Showing ${filteredCount} of ${data.length} invitations`);
-    } else {
-      setAnnouncement('');
-    }
-  }, [table, data.length]);
-
   return (
     <div className="space-y-4">
-      {/* Live region for screen reader announcements */}
-      <div role="status" aria-live="polite" aria-atomic="true" className="sr-only">
-        {announcement}
-      </div>
-
       <div className="overflow-hidden rounded-md border">
         <Table aria-label="Invitations table" aria-describedby="invitations-table-caption">
           <caption id="invitations-table-caption" className="sr-only">

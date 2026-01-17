@@ -33,6 +33,7 @@ import {
 import { invitationApi } from '@/api/client/invitation';
 import { Invitation } from '@/types/invitation';
 import { ApiError } from '@/api/client/errors';
+import { toast } from 'sonner';
 
 const formSchema = z.object({
   studentId: z
@@ -40,7 +41,7 @@ const formSchema = z.object({
     .min(1, 'Student ID is required')
     .refine(
       (val) => {
-        const num = parseInt(val);
+        const num = parseInt(val, 10);
         return num >= 251000000 && num <= 251999999;
       },
       { message: 'Student ID must be between 251000000 and 251999999' },
@@ -49,7 +50,16 @@ const formSchema = z.object({
     .string()
     .min(1, 'Email is required')
     .regex(/^[a-z]+\d*@uwo\.ca$/, 'Email must be a valid UWO email (e.g., jdoe123@uwo.ca)'),
-  expiresInDays: z.string(),
+  expiresInDays: z
+    .string()
+    .regex(/^\d+$/, 'Expiration must be a number of days')
+    .refine(
+      (val) => {
+        const num = Number(val);
+        return num >= 1 && num <= 30;
+      },
+      { message: 'Expiration must be between 1 and 30 days' },
+    ),
 });
 
 type FormData = z.infer<typeof formSchema>;
@@ -91,6 +101,7 @@ export function CreateInvitationDialog({
       form.reset();
       onSuccess?.(invitation);
       onOpenChange(false);
+      toast.success('Invitation created successfully.');
     } catch (error) {
       if (error instanceof ApiError) {
         if (error.code === 'INVITATION_ALREADY_EXISTS') {

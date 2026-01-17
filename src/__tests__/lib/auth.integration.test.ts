@@ -23,7 +23,7 @@ describe('Auth Integration Tests', () => {
       expect(loginResult).toBe(true);
 
       // Step 2: After login, validateSession returns the user
-      const mockUser = createMockUser({ id: 251000001 });
+      const mockUser = createMockUser({ studentId: 251000001 });
       mockAuthenticatedSession(mockUser);
       const postLoginSession = await validateSession();
       expect(postLoginSession).toMatchObject({
