@@ -115,7 +115,7 @@ export const orderHandlers = [
     // Create new order and add to database
     const category = body.category || '3d-print';
     const fileId = body.stlFileId || body.fileId || `mock-${category}-file-${Date.now()}`;
-    
+
     const newOrder = {
       id: `order-${Date.now()}`,
       kind: 'active-print-job' as const,

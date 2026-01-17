@@ -18,7 +18,13 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select';
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from '@/components/ui/select';
 import { UnsavedChangesGuard } from '@/components/ui/unsaved-changes-guard';
 import { endpoints } from '@/api/client/endpoints';
 
@@ -123,10 +129,7 @@ export default function WaterJetForm() {
     } catch (err) {
       console.error('Water jet submit error', err);
       if (typeof window !== 'undefined') {
-        alert(
-          'Failed to submit water jet request. ' +
-            (err instanceof Error ? err.message : ''),
-        );
+        alert('Failed to submit water jet request. ' + (err instanceof Error ? err.message : ''));
       }
     }
   }
@@ -180,9 +183,7 @@ export default function WaterJetForm() {
     <div className="flex min-h-screen flex-col items-center justify-center px-4">
       <div className="mb-6 text-center">
         <h1 className="text-2xl font-semibold">Create New Water Jet Cutting Request</h1>
-        <p className="mt-2 text-muted-foreground">
-          High-pressure cutting for thick materials
-        </p>
+        <p className="mt-2 text-muted-foreground">High-pressure cutting for thick materials</p>
       </div>
 
       <Form {...form}>

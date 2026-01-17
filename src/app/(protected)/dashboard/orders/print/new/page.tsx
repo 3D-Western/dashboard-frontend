@@ -24,7 +24,7 @@ export default function NewPrintOrderPage() {
           Upload your 3D model and specify your printing requirements
         </p>
       </div>
-      
+
       <PrintOrderForm />
     </div>
   );

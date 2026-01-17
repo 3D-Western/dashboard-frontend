@@ -24,7 +24,7 @@ export default function NewCNCOrderPage() {
           Upload your design files and specify machining requirements
         </p>
       </div>
-      
+
       <CNCOrderForm />
     </div>
   );

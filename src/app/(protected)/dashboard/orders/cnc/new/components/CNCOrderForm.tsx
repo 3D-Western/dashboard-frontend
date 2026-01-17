@@ -18,7 +18,13 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select';
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from '@/components/ui/select';
 import { UnsavedChangesGuard } from '@/components/ui/unsaved-changes-guard';
 import { endpoints } from '@/api/client/endpoints';
 
@@ -119,10 +125,7 @@ export default function CNCOrderForm() {
     } catch (err) {
       console.error('CNC submit error', err);
       if (typeof window !== 'undefined') {
-        alert(
-          'Failed to submit CNC request. ' +
-            (err instanceof Error ? err.message : ''),
-        );
+        alert('Failed to submit CNC request. ' + (err instanceof Error ? err.message : ''));
       }
     }
   }
@@ -176,9 +179,7 @@ export default function CNCOrderForm() {
     <div className="flex min-h-screen flex-col items-center justify-center px-4">
       <div className="mb-6 text-center">
         <h1 className="text-2xl font-semibold">Create New CNC Machining Request</h1>
-        <p className="mt-2 text-muted-foreground">
-          Precision machining from solid materials
-        </p>
+        <p className="mt-2 text-muted-foreground">Precision machining from solid materials</p>
       </div>
 
       <Form {...form}>
@@ -209,10 +210,7 @@ export default function CNCOrderForm() {
                   Describe your CNC requirements, dimensions, tolerances, etc.
                 </FormDescription>
                 <FormControl>
-                  <Textarea
-                    placeholder="Describe your CNC request in detail..."
-                    {...field}
-                  />
+                  <Textarea placeholder="Describe your CNC request in detail..." {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -226,9 +224,7 @@ export default function CNCOrderForm() {
             render={({ field }) => (
               <FormItem>
                 <FormLabel className="text-lg">Preferred Material</FormLabel>
-                <FormDescription>
-                  Select your preferred material for CNC machining
-                </FormDescription>
+                <FormDescription>Select your preferred material for CNC machining</FormDescription>
                 <FormControl>
                   <Select value={field.value} onValueChange={field.onChange}>
                     <SelectTrigger>

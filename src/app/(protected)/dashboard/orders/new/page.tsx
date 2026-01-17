@@ -18,7 +18,12 @@ export default function NewOrderPage() {
       icon: Printer,
       href: '/dashboard/orders/print/new',
       color: 'blue',
-      features: ['PLA, ABS, PETG materials', 'Complex geometries', 'Fast prototyping', 'Multiple colors'],
+      features: [
+        'PLA, ABS, PETG materials',
+        'Complex geometries',
+        'Fast prototyping',
+        'Multiple colors',
+      ],
     },
     {
       type: 'cnc',
@@ -52,8 +57,10 @@ export default function NewOrderPage() {
   const getColorClasses = (color: string) => {
     const colorMap = {
       blue: 'bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-800',
-      green: 'bg-green-100 dark:bg-green-900 text-green-600 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-800',
-      orange: 'bg-orange-100 dark:bg-orange-900 text-orange-600 dark:text-orange-400 hover:bg-orange-50 dark:hover:bg-orange-800',
+      green:
+        'bg-green-100 dark:bg-green-900 text-green-600 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-800',
+      orange:
+        'bg-orange-100 dark:bg-orange-900 text-orange-600 dark:text-orange-400 hover:bg-orange-50 dark:hover:bg-orange-800',
       cyan: 'bg-cyan-100 dark:bg-cyan-900 text-cyan-600 dark:text-cyan-400 hover:bg-cyan-50 dark:hover:bg-cyan-800',
     };
     return colorMap[color as keyof typeof colorMap] || colorMap.blue;
@@ -77,18 +84,18 @@ export default function NewOrderPage() {
               className="group transition-all duration-200 hover:scale-[1.02] hover:shadow-lg"
             >
               <CardHeader className="text-center">
-                <div className={`mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full ${getColorClasses(orderType.color)}`}>
+                <div
+                  className={`mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full ${getColorClasses(orderType.color)}`}
+                >
                   <Icon className="h-8 w-8" />
                 </div>
                 <CardTitle className="text-xl">{orderType.title}</CardTitle>
-                <CardDescription className="text-sm">
-                  {orderType.description}
-                </CardDescription>
+                <CardDescription className="text-sm">{orderType.description}</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="space-y-2">
-                  <h4 className="font-medium text-sm">Features:</h4>
-                  <ul className="text-xs text-muted-foreground space-y-1">
+                  <h4 className="text-sm font-medium">Features:</h4>
+                  <ul className="space-y-1 text-xs text-muted-foreground">
                     {orderType.features.map((feature, index) => (
                       <li key={index} className="flex items-center">
                         <div className="mr-2 h-1 w-1 rounded-full bg-current"></div>
@@ -98,9 +105,7 @@ export default function NewOrderPage() {
                   </ul>
                 </div>
                 <Button asChild className="w-full" size="sm">
-                  <Link href={orderType.href}>
-                    Create {orderType.title} Order
-                  </Link>
+                  <Link href={orderType.href}>Create {orderType.title} Order</Link>
                 </Button>
               </CardContent>
             </Card>

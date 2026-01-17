@@ -18,7 +18,13 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select';
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from '@/components/ui/select';
 import { UnsavedChangesGuard } from '@/components/ui/unsaved-changes-guard';
 import { endpoints } from '@/api/client/endpoints';
 
@@ -123,8 +129,7 @@ export default function LaserCuttingOrderForm() {
       console.error('Laser cutting submit error', err);
       if (typeof window !== 'undefined') {
         alert(
-          'Failed to submit laser cutting request. ' +
-            (err instanceof Error ? err.message : ''),
+          'Failed to submit laser cutting request. ' + (err instanceof Error ? err.message : ''),
         );
       }
     }
@@ -179,9 +184,7 @@ export default function LaserCuttingOrderForm() {
     <div className="flex min-h-screen flex-col items-center justify-center px-4">
       <div className="mb-6 text-center">
         <h1 className="text-2xl font-semibold">Create New Laser Cutting Request</h1>
-        <p className="mt-2 text-muted-foreground">
-          Precise cutting of 2D designs
-        </p>
+        <p className="mt-2 text-muted-foreground">Precise cutting of 2D designs</p>
       </div>
 
       <Form {...form}>
@@ -229,9 +232,7 @@ export default function LaserCuttingOrderForm() {
             render={({ field }) => (
               <FormItem>
                 <FormLabel className="text-lg">Preferred Material</FormLabel>
-                <FormDescription>
-                  Select your preferred material for laser cutting
-                </FormDescription>
+                <FormDescription>Select your preferred material for laser cutting</FormDescription>
                 <FormControl>
                   <Select value={field.value} onValueChange={field.onChange}>
                     <SelectTrigger>

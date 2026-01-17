@@ -7,9 +7,7 @@ interface OrdersLayoutProps {
 export default function OrdersLayout({ children }: OrdersLayoutProps) {
   return (
     <div className="min-h-screen">
-      <div className="container mx-auto">
-        {children}
-      </div>
+      <div className="container mx-auto">{children}</div>
     </div>
   );
 }

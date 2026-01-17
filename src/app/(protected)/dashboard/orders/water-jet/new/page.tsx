@@ -24,7 +24,7 @@ export default function NewWaterJetOrderPage() {
           Upload your design files and specify cutting requirements
         </p>
       </div>
-      
+
       <WaterJetForm />
     </div>
   );

@@ -24,7 +24,7 @@ export default function NewLaserCuttingOrderPage() {
           Upload your 2D design files and specify cutting requirements
         </p>
       </div>
-      
+
       <LaserCuttingOrderForm />
     </div>
   );
