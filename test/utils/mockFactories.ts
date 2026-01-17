@@ -2,6 +2,7 @@ import { faker } from '@faker-js/faker';
 import { User, UserRole, UserExperienceLevel } from '@/types/user';
 import { PrintJob, PrintJobStatus } from '@/types/jobs';
 import { FileMetadata, FileUploadResult } from '@/types/file';
+import { UserResponse } from '@/api/types';
 
 /**
  * Creates a mock User object with realistic data
@@ -31,6 +32,23 @@ export const createMockUser = (overrides?: Partial<User>): User => ({
  */
 export const createMockAdmin = (overrides?: Partial<User>): User =>
   createMockUser({ role: 'admin', experienceLevel: 'advanced', ...overrides });
+
+/**
+ * Creates a mock UserResponse object (backend format)
+ *
+ * @example
+ * ```ts
+ * const userResponse = createMockUserResponse({ status: 'Admin' });
+ * ```
+ */
+export const createMockUserResponse = (overrides?: Partial<UserResponse>): UserResponse => ({
+  studentId: faker.number.int({ min: 251000000, max: 251999999 }),
+  email: faker.internet.email(),
+  firstName: faker.person.firstName(),
+  lastName: faker.person.lastName(),
+  status: 'User', // Backend format: "Admin" or "User"
+  ...overrides,
+});
 
 /**
  * Creates a mock PrintJob object

@@ -9,14 +9,14 @@ describe('ApiError', () => {
     expect(error).toBeInstanceOf(ApiError);
     expect(error.name).toBe('ApiError');
     expect(error.code).toBe('TEST_CODE');
-    expect(error.message).toBe('TEST_CODE: Test message');
+    expect(error.message).toBe('Test message');
   });
 
   it('creates an ApiError with code only', () => {
     const error = new ApiError('TEST_CODE');
 
     expect(error.code).toBe('TEST_CODE');
-    expect(error.message).toBe('TEST_CODE: undefined');
+    expect(error.message).toBe('');
   });
 
   it('includes optional details', () => {

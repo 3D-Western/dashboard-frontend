@@ -3,18 +3,18 @@ import { userApi } from './user';
 import { mockServer } from '@/api/mocks';
 import { http, HttpResponse } from 'msw';
 import { endpoints } from './endpoints';
-import { createMockUser } from '@test/utils/mockFactories';
+import { createMockUser, createMockUserResponse } from '@test/utils/mockFactories';
 import { ErrorCodes } from './errors';
 
 describe('userApi', () => {
   describe('listAllUsers', () => {
     it('returns paginated user list successfully', async () => {
-      const mockUsers = [
-        createMockUser({ studentId: 251000001, firstName: 'John', lastName: 'Doe' }),
-        createMockUser({ studentId: 251000002, firstName: 'Jane', lastName: 'Smith' }),
+      const mockUserResponses = [
+        createMockUserResponse({ studentId: 251000001, firstName: 'John', lastName: 'Doe', status: 'User' }),
+        createMockUserResponse({ studentId: 251000002, firstName: 'Jane', lastName: 'Smith', status: 'Admin' }),
       ];
       const mockResponse = {
-        data: mockUsers,
+        data: mockUserResponses,
         pagination: {
           page: 1,
           pageSize: 10,
@@ -37,8 +37,11 @@ describe('userApi', () => {
 
       const result = await userApi.listAllUsers();
 
-      expect(result).toEqual(mockResponse);
+      // Result should be transformed to frontend format
       expect(result.data).toHaveLength(2);
+      expect(result.data[0].role).toBe('user');
+      expect(result.data[1].role).toBe('admin');
+      expect(result.pagination).toEqual(mockResponse.pagination);
     });
 
     it('includes search query parameter when provided', async () => {
@@ -407,26 +410,31 @@ describe('userApi', () => {
 
   describe('getUserById', () => {
     it('returns user by ID successfully', async () => {
-      const mockUser = createMockUser({
+      const mockUserResponse = createMockUserResponse({
         studentId: 251000001,
         firstName: 'John',
         lastName: 'Doe',
         email: 'john@example.com',
+        status: 'User',
       });
 
       mockServer.use(
         http.get('*' + endpoints.users.byId(251000001), () => {
           return HttpResponse.json({
             success: true,
-            data: mockUser,
+            data: mockUserResponse,
           });
         }),
       );
 
       const result = await userApi.getUserById(251000001);
 
-      expect(result).toEqual(mockUser);
+      // Result should be transformed to frontend format
       expect(result.studentId).toBe(251000001);
+      expect(result.firstName).toBe('John');
+      expect(result.lastName).toBe('Doe');
+      expect(result.email).toBe('john@example.com');
+      expect(result.role).toBe('user');
     });
 
     it('uses correct endpoint with user ID', async () => {
@@ -436,7 +444,7 @@ describe('userApi', () => {
           capturedUrl = request.url;
           return HttpResponse.json({
             success: true,
-            data: createMockUser({ studentId: 251000001 }),
+            data: createMockUserResponse({ studentId: 251000001 }),
           });
         }),
       );
@@ -458,7 +466,7 @@ describe('userApi', () => {
         http.get('*' + endpoints.users.byId(251000001), () => {
           return HttpResponse.json({
             success: true,
-            data: createMockUser({ studentId: 251000001 }),
+            data: createMockUserResponse({ studentId: 251000001 }),
           });
         }),
       );
@@ -513,7 +521,7 @@ describe('userApi', () => {
           capturedHeaders = request.headers;
           return HttpResponse.json({
             success: true,
-            data: createMockUser({ studentId: 251000001 }),
+            data: createMockUserResponse({ studentId: 251000001 }),
           });
         }),
       );

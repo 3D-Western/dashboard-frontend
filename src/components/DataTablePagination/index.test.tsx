@@ -54,11 +54,13 @@ function PaginationHarness({
   page = 1,
   pageSize = 10,
   initialRowSelection = {},
+  showSelectionCount = false,
 }: {
   data: RowData[];
   page?: number;
   pageSize?: number;
   initialRowSelection?: Record<string, boolean>;
+  showSelectionCount?: boolean;
 }) {
   const [pagination, setPagination] = React.useState({
     pageIndex: 0,
@@ -95,7 +97,13 @@ function PaginationHarness({
     snapshotCreatedBefore: new Date().toISOString(),
   };
 
-  return <DataTablePagination table={table} pagination={paginationMetadata} />;
+  return (
+    <DataTablePagination
+      table={table}
+      pagination={paginationMetadata}
+      showSelectionCount={showSelectionCount}
+    />
+  );
 }
 
 const buildRows = (count: number) =>
@@ -140,7 +148,13 @@ describe('DataTablePagination', () => {
   });
 
   it('shows selection count when rows are selected', () => {
-    render(<PaginationHarness data={buildRows(30)} initialRowSelection={{ 0: true, 2: true }} />);
+    render(
+      <PaginationHarness
+        data={buildRows(30)}
+        initialRowSelection={{ 0: true, 2: true }}
+        showSelectionCount={true}
+      />,
+    );
 
     expect(screen.getByText('2 of 30 row(s) selected.')).toBeInTheDocument();
   });
