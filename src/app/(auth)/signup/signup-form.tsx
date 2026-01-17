@@ -90,7 +90,7 @@ export function SignupForm({ className, ...props }: React.ComponentProps<'div'>)
   const validateStep1 = async () => {
     const fields = ['email', 'password', 'inviteCode', 'studentId'] as const;
     const isValid = await form.trigger(fields);
-    
+
     if (isValid) {
       setCurrentStep(2);
     }
@@ -179,8 +179,8 @@ export function SignupForm({ className, ...props }: React.ComponentProps<'div'>)
                     </h1>
                   </div>
                   <p className="text-balance text-muted-foreground">
-                    {currentStep === 1 
-                      ? 'Step 1 of 2: Enter your credentials' 
+                    {currentStep === 1
+                      ? 'Step 1 of 2: Enter your credentials'
                       : 'Step 2 of 2: Tell us about yourself'}
                   </p>
                 </div>
@@ -311,12 +311,9 @@ export function SignupForm({ className, ...props }: React.ComponentProps<'div'>)
                       control={form.control}
                       name="agreedToTerms"
                       render={({ field }) => (
-                        <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                        <FormItem className="flex flex-row items-start space-y-0 space-x-3">
                           <FormControl>
-                            <Checkbox 
-                              checked={field.value} 
-                              onCheckedChange={field.onChange}
-                            />
+                            <Checkbox checked={field.value} onCheckedChange={field.onChange} />
                           </FormControl>
                           <div className="space-y-1 leading-none">
                             <FormLabel className="text-sm">
@@ -371,7 +368,8 @@ export function SignupForm({ className, ...props }: React.ComponentProps<'div'>)
         and{' '}
         <Link href="/data-policy" className="underline">
           Privacy Policy
-        </Link>.
+        </Link>
+        .
       </FieldDescription>
     </div>
   );
