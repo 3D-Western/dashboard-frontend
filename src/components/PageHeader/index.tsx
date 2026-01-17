@@ -9,6 +9,7 @@ const pageTitles: Record<string, string> = {
   [Routes.dashboardUserSettings]: 'Settings',
   [Routes.adminUsersManagement]: 'User Management',
   [Routes.adminPrintsManagement]: 'Print Management',
+  [Routes.adminInvitationManagement]: 'Invitation Management',
 };
 
 export function PageHeader() {

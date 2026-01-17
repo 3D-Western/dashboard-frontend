@@ -13,4 +13,5 @@ export const Routes = {
   // Admin routes
   adminUsersManagement: '/admin/users',
   adminPrintsManagement: '/admin/prints',
+  adminInvitationManagement: '/admin/invitations',
 };

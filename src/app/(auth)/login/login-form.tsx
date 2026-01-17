@@ -14,6 +14,7 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
@@ -22,6 +23,7 @@ import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
 import { Routes } from '@/lib/routes';
 import { useState } from 'react';
+import { AlertCircle } from 'lucide-react';
 
 const formSchema = z.object({
   studentId: z
@@ -38,7 +40,18 @@ const formSchema = z.object({
   password: z.string().min(1, 'Password is required'),
 });
 
-export function LoginForm({ className, ...props }: React.ComponentProps<'div'>) {
+const ERROR_MESSAGES: Record<string, { title: string; description: string }> = {
+  unauthenticated: {
+    title: 'Session Expired',
+    description: 'Your session has expired. Please log in again to continue.',
+  },
+};
+
+export function LoginForm({
+  error,
+  className,
+  ...props
+}: React.ComponentProps<'div'> & { error?: string }) {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
 
@@ -78,6 +91,15 @@ export function LoginForm({ className, ...props }: React.ComponentProps<'div'>) 
 
   return (
     <div className={cn('flex flex-col gap-6', className)} {...props}>
+      {/* Error Alert */}
+      {error && ERROR_MESSAGES[error] && (
+        <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertTitle>{ERROR_MESSAGES[error].title}</AlertTitle>
+          <AlertDescription>{ERROR_MESSAGES[error].description}</AlertDescription>
+        </Alert>
+      )}
+
       <Card className="overflow-hidden p-0">
         <CardContent className="grid p-0 md:grid-cols-2">
           <Form {...form}>

@@ -81,6 +81,20 @@ export const sessionHandlers = [
       return createInvalidSessionResponse();
     }
 
-    return HttpResponse.json(generateSuccessResponse({ user: user }));
+    // Transform user to match backend format (capitalized values)
+    const userResponse = {
+      studentId: user.studentId,
+      email: user.email,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      status: user.role.charAt(0).toUpperCase() + user.role.slice(1), // "admin" -> "Admin", "user" -> "User"
+      experienceLevel:
+        user.experienceLevel
+          ?.split('_')
+          .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+          .join('_') || 'Beginner', // "no_experience" -> "No_experience", "beginner" -> "Beginner"
+    };
+
+    return HttpResponse.json(generateSuccessResponse({ user: userResponse }));
   }),
 ];

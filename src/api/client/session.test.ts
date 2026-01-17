@@ -1,35 +1,41 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { sessionApi } from './session';
 import { mockServer } from '@/api/mocks';
 import { http, HttpResponse } from 'msw';
 import { endpoints } from './endpoints';
 import { ErrorCodes } from './errors';
-import { createMockUser } from '@test/utils/mockFactories';
+import { createMockUserResponse } from '@test/utils/mockFactories';
 
 describe('sessionApi', () => {
   describe('current', () => {
     it('returns user when session is valid', async () => {
-      const mockUser = createMockUser({
-        id: 251000001,
+      const mockUserResponse = createMockUserResponse({
+        studentId: 251000001,
         email: 'test@example.com',
         firstName: 'Test',
         lastName: 'User',
-        role: 'user',
-        experienceLevel: 'beginner',
+        status: 'User',
       });
 
       mockServer.use(
         http.get('*' + endpoints.users.me, () => {
           return HttpResponse.json({
             success: true,
-            data: { user: mockUser },
+            data: { user: mockUserResponse },
           });
         }),
       );
 
       const result = await sessionApi.current();
 
-      expect(result.user).toEqual(mockUser);
+      // Result should be transformed to frontend format
+      expect(result.user).toEqual({
+        studentId: 251000001,
+        email: 'test@example.com',
+        firstName: 'Test',
+        lastName: 'User',
+        role: 'user',
+      });
     });
 
     it('suppresses SESSION_INVALID error and returns {user: null}', async () => {
@@ -80,7 +86,7 @@ describe('sessionApi', () => {
           requestCredentials = request.credentials;
           return HttpResponse.json({
             success: true,
-            data: { user: createMockUser() },
+            data: { user: createMockUserResponse() },
           });
         }),
       );
@@ -108,16 +114,16 @@ describe('sessionApi', () => {
         http.get('*' + endpoints.users.me, () => {
           return HttpResponse.json({
             success: true,
-            data: { user: createMockUser() },
+            data: { user: createMockUserResponse() },
           });
         }),
       );
 
-      global.fetch = vi.fn((url, options) => {
+      global.fetch = vi.fn((url: RequestInfo | URL, options?: RequestInit) => {
         const headers = new Headers(options?.headers);
         capturedCookie = headers.get('Cookie');
         return originalFetch(url, options);
-      });
+      }) as typeof fetch;
 
       await sessionApi.current({ cookieHeader: 'sessionToken=server-token' });
 

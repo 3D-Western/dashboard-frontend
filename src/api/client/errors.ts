@@ -5,7 +5,7 @@ export class ApiError extends Error {
     public details?: unknown,
     public redirectUrl?: string,
   ) {
-    super(`${code}: ${message}`);
+    super(message ?? code);
     this.name = 'ApiError';
   }
 }
@@ -28,4 +28,7 @@ export const ErrorCodes = {
   VALIDATION_FAILED: 'VALIDATION_FAILED',
   INTERNAL_SERVER_ERROR: 'INTERNAL_SERVER_ERROR',
   INVALID_OTP: 'INVALID_OTP',
+  INVITATION_NOT_FOUND: 'INVITATION_NOT_FOUND',
+  INVITATION_ALREADY_EXISTS: 'INVITATION_ALREADY_EXISTS',
+  INVITATION_ALREADY_REVOKED: 'INVITATION_ALREADY_REVOKED',
 };

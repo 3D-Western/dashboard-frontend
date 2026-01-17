@@ -1,5 +1,6 @@
 import { ApiResponseRaw } from '../types';
 import { ApiError, ErrorCodes } from './errors';
+import { ensureMockServer } from './mock-server';
 
 const isDev = process.env.NODE_ENV === 'development';
 
@@ -73,6 +74,7 @@ export async function apiRequest<T>(
   let response: Response;
 
   try {
+    await ensureMockServer();
     response = await fetch(url, {
       ...options,
       headers: headersObj,

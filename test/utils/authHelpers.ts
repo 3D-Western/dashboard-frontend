@@ -2,7 +2,7 @@ import { http, HttpResponse } from 'msw';
 import { mockServer } from '@/api/mocks';
 import { endpoints } from '@/api/client/endpoints';
 import { User } from '@/types/user';
-import { createMockUser } from './mockFactories';
+import { createMockUser, createMockUserResponse } from './mockFactories';
 import { ErrorCodes } from '@/api/client/errors';
 
 /**
@@ -19,11 +19,20 @@ import { ErrorCodes } from '@/api/client/errors';
  * ```
  */
 export function mockAuthenticatedSession(user: User = createMockUser()): User {
+  // Convert frontend User format to backend UserResponse format for the mock
+  const userResponse = createMockUserResponse({
+    studentId: user.studentId,
+    email: user.email,
+    firstName: user.firstName,
+    lastName: user.lastName,
+    status: user.role === 'admin' ? 'Admin' : 'User',
+  });
+
   mockServer.use(
     http.get(`*${endpoints.users.me}`, () => {
       return HttpResponse.json({
         success: true,
-        data: { user },
+        data: { user: userResponse },
       });
     }),
   );

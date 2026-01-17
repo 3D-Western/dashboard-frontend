@@ -75,16 +75,20 @@ export const userHandlers = [
       users = users.filter((u) => u.experienceLevel === experienceLevelFilter);
     }
 
-    // Map to API response format
+    // Map to API response format (with capitalized values to match backend)
     const userList = users.map((u) => ({
       studentId: u.studentId,
       email: u.email,
       firstName: u.firstName,
       lastName: u.lastName,
       createdDate: u.createdDate || new Date().toISOString(),
-      status: u.role,
+      status: u.role.charAt(0).toUpperCase() + u.role.slice(1), // "admin" -> "Admin", "user" -> "User"
       trainingLevel: u.trainingLevel,
-      experienceLevel: u.experienceLevel,
+      experienceLevel:
+        u.experienceLevel
+          ?.split('_')
+          .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+          .join('_') || 'Beginner', // "no_experience" -> "No_experience"
     }));
 
     // Calculate pagination
@@ -155,9 +159,13 @@ export const userHandlers = [
         firstName: targetUser.firstName,
         lastName: targetUser.lastName,
         createdDate: targetUser.createdDate || new Date().toISOString(),
-        status: targetUser.role,
+        status: targetUser.role.charAt(0).toUpperCase() + targetUser.role.slice(1), // "admin" -> "Admin"
         trainingLevel: targetUser.trainingLevel,
-        experienceLevel: targetUser.experienceLevel,
+        experienceLevel:
+          targetUser.experienceLevel
+            ?.split('_')
+            .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+            .join('_') || 'Beginner', // "no_experience" -> "No_experience"
       }),
     );
   }),

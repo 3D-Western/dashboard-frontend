@@ -122,7 +122,7 @@ export function DataTable<TData, TValue>({
         </Table>
       </div>
 
-      <DataTablePagination table={table} pagination={pagination} />
+      <DataTablePagination table={table} pagination={pagination} showSelectionCount />
     </div>
   );
 }

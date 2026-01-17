@@ -23,10 +23,16 @@ describe('Auth Integration Tests', () => {
       expect(loginResult).toBe(true);
 
       // Step 2: After login, validateSession returns the user
-      const mockUser = createMockUser({ id: 251000001 });
+      const mockUser = createMockUser({ studentId: 251000001 });
       mockAuthenticatedSession(mockUser);
       const postLoginSession = await validateSession();
-      expect(postLoginSession).toEqual(mockUser);
+      expect(postLoginSession).toMatchObject({
+        studentId: mockUser.studentId,
+        email: mockUser.email,
+        firstName: mockUser.firstName,
+        lastName: mockUser.lastName,
+        role: mockUser.role,
+      });
     });
 
     it('handles login failure without breaking authentication flow', async () => {
@@ -53,7 +59,13 @@ describe('Auth Integration Tests', () => {
       const mockUser = createMockUser();
       mockAuthenticatedSession(mockUser);
       const initialSession = await validateSession();
-      expect(initialSession).toEqual(mockUser);
+      expect(initialSession).toMatchObject({
+        studentId: mockUser.studentId,
+        email: mockUser.email,
+        firstName: mockUser.firstName,
+        lastName: mockUser.lastName,
+        role: mockUser.role,
+      });
 
       // Step 1: User logs out
       mockSuccessfulLogout();
@@ -76,9 +88,27 @@ describe('Auth Integration Tests', () => {
       const session2 = await validateSession();
       const session3 = await validateSession();
 
-      expect(session1).toEqual(mockUser);
-      expect(session2).toEqual(mockUser);
-      expect(session3).toEqual(mockUser);
+      expect(session1).toMatchObject({
+        studentId: mockUser.studentId,
+        email: mockUser.email,
+        firstName: mockUser.firstName,
+        lastName: mockUser.lastName,
+        role: mockUser.role,
+      });
+      expect(session2).toMatchObject({
+        studentId: mockUser.studentId,
+        email: mockUser.email,
+        firstName: mockUser.firstName,
+        lastName: mockUser.lastName,
+        role: mockUser.role,
+      });
+      expect(session3).toMatchObject({
+        studentId: mockUser.studentId,
+        email: mockUser.email,
+        firstName: mockUser.firstName,
+        lastName: mockUser.lastName,
+        role: mockUser.role,
+      });
     });
   });
 
@@ -94,9 +124,27 @@ describe('Auth Integration Tests', () => {
         validateSession(),
       ]);
 
-      expect(session1).toEqual(mockUser);
-      expect(session2).toEqual(mockUser);
-      expect(session3).toEqual(mockUser);
+      expect(session1).toMatchObject({
+        studentId: mockUser.studentId,
+        email: mockUser.email,
+        firstName: mockUser.firstName,
+        lastName: mockUser.lastName,
+        role: mockUser.role,
+      });
+      expect(session2).toMatchObject({
+        studentId: mockUser.studentId,
+        email: mockUser.email,
+        firstName: mockUser.firstName,
+        lastName: mockUser.lastName,
+        role: mockUser.role,
+      });
+      expect(session3).toMatchObject({
+        studentId: mockUser.studentId,
+        email: mockUser.email,
+        firstName: mockUser.firstName,
+        lastName: mockUser.lastName,
+        role: mockUser.role,
+      });
     });
 
     it('handles concurrent validateSession calls when unauthenticated', async () => {
@@ -121,7 +169,13 @@ describe('Auth Integration Tests', () => {
       const mockUser = createMockUser();
       mockAuthenticatedSession(mockUser);
       const session = await validateSession();
-      expect(session).toEqual(mockUser);
+      expect(session).toMatchObject({
+        studentId: mockUser.studentId,
+        email: mockUser.email,
+        firstName: mockUser.firstName,
+        lastName: mockUser.lastName,
+        role: mockUser.role,
+      });
 
       // Session expires (server returns SESSION_INVALID)
       mockUnauthenticatedSession();
