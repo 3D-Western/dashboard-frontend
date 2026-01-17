@@ -16,7 +16,7 @@ describe('ApiError', () => {
     const error = new ApiError('TEST_CODE');
 
     expect(error.code).toBe('TEST_CODE');
-    expect(error.message).toBe('');
+    expect(error.message).toBe('TEST_CODE');
   });
 
   it('includes optional details', () => {
