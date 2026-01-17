@@ -54,7 +54,7 @@ export default function CNCOrderForm() {
     name: z.string().min(1, { message: 'Must have a name for the request' }).max(50),
     description: z.string().min(2, { message: 'Must have a description for the request' }).max(500),
     material: z.string().min(1, { message: 'Please select a material' }),
-    file: z.any().optional(),
+    file: z.any().refine((f) => f instanceof File, { message: 'Please upload an STL file' }),
   });
 
   const form = useForm<z.infer<typeof formSchema>>({
@@ -77,11 +77,6 @@ export default function CNCOrderForm() {
   };
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    if (!values.file || !(values.file instanceof File)) {
-      alert(CNC_FILE_TYPES.validation);
-      return;
-    }
-
     try {
       const file = values.file as File;
 
