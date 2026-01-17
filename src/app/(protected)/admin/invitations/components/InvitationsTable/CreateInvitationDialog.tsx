@@ -94,9 +94,11 @@ export function CreateInvitationDialog({
     } catch (error) {
       if (error instanceof ApiError) {
         if (error.code === 'INVITATION_ALREADY_EXISTS') {
-          setServerError('A pending invitation already exists for this student ID or email.');
+          setServerError(
+            error.message || 'A pending invitation already exists for this student ID or email.',
+          );
         } else if (error.code === 'USER_ALREADY_EXISTS') {
-          setServerError('A user with this student ID already exists.');
+          setServerError(error.message || 'This student is already registered.');
         } else if (error.code === 'VALIDATION_FAILED' && error.details) {
           const details = error.details as Record<string, string>;
           Object.entries(details).forEach(([field, message]) => {

@@ -1,12 +1,17 @@
 import { User } from '@/types/user';
-import { PrintJobListResponse, UserListResponse } from '../types';
+import { PaginatedResponse } from '@/types/common';
+import { PrintJobListResponse, UserListResponseRaw, UserResponse } from '../types';
 import { CurrentUserOrderListParams, UserListParams } from '@/types/common';
 import { apiRequest } from './base';
 import { endpoints } from './endpoints';
 import { getBaseUrl } from './utils';
+import { transformUserResponse, transformUserListResponse } from './transformers';
 
 export const userApi = {
-  listAllUsers: async (params?: UserListParams, options?: RequestInit) => {
+  listAllUsers: async (
+    params?: UserListParams,
+    options?: RequestInit,
+  ): Promise<PaginatedResponse<User>> => {
     const searchParams = new URLSearchParams();
 
     if (params?.search !== undefined) {
@@ -34,19 +39,26 @@ export const userApi = {
     const queryString = searchParams.toString();
     const url = `${getBaseUrl()}${endpoints.users.list}${queryString ? `?${queryString}` : ''}`;
 
-    return apiRequest<UserListResponse>(url, {
+    const response = await apiRequest<UserListResponseRaw>(url, {
       method: 'GET',
       credentials: 'include',
       ...options,
     });
+
+    return transformUserListResponse(response);
   },
 
-  getUserById: async (userId: number, options?: RequestInit) => {
-    return apiRequest<User>(`${getBaseUrl()}${endpoints.users.byId(userId)}`, {
-      method: 'GET',
-      credentials: 'include',
-      ...options,
-    });
+  getUserById: async (userId: number, options?: RequestInit): Promise<User> => {
+    const response = await apiRequest<UserResponse>(
+      `${getBaseUrl()}${endpoints.users.byId(userId)}`,
+      {
+        method: 'GET',
+        credentials: 'include',
+        ...options,
+      },
+    );
+
+    return transformUserResponse(response);
   },
 
   getCurrentUserOrders: async (params?: CurrentUserOrderListParams, options?: RequestInit) => {

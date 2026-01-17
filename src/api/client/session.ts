@@ -3,6 +3,8 @@ import { apiRequest } from './base';
 import { endpoints } from './endpoints';
 import { getBaseUrl } from './utils';
 import { ErrorCodes } from './errors';
+import { transformUserResponse } from './transformers';
+import { User } from '@/types/user';
 
 export const sessionApi = {
   /**
@@ -10,7 +12,9 @@ export const sessionApi = {
    * Note: This API call suppresses SESSION_INVALID errors since that's an expected state
    * when checking if a user is logged in. Other errors are still thrown.
    */
-  current: async (options?: RequestInit & { cookieHeader?: string }) => {
+  current: async (
+    options?: RequestInit & { cookieHeader?: string },
+  ): Promise<{ user: User | null }> => {
     const serverUrl = getBaseUrl();
 
     // Extract custom cookieHeader option if provided
@@ -23,17 +27,25 @@ export const sessionApi = {
     }
 
     try {
-      return await apiRequest<ApiGetCurrentSessionResponse>(`${serverUrl}${endpoints.users.me}`, {
-        method: 'GET',
-        credentials: 'include',
-        ...requestOptions,
-        headers,
-      });
+      const response = await apiRequest<ApiGetCurrentSessionResponse>(
+        `${serverUrl}${endpoints.users.me}`,
+        {
+          method: 'GET',
+          credentials: 'include',
+          ...requestOptions,
+          headers,
+        },
+      );
+
+      // Transform the user response from backend format to frontend format
+      return {
+        user: response.user ? transformUserResponse(response.user) : null,
+      };
     } catch (error) {
       // If it's a SESSION_INVALID error, suppress it and return null-like response
       // This allows validateSession() to gracefully return null
       if (error instanceof Error && 'code' in error && error.code === ErrorCodes.SESSION_INVALID) {
-        return { user: null } as ApiGetCurrentSessionResponse;
+        return { user: null };
       }
       // Re-throw other errors (network issues, server errors, etc.)
       throw error;
