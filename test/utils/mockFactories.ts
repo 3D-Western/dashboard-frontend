@@ -2,6 +2,7 @@ import { faker } from '@faker-js/faker';
 import { User, UserRole, UserExperienceLevel } from '@/types/user';
 import { PrintJob, PrintJobStatus } from '@/types/jobs';
 import { FileMetadata, FileUploadResult } from '@/types/file';
+import { Invitation, InvitationStatus } from '@/types/invitation';
 import { UserResponse } from '@/api/types';
 
 /**
@@ -139,3 +140,110 @@ export const createMockFileUploadResult = (
   uploadedAt: faker.date.recent().toISOString(),
   ...overrides,
 });
+
+/**
+ * Creates a mock Invitation object with realistic data
+ *
+ * @example
+ * ```ts
+ * const invitation = createMockInvitation({ status: 'PENDING' });
+ * ```
+ */
+export const createMockInvitation = (overrides?: Partial<Invitation>): Invitation => {
+  const createdAt = faker.date.recent({ days: 7 });
+  const expiredAt = new Date(createdAt);
+  expiredAt.setDate(expiredAt.getDate() + 7);
+
+  return {
+    id: faker.number.int({ min: 1, max: 10000 }),
+    studentId: faker.number.int({ min: 251000000, max: 251999999 }),
+    email: faker.internet.email({ provider: 'uwo.ca' }),
+    invitationCode: faker.string.alphanumeric(16),
+    status: 'PENDING' as InvitationStatus,
+    createdAt: createdAt.toISOString(),
+    expiredAt: expiredAt.toISOString(),
+    acceptedAt: null,
+    createdBy: {
+      studentId: faker.number.int({ min: 251000000, max: 251999999 }),
+      firstName: faker.person.firstName(),
+      lastName: faker.person.lastName(),
+    },
+    ...overrides,
+  };
+};
+
+/**
+ * Creates a mock pending Invitation
+ *
+ * @example
+ * ```ts
+ * const pendingInvitation = createMockPendingInvitation();
+ * ```
+ */
+export const createMockPendingInvitation = (overrides?: Partial<Invitation>): Invitation =>
+  createMockInvitation({ status: 'PENDING', acceptedAt: null, ...overrides });
+
+/**
+ * Creates a mock accepted Invitation
+ *
+ * @example
+ * ```ts
+ * const acceptedInvitation = createMockAcceptedInvitation();
+ * ```
+ */
+export const createMockAcceptedInvitation = (overrides?: Partial<Invitation>): Invitation => {
+  const createdAt = faker.date.recent({ days: 14 });
+  const acceptedAt = new Date(createdAt);
+  acceptedAt.setDate(acceptedAt.getDate() + 2);
+
+  return createMockInvitation({
+    status: 'ACCEPTED',
+    createdAt: createdAt.toISOString(),
+    acceptedAt: acceptedAt.toISOString(),
+    ...overrides,
+  });
+};
+
+/**
+ * Creates a mock expired Invitation
+ *
+ * @example
+ * ```ts
+ * const expiredInvitation = createMockExpiredInvitation();
+ * ```
+ */
+export const createMockExpiredInvitation = (overrides?: Partial<Invitation>): Invitation => {
+  const createdAt = faker.date.recent({ days: 30 });
+  const expiredAt = new Date(createdAt);
+  expiredAt.setDate(expiredAt.getDate() - 1); // Already expired
+
+  return createMockInvitation({
+    status: 'EXPIRED',
+    createdAt: createdAt.toISOString(),
+    expiredAt: expiredAt.toISOString(),
+    acceptedAt: null,
+    ...overrides,
+  });
+};
+
+/**
+ * Creates a mock revoked Invitation
+ *
+ * @example
+ * ```ts
+ * const revokedInvitation = createMockRevokedInvitation();
+ * ```
+ */
+export const createMockRevokedInvitation = (overrides?: Partial<Invitation>): Invitation =>
+  createMockInvitation({ status: 'REVOKED', acceptedAt: null, ...overrides });
+
+/**
+ * Creates an array of mock Invitation objects
+ *
+ * @example
+ * ```ts
+ * const invitations = createMockInvitations(10);
+ * ```
+ */
+export const createMockInvitations = (count: number): Invitation[] =>
+  Array.from({ length: count }, () => createMockInvitation());

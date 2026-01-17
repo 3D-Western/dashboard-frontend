@@ -52,7 +52,8 @@ export const validateSession = async (): Promise<User | null> => {
     }
 
     return response.user;
-  } catch {
+  } catch (e) {
+    console.error('Error validating session:', e);
     return null;
   }
 };

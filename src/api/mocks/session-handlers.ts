@@ -87,7 +87,7 @@ export const sessionHandlers = [
       email: user.email,
       firstName: user.firstName,
       lastName: user.lastName,
-      role: user.role.charAt(0).toUpperCase() + user.role.slice(1), // "admin" -> "Admin", "user" -> "User"
+      status: user.role.charAt(0).toUpperCase() + user.role.slice(1), // "admin" -> "Admin", "user" -> "User"
       experienceLevel:
         user.experienceLevel
           ?.split('_')

@@ -82,7 +82,7 @@ export const userHandlers = [
       firstName: u.firstName,
       lastName: u.lastName,
       createdDate: u.createdDate || new Date().toISOString(),
-      role: u.role.charAt(0).toUpperCase() + u.role.slice(1), // "admin" -> "Admin", "user" -> "User"
+      status: u.role.charAt(0).toUpperCase() + u.role.slice(1), // "admin" -> "Admin", "user" -> "User"
       trainingLevel: u.trainingLevel,
       experienceLevel:
         u.experienceLevel
@@ -159,7 +159,7 @@ export const userHandlers = [
         firstName: targetUser.firstName,
         lastName: targetUser.lastName,
         createdDate: targetUser.createdDate || new Date().toISOString(),
-        role: targetUser.role.charAt(0).toUpperCase() + targetUser.role.slice(1), // "admin" -> "Admin"
+        status: targetUser.role.charAt(0).toUpperCase() + targetUser.role.slice(1), // "admin" -> "Admin"
         trainingLevel: targetUser.trainingLevel,
         experienceLevel:
           targetUser.experienceLevel

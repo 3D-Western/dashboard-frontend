@@ -3,7 +3,7 @@ import { userApi } from './user';
 import { mockServer } from '@/api/mocks';
 import { http, HttpResponse } from 'msw';
 import { endpoints } from './endpoints';
-import { createMockUser, createMockUserResponse } from '@test/utils/mockFactories';
+import { createMockUserResponse } from '@test/utils/mockFactories';
 import { ErrorCodes } from './errors';
 
 describe('userApi', () => {

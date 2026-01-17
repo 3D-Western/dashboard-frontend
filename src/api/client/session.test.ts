@@ -1,10 +1,10 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { sessionApi } from './session';
 import { mockServer } from '@/api/mocks';
 import { http, HttpResponse } from 'msw';
 import { endpoints } from './endpoints';
 import { ErrorCodes } from './errors';
-import { createMockUser, createMockUserResponse } from '@test/utils/mockFactories';
+import { createMockUserResponse } from '@test/utils/mockFactories';
 
 describe('sessionApi', () => {
   describe('current', () => {
@@ -119,11 +119,11 @@ describe('sessionApi', () => {
         }),
       );
 
-      global.fetch = vi.fn((url, options) => {
+      global.fetch = vi.fn((url: RequestInfo | URL, options?: RequestInit) => {
         const headers = new Headers(options?.headers);
         capturedCookie = headers.get('Cookie');
         return originalFetch(url, options);
-      });
+      }) as typeof fetch;
 
       await sessionApi.current({ cookieHeader: 'sessionToken=server-token' });
 

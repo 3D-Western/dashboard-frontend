@@ -11,6 +11,16 @@ import { PrintJobStatus } from '@/types/jobs';
 describe('jobApi', () => {
   const baseUrl = getBaseUrl();
 
+  const createMockPagination = () => ({
+    page: 1,
+    pageSize: 10,
+    totalItems: 2,
+    totalPages: 1,
+    hasNext: false,
+    hasPrevious: false,
+    snapshotCreatedBefore: new Date().toISOString(),
+  });
+
   describe('listAllJobs', () => {
     it('returns jobs array when successful', async () => {
       const mockJobs = [
@@ -22,14 +32,17 @@ describe('jobApi', () => {
         http.get(`${baseUrl}${endpoints.orders.list}`, () => {
           return HttpResponse.json({
             success: true,
-            data: { jobs: mockJobs },
+            data: {
+              data: mockJobs,
+              pagination: createMockPagination(),
+            },
           });
         }),
       );
 
       const result = await jobApi.listAllJobs();
-      expect(result.jobs).toHaveLength(2);
-      expect(result.jobs[0].name).toBe('Job 1');
+      expect(result.data).toHaveLength(2);
+      expect(result.data[0].name).toBe('Job 1');
     });
 
     it('includes query parameters when provided', async () => {
@@ -40,7 +53,10 @@ describe('jobApi', () => {
           requestUrl = request.url;
           return HttpResponse.json({
             success: true,
-            data: { jobs: [] },
+            data: {
+              data: [],
+              pagination: createMockPagination(),
+            },
           });
         }),
       );
@@ -68,7 +84,10 @@ describe('jobApi', () => {
           requestUrl = request.url;
           return HttpResponse.json({
             success: true,
-            data: { jobs: [] },
+            data: {
+              data: [],
+              pagination: createMockPagination(),
+            },
           });
         }),
       );
@@ -88,7 +107,10 @@ describe('jobApi', () => {
           requestCredentials = request.credentials;
           return HttpResponse.json({
             success: true,
-            data: { jobs: [] },
+            data: {
+              data: [],
+              pagination: createMockPagination(),
+            },
           });
         }),
       );
