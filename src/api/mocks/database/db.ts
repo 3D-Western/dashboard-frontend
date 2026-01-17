@@ -3,12 +3,7 @@ import { mockUsers } from '../data/users';
 import { mockPrintJobs } from '../data/print-jobs';
 import { mockInvitations } from '../data/invitations';
 
-// Declare global type for HMR persistence
-declare global {
-  var __mockDbInstance: Database | undefined;
-}
-
-class Database {
+export class Database {
   private static instance: Database;
   // In-memory storage for users
   private users: Map<number, User> = new Map();

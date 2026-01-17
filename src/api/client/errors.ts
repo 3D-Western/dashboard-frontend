@@ -5,7 +5,7 @@ export class ApiError extends Error {
     public details?: unknown,
     public redirectUrl?: string,
   ) {
-    super(message);
+    super(message ?? code);
     this.name = 'ApiError';
   }
 }

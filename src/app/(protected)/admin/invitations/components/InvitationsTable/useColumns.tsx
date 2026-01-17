@@ -19,6 +19,7 @@ import { InvitationInfoDialog } from './InvitationInfoDialog';
 import { InvitationStatusBadge } from './InvitationStatusBadge';
 import { RevokeInvitationDialog } from './RevokeInvitationDialog';
 import { invitationApi } from '@/api/client/invitation';
+import { toast } from 'sonner';
 
 interface UseColumnsOptions {
   onRevoke?: (invitationId: number) => void;
@@ -129,6 +130,7 @@ export const useColumns = (opts: UseColumnsOptions = {}) => {
               onRevoke?.(invitation.id);
               setShowRevokeDialog(false);
             } catch (error) {
+              toast.error('Failed to revoke invitation. Please try again.');
               console.error('Failed to revoke invitation:', error);
             } finally {
               setIsRevoking(false);
