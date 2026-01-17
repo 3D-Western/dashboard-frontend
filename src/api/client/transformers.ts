@@ -22,9 +22,7 @@ export function transformUserResponse(userResponse: UserResponse): User {
 /**
  * Transforms a paginated list of UserResponse objects into User objects.
  */
-export function transformUserListResponse(
-  response: UserListResponseRaw,
-): PaginatedResponse<User> {
+export function transformUserListResponse(response: UserListResponseRaw): PaginatedResponse<User> {
   return {
     ...response,
     data: response.data.map(transformUserResponse),

@@ -31,16 +31,13 @@ const mapInvitationStatusToDisplayLabel = (status: InvitationStatus): string => 
 };
 
 export interface InvitationStatusBadgeProps
-  extends Omit<React.ComponentProps<typeof Badge>, 'variant'>,
+  extends
+    Omit<React.ComponentProps<typeof Badge>, 'variant'>,
     VariantProps<typeof statusBadgeVariants> {
   status: InvitationStatus;
 }
 
-export function InvitationStatusBadge({
-  status,
-  className,
-  ...props
-}: InvitationStatusBadgeProps) {
+export function InvitationStatusBadge({ status, className, ...props }: InvitationStatusBadgeProps) {
   const displayLabel = mapInvitationStatusToDisplayLabel(status);
 
   return (

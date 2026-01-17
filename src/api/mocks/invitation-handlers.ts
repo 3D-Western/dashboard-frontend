@@ -200,10 +200,7 @@ export const invitationHandlers = [
     }
 
     // Check if invitation already exists for this student or email
-    const existingInvitation = db.findInvitationByStudentIdOrEmail(
-      body.studentId,
-      body.email,
-    );
+    const existingInvitation = db.findInvitationByStudentIdOrEmail(body.studentId, body.email);
     if (existingInvitation) {
       return HttpResponse.json(
         generateErrorResponse({
@@ -255,74 +252,71 @@ export const invitationHandlers = [
   }),
 
   // PATCH /api/v1/admin/invitations/:id/revoke - Revoke invitation
-  http.patch(
-    `${apiUrl}/api/v1/admin/invitations/:invitationId/revoke`,
-    ({ cookies, params }) => {
-      const sessionId = cookies['sessionToken'] || '';
-      const user = db.validateSession(sessionId);
-      if (!user) {
-        return createInvalidSessionResponse();
-      }
+  http.patch(`${apiUrl}/api/v1/admin/invitations/:invitationId/revoke`, ({ cookies, params }) => {
+    const sessionId = cookies['sessionToken'] || '';
+    const user = db.validateSession(sessionId);
+    if (!user) {
+      return createInvalidSessionResponse();
+    }
 
-      // Only admins can revoke invitations
-      if (user.role !== 'admin') {
-        return HttpResponse.json(
-          generateErrorResponse({
-            code: 'FORBIDDEN',
-            message: 'Admin role required to access this resource',
-          }),
-          { status: 403 },
-        );
-      }
-
-      const { invitationId } = params;
-      const invitation = db.getInvitationById(parseInt(invitationId as string));
-
-      if (!invitation) {
-        return HttpResponse.json(
-          generateErrorResponse({
-            code: 'INVITATION_NOT_FOUND',
-            message: `Invitation with ID ${invitationId} not found`,
-          }),
-          { status: 404 },
-        );
-      }
-
-      if (invitation.status !== 'PENDING') {
-        return HttpResponse.json(
-          generateErrorResponse({
-            code: 'INVITATION_CANNOT_BE_REVOKED',
-            message: 'Only pending invitations can be revoked',
-            details: {
-              currentStatus: invitation.status,
-            },
-          }),
-          { status: 409 },
-        );
-      }
-
-      const revokedInvitation = db.revokeInvitation(invitation.id);
-      const creator = db.getUserById(invitation.createdByUserId);
-
+    // Only admins can revoke invitations
+    if (user.role !== 'admin') {
       return HttpResponse.json(
-        generateSuccessResponse({
-          id: revokedInvitation!.id,
-          studentId: revokedInvitation!.studentId,
-          email: revokedInvitation!.email,
-          invitationCode: revokedInvitation!.invitationCode,
-          status: revokedInvitation!.status,
-          createdAt: revokedInvitation!.createdAt,
-          expiredAt: revokedInvitation!.expiredAt,
-          acceptedAt: revokedInvitation!.acceptedAt,
-          createdBy: creator
-            ? {
-                studentId: creator.studentId,
-                firstName: creator.firstName,
-                lastName: creator.lastName,
-              }
-            : null,
+        generateErrorResponse({
+          code: 'FORBIDDEN',
+          message: 'Admin role required to access this resource',
         }),
+        { status: 403 },
       );
-    },
-  ),
+    }
+
+    const { invitationId } = params;
+    const invitation = db.getInvitationById(parseInt(invitationId as string));
+
+    if (!invitation) {
+      return HttpResponse.json(
+        generateErrorResponse({
+          code: 'INVITATION_NOT_FOUND',
+          message: `Invitation with ID ${invitationId} not found`,
+        }),
+        { status: 404 },
+      );
+    }
+
+    if (invitation.status !== 'PENDING') {
+      return HttpResponse.json(
+        generateErrorResponse({
+          code: 'INVITATION_CANNOT_BE_REVOKED',
+          message: 'Only pending invitations can be revoked',
+          details: {
+            currentStatus: invitation.status,
+          },
+        }),
+        { status: 409 },
+      );
+    }
+
+    const revokedInvitation = db.revokeInvitation(invitation.id);
+    const creator = db.getUserById(invitation.createdByUserId);
+
+    return HttpResponse.json(
+      generateSuccessResponse({
+        id: revokedInvitation!.id,
+        studentId: revokedInvitation!.studentId,
+        email: revokedInvitation!.email,
+        invitationCode: revokedInvitation!.invitationCode,
+        status: revokedInvitation!.status,
+        createdAt: revokedInvitation!.createdAt,
+        expiredAt: revokedInvitation!.expiredAt,
+        acceptedAt: revokedInvitation!.acceptedAt,
+        createdBy: creator
+          ? {
+              studentId: creator.studentId,
+              firstName: creator.firstName,
+              lastName: creator.lastName,
+            }
+          : null,
+      }),
+    );
+  }),
 ];

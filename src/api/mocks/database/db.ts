@@ -231,9 +231,7 @@ class Database {
 
     // Apply snapshot filter
     if (filters?.snapshotCreatedBefore) {
-      invitations = invitations.filter(
-        (inv) => inv.createdAt <= filters.snapshotCreatedBefore!,
-      );
+      invitations = invitations.filter((inv) => inv.createdAt <= filters.snapshotCreatedBefore!);
     }
 
     // Filter by studentId if provided (exact match)
@@ -244,9 +242,7 @@ class Database {
     // Filter by email if provided (partial match, case-insensitive)
     if (filters?.email) {
       const lowerEmail = filters.email.toLowerCase();
-      invitations = invitations.filter((inv) =>
-        inv.email.toLowerCase().includes(lowerEmail),
-      );
+      invitations = invitations.filter((inv) => inv.email.toLowerCase().includes(lowerEmail));
     }
 
     // Filter by status if provided
@@ -255,9 +251,7 @@ class Database {
     }
 
     // Sort by createdAt descending (newest first)
-    invitations.sort(
-      (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
-    );
+    invitations.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
     return invitations;
   }
@@ -307,16 +301,11 @@ class Database {
     return invitation;
   }
 
-  public findInvitationByStudentIdOrEmail(
-    studentId: number,
-    email: string,
-  ): Invitation | null {
+  public findInvitationByStudentIdOrEmail(studentId: number, email: string): Invitation | null {
     const invitations = Array.from(this.invitations.values());
     return (
       invitations.find(
-        (inv) =>
-          inv.status === 'PENDING' &&
-          (inv.studentId === studentId || inv.email === email),
+        (inv) => inv.status === 'PENDING' && (inv.studentId === studentId || inv.email === email),
       ) || null
     );
   }

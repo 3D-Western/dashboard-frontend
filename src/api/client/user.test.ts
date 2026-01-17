@@ -10,8 +10,18 @@ describe('userApi', () => {
   describe('listAllUsers', () => {
     it('returns paginated user list successfully', async () => {
       const mockUserResponses = [
-        createMockUserResponse({ studentId: 251000001, firstName: 'John', lastName: 'Doe', status: 'User' }),
-        createMockUserResponse({ studentId: 251000002, firstName: 'Jane', lastName: 'Smith', status: 'Admin' }),
+        createMockUserResponse({
+          studentId: 251000001,
+          firstName: 'John',
+          lastName: 'Doe',
+          status: 'User',
+        }),
+        createMockUserResponse({
+          studentId: 251000002,
+          firstName: 'Jane',
+          lastName: 'Smith',
+          status: 'Admin',
+        }),
       ];
       const mockResponse = {
         data: mockUserResponses,
