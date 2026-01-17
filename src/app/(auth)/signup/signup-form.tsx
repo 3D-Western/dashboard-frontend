@@ -5,8 +5,10 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
+import { FieldDescription } from '@/components/ui/field';
 import {
   Form,
   FormControl,
@@ -25,6 +27,10 @@ import {
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { EXPERIENCE_LEVELS, EXPERIENCE_LEVEL_OPTIONS } from '@/constants/experience-levels';
+import { Routes } from '@/lib/routes';
+import { ArrowLeft, ArrowRight } from 'lucide-react';
+import Image from 'next/image';
+import { cn } from '@/lib/utils';
 
 const formSchema = z.object({
   studentId: z
@@ -48,6 +54,7 @@ const formSchema = z.object({
     .regex(/[A-Z]/, 'Password must contain at least one uppercase letter')
     .regex(/[a-z]/, 'Password must contain at least one lowercase letter')
     .regex(/[0-9]/, 'Password must contain at least one number'),
+  inviteCode: z.string().min(1, 'Invite code is required'),
   firstName: z.string().min(1, 'First name is required'),
   lastName: z.string().min(1, 'Last name is required'),
   experienceLevel: z
@@ -60,8 +67,9 @@ const formSchema = z.object({
 
 type FormData = z.infer<typeof formSchema>;
 
-export function SignupForm() {
+export function SignupForm({ className, ...props }: React.ComponentProps<'div'>) {
   const [isLoading, setIsLoading] = useState(false);
+  const [currentStep, setCurrentStep] = useState(1);
   const router = useRouter();
 
   const form = useForm<FormData>({
@@ -70,12 +78,24 @@ export function SignupForm() {
       studentId: '',
       email: '',
       password: '',
+      inviteCode: '',
       firstName: '',
       lastName: '',
       experienceLevel: undefined,
       agreedToTerms: false,
     },
   });
+
+  // Step 1 validation
+  const validateStep1 = async () => {
+    const fields = ['email', 'password', 'inviteCode', 'studentId'] as const;
+    const isValid = await form.trigger(fields);
+    
+    if (isValid) {
+      setCurrentStep(2);
+    }
+    return isValid;
+  };
 
   async function onSubmit(values: FormData) {
     try {
@@ -93,6 +113,7 @@ export function SignupForm() {
         studentId: parseInt(studentId, 10),
         email: rest.email,
         password: rest.password,
+        inviteCode: rest.inviteCode,
         firstName: rest.firstName,
         lastName: rest.lastName,
         experienceLevel: values.experienceLevel,
@@ -133,173 +154,225 @@ export function SignupForm() {
   }
 
   return (
-    <div className="flex">
-      <div className="flex min-h-screen w-screen flex-col items-center justify-center gap-y-[90px] bg-cover py-10">
-        <span className="font-jersey text-[96px]">SIGN UP</span>
+    <div className={cn('flex flex-col gap-6', className)} {...props}>
+      <Card className="overflow-hidden p-0">
+        <CardContent className="grid p-0 md:grid-cols-2">
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="p-6 md:p-8">
+              <div className="grid gap-6">
+                {/* Header */}
+                <div className="flex flex-col items-center gap-2 text-center">
+                  <div className="mb-2 flex items-center gap-2">
+                    {currentStep === 2 && (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setCurrentStep(1)}
+                        className="p-1"
+                      >
+                        <ArrowLeft className="h-4 w-4" />
+                      </Button>
+                    )}
+                    <h1 className="text-2xl font-bold">
+                      {currentStep === 1 ? 'Create your account' : 'Complete your profile'}
+                    </h1>
+                  </div>
+                  <p className="text-balance text-muted-foreground">
+                    {currentStep === 1 
+                      ? 'Step 1 of 2: Enter your credentials' 
+                      : 'Step 2 of 2: Tell us about yourself'}
+                  </p>
+                </div>
 
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="w-full px-4">
-            <div className="mx-auto grid max-w-[1200px] grid-cols-1 justify-items-center gap-x-[74px] gap-y-[24px] md:grid-cols-2 lg:grid-cols-3">
-              <FormField
-                control={form.control}
-                name="firstName"
-                render={({ field }) => (
-                  <FormItem className="flex w-[325px] flex-col">
-                    <FormLabel className="font-jersey text-[26px]">FIRST NAME</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="text"
-                        placeholder="FIRST NAME"
-                        className="h-[43px] w-[325px] !bg-white !text-[20px] text-black placeholder:text-[20px]"
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
+                {/* Step 1: Credentials */}
+                {currentStep === 1 && (
+                  <>
+                    <FormField
+                      control={form.control}
+                      name="email"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>UWO Email</FormLabel>
+                          <FormControl>
+                            <Input placeholder="example@uwo.ca" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="password"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Password</FormLabel>
+                          <FormControl>
+                            <Input type="password" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="inviteCode"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Invite Code</FormLabel>
+                          <FormControl>
+                            <Input placeholder="Enter your invite code" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="studentId"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Student ID</FormLabel>
+                          <FormControl>
+                            <Input placeholder="251000000" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <Button type="button" onClick={validateStep1} className="w-full">
+                      Continue
+                      <ArrowRight className="ml-2 h-4 w-4" />
+                    </Button>
+                  </>
                 )}
-              />
 
-              <FormField
-                control={form.control}
-                name="lastName"
-                render={({ field }) => (
-                  <FormItem className="flex w-[325px] flex-col">
-                    <FormLabel className="font-jersey text-[26px]">LAST NAME</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="text"
-                        placeholder="LAST NAME"
-                        className="h-[43px] w-[325px] !bg-white !text-[20px] text-black placeholder:text-[20px]"
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
+                {/* Step 2: Personal Information */}
+                {currentStep === 2 && (
+                  <>
+                    <FormField
+                      control={form.control}
+                      name="firstName"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>First Name</FormLabel>
+                          <FormControl>
+                            <Input placeholder="John" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="lastName"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Last Name</FormLabel>
+                          <FormControl>
+                            <Input placeholder="Doe" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="experienceLevel"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Experience Level</FormLabel>
+                          <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select your experience level" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              {EXPERIENCE_LEVEL_OPTIONS.map((option) => (
+                                <SelectItem key={option.value} value={option.value}>
+                                  {option.label}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="agreedToTerms"
+                      render={({ field }) => (
+                        <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                          <FormControl>
+                            <Checkbox 
+                              checked={field.value} 
+                              onCheckedChange={field.onChange}
+                            />
+                          </FormControl>
+                          <div className="space-y-1 leading-none">
+                            <FormLabel className="text-sm">
+                              I agree to the{' '}
+                              <Link href="/terms-and-conditions" className="underline">
+                                Terms of Service
+                              </Link>{' '}
+                              and{' '}
+                              <Link href="/data-policy" className="underline">
+                                Privacy Policy
+                              </Link>
+                            </FormLabel>
+                            <FormMessage />
+                          </div>
+                        </FormItem>
+                      )}
+                    />
+
+                    <Button type="submit" disabled={isLoading} className="w-full">
+                      {isLoading ? 'Creating Account...' : 'Create Account'}
+                    </Button>
+                  </>
                 )}
-              />
 
-              <FormField
-                control={form.control}
-                name="email"
-                render={({ field }) => (
-                  <FormItem className="flex w-[325px] flex-col">
-                    <FormLabel className="font-jersey text-[26px]">UWO EMAIL</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="email"
-                        placeholder="UWO EMAIL"
-                        className="h-[43px] w-[325px] !bg-white !text-[20px] text-black placeholder:text-[20px]"
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+                <FieldDescription className="text-center">
+                  Already have an account?{' '}
+                  <Link href={Routes.login} className="underline">
+                    Sign in
+                  </Link>
+                </FieldDescription>
+              </div>
+            </form>
+          </Form>
 
-              <FormField
-                control={form.control}
-                name="password"
-                render={({ field }) => (
-                  <FormItem className="flex w-[325px] flex-col">
-                    <FormLabel className="font-jersey text-[26px]">PASSWORD</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="password"
-                        placeholder="PASSWORD"
-                        className="h-[43px] w-[325px] !bg-white !text-[20px] text-black placeholder:text-[20px]"
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+          {/* Right side - Logo/Image */}
+          <div className="relative hidden min-h-[600px] bg-muted md:block">
+            <Image
+              src="/3dWesternLogo.png"
+              alt="3D Western Logo"
+              fill
+              className="object-contain p-8"
+            />
+          </div>
+        </CardContent>
+      </Card>
 
-              <FormField
-                control={form.control}
-                name="studentId"
-                render={({ field }) => (
-                  <FormItem className="flex w-[325px] flex-col">
-                    <FormLabel className="font-jersey text-[26px]">STUDENT NUMBER</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="number"
-                        placeholder="STUDENT NUMBER"
-                        className="h-[43px] w-[325px] !bg-white !text-[20px] text-black placeholder:text-[20px]"
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="experienceLevel"
-                render={({ field }) => (
-                  <FormItem className="flex w-[325px] flex-col">
-                    <FormLabel className="font-jersey text-[26px]">EXPERIENCE LEVEL</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl>
-                        <SelectTrigger className="h-[43px] w-[325px] !bg-white !text-[20px] text-black">
-                          <SelectValue placeholder="Experience Level" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {EXPERIENCE_LEVEL_OPTIONS.map((option) => (
-                          <SelectItem key={option.value} value={option.value}>
-                            {option.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-
-            <div className="mt-[60px] flex flex-col items-center gap-y-[46px]">
-              <FormField
-                control={form.control}
-                name="agreedToTerms"
-                render={({ field }) => (
-                  <FormItem className="flex items-center space-y-0 gap-x-[16px]">
-                    <FormControl>
-                      <Checkbox checked={field.value} onCheckedChange={field.onChange} />
-                    </FormControl>
-                    <FormLabel className="!mt-0 font-jersey text-[20px]">
-                      I have read the{' '}
-                      <Link href="/terms-and-conditions" className="underline">
-                        terms and conditions
-                      </Link>{' '}
-                      and agree to 3D Western&apos;s{' '}
-                      <Link href="/data-policy" className="underline">
-                        data policy
-                      </Link>
-                      .
-                    </FormLabel>
-                  </FormItem>
-                )}
-              />
-              <FormMessage />
-
-              <Button type="submit" className="h-[63px] w-[160px] text-[30px]" disabled={isLoading}>
-                {isLoading ? 'LOADING...' : 'REGISTER'}
-              </Button>
-
-              <span className="font-jersey text-[20px]">
-                Having Issues?{' '}
-                <Link href="/contact-us" className="underline">
-                  Contact us
-                </Link>
-              </span>
-            </div>
-          </form>
-        </Form>
-      </div>
+      <FieldDescription className="px-6 text-center">
+        By creating an account, you agree to our{' '}
+        <Link href="/terms-and-conditions" className="underline">
+          Terms of Service
+        </Link>{' '}
+        and{' '}
+        <Link href="/data-policy" className="underline">
+          Privacy Policy
+        </Link>.
+      </FieldDescription>
     </div>
   );
 }
