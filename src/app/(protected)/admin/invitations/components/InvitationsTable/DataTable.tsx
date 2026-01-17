@@ -19,14 +19,13 @@ import {
   useReactTable,
 } from '@tanstack/react-table';
 import { useEffect, useState } from 'react';
-import { DataTablePagination } from '../DataTablePagination';
+import { DataTablePagination } from '@/components/DataTablePagination';
 import { PaginationMetadata } from '@/types/common';
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
   data: TData[];
   pagination: PaginationMetadata;
-  className?: string;
 }
 
 export function DataTable<TData, TValue>({
@@ -37,7 +36,6 @@ export function DataTable<TData, TValue>({
   'use no memo';
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
-  const [rowSelection, setRowSelection] = useState({});
   const [announcement, setAnnouncement] = useState('');
 
   // eslint-disable-next-line react-hooks/incompatible-library -- TanStack Table is known to be incompatible with React Compiler
@@ -49,21 +47,16 @@ export function DataTable<TData, TValue>({
     getSortedRowModel: getSortedRowModel(),
     onColumnFiltersChange: setColumnFilters,
     getFilteredRowModel: getFilteredRowModel(),
-    onRowSelectionChange: setRowSelection,
-    state: { sorting, columnFilters, rowSelection },
-    // Disable client-side pagination - using server-side pagination
+    state: { sorting, columnFilters },
     manualPagination: true,
   });
 
   // Announce filtered results for screen readers
   useEffect(() => {
     const filteredCount = table.getFilteredRowModel().rows.length;
-    const selectedCount = table.getFilteredSelectedRowModel().rows.length;
 
     if (filteredCount !== data.length) {
-      setAnnouncement(`Showing ${filteredCount} of ${data.length} print jobs`);
-    } else if (selectedCount > 0) {
-      setAnnouncement(`${selectedCount} print job${selectedCount === 1 ? '' : 's'} selected`);
+      setAnnouncement(`Showing ${filteredCount} of ${data.length} invitations`);
     } else {
       setAnnouncement('');
     }
@@ -77,9 +70,9 @@ export function DataTable<TData, TValue>({
       </div>
 
       <div className="overflow-hidden rounded-md border">
-        <Table aria-label="Print jobs table" aria-describedby="table-caption">
-          <caption id="table-caption" className="sr-only">
-            Your print jobs with status, dates, and file information. Sortable by print date.
+        <Table aria-label="Invitations table" aria-describedby="invitations-table-caption">
+          <caption id="invitations-table-caption" className="sr-only">
+            Invitations with status, email, student ID, and creation information. Sortable by date.
           </caption>
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
@@ -99,11 +92,7 @@ export function DataTable<TData, TValue>({
           <TableBody>
             {table.getRowModel().rows?.length ? (
               table.getRowModel().rows.map((row) => (
-                <TableRow
-                  key={row.id}
-                  data-state={row.getIsSelected() && 'selected'}
-                  aria-selected={row.getIsSelected()}
-                >
+                <TableRow key={row.id}>
                   {row.getVisibleCells().map((cell) => (
                     <TableCell key={cell.id}>
                       {flexRender(cell.column.columnDef.cell, cell.getContext())}
@@ -114,7 +103,7 @@ export function DataTable<TData, TValue>({
             ) : (
               <TableRow>
                 <TableCell colSpan={columns.length} className="h-24 text-center">
-                  No results.
+                  No invitations found.
                 </TableCell>
               </TableRow>
             )}
@@ -122,7 +111,7 @@ export function DataTable<TData, TValue>({
         </Table>
       </div>
 
-      <DataTablePagination table={table} pagination={pagination} showSelectionCount />
+      <DataTablePagination table={table} pagination={pagination} />
     </div>
   );
 }

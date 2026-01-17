@@ -15,9 +15,18 @@ import {
 } from '@/components/ui/sidebar';
 import { SettingsPopover } from '@/components/SettingsPopover';
 import { User } from '@/types/user';
-import { LayoutDashboard, Printer, Users, Settings, Shield, FilePlus } from 'lucide-react';
+import {
+  LayoutDashboard,
+  Printer,
+  Users,
+  Settings,
+  Shield,
+  FilePlus,
+  TicketPlus,
+} from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { Routes } from '@/lib/routes';
 
 const navigationItems = [
   {
@@ -45,13 +54,18 @@ const adminNavigationItems = [
   },
   {
     title: 'User Management',
-    url: '/admin/users',
+    url: Routes.adminUsersManagement,
     icon: Users,
   },
   {
     title: 'Print Management',
-    url: '/admin/prints',
+    url: Routes.adminPrintsManagement,
     icon: Settings,
+  },
+  {
+    title: 'Invitation Management',
+    url: Routes.adminInvitationManagement,
+    icon: TicketPlus,
   },
 ];
 

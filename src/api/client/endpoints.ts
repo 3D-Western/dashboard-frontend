@@ -36,4 +36,10 @@ export const endpoints = {
     verifyEmail: '/api/v1/mfa/email/verify',
     resendEmail: (challengeId: number) => `/api/v1/mfa/email/challenge/${challengeId}/resend`,
   },
+  invitations: {
+    list: '/api/v1/admin/invitations',
+    create: '/api/v1/admin/invitations',
+    byId: (invitationId: number) => `/api/v1/admin/invitations/${invitationId}`,
+    revoke: (invitationId: number) => `/api/v1/admin/invitations/${invitationId}/revoke`,
+  },
 };

@@ -71,3 +71,24 @@ export interface FileListItem {
     lastName: string;
   };
 }
+
+// Invitation types
+export type InvitationStatus = 'PENDING' | 'ACCEPTED' | 'EXPIRED' | 'REVOKED';
+
+export interface InvitationCreator {
+  studentId: number;
+  firstName: string;
+  lastName: string;
+}
+
+export interface Invitation {
+  id: number;
+  studentId: number;
+  email: string;
+  invitationCode: string;
+  status: InvitationStatus;
+  createdAt: string;
+  expiredAt: string;
+  acceptedAt: string | null;
+  createdByUserId: number; // Reference to creator's studentId
+}

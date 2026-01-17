@@ -1,5 +1,6 @@
 import { User } from '@/types/user';
 import { PrintJob } from '@/types/jobs';
+import { Invitation } from '@/types/invitation';
 import { FileUploadResult, FileMetadata, FileList } from '@/types/file';
 import { PaginatedResponse } from '@/types/common';
 
@@ -42,3 +43,7 @@ export type FileDeleteResponse = null;
 
 // Users API Response Types
 export type UserListResponse = PaginatedResponse<User>;
+
+// Invitations API Response Types
+export type InvitationListResponse = PaginatedResponse<Invitation>;
+export type InvitationResponse = Invitation;

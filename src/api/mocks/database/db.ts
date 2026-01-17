@@ -1,6 +1,12 @@
-import { PrintJob, User, FileMetadata } from './types';
+import { PrintJob, User, FileMetadata, Invitation, InvitationStatus } from './types';
 import { mockUsers } from '../data/users';
 import { mockPrintJobs } from '../data/print-jobs';
+import { mockInvitations } from '../data/invitations';
+
+// Declare global type for HMR persistence
+declare global {
+  var __mockDbInstance: Database | undefined;
+}
 
 class Database {
   private static instance: Database;
@@ -11,6 +17,8 @@ class Database {
   private activePrintJobsUserMap: Map<number, PrintJob[]> = new Map(); // userId to PrintJobs
   private activePrintJobsIDMap: Map<string, PrintJob> = new Map(); // printJobId to PrintJob
   private files: Map<string, FileMetadata> = new Map(); // fileId to FileMetadata
+  private invitations: Map<number, Invitation> = new Map(); // invitationId to Invitation
+  private nextInvitationId: number = 1;
 
   // Singleton pattern to ensure only one instance of Database exists
   constructor() {
@@ -36,6 +44,14 @@ class Database {
         userJobs.push(userJob);
         this.activePrintJobsIDMap.set(userJob.id, userJob);
       });
+    });
+
+    // Load initial mock invitations
+    mockInvitations.forEach((invitation) => {
+      this.invitations.set(invitation.id, invitation);
+      if (invitation.id >= this.nextInvitationId) {
+        this.nextInvitationId = invitation.id + 1;
+      }
     });
   }
 
@@ -199,9 +215,117 @@ class Database {
   public getFilesByUserId(userId: number): FileMetadata[] {
     return Array.from(this.files.values()).filter((file) => file.uploadedBy === userId);
   }
+
+  // Invitation methods
+  public getAllInvitations(): Invitation[] {
+    return Array.from(this.invitations.values());
+  }
+
+  public getInvitations(filters?: {
+    studentId?: number;
+    email?: string;
+    status?: InvitationStatus;
+    snapshotCreatedBefore?: string;
+  }): Invitation[] {
+    let invitations = Array.from(this.invitations.values());
+
+    // Apply snapshot filter
+    if (filters?.snapshotCreatedBefore) {
+      invitations = invitations.filter(
+        (inv) => inv.createdAt <= filters.snapshotCreatedBefore!,
+      );
+    }
+
+    // Filter by studentId if provided (exact match)
+    if (filters?.studentId !== undefined) {
+      invitations = invitations.filter((inv) => inv.studentId === filters.studentId);
+    }
+
+    // Filter by email if provided (partial match, case-insensitive)
+    if (filters?.email) {
+      const lowerEmail = filters.email.toLowerCase();
+      invitations = invitations.filter((inv) =>
+        inv.email.toLowerCase().includes(lowerEmail),
+      );
+    }
+
+    // Filter by status if provided
+    if (filters?.status) {
+      invitations = invitations.filter((inv) => inv.status === filters.status);
+    }
+
+    // Sort by createdAt descending (newest first)
+    invitations.sort(
+      (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+    );
+
+    return invitations;
+  }
+
+  public getInvitationById(invitationId: number): Invitation | null {
+    return this.invitations.get(invitationId) || null;
+  }
+
+  public createInvitation(data: {
+    studentId: number;
+    email: string;
+    expiresInDays?: number;
+    createdByUserId: number;
+  }): Invitation {
+    const expiresInDays = data.expiresInDays || 7;
+    const now = new Date();
+    const expiredAt = new Date(now);
+    expiredAt.setDate(expiredAt.getDate() + expiresInDays);
+
+    const invitation: Invitation = {
+      id: this.nextInvitationId++,
+      studentId: data.studentId,
+      email: data.email,
+      invitationCode: Math.random().toString(36).substring(2, 18),
+      status: 'PENDING',
+      createdAt: now.toISOString(),
+      expiredAt: expiredAt.toISOString(),
+      acceptedAt: null,
+      createdByUserId: data.createdByUserId,
+    };
+
+    this.invitations.set(invitation.id, invitation);
+    return invitation;
+  }
+
+  public revokeInvitation(invitationId: number): Invitation | null {
+    const invitation = this.invitations.get(invitationId);
+    if (!invitation) {
+      return null;
+    }
+
+    if (invitation.status !== 'PENDING') {
+      return null; // Can only revoke pending invitations
+    }
+
+    invitation.status = 'REVOKED';
+    return invitation;
+  }
+
+  public findInvitationByStudentIdOrEmail(
+    studentId: number,
+    email: string,
+  ): Invitation | null {
+    const invitations = Array.from(this.invitations.values());
+    return (
+      invitations.find(
+        (inv) =>
+          inv.status === 'PENDING' &&
+          (inv.studentId === studentId || inv.email === email),
+      ) || null
+    );
+  }
 }
 
-const db = new Database();
+// Use globalThis to persist database instance across HMR reloads
+// This prevents state loss during development hot reloads
+const db = globalThis.__mockDbInstance ?? new Database();
+globalThis.__mockDbInstance = db;
 
 Object.freeze(Database);
 

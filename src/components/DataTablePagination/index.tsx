@@ -17,9 +17,14 @@ import { useCallback } from 'react';
 interface DataTablePaginationProps<TData> {
   table: Table<TData>;
   pagination: PaginationMetadata;
+  showSelectionCount?: boolean;
 }
 
-export function DataTablePagination<TData>({ table, pagination }: DataTablePaginationProps<TData>) {
+export function DataTablePagination<TData>({
+  table,
+  pagination,
+  showSelectionCount = false,
+}: DataTablePaginationProps<TData>) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const currentPage = pagination.page;
@@ -42,16 +47,21 @@ export function DataTablePagination<TData>({ table, pagination }: DataTablePagin
   );
 
   return (
-    <div className="flex flex-col items-center justify-between gap-4 px-2 sm:flex-row">
+    <div
+      className={`flex flex-col items-center gap-4 px-2 sm:flex-row ${showSelectionCount ? 'sm:justify-between' : 'sm:justify-end'}`}
+    >
       {/* Live region for page change announcements */}
       <div role="status" aria-live="polite" aria-atomic="true" className="sr-only">
         Page {currentPage} of {totalPages}
       </div>
 
-      <div className="text-sm text-muted-foreground">
-        {table.getFilteredSelectedRowModel().rows.length} of{' '}
-        {table.getFilteredRowModel().rows.length} row(s) selected.
-      </div>
+      {showSelectionCount && (
+        <div className="text-sm text-muted-foreground">
+          {table.getFilteredSelectedRowModel().rows.length} of{' '}
+          {table.getFilteredRowModel().rows.length} row(s) selected.
+        </div>
+      )}
+
       <div className="flex flex-col items-center gap-4 sm:flex-row">
         <div className="flex items-center gap-2">
           <p className="text-sm font-medium">Rows per page</p>
