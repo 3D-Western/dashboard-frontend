@@ -14,6 +14,9 @@ import { ColumnDef } from '@tanstack/react-table';
 import { ArrowUpDown, MoreHorizontal } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { DateCell } from './DateCell';
+import { EmailCell } from './EmailCell';
+import { InvitationCodeCell } from './InvitationCodeCell';
+import { InvitationInfoDialog } from './InvitationInfoDialog';
 import { InvitationStatusBadge } from './InvitationStatusBadge';
 import { RevokeInvitationDialog } from './RevokeInvitationDialog';
 import { invitationApi } from '@/api/client/invitation';
@@ -40,7 +43,15 @@ export const useColumns = (opts: UseColumnsOptions = {}) => {
         header: () => <div className="w-full text-center">Email</div>,
         cell: ({ row }) => {
           const email = row.getValue('email') as string;
-          return <div className="w-full text-center">{email}</div>;
+          return <EmailCell email={email} />;
+        },
+      },
+      {
+        accessorKey: 'invitationCode',
+        header: () => <div className="w-full text-center">Invitation Code</div>,
+        cell: ({ row }) => {
+          const code = row.getValue('invitationCode') as string;
+          return <InvitationCodeCell code={code} />;
         },
       },
       {
@@ -104,26 +115,12 @@ export const useColumns = (opts: UseColumnsOptions = {}) => {
         cell: ({ row }) => <DateCell date={row.getValue('expiredAt') as string} />,
       },
       {
-        accessorKey: 'createdBy',
-        header: () => <div className="w-full text-center">Created By</div>,
-        cell: ({ row }) => {
-          const createdBy = row.original.createdBy;
-          if (!createdBy) {
-            return <div className="w-full text-center text-muted-foreground">-</div>;
-          }
-          return (
-            <div className="w-full text-center">
-              {createdBy.firstName} {createdBy.lastName}
-            </div>
-          );
-        },
-      },
-      {
         id: 'actions',
         cell: function ActionsCell({ row }) {
           const invitation = row.original;
           const canRevoke = invitation.status === 'PENDING';
           const [showRevokeDialog, setShowRevokeDialog] = useState(false);
+          const [showInfoDialog, setShowInfoDialog] = useState(false);
           const [isRevoking, setIsRevoking] = useState(false);
 
           const handleRevoke = async () => {
@@ -154,28 +151,8 @@ export const useColumns = (opts: UseColumnsOptions = {}) => {
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
-                  <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                  <DropdownMenuItem
-                    onSelect={async () => {
-                      try {
-                        await navigator.clipboard.writeText(invitation.invitationCode);
-                      } catch (error) {
-                        console.error('Failed to copy invitation code:', error);
-                      }
-                    }}
-                  >
-                    Copy Invitation Code
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    onSelect={async () => {
-                      try {
-                        await navigator.clipboard.writeText(invitation.email);
-                      } catch (error) {
-                        console.error('Failed to copy email:', error);
-                      }
-                    }}
-                  >
-                    Copy Email
+                  <DropdownMenuItem onSelect={() => setShowInfoDialog(true)}>
+                    More Info
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   {canRevoke && (
@@ -206,6 +183,12 @@ export const useColumns = (opts: UseColumnsOptions = {}) => {
                 email={invitation.email}
                 onConfirm={handleRevoke}
                 isLoading={isRevoking}
+              />
+
+              <InvitationInfoDialog
+                open={showInfoDialog}
+                onOpenChange={setShowInfoDialog}
+                invitation={invitation}
               />
             </>
           );
