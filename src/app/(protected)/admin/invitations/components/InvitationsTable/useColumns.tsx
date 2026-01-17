@@ -89,7 +89,9 @@ export const useColumns = (opts: UseColumnsOptions = {}) => {
             </Button>
           );
         },
-        cell: ({ row }: { row: Row<Invitation> }) => <DateCell date={row.getValue('createdAt') as string} />,
+        cell: ({ row }: { row: Row<Invitation> }) => (
+          <DateCell date={row.getValue('createdAt') as string} />
+        ),
       },
       {
         accessorKey: 'expiredAt',
@@ -113,7 +115,9 @@ export const useColumns = (opts: UseColumnsOptions = {}) => {
             </Button>
           );
         },
-        cell: ({ row }: { row: Row<Invitation> }) => <DateCell date={row.getValue('expiredAt') as string} />,
+        cell: ({ row }: { row: Row<Invitation> }) => (
+          <DateCell date={row.getValue('expiredAt') as string} />
+        ),
       },
       {
         id: 'actions',

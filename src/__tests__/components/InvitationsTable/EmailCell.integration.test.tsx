@@ -90,10 +90,7 @@ describe('EmailCell Component', () => {
     expect(copyButton).toBeInTheDocument();
     await waitFor(() => {
       expect(toast.error).toHaveBeenCalledWith('Failed to copy email');
-      expect(consoleSpy).toHaveBeenCalledWith(
-        'Failed to copy email:',
-        expect.any(Error),
-      );
+      expect(consoleSpy).toHaveBeenCalledWith('Failed to copy email:', expect.any(Error));
     });
     consoleSpy.mockRestore();
   });

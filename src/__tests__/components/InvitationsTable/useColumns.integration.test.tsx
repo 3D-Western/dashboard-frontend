@@ -5,7 +5,9 @@ import type { ColumnDef } from '@tanstack/react-table';
 import type { Invitation } from '@/types/invitation';
 
 // Type guard to check if a column has an accessorKey
-function hasAccessorKey(col: ColumnDef<Invitation>): col is ColumnDef<Invitation> & { accessorKey: string } {
+function hasAccessorKey(
+  col: ColumnDef<Invitation>,
+): col is ColumnDef<Invitation> & { accessorKey: string } {
   return 'accessorKey' in col;
 }
 
@@ -30,7 +32,9 @@ describe('useColumns Hook', () => {
       const { result } = renderHook(() => useColumns({ onRevoke: mockOnRevoke }));
 
       const columns = result.current;
-      const studentIdColumn = columns.find((col) => hasAccessorKey(col) && col.accessorKey === 'studentId');
+      const studentIdColumn = columns.find(
+        (col) => hasAccessorKey(col) && col.accessorKey === 'studentId',
+      );
 
       expect(studentIdColumn).toBeDefined();
       expect(studentIdColumn?.header).toBeDefined();
@@ -49,7 +53,9 @@ describe('useColumns Hook', () => {
       const { result } = renderHook(() => useColumns({ onRevoke: mockOnRevoke }));
 
       const columns = result.current;
-      const codeColumn = columns.find((col) => hasAccessorKey(col) && col.accessorKey === 'invitationCode');
+      const codeColumn = columns.find(
+        (col) => hasAccessorKey(col) && col.accessorKey === 'invitationCode',
+      );
 
       expect(codeColumn).toBeDefined();
     });
@@ -58,7 +64,9 @@ describe('useColumns Hook', () => {
       const { result } = renderHook(() => useColumns({ onRevoke: mockOnRevoke }));
 
       const columns = result.current;
-      const statusColumn = columns.find((col) => hasAccessorKey(col) && col.accessorKey === 'status');
+      const statusColumn = columns.find(
+        (col) => hasAccessorKey(col) && col.accessorKey === 'status',
+      );
 
       expect(statusColumn).toBeDefined();
     });
@@ -67,7 +75,9 @@ describe('useColumns Hook', () => {
       const { result } = renderHook(() => useColumns({ onRevoke: mockOnRevoke }));
 
       const columns = result.current;
-      const createdColumn = columns.find((col) => hasAccessorKey(col) && col.accessorKey === 'createdAt');
+      const createdColumn = columns.find(
+        (col) => hasAccessorKey(col) && col.accessorKey === 'createdAt',
+      );
 
       expect(createdColumn).toBeDefined();
       expect(createdColumn?.header).toBeDefined();
@@ -77,7 +87,9 @@ describe('useColumns Hook', () => {
       const { result } = renderHook(() => useColumns({ onRevoke: mockOnRevoke }));
 
       const columns = result.current;
-      const expiresColumn = columns.find((col) => hasAccessorKey(col) && col.accessorKey === 'expiredAt');
+      const expiresColumn = columns.find(
+        (col) => hasAccessorKey(col) && col.accessorKey === 'expiredAt',
+      );
 
       expect(expiresColumn).toBeDefined();
     });
@@ -97,7 +109,9 @@ describe('useColumns Hook', () => {
     it('student ID column displays as center-aligned', () => {
       const { result } = renderHook(() => useColumns({ onRevoke: mockOnRevoke }));
 
-      const studentIdColumn = result.current.find((col) => hasAccessorKey(col) && col.accessorKey === 'studentId');
+      const studentIdColumn = result.current.find(
+        (col) => hasAccessorKey(col) && col.accessorKey === 'studentId',
+      );
       expect(studentIdColumn).toBeDefined();
       if (studentIdColumn && hasAccessorKey(studentIdColumn)) {
         expect(studentIdColumn.accessorKey).toBe('studentId');
@@ -107,21 +121,27 @@ describe('useColumns Hook', () => {
     it('email column uses EmailCell component', () => {
       const { result } = renderHook(() => useColumns({ onRevoke: mockOnRevoke }));
 
-      const emailColumn = result.current.find((col) => hasAccessorKey(col) && col.accessorKey === 'email');
+      const emailColumn = result.current.find(
+        (col) => hasAccessorKey(col) && col.accessorKey === 'email',
+      );
       expect(emailColumn?.cell).toBeDefined();
     });
 
     it('invitationCode column uses InvitationCodeCell component', () => {
       const { result } = renderHook(() => useColumns({ onRevoke: mockOnRevoke }));
 
-      const codeColumn = result.current.find((col) => hasAccessorKey(col) && col.accessorKey === 'invitationCode');
+      const codeColumn = result.current.find(
+        (col) => hasAccessorKey(col) && col.accessorKey === 'invitationCode',
+      );
       expect(codeColumn?.cell).toBeDefined();
     });
 
     it('status column uses InvitationStatusBadge component', () => {
       const { result } = renderHook(() => useColumns({ onRevoke: mockOnRevoke }));
 
-      const statusColumn = result.current.find((col) => hasAccessorKey(col) && col.accessorKey === 'status');
+      const statusColumn = result.current.find(
+        (col) => hasAccessorKey(col) && col.accessorKey === 'status',
+      );
       expect(statusColumn?.cell).toBeDefined();
     });
   });
@@ -179,10 +199,14 @@ describe('useColumns Hook', () => {
     it('has aria-labels on sortable column headers', () => {
       const { result } = renderHook(() => useColumns({ onRevoke: mockOnRevoke }));
 
-      const createdColumn = result.current.find((col) => hasAccessorKey(col) && col.accessorKey === 'createdAt');
+      const createdColumn = result.current.find(
+        (col) => hasAccessorKey(col) && col.accessorKey === 'createdAt',
+      );
       expect(createdColumn?.header).toBeDefined();
 
-      const expiresColumn = result.current.find((col) => hasAccessorKey(col) && col.accessorKey === 'expiredAt');
+      const expiresColumn = result.current.find(
+        (col) => hasAccessorKey(col) && col.accessorKey === 'expiredAt',
+      );
       expect(expiresColumn?.header).toBeDefined();
     });
 

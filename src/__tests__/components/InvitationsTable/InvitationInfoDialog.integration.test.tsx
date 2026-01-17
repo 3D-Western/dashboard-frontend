@@ -14,22 +14,16 @@ describe('InvitationInfoDialog Integration', () => {
       },
     });
 
-    render(
-      <InvitationInfoDialog open={true} onOpenChange={() => {}} invitation={invitation} />,
-    );
+    render(<InvitationInfoDialog open={true} onOpenChange={() => {}} invitation={invitation} />);
 
     expect(screen.getByText('Invitation Details')).toBeInTheDocument();
-    expect(
-      screen.getByText('Ada Lovelace (251000123)'),
-    ).toBeInTheDocument();
+    expect(screen.getByText('Ada Lovelace (251000123)')).toBeInTheDocument();
   });
 
   it('renders placeholder when createdBy is missing', () => {
     const invitation = createMockInvitation({ createdBy: null as unknown as InvitationCreator });
 
-    render(
-      <InvitationInfoDialog open={true} onOpenChange={() => {}} invitation={invitation} />,
-    );
+    render(<InvitationInfoDialog open={true} onOpenChange={() => {}} invitation={invitation} />);
 
     expect(screen.getByText('-')).toBeInTheDocument();
   });
