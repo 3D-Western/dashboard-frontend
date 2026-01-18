@@ -69,9 +69,7 @@ describe('LaserCuttingOrderForm Integration', () => {
       await user.click(submitButton);
 
       await waitFor(() => {
-        expect(
-          screen.getByText(/Must have a description for the request/i),
-        ).toBeInTheDocument();
+        expect(screen.getByText(/Must have a description for the request/i)).toBeInTheDocument();
       });
     });
 
@@ -86,9 +84,7 @@ describe('LaserCuttingOrderForm Integration', () => {
       await user.click(submitButton);
 
       await waitFor(() => {
-        expect(
-          screen.getByText(/Must have a description for the request/i),
-        ).toBeInTheDocument();
+        expect(screen.getByText(/Must have a description for the request/i)).toBeInTheDocument();
       });
     });
 
@@ -102,9 +98,10 @@ describe('LaserCuttingOrderForm Integration', () => {
       await waitFor(() => {
         // Look for the error message specifically in the destructive-colored element
         const errorMessages = screen.getAllByText(/Please upload a DXF, AI, SVG, or DWG file/i);
-        const errorMessage = errorMessages.find(el => 
-          el.classList.contains('text-destructive') || 
-          el.getAttribute('data-slot') === 'form-message'
+        const errorMessage = errorMessages.find(
+          (el) =>
+            el.classList.contains('text-destructive') ||
+            el.getAttribute('data-slot') === 'form-message',
         );
         expect(errorMessage).toBeInTheDocument();
       });
@@ -288,7 +285,9 @@ describe('LaserCuttingOrderForm Integration', () => {
       await user.click(submitButton);
 
       await waitFor(() => {
-        expect(alertSpy).toHaveBeenCalledWith(expect.stringContaining('Laser cutting order submit failed'));
+        expect(alertSpy).toHaveBeenCalledWith(
+          expect.stringContaining('Laser cutting order submit failed'),
+        );
       });
 
       fetchSpy.mockRestore();
@@ -358,7 +357,7 @@ describe('LaserCuttingOrderForm Integration', () => {
 
       const nameField = screen.getByLabelText(/Request Name/i) as HTMLInputElement;
       const descriptionField = screen.getByLabelText(/Description/i) as HTMLTextAreaElement;
-      
+
       expect(nameField.value).toBe('');
       expect(descriptionField.value).toBe('');
       expect(screen.getByText('Select a material')).toBeInTheDocument();

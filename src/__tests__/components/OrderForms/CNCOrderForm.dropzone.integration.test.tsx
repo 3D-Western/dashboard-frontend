@@ -180,10 +180,10 @@ describe('CNCOrderForm material selection behavior', () => {
     render(<CNCOrderForm />);
 
     const materialSelect = screen.getByRole('combobox') as HTMLSelectElement;
-    
+
     await user.selectOptions(materialSelect, 'aluminum');
     expect(materialSelect.value).toBe('aluminum');
-    
+
     await user.selectOptions(materialSelect, 'steel');
     expect(materialSelect.value).toBe('steel');
   });

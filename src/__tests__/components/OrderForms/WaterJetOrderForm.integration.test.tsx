@@ -69,9 +69,7 @@ describe('WaterJetForm Integration', () => {
       await user.click(submitButton);
 
       await waitFor(() => {
-        expect(
-          screen.getByText(/Must have a description for the request/i),
-        ).toBeInTheDocument();
+        expect(screen.getByText(/Must have a description for the request/i)).toBeInTheDocument();
       });
     });
 
@@ -86,9 +84,7 @@ describe('WaterJetForm Integration', () => {
       await user.click(submitButton);
 
       await waitFor(() => {
-        expect(
-          screen.getByText(/Must have a description for the request/i),
-        ).toBeInTheDocument();
+        expect(screen.getByText(/Must have a description for the request/i)).toBeInTheDocument();
       });
     });
 
@@ -102,9 +98,10 @@ describe('WaterJetForm Integration', () => {
       await waitFor(() => {
         // Look for the error message specifically in the destructive-colored element
         const errorMessages = screen.getAllByText(/Please upload a DXF, AI, SVG, or DWG file/i);
-        const errorMessage = errorMessages.find(el => 
-          el.classList.contains('text-destructive') || 
-          el.getAttribute('data-slot') === 'form-message'
+        const errorMessage = errorMessages.find(
+          (el) =>
+            el.classList.contains('text-destructive') ||
+            el.getAttribute('data-slot') === 'form-message',
         );
         expect(errorMessage).toBeInTheDocument();
       });
@@ -141,7 +138,9 @@ describe('WaterJetForm Integration', () => {
       const descriptionField = screen.getByLabelText(/Description/i);
       await user.type(descriptionField, 'This is a test description for my water jet cutting job');
 
-      expect(descriptionField).toHaveValue('This is a test description for my water jet cutting job');
+      expect(descriptionField).toHaveValue(
+        'This is a test description for my water jet cutting job',
+      );
     });
 
     it('material select is interactive', async () => {
@@ -288,7 +287,9 @@ describe('WaterJetForm Integration', () => {
       await user.click(submitButton);
 
       await waitFor(() => {
-        expect(alertSpy).toHaveBeenCalledWith(expect.stringContaining('Water jet order submit failed'));
+        expect(alertSpy).toHaveBeenCalledWith(
+          expect.stringContaining('Water jet order submit failed'),
+        );
       });
 
       fetchSpy.mockRestore();
@@ -358,7 +359,7 @@ describe('WaterJetForm Integration', () => {
 
       const nameField = screen.getByLabelText(/Request Name/i) as HTMLInputElement;
       const descriptionField = screen.getByLabelText(/Description/i) as HTMLTextAreaElement;
-      
+
       expect(nameField.value).toBe('');
       expect(descriptionField.value).toBe('');
       expect(screen.getByText('Select a material')).toBeInTheDocument();

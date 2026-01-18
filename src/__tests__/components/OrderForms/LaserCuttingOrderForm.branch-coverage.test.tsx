@@ -51,11 +51,11 @@ describe('LaserCuttingOrderForm branch coverage', () => {
     // Select material - click the combobox and select acrylic
     const materialCombobox = screen.getByRole('combobox');
     await user.click(materialCombobox);
-    
+
     await waitFor(() => {
       expect(screen.getByRole('option', { name: /acrylic/i })).toBeInTheDocument();
     });
-    
+
     await user.click(screen.getByRole('option', { name: /acrylic/i }));
 
     // Submit form without file
@@ -95,9 +95,11 @@ describe('LaserCuttingOrderForm branch coverage', () => {
 
     // Create a valid laser cutting file
     const validFile = new File(['test dxf content'], 'test.dxf', { type: 'application/dxf' });
-    
+
     // Upload file
-    const fileInput = screen.getByRole('presentation').querySelector('input[type="file"]') as HTMLInputElement;
+    const fileInput = screen
+      .getByRole('presentation')
+      .querySelector('input[type="file"]') as HTMLInputElement;
     await user.upload(fileInput, validFile);
 
     // Verify file was accepted and filename displayed
@@ -141,7 +143,9 @@ describe('LaserCuttingOrderForm branch coverage', () => {
 
     // Upload valid file
     const validFile = new File(['test'], 'test.svg', { type: 'image/svg+xml' });
-    const fileInput = screen.getByRole('presentation').querySelector('input[type="file"]') as HTMLInputElement;
+    const fileInput = screen
+      .getByRole('presentation')
+      .querySelector('input[type="file"]') as HTMLInputElement;
     await user.upload(fileInput, validFile);
 
     // Submit form
@@ -160,11 +164,13 @@ describe('LaserCuttingOrderForm branch coverage', () => {
   it('covers file type validation in dropzone', async () => {
     const user = userEvent.setup();
     render(<LaserCuttingOrderForm />);
-    
+
     // Upload invalid file through dropzone
     const invalidFile = new File(['test'], 'test.txt', { type: 'text/plain' });
-    const fileInput = screen.getByRole('presentation').querySelector('input[type="file"]') as HTMLInputElement;
-    
+    const fileInput = screen
+      .getByRole('presentation')
+      .querySelector('input[type="file"]') as HTMLInputElement;
+
     await user.upload(fileInput, invalidFile);
 
     // Invalid files should be rejected by dropzone and not display filename
@@ -219,7 +225,9 @@ describe('LaserCuttingOrderForm branch coverage', () => {
 
     // Upload valid file
     const validFile = new File(['test'], 'test.dwg', { type: 'application/dwg' });
-    const fileInput = screen.getByRole('presentation').querySelector('input[type="file"]') as HTMLInputElement;
+    const fileInput = screen
+      .getByRole('presentation')
+      .querySelector('input[type="file"]') as HTMLInputElement;
     await user.upload(fileInput, validFile);
 
     // Submit form

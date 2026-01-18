@@ -58,7 +58,9 @@ export default function WaterJetForm() {
     name: z.string().min(1, { message: 'Must have a name for the request' }).max(50),
     description: z.string().min(2, { message: 'Must have a description for the request' }).max(500),
     material: z.string().min(1, { message: 'Please select a material' }),
-    file: z.any().refine((f) => f instanceof File, { message: 'Please upload a DXF, AI, SVG, or DWG file' }),
+    file: z
+      .any()
+      .refine((f) => f instanceof File, { message: 'Please upload a DXF, AI, SVG, or DWG file' }),
   });
 
   const form = useForm<z.infer<typeof formSchema>>({

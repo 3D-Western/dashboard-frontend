@@ -117,7 +117,7 @@ describe('CNCOrderForm branch coverage (fallbacks)', () => {
     await user.type(screen.getByLabelText(/description/i), 'Test description for CNC part');
 
     const submitButton = screen.getByRole('button', { name: /Submit CNC Request/i });
-    
+
     await user.click(submitButton);
 
     await waitFor(() => {
@@ -183,7 +183,7 @@ describe('CNCOrderForm branch coverage (fallbacks)', () => {
     await user.click(submitButton);
 
     // For CNC form, we don't show individual field validation errors on first submit
-    // Instead, it focuses on file requirement when other fields are present 
+    // Instead, it focuses on file requirement when other fields are present
     // Let's just verify that the form doesn't crash when submitting empty
     expect(submitButton).toBeInTheDocument();
   });
@@ -195,7 +195,7 @@ describe('CNCOrderForm branch coverage (fallbacks)', () => {
     // Fill required fields
     await user.type(screen.getByLabelText(/request name/i), 'Test Part');
     await user.type(screen.getByLabelText(/description/i), 'Test description');
-    
+
     // Click the set-undefined button to simulate material selection
     const setUndefinedButtons = screen.getAllByRole('button', { name: /set-undefined/i });
     if (setUndefinedButtons.length > 0) {

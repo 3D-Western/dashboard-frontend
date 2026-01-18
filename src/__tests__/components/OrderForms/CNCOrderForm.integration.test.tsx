@@ -69,9 +69,7 @@ describe('CNCOrderForm Integration', () => {
       await user.click(submitButton);
 
       await waitFor(() => {
-        expect(
-          screen.getByText(/Must have a description for the request/i),
-        ).toBeInTheDocument();
+        expect(screen.getByText(/Must have a description for the request/i)).toBeInTheDocument();
       });
     });
 
@@ -86,9 +84,7 @@ describe('CNCOrderForm Integration', () => {
       await user.click(submitButton);
 
       await waitFor(() => {
-        expect(
-          screen.getByText(/Must have a description for the request/i),
-        ).toBeInTheDocument();
+        expect(screen.getByText(/Must have a description for the request/i)).toBeInTheDocument();
       });
     });
 

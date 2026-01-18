@@ -87,7 +87,16 @@ vi.mock('@/components/ui/select', () => {
     return items;
   };
 
-  const materialValues = ['steel', 'stainless-steel', 'aluminum', 'brass', 'copper', 'titanium', 'stone', 'glass'] as const;
+  const materialValues = [
+    'steel',
+    'stainless-steel',
+    'aluminum',
+    'brass',
+    'copper',
+    'titanium',
+    'stone',
+    'glass',
+  ] as const;
   const labels: Record<string, string> = {
     steel: 'Steel',
     'stainless-steel': 'Stainless Steel',

@@ -87,7 +87,15 @@ vi.mock('@/components/ui/select', () => {
     return items;
   };
 
-  const materialValues = ['acrylic', 'wood', 'cardboard', 'fabric', 'leather', 'paper', 'foam'] as const;
+  const materialValues = [
+    'acrylic',
+    'wood',
+    'cardboard',
+    'fabric',
+    'leather',
+    'paper',
+    'foam',
+  ] as const;
   const labels: Record<string, string> = {
     acrylic: 'Acrylic',
     wood: 'Wood (Plywood/MDF)',
