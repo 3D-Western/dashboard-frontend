@@ -9,6 +9,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Routes } from '@/lib/routes';
 import { Mail, CheckCircle2, XCircle } from 'lucide-react';
+import { sessionApi } from '@/api/client/session';
 
 type VerificationStatus = 'loading' | 'success' | 'error' | 'invalid-token';
 
@@ -38,8 +39,7 @@ export function VerifyEmailContent({ className, ...props }: React.ComponentProps
       }
 
       try {
-        // TODO: Replace with actual API call
-        // await emailVerificationApi.verify(token);
+        // await sessionApi.
 
         // Stub: simulate API call
         await new Promise((resolve) => setTimeout(resolve, 1500));

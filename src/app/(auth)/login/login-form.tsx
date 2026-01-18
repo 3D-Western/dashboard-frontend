@@ -14,7 +14,7 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { StatusAlert } from '@/components/StatusAlert';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
@@ -22,7 +22,6 @@ import { sessionApi } from '@/api/client/session';
 import { useRouter } from 'next/navigation';
 import { Routes } from '@/lib/routes';
 import { useState, useEffect } from 'react';
-import { AlertCircle } from 'lucide-react';
 import { ApiError, ErrorCodes } from '@/api/client/errors';
 
 const formSchema = z.object({
@@ -50,10 +49,9 @@ const ERROR_MESSAGES: Record<string, { title: string; description: string }> = {
 type ErrorState = {
   title: string;
   description: string;
-  variant?: 'default' | 'destructive';
+  variant?: 'default' | 'destructive' | 'warning';
   emailVerification?: {
-    challengeId: number;
-    email: string;
+    studentId: number;
   };
 } | null;
 
@@ -65,9 +63,7 @@ export function LoginForm({
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [currentError, setCurrentError] = useState<ErrorState>(
-    error && ERROR_MESSAGES[error]
-      ? { ...ERROR_MESSAGES[error], variant: 'destructive' }
-      : null,
+    error && ERROR_MESSAGES[error] ? { ...ERROR_MESSAGES[error], variant: 'destructive' } : null,
   );
   const [isResending, setIsResending] = useState(false);
   const [resendCooldown, setResendCooldown] = useState(0);
@@ -113,16 +109,13 @@ export function LoginForm({
       // Check if it's an email verification error
       if (error instanceof ApiError && error.code === ErrorCodes.EMAIL_NOT_VERIFIED) {
         // Extract challengeId and email from error details
-        const details = error.details as { challengeId?: number; email?: string } | undefined;
-
         setCurrentError({
           title: 'Email Not Verified',
           description:
             'Your email address has not been verified. Please check your inbox for the verification link.',
-          variant: 'default',
+          variant: 'warning',
           emailVerification: {
-            challengeId: details?.challengeId || 0,
-            email: details?.email || values.studentId,
+            studentId: parseInt(values.studentId, 10),
           },
         });
       } else if (error instanceof ApiError) {
@@ -150,7 +143,7 @@ export function LoginForm({
 
     setIsResending(true);
     try {
-      await sessionApi.resendEmailVerification(currentError.emailVerification.challengeId);
+      await sessionApi.resendEmailVerification(currentError.emailVerification.studentId);
       // Start 60-second cooldown
       setResendCooldown(60);
       // Update error to show success message
@@ -158,7 +151,7 @@ export function LoginForm({
         title: 'Verification Email Sent',
         description:
           'A new verification email has been sent. Please check your inbox and verify your email address.',
-        variant: 'default',
+        variant: 'warning',
         emailVerification: currentError.emailVerification,
       });
     } catch (error) {
@@ -187,12 +180,12 @@ export function LoginForm({
     <div className={cn('flex flex-col gap-6', className)} {...props}>
       {/* Single Error Display Area */}
       {currentError && (
-        <Alert variant={currentError.variant}>
-          <AlertCircle className="h-4 w-4" />
-          <AlertTitle>{currentError.title}</AlertTitle>
-          <AlertDescription className="space-y-3">
-            <p>{currentError.description}</p>
-            {currentError.emailVerification && (
+        <StatusAlert
+          variant={currentError.variant}
+          title={currentError.title}
+          description={currentError.description}
+          action={
+            currentError.emailVerification ? (
               <Button
                 onClick={handleResendVerification}
                 disabled={isResending || resendCooldown > 0}
@@ -206,9 +199,9 @@ export function LoginForm({
                     ? `Resend available in ${resendCooldown}s`
                     : 'Click here to resend verification email'}
               </Button>
-            )}
-          </AlertDescription>
-        </Alert>
+            ) : undefined
+          }
+        />
       )}
 
       <Card className="overflow-hidden p-0">

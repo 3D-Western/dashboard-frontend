@@ -78,7 +78,7 @@ export const sessionApi = {
   verifyMfa: async (challengeId: number, code: string, options?: RequestInit) => {
     const serverUrl = getBaseUrl();
 
-    return apiRequest<ApiVerifyMfaResponse>(`${serverUrl}${endpoints.mfa.verifyEmail}`, {
+    return apiRequest<ApiVerifyMfaResponse>(`${serverUrl}${endpoints.emailVerify.verifyEmail}`, {
       method: 'POST',
       body: JSON.stringify({ challengeId, code }),
       credentials: 'include',
@@ -95,12 +95,13 @@ export const sessionApi = {
       ...options,
     });
   },
-  resendEmailVerification: async (challengeId: number, options?: RequestInit) => {
+  resendEmailVerification: async (studentId: number, options?: RequestInit) => {
     const serverUrl = getBaseUrl();
 
-    return apiRequest<void>(`${serverUrl}${endpoints.mfa.resendEmail(challengeId)}`, {
+    return apiRequest<void>(`${serverUrl}${endpoints.emailVerify.resendEmail}`, {
       method: 'POST',
       credentials: 'include',
+      body: JSON.stringify({ studentId }),
       ...options,
     });
   },

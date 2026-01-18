@@ -10,7 +10,7 @@ const VALID_OTP_CODE = '123456';
 const MOCK_CHALLENGE_ID = 123;
 
 export const mfaHandlers = [
-  http.post(`${apiUrl}${endpoints.mfa.verifyEmail}`, async ({ request }) => {
+  http.post(`${apiUrl}${endpoints.emailVerify.verifyEmail}`, async ({ request }) => {
     const { challengeId, code } = (await request.json()) as {
       challengeId: number;
       code: string;

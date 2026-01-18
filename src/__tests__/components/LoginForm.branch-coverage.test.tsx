@@ -147,7 +147,7 @@ describe('LoginForm Branch Coverage', () => {
             { status: 403 },
           );
         }),
-        http.post(`*${endpoints.mfa.resendEmail(12345)}`, () => {
+        http.post(`*${endpoints.emailVerify.resendEmail}`, () => {
           throw new Error('Network error');
         }),
       );
@@ -196,7 +196,7 @@ describe('LoginForm Branch Coverage', () => {
             { status: 403 },
           );
         }),
-        http.post(`*${endpoints.mfa.resendEmail(12345)}`, () => {
+        http.post(`*${endpoints.emailVerify.resendEmail}`, () => {
           return HttpResponse.json({
             success: true,
             data: { message: 'Verification email sent' },
@@ -251,7 +251,7 @@ describe('LoginForm Branch Coverage', () => {
             { status: 403 },
           );
         }),
-        http.post(`*${endpoints.mfa.resendEmail(12345)}`, () => {
+        http.post(`*${endpoints.emailVerify.resendEmail}`, () => {
           return HttpResponse.json({
             success: true,
             data: { message: 'Verification email sent' },
@@ -287,7 +287,9 @@ describe('LoginForm Branch Coverage', () => {
       });
 
       await waitFor(() => {
-        expect(screen.getByRole('button', { name: /resend available in 59s/i })).toBeInTheDocument();
+        expect(
+          screen.getByRole('button', { name: /resend available in 59s/i }),
+        ).toBeInTheDocument();
       });
 
       // Advance timer by another second
@@ -296,7 +298,9 @@ describe('LoginForm Branch Coverage', () => {
       });
 
       await waitFor(() => {
-        expect(screen.getByRole('button', { name: /resend available in 58s/i })).toBeInTheDocument();
+        expect(
+          screen.getByRole('button', { name: /resend available in 58s/i }),
+        ).toBeInTheDocument();
       });
     });
   });
@@ -322,7 +326,7 @@ describe('LoginForm Branch Coverage', () => {
             { status: 403 },
           );
         }),
-        http.post(`*${endpoints.mfa.resendEmail(12345)}`, () => {
+        http.post(`*${endpoints.emailVerify.resendEmail}`, () => {
           return HttpResponse.json({
             success: true,
             data: { message: 'Verification email sent' },

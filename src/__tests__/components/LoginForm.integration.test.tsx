@@ -359,9 +359,7 @@ describe('LoginForm Integration', () => {
         expect(screen.getByText(/email not verified/i)).toBeInTheDocument();
       });
 
-      expect(
-        screen.getByText(/your email address has not been verified/i),
-      ).toBeInTheDocument();
+      expect(screen.getByText(/your email address has not been verified/i)).toBeInTheDocument();
       expect(
         screen.getByRole('button', { name: /click here to resend verification email/i }),
       ).toBeInTheDocument();
@@ -388,7 +386,7 @@ describe('LoginForm Integration', () => {
             { status: 403 },
           );
         }),
-        http.post(`*${endpoints.mfa.resendEmail(12345)}`, () => {
+        http.post(`*${endpoints.emailVerify.resendEmail}`, () => {
           return HttpResponse.json({
             success: true,
             data: { message: 'Verification email sent' },
@@ -441,7 +439,7 @@ describe('LoginForm Integration', () => {
             { status: 403 },
           );
         }),
-        http.post(`*${endpoints.mfa.resendEmail(12345)}`, () => {
+        http.post(`*${endpoints.emailVerify.resendEmail}`, () => {
           return HttpResponse.json(
             {
               success: false,
@@ -494,7 +492,7 @@ describe('LoginForm Integration', () => {
             { status: 403 },
           );
         }),
-        http.post(`*${endpoints.mfa.resendEmail(12345)}`, async () => {
+        http.post(`*${endpoints.emailVerify.resendEmail}`, async () => {
           await new Promise((resolve) => setTimeout(resolve, 100));
           return HttpResponse.json({
             success: true,
