@@ -131,15 +131,7 @@ export function LoginForm({
                   name="password"
                   render={({ field }) => (
                     <FormItem>
-                      <div className="flex items-center">
-                        <FormLabel>Password</FormLabel>
-                        <a
-                          href={`${Routes.forgotPassword}`}
-                          className="ml-auto text-sm underline-offset-2 hover:underline"
-                        >
-                          Forgot your password?
-                        </a>
-                      </div>
+                      <FormLabel>Password</FormLabel>
                       <FormControl>
                         <Input type="password" {...field} />
                       </FormControl>
@@ -147,6 +139,15 @@ export function LoginForm({
                     </FormItem>
                   )}
                 />
+
+                <div className="text-right">
+                  <a
+                    href={`${Routes.forgotPassword}`}
+                    className="text-sm underline-offset-2 hover:underline"
+                  >
+                    Forgot your password?
+                  </a>
+                </div>
 
                 <Button type="submit" disabled={isLoading}>
                   {isLoading ? 'Logging in...' : 'Login'}
