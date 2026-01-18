@@ -108,7 +108,7 @@ vi.mock('@/components/ui/select', () => {
     children: React.ReactNode;
   }) => {
     const items = collectItems(children);
-    const itemValues = new Set(items.map((item) => (item.props as any).value));
+    const itemValues = new Set(items.map((item) => (item.props as { value: string }).value));
     const isMaterialSelect = materialValues.some((val) => itemValues.has(val));
 
     const options = isMaterialSelect
@@ -117,7 +117,7 @@ vi.mock('@/components/ui/select', () => {
         )
       : items.map((item) =>
           React.cloneElement(item, {
-            key: (item.props as any).value,
+            key: (item.props as { value: string }).value,
           }),
         );
     return React.createElement(

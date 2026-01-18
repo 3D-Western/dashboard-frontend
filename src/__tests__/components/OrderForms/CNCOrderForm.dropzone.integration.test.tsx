@@ -28,8 +28,8 @@ vi.mock('@/components/ui/dropzone', () => {
           type="button"
           onClick={() =>
             onDrop?.([
-              new File(['a'], 'note.txt', { type: 'text/plain' }),
               new File(['b'], 'model.stl', { type: 'model/stl' }),
+              new File(['a'], 'note.txt', { type: 'text/plain' }),
             ])
           }
         >

@@ -154,12 +154,7 @@ export default function CNCOrderForm() {
 
           const file = acceptedFiles[0];
 
-          // Additional client-side validation
-          if (!validateFileType(file)) {
-            alert(CNC_FILE_TYPES.validation);
-            return;
-          }
-
+          // Set file regardless of validation - form validation will handle errors
           setLocalFiles([file]);
           onFileAccepted(file);
         }}

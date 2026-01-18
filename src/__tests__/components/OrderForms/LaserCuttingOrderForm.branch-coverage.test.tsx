@@ -23,7 +23,7 @@ describe('LaserCuttingOrderForm branch coverage', () => {
     mockRefresh.mockClear();
     // Reset global fetch mock
     if (vi.isMockFunction(global.fetch)) {
-      (global.fetch as any).mockReset();
+      (global.fetch as ReturnType<typeof vi.fn>).mockReset();
     } else {
       global.fetch = vi.fn();
     }
@@ -82,7 +82,7 @@ describe('LaserCuttingOrderForm branch coverage', () => {
         data: { order: { id: 'test-123' } },
       }),
     };
-    (global.fetch as any).mockResolvedValue(mockFetchResponse);
+    (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValue(mockFetchResponse);
 
     // Fill required fields
     await user.type(screen.getByLabelText(/request name/i), 'Test Part');
@@ -128,7 +128,7 @@ describe('LaserCuttingOrderForm branch coverage', () => {
     const user = userEvent.setup();
     render(<LaserCuttingOrderForm />);
 
-    (global.fetch as any).mockRejectedValue(new Error('Network error'));
+    (global.fetch as ReturnType<typeof vi.fn>).mockRejectedValue(new Error('Network error'));
 
     // Fill form completely
     await user.type(screen.getByLabelText(/request name/i), 'Test Part');
@@ -206,7 +206,7 @@ describe('LaserCuttingOrderForm branch coverage', () => {
       ok: false,
       text: vi.fn().mockResolvedValue('Server error'),
     };
-    (global.fetch as any).mockResolvedValue(mockFetchResponse);
+    (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValue(mockFetchResponse);
 
     // Fill form completely
     await user.type(screen.getByLabelText(/request name/i), 'Test Part');
