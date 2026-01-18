@@ -31,6 +31,8 @@ import { Routes } from '@/lib/routes';
 import { ArrowLeft, ArrowRight } from 'lucide-react';
 import Image from 'next/image';
 import { cn } from '@/lib/utils';
+import { sessionApi } from '@/api/client/session';
+import { ApiError } from '@/api/client/errors';
 
 const formSchema = z.object({
   studentId: z
@@ -107,47 +109,47 @@ export function SignupForm({ className, ...props }: React.ComponentProps<'div'>)
         return;
       }
 
-      // Convert studentId to number and prepare data for submission
-      const { studentId, ...rest } = values;
-      const submitData = {
-        studentId: parseInt(studentId, 10),
-        email: rest.email,
-        password: rest.password,
-        inviteCode: rest.inviteCode,
-        firstName: rest.firstName,
-        lastName: rest.lastName,
+      // Convert studentId to number and prepare data for API
+      const signupData = {
+        studentId: parseInt(values.studentId, 10),
+        email: values.email,
+        password: values.password,
+        inviteCode: values.inviteCode,
+        firstName: values.firstName,
+        lastName: values.lastName,
         experienceLevel: values.experienceLevel,
       };
 
-      // Make API call to signup endpoint
-      const response = await fetch('/api/signup', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(submitData),
-      });
+      // Call signup API endpoint
+      const response = await sessionApi.signup(signupData);
 
-      // Handle error responses (400-500 status codes)
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({ message: 'An error occurred' }));
-        toast.error(errorData.message || `Error: ${response.status} - ${response.statusText}`);
+      // Check if MFA is required
+      if (response.requiresMfa && response.challengeId) {
+        // Redirect to MFA verification page with challengeId
+        toast.info('Please verify your email to complete registration');
+        router.push(`/verify-email?challengeId=${response.challengeId}`);
         return;
       }
 
-      // Handle successful response (200 status code)
-      const data = await response.json();
+      // If we have a session token, registration is complete
+      if (response.sessionToken) {
+        toast.success('Registration successful! Redirecting...');
+        router.push('/dashboard');
+        return;
+      }
 
-      // Store the session token as a cookie
-      document.cookie = `sessionToken=${data.sessionToken}; path=/; max-age=${60 * 60 * 24 * 7}; SameSite=Strict`;
-
-      toast.success('Registration successful! Redirecting...');
-
-      // Redirect to dashboard homepage
-      router.push('/dashboard');
+      // Unexpected response
+      toast.error('Unexpected response from server. Please try again.');
     } catch (error) {
-      console.error('Form submission error', error);
-      toast.error('Failed to connect to the server. Please try again.');
+      console.error('Signup error:', error);
+
+      if (error instanceof ApiError) {
+        // Handle specific API errors
+        toast.error(error.message);
+      } else {
+        // Handle network or unexpected errors
+        toast.error('Failed to connect to the server. Please try again.');
+      }
     } finally {
       setIsLoading(false);
     }

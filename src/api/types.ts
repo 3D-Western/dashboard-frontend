@@ -40,6 +40,18 @@ export interface ApiVerifyMfaResponse {
   sessionToken: string;
 }
 
+export interface ApiSignupRequest {
+  studentId: number;
+  email: string;
+  password: string;
+  inviteCode: string;
+  firstName: string;
+  lastName: string;
+  experienceLevel: string;
+}
+
+export type ApiSignupResponse = ApiLoginResponse;
+
 // Print Jobs API Response Types
 export type PrintJobListResponse = PaginatedResponse<PrintJob>;
 export type PrintJobResponse = PrintJob;

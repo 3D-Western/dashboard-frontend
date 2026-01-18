@@ -1,4 +1,10 @@
-import { ApiGetCurrentSessionResponse, ApiLoginResponse, ApiVerifyMfaResponse } from '../types';
+import {
+  ApiGetCurrentSessionResponse,
+  ApiLoginResponse,
+  ApiVerifyMfaResponse,
+  ApiSignupRequest,
+  ApiSignupResponse,
+} from '../types';
 import { apiRequest } from './base';
 import { endpoints } from './endpoints';
 import { getBaseUrl } from './utils';
@@ -75,6 +81,16 @@ export const sessionApi = {
     return apiRequest<ApiVerifyMfaResponse>(`${serverUrl}${endpoints.mfa.verifyEmail}`, {
       method: 'POST',
       body: JSON.stringify({ challengeId, code }),
+      credentials: 'include',
+      ...options,
+    });
+  },
+  signup: async (signupData: ApiSignupRequest, options?: RequestInit) => {
+    const serverUrl = getBaseUrl();
+
+    return apiRequest<ApiSignupResponse>(`${serverUrl}${endpoints.auth.signup}`, {
+      method: 'POST',
+      body: JSON.stringify(signupData),
       credentials: 'include',
       ...options,
     });
