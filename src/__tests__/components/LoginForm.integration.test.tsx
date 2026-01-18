@@ -41,7 +41,7 @@ describe('LoginForm Integration', () => {
       const user = userEvent.setup();
       render(<LoginForm />);
 
-      const submitButton = screen.getByRole('button', { name: /login/i });
+      const submitButton = screen.getByRole('button', { name: /^login$/i });
       await user.click(submitButton);
 
       expect(await screen.findByText(/student id is required/i)).toBeInTheDocument();
@@ -52,7 +52,7 @@ describe('LoginForm Integration', () => {
       render(<LoginForm />);
 
       const studentIdInput = screen.getByLabelText(/student id/i);
-      const submitButton = screen.getByRole('button', { name: /login/i });
+      const submitButton = screen.getByRole('button', { name: /^login$/i });
 
       // Too short
       await user.type(studentIdInput, '12345');
@@ -66,7 +66,7 @@ describe('LoginForm Integration', () => {
       render(<LoginForm />);
 
       const studentIdInput = screen.getByLabelText(/student id/i);
-      const submitButton = screen.getByRole('button', { name: /login/i });
+      const submitButton = screen.getByRole('button', { name: /^login$/i });
 
       // Out of range
       await user.type(studentIdInput, '999999999');
@@ -82,7 +82,7 @@ describe('LoginForm Integration', () => {
       render(<LoginForm />);
 
       const studentIdInput = screen.getByLabelText(/student id/i);
-      const submitButton = screen.getByRole('button', { name: /login/i });
+      const submitButton = screen.getByRole('button', { name: /^login$/i });
 
       await user.type(studentIdInput, 'abc123xyz');
       await user.click(submitButton);
@@ -95,7 +95,7 @@ describe('LoginForm Integration', () => {
       render(<LoginForm />);
 
       const studentIdInput = screen.getByLabelText(/student id/i);
-      const submitButton = screen.getByRole('button', { name: /login/i });
+      const submitButton = screen.getByRole('button', { name: /^login$/i });
 
       await user.type(studentIdInput, '251000001');
       await user.click(submitButton);
@@ -113,11 +113,7 @@ describe('LoginForm Integration', () => {
 
       await user.type(screen.getByLabelText(/student id/i), '251000001');
       await user.type(screen.getByLabelText(/password/i), 'password123');
-      await user.click(screen.getByRole('button', { name: /login/i }));
-
-      await waitFor(() => {
-        expect(toast.success).toHaveBeenCalledWith(expect.stringContaining('Login successful'));
-      });
+      await user.click(screen.getByRole('button', { name: /^login$/i }));
 
       await waitFor(() => {
         expect(mockPush).toHaveBeenCalledWith('/dashboard');
@@ -143,7 +139,7 @@ describe('LoginForm Integration', () => {
 
       await user.type(screen.getByLabelText(/student id/i), '251000001');
       await user.type(screen.getByLabelText(/password/i), 'password123');
-      await user.click(screen.getByRole('button', { name: /login/i }));
+      await user.click(screen.getByRole('button', { name: /^login$/i }));
 
       await waitFor(() => {
         expect(sessionStorage.getItem('mfaChallengeId')).toBe('123456');
@@ -158,7 +154,7 @@ describe('LoginForm Integration', () => {
       render(<LoginForm />);
 
       const studentIdInput = screen.getByLabelText(/student id/i);
-      const submitButton = screen.getByRole('button', { name: /login/i });
+      const submitButton = screen.getByRole('button', { name: /^login$/i });
 
       // First submit with invalid data
       await user.click(submitButton);
@@ -176,7 +172,7 @@ describe('LoginForm Integration', () => {
   });
 
   describe('Failed Login', () => {
-    it('shows error toast on invalid credentials', async () => {
+    it('shows error alert on invalid credentials', async () => {
       const user = userEvent.setup();
       mockFailedLogin();
 
@@ -184,10 +180,10 @@ describe('LoginForm Integration', () => {
 
       await user.type(screen.getByLabelText(/student id/i), '251000001');
       await user.type(screen.getByLabelText(/password/i), 'wrongpassword');
-      await user.click(screen.getByRole('button', { name: /login/i }));
+      await user.click(screen.getByRole('button', { name: /^login$/i }));
 
       await waitFor(() => {
-        expect(toast.error).toHaveBeenCalledWith(expect.stringContaining('Invalid credentials'));
+        expect(screen.getByText(/login failed/i)).toBeInTheDocument();
       });
 
       expect(mockPush).not.toHaveBeenCalled();
@@ -202,10 +198,10 @@ describe('LoginForm Integration', () => {
 
       await user.type(screen.getByLabelText(/student id/i), '251000001');
       await user.type(screen.getByLabelText(/password/i), 'wrongpassword');
-      await user.click(screen.getByRole('button', { name: /login/i }));
+      await user.click(screen.getByRole('button', { name: /^login$/i }));
 
       await waitFor(() => {
-        expect(toast.error).toHaveBeenCalled();
+        expect(screen.getByText(/login failed/i)).toBeInTheDocument();
       });
 
       vi.clearAllMocks();
@@ -216,10 +212,9 @@ describe('LoginForm Integration', () => {
       const passwordInput = screen.getByLabelText(/password/i);
       await user.clear(passwordInput);
       await user.type(passwordInput, 'correctpassword');
-      await user.click(screen.getByRole('button', { name: /login/i }));
+      await user.click(screen.getByRole('button', { name: /^login$/i }));
 
       await waitFor(() => {
-        expect(toast.success).toHaveBeenCalled();
         expect(mockPush).toHaveBeenCalledWith('/dashboard');
       });
     });
@@ -237,10 +232,10 @@ describe('LoginForm Integration', () => {
 
       await user.type(screen.getByLabelText(/student id/i), '251000001');
       await user.type(screen.getByLabelText(/password/i), 'password123');
-      await user.click(screen.getByRole('button', { name: /login/i }));
+      await user.click(screen.getByRole('button', { name: /^login$/i }));
 
       await waitFor(() => {
-        expect(toast.error).toHaveBeenCalled();
+        expect(screen.getByText(/login failed/i)).toBeInTheDocument();
       });
     });
   });
@@ -262,7 +257,7 @@ describe('LoginForm Integration', () => {
 
       render(<LoginForm />);
 
-      const submitButton = screen.getByRole('button', { name: /login/i });
+      const submitButton = screen.getByRole('button', { name: /^login$/i });
 
       await user.type(screen.getByLabelText(/student id/i), '251000001');
       await user.type(screen.getByLabelText(/password/i), 'password123');
@@ -298,7 +293,7 @@ describe('LoginForm Integration', () => {
       await user.type(screen.getByLabelText(/student id/i), '251000001');
       await user.type(screen.getByLabelText(/password/i), 'password123');
 
-      const submitButton = screen.getByRole('button', { name: /login/i });
+      const submitButton = screen.getByRole('button', { name: /^login$/i });
       await user.click(submitButton);
 
       // Should show loading text
@@ -328,6 +323,205 @@ describe('LoginForm Integration', () => {
 
       const passwordInput = screen.getByLabelText(/password/i);
       expect(passwordInput).toHaveAttribute('type', 'password');
+    });
+  });
+
+  describe('Email Verification', () => {
+    it('displays email not verified error and resend button', async () => {
+      const user = userEvent.setup();
+
+      mockServer.use(
+        http.post(`*${endpoints.auth.login}`, () => {
+          return HttpResponse.json(
+            {
+              success: false,
+              error: {
+                code: 'EMAIL_NOT_VERIFIED',
+                message: 'Email not verified',
+                details: {
+                  challengeId: 12345,
+                  email: 'test@uwo.ca',
+                },
+              },
+            },
+            { status: 403 },
+          );
+        }),
+      );
+
+      render(<LoginForm />);
+
+      await user.type(screen.getByLabelText(/student id/i), '251000001');
+      await user.type(screen.getByLabelText(/password/i), 'password123');
+      await user.click(screen.getByRole('button', { name: /^login$/i }));
+
+      await waitFor(() => {
+        expect(screen.getByText(/email not verified/i)).toBeInTheDocument();
+      });
+
+      expect(
+        screen.getByText(/your email address has not been verified/i),
+      ).toBeInTheDocument();
+      expect(
+        screen.getByRole('button', { name: /click here to resend verification email/i }),
+      ).toBeInTheDocument();
+    });
+
+    it('handles resend verification email successfully', async () => {
+      const user = userEvent.setup();
+
+      // Mock initial login with email not verified error
+      mockServer.use(
+        http.post(`*${endpoints.auth.login}`, () => {
+          return HttpResponse.json(
+            {
+              success: false,
+              error: {
+                code: 'EMAIL_NOT_VERIFIED',
+                message: 'Email not verified',
+                details: {
+                  challengeId: 12345,
+                  email: 'test@uwo.ca',
+                },
+              },
+            },
+            { status: 403 },
+          );
+        }),
+        http.post(`*${endpoints.mfa.resendEmail(12345)}`, () => {
+          return HttpResponse.json({
+            success: true,
+            data: { message: 'Verification email sent' },
+          });
+        }),
+      );
+
+      render(<LoginForm />);
+
+      await user.type(screen.getByLabelText(/student id/i), '251000001');
+      await user.type(screen.getByLabelText(/password/i), 'password123');
+      await user.click(screen.getByRole('button', { name: /^login$/i }));
+
+      await waitFor(() => {
+        expect(screen.getByText(/email not verified/i)).toBeInTheDocument();
+      });
+
+      // Click resend button
+      const resendButton = screen.getByRole('button', {
+        name: /click here to resend verification email/i,
+      });
+      await user.click(resendButton);
+
+      // Should show success message
+      await waitFor(() => {
+        expect(screen.getByText(/verification email sent/i)).toBeInTheDocument();
+      });
+
+      // Button should show cooldown
+      expect(screen.getByRole('button', { name: /resend available in/i })).toBeDisabled();
+    });
+
+    it('handles resend verification email failure', async () => {
+      const user = userEvent.setup();
+
+      mockServer.use(
+        http.post(`*${endpoints.auth.login}`, () => {
+          return HttpResponse.json(
+            {
+              success: false,
+              error: {
+                code: 'EMAIL_NOT_VERIFIED',
+                message: 'Email not verified',
+                details: {
+                  challengeId: 12345,
+                  email: 'test@uwo.ca',
+                },
+              },
+            },
+            { status: 403 },
+          );
+        }),
+        http.post(`*${endpoints.mfa.resendEmail(12345)}`, () => {
+          return HttpResponse.json(
+            {
+              success: false,
+              error: { code: 'SERVER_ERROR', message: 'Failed to send email' },
+            },
+            { status: 500 },
+          );
+        }),
+      );
+
+      render(<LoginForm />);
+
+      await user.type(screen.getByLabelText(/student id/i), '251000001');
+      await user.type(screen.getByLabelText(/password/i), 'password123');
+      await user.click(screen.getByRole('button', { name: /^login$/i }));
+
+      await waitFor(() => {
+        expect(screen.getByText(/email not verified/i)).toBeInTheDocument();
+      });
+
+      // Click resend button
+      const resendButton = screen.getByRole('button', {
+        name: /click here to resend verification email/i,
+      });
+      await user.click(resendButton);
+
+      // Should show error message
+      await waitFor(() => {
+        expect(screen.getByText(/failed to resend email/i)).toBeInTheDocument();
+      });
+    });
+
+    it('disables resend button while sending', async () => {
+      const user = userEvent.setup();
+
+      mockServer.use(
+        http.post(`*${endpoints.auth.login}`, () => {
+          return HttpResponse.json(
+            {
+              success: false,
+              error: {
+                code: 'EMAIL_NOT_VERIFIED',
+                message: 'Email not verified',
+                details: {
+                  challengeId: 12345,
+                  email: 'test@uwo.ca',
+                },
+              },
+            },
+            { status: 403 },
+          );
+        }),
+        http.post(`*${endpoints.mfa.resendEmail(12345)}`, async () => {
+          await new Promise((resolve) => setTimeout(resolve, 100));
+          return HttpResponse.json({
+            success: true,
+            data: { message: 'Verification email sent' },
+          });
+        }),
+      );
+
+      render(<LoginForm />);
+
+      await user.type(screen.getByLabelText(/student id/i), '251000001');
+      await user.type(screen.getByLabelText(/password/i), 'password123');
+      await user.click(screen.getByRole('button', { name: /^login$/i }));
+
+      await waitFor(() => {
+        expect(screen.getByText(/email not verified/i)).toBeInTheDocument();
+      });
+
+      const resendButton = screen.getByRole('button', {
+        name: /click here to resend verification email/i,
+      });
+      await user.click(resendButton);
+
+      // Should show "Sending..." and be disabled
+      await waitFor(() => {
+        expect(screen.getByRole('button', { name: /sending/i })).toBeDisabled();
+      });
     });
   });
 });
