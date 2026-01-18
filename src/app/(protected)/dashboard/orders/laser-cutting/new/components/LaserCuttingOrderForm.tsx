@@ -57,7 +57,7 @@ export default function LaserCuttingOrderForm() {
     name: z.string().min(1, { message: 'Must have a name for the request' }).max(50),
     description: z.string().min(2, { message: 'Must have a description for the request' }).max(500),
     material: z.string().min(1, { message: 'Please select a material' }),
-    file: z.any().optional(),
+    file: z.any().refine((f) => f instanceof File, { message: 'Please upload a DXF, AI, SVG, or DWG file' }),
   });
 
   const form = useForm<z.infer<typeof formSchema>>({
@@ -80,11 +80,6 @@ export default function LaserCuttingOrderForm() {
   };
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    if (!values.file || !(values.file instanceof File)) {
-      alert(LASER_FILE_TYPES.validation);
-      return;
-    }
-
     try {
       const file = values.file as File;
 
@@ -164,12 +159,7 @@ export default function LaserCuttingOrderForm() {
 
           const file = acceptedFiles[0];
 
-          // Additional client-side validation
-          if (!validateFileType(file)) {
-            alert(LASER_FILE_TYPES.validation);
-            return;
-          }
-
+          // Set file regardless of validation - form validation will handle errors
           setLocalFiles([file]);
           onFileAccepted(file);
         }}
