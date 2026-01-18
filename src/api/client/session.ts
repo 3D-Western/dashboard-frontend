@@ -95,4 +95,13 @@ export const sessionApi = {
       ...options,
     });
   },
+  resendEmailVerification: async (challengeId: number, options?: RequestInit) => {
+    const serverUrl = getBaseUrl();
+
+    return apiRequest<void>(`${serverUrl}${endpoints.mfa.resendEmail(challengeId)}`, {
+      method: 'POST',
+      credentials: 'include',
+      ...options,
+    });
+  },
 };

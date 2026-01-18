@@ -23,6 +23,7 @@ export interface UserResponse {
   lastName: string;
   status: string; // Backend sends "Admin" or "User"
   experienceLevel?: string;
+  faculty?: string;
 }
 
 export interface ApiGetCurrentSessionResponse {
@@ -48,6 +49,7 @@ export interface ApiSignupRequest {
   firstName: string;
   lastName: string;
   experienceLevel: string;
+  faculty: string;
 }
 
 export type ApiSignupResponse = ApiLoginResponse;

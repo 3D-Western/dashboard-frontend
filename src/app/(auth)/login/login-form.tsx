@@ -19,11 +19,11 @@ import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { sessionApi } from '@/api/client/session';
-import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
 import { Routes } from '@/lib/routes';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { AlertCircle } from 'lucide-react';
+import { ApiError, ErrorCodes } from '@/api/client/errors';
 
 const formSchema = z.object({
   studentId: z
@@ -47,6 +47,16 @@ const ERROR_MESSAGES: Record<string, { title: string; description: string }> = {
   },
 };
 
+type ErrorState = {
+  title: string;
+  description: string;
+  variant?: 'default' | 'destructive';
+  emailVerification?: {
+    challengeId: number;
+    email: string;
+  };
+} | null;
+
 export function LoginForm({
   error,
   className,
@@ -54,6 +64,13 @@ export function LoginForm({
 }: React.ComponentProps<'div'> & { error?: string }) {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
+  const [currentError, setCurrentError] = useState<ErrorState>(
+    error && ERROR_MESSAGES[error]
+      ? { ...ERROR_MESSAGES[error], variant: 'destructive' }
+      : null,
+  );
+  const [isResending, setIsResending] = useState(false);
+  const [resendCooldown, setResendCooldown] = useState(0);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -63,8 +80,20 @@ export function LoginForm({
     },
   });
 
+  // Cooldown timer effect
+  useEffect(() => {
+    if (resendCooldown > 0) {
+      const timer = setTimeout(() => {
+        setResendCooldown(resendCooldown - 1);
+      }, 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [resendCooldown]);
+
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsLoading(true);
+    setCurrentError(null); // Clear any existing errors
+
     try {
       const studentIdNumber = parseInt(values.studentId, 10);
       const response = await sessionApi.login(studentIdNumber, values.password);
@@ -77,26 +106,108 @@ export function LoginForm({
         // Redirect to MFA page
         router.push(Routes.mfa);
       } else {
-        // Successful login without MFA
-        toast.success('Login successful! Redirecting to dashboard...');
-        // Redirect to dashboard homepage
+        // Successful login without MFA - Redirect to dashboard homepage
         router.push(Routes.dashboard);
       }
-    } catch (_error) {
-      toast.error('Invalid credentials. Please check your Student ID and password.');
+    } catch (error) {
+      // Check if it's an email verification error
+      if (error instanceof ApiError && error.code === ErrorCodes.EMAIL_NOT_VERIFIED) {
+        // Extract challengeId and email from error details
+        const details = error.details as { challengeId?: number; email?: string } | undefined;
+
+        setCurrentError({
+          title: 'Email Not Verified',
+          description:
+            'Your email address has not been verified. Please check your inbox for the verification link.',
+          variant: 'default',
+          emailVerification: {
+            challengeId: details?.challengeId || 0,
+            email: details?.email || values.studentId,
+          },
+        });
+      } else if (error instanceof ApiError) {
+        // Handle other API errors
+        setCurrentError({
+          title: 'Login Failed',
+          description: error.message || 'Invalid credentials. Please try again.',
+          variant: 'destructive',
+        });
+      } else {
+        // Handle unexpected errors
+        setCurrentError({
+          title: 'Login Failed',
+          description: 'Invalid credentials. Please check your Student ID and password.',
+          variant: 'destructive',
+        });
+      }
     } finally {
       setIsLoading(false);
     }
   }
 
+  async function handleResendVerification() {
+    if (!currentError?.emailVerification || resendCooldown > 0) return;
+
+    setIsResending(true);
+    try {
+      await sessionApi.resendEmailVerification(currentError.emailVerification.challengeId);
+      // Start 60-second cooldown
+      setResendCooldown(60);
+      // Update error to show success message
+      setCurrentError({
+        title: 'Verification Email Sent',
+        description:
+          'A new verification email has been sent. Please check your inbox and verify your email address.',
+        variant: 'default',
+        emailVerification: currentError.emailVerification,
+      });
+    } catch (error) {
+      console.error('Failed to resend verification email:', error);
+      if (error instanceof ApiError) {
+        setCurrentError({
+          title: 'Failed to Resend Email',
+          description: error.message || 'Failed to resend verification email. Please try again.',
+          variant: 'destructive',
+          emailVerification: currentError.emailVerification,
+        });
+      } else {
+        setCurrentError({
+          title: 'Failed to Resend Email',
+          description: 'Failed to resend verification email. Please try again.',
+          variant: 'destructive',
+          emailVerification: currentError.emailVerification,
+        });
+      }
+    } finally {
+      setIsResending(false);
+    }
+  }
+
   return (
     <div className={cn('flex flex-col gap-6', className)} {...props}>
-      {/* Error Alert */}
-      {error && ERROR_MESSAGES[error] && (
-        <Alert variant="destructive">
+      {/* Single Error Display Area */}
+      {currentError && (
+        <Alert variant={currentError.variant}>
           <AlertCircle className="h-4 w-4" />
-          <AlertTitle>{ERROR_MESSAGES[error].title}</AlertTitle>
-          <AlertDescription>{ERROR_MESSAGES[error].description}</AlertDescription>
+          <AlertTitle>{currentError.title}</AlertTitle>
+          <AlertDescription className="space-y-3">
+            <p>{currentError.description}</p>
+            {currentError.emailVerification && (
+              <Button
+                onClick={handleResendVerification}
+                disabled={isResending || resendCooldown > 0}
+                size="sm"
+                variant="outline"
+                className="w-full sm:w-auto"
+              >
+                {isResending
+                  ? 'Sending...'
+                  : resendCooldown > 0
+                    ? `Resend available in ${resendCooldown}s`
+                    : 'Click here to resend verification email'}
+              </Button>
+            )}
+          </AlertDescription>
         </Alert>
       )}
 
