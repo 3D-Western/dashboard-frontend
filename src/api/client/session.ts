@@ -4,6 +4,7 @@ import {
   ApiVerifyMfaResponse,
   ApiSignupRequest,
   ApiSignupResponse,
+  VerifyEmailResponse,
 } from '../types';
 import { apiRequest } from './base';
 import { endpoints } from './endpoints';
@@ -102,6 +103,15 @@ export const sessionApi = {
       method: 'POST',
       credentials: 'include',
       body: JSON.stringify({ studentId }),
+      ...options,
+    });
+  },
+  verifyEmail: async (token: string, options?: RequestInit) => {
+    const serverUrl = getBaseUrl();
+    return apiRequest<VerifyEmailResponse>(`${serverUrl}${endpoints.emailVerify.verifyEmail}`, {
+      method: 'POST',
+      body: JSON.stringify({ token }),
+      credentials: 'include',
       ...options,
     });
   },

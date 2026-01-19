@@ -52,6 +52,10 @@ export interface ApiSignupRequest {
   faculty: string;
 }
 
+export interface VerifyEmailResponse {
+  message: string;
+}
+
 export type ApiSignupResponse = ApiLoginResponse;
 
 // Print Jobs API Response Types
