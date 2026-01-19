@@ -32,6 +32,10 @@ export const endpoints = {
     delete: (fileId: string) => `/api/v1/files/${fileId}`,
     download: (fileId: string) => `/api/v1/files/${fileId}/download`,
   },
+  mfa: {
+    verifyOtp: '/api/v1/mfa/email/verify',
+    resendOtp: (challengeId: number) => `/api/v1/mfa/email/challenge/${challengeId}/resend`,
+  },
   emailVerify: {
     verifyEmail: '/api/v1/auth/verify-email',
     resendEmail: `/api/v1/auth/resend-verification`,

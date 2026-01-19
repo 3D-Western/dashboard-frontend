@@ -79,12 +79,24 @@ export const sessionApi = {
   verifyMfa: async (challengeId: number, code: string, options?: RequestInit) => {
     const serverUrl = getBaseUrl();
 
-    return apiRequest<ApiVerifyMfaResponse>(`${serverUrl}${endpoints.emailVerify.verifyEmail}`, {
+    return apiRequest<ApiVerifyMfaResponse>(`${serverUrl}${endpoints.mfa.verifyOtp}`, {
       method: 'POST',
       body: JSON.stringify({ challengeId, code }),
       credentials: 'include',
       ...options,
     });
+  },
+  resendMfaOtp: async (challengeId: number, options?: RequestInit) => {
+    const serverUrl = getBaseUrl();
+
+    return apiRequest<{ challengeId: number }>(
+      `${serverUrl}${endpoints.mfa.resendOtp(challengeId)}`,
+      {
+        method: 'POST',
+        credentials: 'include',
+        ...options,
+      },
+    );
   },
   signup: async (signupData: ApiSignupRequest, options?: RequestInit) => {
     const serverUrl = getBaseUrl();

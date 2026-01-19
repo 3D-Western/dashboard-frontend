@@ -263,7 +263,7 @@ describe('sessionApi', () => {
       const expected = { verified: true };
 
       mockServer.use(
-        http.post('*' + endpoints.emailVerify.verifyEmail, async ({ request }) => {
+        http.post('*' + endpoints.mfa.verifyOtp, async ({ request }) => {
           const body = await request.json();
           expect(body).toEqual({ challengeId: 123, code: '123456' });
           return HttpResponse.json({
