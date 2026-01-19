@@ -28,6 +28,7 @@ import {
 } from '@/components/ui/select';
 import { UnsavedChangesGuard } from '@/components/ui/unsaved-changes-guard';
 import { endpoints } from '@/api/client/endpoints';
+import { toast } from 'sonner';
 
 type NewPrintFormProps = {
   mockMode?: boolean;
@@ -102,7 +103,6 @@ export default function NewPrintForm({ mockMode = true }: NewPrintFormProps = {}
       // Handle file upload based on mode
       if (mockMode) {
         // Mock mode: simulate file upload
-        console.log('MOCK: Simulating file upload for', file?.name);
         await new Promise((res) => setTimeout(res, 500));
         if (file) fileId = `mock-file-${Date.now()}`;
       } else {
@@ -156,7 +156,6 @@ export default function NewPrintForm({ mockMode = true }: NewPrintFormProps = {}
       }
 
       const result = await submitRes.json();
-      console.log('MOCK: Created order', result.data?.order?.id);
 
       // Navigate to dashboard and force refresh to show new data
       router.push('/dashboard/print');
@@ -164,7 +163,6 @@ export default function NewPrintForm({ mockMode = true }: NewPrintFormProps = {}
         router.refresh(); // Force server component to re-run
       }
     } catch (err) {
-      console.error('Submit error', err);
       if (typeof window !== 'undefined' && typeof window.alert === 'function') {
         window.alert(
           'Failed to submit print request. ' + (err instanceof Error ? err.message : ''),

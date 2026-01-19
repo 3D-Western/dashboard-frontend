@@ -27,6 +27,7 @@ import {
 } from '@/components/ui/select';
 import { UnsavedChangesGuard } from '@/components/ui/unsaved-changes-guard';
 import { endpoints } from '@/api/client/endpoints';
+import { toast } from 'sonner';
 
 const CNC_MATERIALS = [
   { value: 'aluminum', label: 'Aluminum' },
@@ -111,17 +112,13 @@ export default function CNCOrderForm() {
       }
 
       const result = await submitRes.json();
-      console.log('MOCK: Created CNC order', result.data?.order?.id);
 
       router.push('/dashboard');
       if (typeof router.refresh === 'function') {
         router.refresh();
       }
     } catch (err) {
-      console.error('CNC submit error', err);
-      if (typeof window !== 'undefined') {
-        alert('Failed to submit CNC request. ' + (err instanceof Error ? err.message : ''));
-      }
+      toast.error('Failed to submit CNC request. ' + (err instanceof Error ? err.message : ''));
     }
   }
 

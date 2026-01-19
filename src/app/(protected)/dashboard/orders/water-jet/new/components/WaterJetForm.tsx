@@ -27,6 +27,7 @@ import {
 } from '@/components/ui/select';
 import { UnsavedChangesGuard } from '@/components/ui/unsaved-changes-guard';
 import { endpoints } from '@/api/client/endpoints';
+import { toast } from 'sonner';
 
 const WATERJET_MATERIALS = [
   { value: 'steel', label: 'Steel' },
@@ -117,17 +118,13 @@ export default function WaterJetForm() {
       }
 
       const result = await submitRes.json();
-      console.log('MOCK: Created water jet order', result.data?.order?.id);
 
       router.push('/dashboard');
       if (typeof router.refresh === 'function') {
         router.refresh();
       }
     } catch (err) {
-      console.error('Water jet submit error', err);
-      if (typeof window !== 'undefined') {
-        alert('Failed to submit water jet request. ' + (err instanceof Error ? err.message : ''));
-      }
+      toast.error('Failed to submit water jet request. ' + (err instanceof Error ? err.message : ''));
     }
   }
 
