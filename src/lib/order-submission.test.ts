@@ -126,7 +126,7 @@ describe('submitOrder', () => {
       }),
     });
 
-    expect(mockRouter.push).toHaveBeenCalledWith('/dashboard');
+    expect(mockRouter.push).toHaveBeenCalledWith('/dashboard/print');
   });
 
   it('should use default redirect path when not specified', async () => {
@@ -142,6 +142,6 @@ describe('submitOrder', () => {
 
     await submitOrder(orderData, options, mockRouter);
 
-    expect(mockRouter.push).toHaveBeenCalledWith('/dashboard');
+    expect(mockRouter.push).toHaveBeenCalledWith('/dashboard/print');
   });
 });

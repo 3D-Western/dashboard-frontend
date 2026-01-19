@@ -21,7 +21,7 @@ export async function submitOrder(
   const { file } = data;
   const {
     category,
-    successRedirectPath = '/dashboard',
+    successRedirectPath = '/dashboard/print',
     errorMessagePrefix = 'Order submit failed',
   } = options;
 
