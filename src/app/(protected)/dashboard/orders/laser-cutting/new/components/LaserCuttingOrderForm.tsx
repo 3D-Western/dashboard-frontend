@@ -27,6 +27,7 @@ import {
 } from '@/components/ui/select';
 import { UnsavedChangesGuard } from '@/components/ui/unsaved-changes-guard';
 import { endpoints } from '@/api/client/endpoints';
+import { toast } from 'sonner';
 
 const LASER_MATERIALS = [
   { value: 'acrylic', label: 'Acrylic' },
@@ -115,18 +116,14 @@ export default function LaserCuttingOrderForm() {
         throw new Error(text || 'Laser cutting order submit failed');
       }
 
-      const result = await submitRes.json();
+      await submitRes.json();
 
-      router.push('/dashboard/print');
+      router.push('/dashboard');
       if (typeof router.refresh === 'function') {
         router.refresh();
       }
     } catch (err) {
-      if (typeof window !== 'undefined') {
-        alert(
-          'Failed to submit laser cutting request. ' + (err instanceof Error ? err.message : ''),
-        );
-      }
+      toast.error('Failed to submit laser cutting request. ' + (err instanceof Error ? err.message : ''));
     }
   }
 

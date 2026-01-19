@@ -28,7 +28,6 @@ import {
 } from '@/components/ui/select';
 import { UnsavedChangesGuard } from '@/components/ui/unsaved-changes-guard';
 import { endpoints } from '@/api/client/endpoints';
-import { toast } from 'sonner';
 
 type NewPrintFormProps = {
   mockMode?: boolean;
@@ -155,7 +154,7 @@ export default function NewPrintForm({ mockMode = true }: NewPrintFormProps = {}
         throw new Error(text || 'Submit failed');
       }
 
-      const result = await submitRes.json();
+      await submitRes.json();
 
       // Navigate to dashboard and force refresh to show new data
       router.push('/dashboard/print');
