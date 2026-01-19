@@ -2,7 +2,7 @@ import { describe, it, expect, vi } from 'vitest';
 import * as React from 'react';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import NewPrintForm from '@/components/PrintRequestForm/NewPrintForm';
+import NewPrintForm from '@/app/(protected)/dashboard/orders/print/new/components/PrintOrderForm';
 
 const mockPush = vi.fn();
 vi.mock('next/navigation', () => ({

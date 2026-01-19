@@ -91,21 +91,51 @@ export const orderHandlers = [
     }
 
     const body = (await request.json()) as {
+      category?: string;
       name: string;
       description: string;
+      // 3D Print specific fields
       goal?: string;
       durability?: string;
       infill?: string;
-      material1: string;
-      color1: string;
+      material1?: string;
+      color1?: string;
       material2?: string;
       color2?: string;
       support?: string;
-      stlFileId: string;
+      stlFileId?: string;
       reprint?: string | null;
+      // CNC/Laser/WaterJet specific fields
+      material?: string;
+      fileId?: string;
+      priority?: string;
+      urgency?: string;
     };
 
     // Create new order and add to database
+    const category = body.category || '3d-print';
+    const fileId = body.stlFileId || body.fileId || `mock-${category}-file-${Date.now()}`;
+
+    // Helper function to get appropriate file extension and name based on category
+    const getFileDetails = (category: string) => {
+      switch (category) {
+        case '3d-print':
+          return { extension: '.stl', name: 'design.stl' };
+        case 'cnc':
+          return { extension: '.stl', name: 'design.stl' };
+        case 'laser-cutting':
+          // DXF is the most common format for laser cutting (also supports .ai, .svg, .dwg)
+          return { extension: '.dxf', name: 'design.dxf' };
+        case 'water-jet':
+          // DXF is the most common format for water jet cutting (also supports .ai, .svg, .dwg)
+          return { extension: '.dxf', name: 'design.dxf' };
+        default:
+          return { extension: '.stl', name: 'design.stl' };
+      }
+    };
+
+    const fileDetails = getFileDetails(category);
+
     const newOrder = {
       id: `order-${Date.now()}`,
       kind: 'active-print-job' as const,
@@ -115,20 +145,26 @@ export const orderHandlers = [
       orderPlaced: new Date().toISOString(),
       status: 'IN_QUEUE' as const,
       stlFile: {
-        id: body.stlFileId,
-        name: 'file.stl',
-        path: '/uploads/file.stl',
+        id: fileId,
+        name: fileDetails.name,
+        path: `/uploads/${fileDetails.name}`,
       },
-      reprint: body.reprint,
-      // Additional metadata for form fields
+      reprint: body.reprint || null,
+      // Store category for filtering/display
+      category: category,
+      // 3D Print specific fields
       goal: body.goal,
       durability: body.durability,
       infill: body.infill,
-      material1: body.material1,
+      material1: body.material1 || body.material, // Support both formats
       color1: body.color1,
       material2: body.material2,
       color2: body.color2,
       support: body.support,
+      // CNC/Laser/WaterJet specific fields
+      material: body.material,
+      priority: body.priority,
+      urgency: body.urgency,
     };
     db.addPrintJob(newOrder);
 

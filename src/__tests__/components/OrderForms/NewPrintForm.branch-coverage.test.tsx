@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import type { ReactNode } from 'react';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import NewPrintForm from '@/components/PrintRequestForm/NewPrintForm';
+import NewPrintForm from '@/app/(protected)/dashboard/orders/print/new/components/PrintOrderForm';
 
 const mockPush = vi.fn();
 const mockRefresh = vi.fn();

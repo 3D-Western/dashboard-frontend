@@ -15,12 +15,18 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from '../ui/form';
-import { Input } from '../ui/input';
-import { Textarea } from '../ui/textarea';
-import { RadioGroup, RadioGroupItem } from '../ui/radio-group';
-import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '../ui/select';
-import { UnsavedChangesGuard } from '../ui/unsaved-changes-guard';
+} from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from '@/components/ui/select';
+import { UnsavedChangesGuard } from '@/components/ui/unsaved-changes-guard';
 import { endpoints } from '@/api/client/endpoints';
 
 type NewPrintFormProps = {
@@ -96,7 +102,6 @@ export default function NewPrintForm({ mockMode = true }: NewPrintFormProps = {}
       // Handle file upload based on mode
       if (mockMode) {
         // Mock mode: simulate file upload
-        console.log('MOCK: Simulating file upload for', file?.name);
         await new Promise((res) => setTimeout(res, 500));
         if (file) fileId = `mock-file-${Date.now()}`;
       } else {
@@ -122,6 +127,7 @@ export default function NewPrintForm({ mockMode = true }: NewPrintFormProps = {}
 
       // Prepare order payload
       const payload = {
+        category: '3d-print',
         name: values['print-name'],
         description: values.description,
         goal: values.goal,
@@ -148,8 +154,7 @@ export default function NewPrintForm({ mockMode = true }: NewPrintFormProps = {}
         throw new Error(text || 'Submit failed');
       }
 
-      const result = await submitRes.json();
-      console.log('MOCK: Created order', result.data?.order?.id);
+      await submitRes.json();
 
       // Navigate to dashboard and force refresh to show new data
       router.push('/dashboard/print');
@@ -157,7 +162,6 @@ export default function NewPrintForm({ mockMode = true }: NewPrintFormProps = {}
         router.refresh(); // Force server component to re-run
       }
     } catch (err) {
-      console.error('Submit error', err);
       if (typeof window !== 'undefined' && typeof window.alert === 'function') {
         window.alert(
           'Failed to submit print request. ' + (err instanceof Error ? err.message : ''),
