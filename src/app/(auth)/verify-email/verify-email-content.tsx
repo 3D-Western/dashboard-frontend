@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -35,6 +35,7 @@ export function VerifyEmailContent({ className, ...props }: React.ComponentProps
   const [status, setStatus] = useState<VerificationStatus>('loading');
   const [errorMessage, setErrorMessage] = useState<string>('');
   const [countdown, setCountdown] = useState<number>(5);
+  const isMountedRef = useRef<boolean>(true);
 
   useEffect(() => {
     async function verifyEmail() {
@@ -72,10 +73,17 @@ export function VerifyEmailContent({ className, ...props }: React.ComponentProps
         setCountdown(countdown - 1);
       }, 1000);
       return () => clearTimeout(timer);
-    } else if (status === 'success' && countdown === 0) {
+    } else if (status === 'success' && countdown === 0 && isMountedRef.current) {
       router.push(Routes.login);
     }
   }, [status, countdown, router]);
+
+  // Cleanup: mark component as unmounted
+  useEffect(() => {
+    return () => {
+      isMountedRef.current = false;
+    };
+  }, []);
 
   return (
     <div className={cn('flex flex-col gap-6', className)} {...props}>
