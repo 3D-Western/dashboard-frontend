@@ -2,6 +2,7 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import WaterJetForm from '@/app/(protected)/dashboard/orders/water-jet/new/components/WaterJetForm';
+import { toast } from 'sonner';
 
 // Mock next/navigation
 const mockPush = vi.fn();
@@ -9,6 +10,13 @@ vi.mock('next/navigation', () => ({
   useRouter: () => ({
     push: mockPush,
   }),
+}));
+
+// Mock sonner toast
+vi.mock('sonner', () => ({
+  toast: {
+    error: vi.fn(),
+  },
 }));
 
 const setupUser = () => userEvent.setup({ pointerEventsCheck: 0 });
@@ -27,6 +35,7 @@ const selectComboboxOption = async (
 describe('WaterJetForm Integration', () => {
   beforeEach(() => {
     mockPush.mockClear();
+    vi.mocked(toast.error).mockClear();
   });
 
   describe('form rendering', () => {
@@ -199,7 +208,7 @@ describe('WaterJetForm Integration', () => {
       await user.click(submitButton);
 
       await waitFor(() => {
-        expect(mockPush).toHaveBeenCalledWith('/dashboard');
+        expect(mockPush).toHaveBeenCalledWith('/dashboard/print');
       });
 
       fetchSpy.mockRestore();
@@ -252,8 +261,6 @@ describe('WaterJetForm Integration', () => {
     it('handles submit failure', async () => {
       const user = setupUser();
       const fetchSpy = vi.spyOn(global, 'fetch');
-      const alertSpy = vi.fn();
-      vi.stubGlobal('alert', alertSpy);
 
       fetchSpy.mockResolvedValueOnce(new Response('Submit failed', { status: 400 }));
 
@@ -264,19 +271,16 @@ describe('WaterJetForm Integration', () => {
       await user.click(submitButton);
 
       await waitFor(() => {
-        expect(alertSpy).toHaveBeenCalledWith(expect.stringContaining('Submit failed'));
+        expect(toast.error).toHaveBeenCalledWith(expect.stringContaining('Submit failed'));
       });
 
       expect(mockPush).not.toHaveBeenCalled();
       fetchSpy.mockRestore();
-      vi.unstubAllGlobals();
     });
 
     it('uses fallback submit error message when response is empty', async () => {
       const user = setupUser();
       const fetchSpy = vi.spyOn(global, 'fetch');
-      const alertSpy = vi.fn();
-      vi.stubGlobal('alert', alertSpy);
 
       fetchSpy.mockResolvedValueOnce(new Response('', { status: 400 }));
 
@@ -287,20 +291,17 @@ describe('WaterJetForm Integration', () => {
       await user.click(submitButton);
 
       await waitFor(() => {
-        expect(alertSpy).toHaveBeenCalledWith(
+        expect(toast.error).toHaveBeenCalledWith(
           expect.stringContaining('Water jet order submit failed'),
         );
       });
 
       fetchSpy.mockRestore();
-      vi.unstubAllGlobals();
     });
 
     it('handles non-Error throw in submit flow', async () => {
       const user = setupUser();
       const fetchSpy = vi.spyOn(global, 'fetch');
-      const alertSpy = vi.fn();
-      vi.stubGlobal('alert', alertSpy);
 
       fetchSpy.mockRejectedValueOnce('boom');
 
@@ -311,11 +312,10 @@ describe('WaterJetForm Integration', () => {
       await user.click(submitButton);
 
       await waitFor(() => {
-        expect(alertSpy).toHaveBeenCalledWith('Failed to submit water jet request. ');
+        expect(toast.error).toHaveBeenCalledWith('Failed to submit water jet request. ');
       });
 
       fetchSpy.mockRestore();
-      vi.unstubAllGlobals();
     });
   });
 

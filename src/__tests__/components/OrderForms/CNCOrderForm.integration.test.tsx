@@ -191,7 +191,7 @@ describe('CNCOrderForm Integration', () => {
 
       await waitFor(() => {
         expect(fetchSpy).toHaveBeenCalled();
-        expect(mockPush).toHaveBeenCalledWith('/dashboard');
+        expect(mockPush).toHaveBeenCalledWith('/dashboard/print');
       });
 
       fetchSpy.mockRestore();

@@ -2,8 +2,7 @@
 
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
-import Dropzone, { DropzoneContent, DropzoneEmptyState } from '@/components/ui/dropzone';
-import { useEffect, useState } from 'react';
+import { FileDropZone } from '@/components/manufacturing/FileDropZone';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
@@ -77,19 +76,9 @@ export default function WaterJetForm() {
   const { isDirty, isSubmitting } = form.formState;
   const selectedFile = form.watch('file') as File | undefined;
 
-  const validateFileType = (file: File): boolean => {
-    const fileName = file.name.toLowerCase();
-    const allowedExtensions = Object.values(WATERJET_FILE_TYPES.accept).flat();
-    return allowedExtensions.some((ext) => fileName.endsWith(ext.toLowerCase()));
-  };
-
   async function onSubmit(values: z.infer<typeof formSchema>) {
     try {
       const file = values.file as File;
-
-      if (!validateFileType(file)) {
-        throw new Error(WATERJET_FILE_TYPES.validation);
-      }
 
       let fileId: string | null = null;
 
@@ -128,45 +117,7 @@ export default function WaterJetForm() {
     }
   }
 
-  function CustomDropZone({
-    onFileAccepted,
-    initialFile,
-  }: {
-    onFileAccepted: (file: File | null) => void;
-    initialFile?: File | undefined;
-  }) {
-    const [localFiles, setLocalFiles] = useState<File[] | undefined>(
-      initialFile ? [initialFile] : undefined,
-    );
 
-    useEffect(() => {
-      if (initialFile) setLocalFiles([initialFile]);
-    }, [initialFile]);
-
-    return (
-      <Dropzone
-        src={localFiles}
-        maxFiles={1}
-        accept={WATERJET_FILE_TYPES.accept}
-        onDrop={(acceptedFiles: File[]) => {
-          if (!acceptedFiles || acceptedFiles.length === 0) {
-            setLocalFiles(undefined);
-            onFileAccepted(null);
-            return;
-          }
-
-          const file = acceptedFiles[0];
-
-          // Set file regardless of validation - form validation will handle errors
-          setLocalFiles([file]);
-          onFileAccepted(file);
-        }}
-      >
-        <DropzoneEmptyState />
-        <DropzoneContent />
-      </Dropzone>
-    );
-  }
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center px-4">
@@ -253,7 +204,8 @@ export default function WaterJetForm() {
                   {WATERJET_FILE_TYPES.description} - {WATERJET_FILE_TYPES.validation}
                 </FormDescription>
                 <FormControl>
-                  <CustomDropZone
+                  <FileDropZone
+                    accept={WATERJET_FILE_TYPES.accept}
                     initialFile={field.value as File | undefined}
                     onFileAccepted={(f) => {
                       field.onChange(f ?? undefined);

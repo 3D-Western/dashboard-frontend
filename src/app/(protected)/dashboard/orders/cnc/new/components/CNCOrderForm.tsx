@@ -2,8 +2,7 @@
 
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
-import Dropzone, { DropzoneContent, DropzoneEmptyState } from '@/components/ui/dropzone';
-import { useEffect, useState } from 'react';
+
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
@@ -28,6 +27,7 @@ import {
 import { UnsavedChangesGuard } from '@/components/ui/unsaved-changes-guard';
 import { endpoints } from '@/api/client/endpoints';
 import { toast } from 'sonner';
+import { FileDropZone } from '@/components/manufacturing/FileDropZone';
 
 const CNC_MATERIALS = [
   { value: 'aluminum', label: 'Aluminum' },
@@ -71,19 +71,9 @@ export default function CNCOrderForm() {
   const { isDirty, isSubmitting } = form.formState;
   const selectedFile = form.watch('file') as File | undefined;
 
-  const validateFileType = (file: File): boolean => {
-    const fileName = file.name.toLowerCase();
-    const allowedExtensions = Object.values(CNC_FILE_TYPES.accept).flat();
-    return allowedExtensions.some((ext) => fileName.endsWith(ext.toLowerCase()));
-  };
-
   async function onSubmit(values: z.infer<typeof formSchema>) {
     try {
       const file = values.file as File;
-
-      if (!validateFileType(file)) {
-        throw new Error(CNC_FILE_TYPES.validation);
-      }
 
       let fileId: string | null = null;
 
@@ -113,7 +103,7 @@ export default function CNCOrderForm() {
 
       await submitRes.json();
 
-      router.push('/dashboard');
+      router.push('/dashboard/print');
       if (typeof router.refresh === 'function') {
         router.refresh();
       }
@@ -122,45 +112,6 @@ export default function CNCOrderForm() {
     }
   }
 
-  function CustomDropZone({
-    onFileAccepted,
-    initialFile,
-  }: {
-    onFileAccepted: (file: File | null) => void;
-    initialFile?: File | undefined;
-  }) {
-    const [localFiles, setLocalFiles] = useState<File[] | undefined>(
-      initialFile ? [initialFile] : undefined,
-    );
-
-    useEffect(() => {
-      if (initialFile) setLocalFiles([initialFile]);
-    }, [initialFile]);
-
-    return (
-      <Dropzone
-        src={localFiles}
-        maxFiles={1}
-        accept={CNC_FILE_TYPES.accept}
-        onDrop={(acceptedFiles: File[]) => {
-          if (!acceptedFiles || acceptedFiles.length === 0) {
-            setLocalFiles(undefined);
-            onFileAccepted(null);
-            return;
-          }
-
-          const file = acceptedFiles[0];
-
-          // Set file regardless of validation - form validation will handle errors
-          setLocalFiles([file]);
-          onFileAccepted(file);
-        }}
-      >
-        <DropzoneEmptyState />
-        <DropzoneContent />
-      </Dropzone>
-    );
-  }
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center px-4">
@@ -242,7 +193,8 @@ export default function CNCOrderForm() {
                   {CNC_FILE_TYPES.description} - {CNC_FILE_TYPES.validation}
                 </FormDescription>
                 <FormControl>
-                  <CustomDropZone
+                  <FileDropZone
+                    accept={CNC_FILE_TYPES.accept}
                     initialFile={field.value as File | undefined}
                     onFileAccepted={(f) => {
                       field.onChange(f ?? undefined);
