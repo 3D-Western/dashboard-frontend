@@ -27,12 +27,12 @@ describe('submitOrder', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     global.fetch = mockFetch;
-    
+
     // Mock successful fetch by default
     mockFetch.mockResolvedValue({
       ok: true,
-      json: vi.fn().mockResolvedValue({ 
-        data: { order: { id: 'test-order-123' } }
+      json: vi.fn().mockResolvedValue({
+        data: { order: { id: 'test-order-123' } },
       }),
     });
   });
@@ -53,15 +53,18 @@ describe('submitOrder', () => {
     await submitOrder(orderData, options, mockRouter);
 
     // Check that fetch was called with the right URL and method
-    expect(mockFetch).toHaveBeenCalledWith('/api/orders', expect.objectContaining({
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-    }));
+    expect(mockFetch).toHaveBeenCalledWith(
+      '/api/orders',
+      expect.objectContaining({
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+      }),
+    );
 
     // Parse the body and check its contents
     const callArgs = mockFetch.mock.calls[0];
     const body = JSON.parse(callArgs[1].body);
-    
+
     expect(body).toEqual({
       category: 'laser-cutting',
       name: 'Test Order',

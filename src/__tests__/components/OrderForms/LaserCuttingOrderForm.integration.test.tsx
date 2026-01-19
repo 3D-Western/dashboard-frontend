@@ -206,7 +206,7 @@ describe('LaserCuttingOrderForm Integration', () => {
       await user.click(submitButton);
 
       await waitFor(() => {
-        expect(mockPush).toHaveBeenCalledWith('/dashboard');
+        expect(mockPush).toHaveBeenCalledWith('/dashboard/print');
       });
 
       fetchSpy.mockRestore();

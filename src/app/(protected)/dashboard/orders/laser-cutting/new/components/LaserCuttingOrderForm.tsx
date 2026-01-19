@@ -73,7 +73,6 @@ export default function LaserCuttingOrderForm() {
   });
 
   const { isDirty, isSubmitting } = form.formState;
-  const selectedFile = form.watch('file') as File | undefined;
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     try {
@@ -89,10 +88,12 @@ export default function LaserCuttingOrderForm() {
           successRedirectPath: '/dashboard/print',
           errorMessagePrefix: 'Laser cutting order submit failed',
         },
-        router
+        router,
       );
     } catch (err) {
-      toast.error('Failed to submit laser cutting request. ' + (err instanceof Error ? err.message : ''));
+      toast.error(
+        'Failed to submit laser cutting request. ' + (err instanceof Error ? err.message : ''),
+      );
     }
   }
 
@@ -188,8 +189,10 @@ export default function LaserCuttingOrderForm() {
                   />
                 </FormControl>
                 {/* Show filename preview when present */}
-                {selectedFile && (
-                  <div className="mt-2 text-sm text-muted-foreground">{selectedFile.name}</div>
+                {field.value && (
+                  <div className="mt-2 text-sm text-muted-foreground">
+                    {(field.value as File).name}
+                  </div>
                 )}
                 <FormMessage />
               </FormItem>

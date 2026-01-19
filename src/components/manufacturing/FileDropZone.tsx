@@ -9,11 +9,7 @@ interface FileDropZoneProps {
   accept: Record<string, string[]>;
 }
 
-export function FileDropZone({
-  onFileAccepted,
-  initialFile,
-  accept,
-}: FileDropZoneProps) {
+export function FileDropZone({ onFileAccepted, initialFile, accept }: FileDropZoneProps) {
   const [localFiles, setLocalFiles] = useState<File[] | undefined>(
     initialFile ? [initialFile] : undefined,
   );

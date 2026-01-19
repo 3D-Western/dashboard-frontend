@@ -74,7 +74,6 @@ export default function WaterJetForm() {
   });
 
   const { isDirty, isSubmitting } = form.formState;
-  const selectedFile = form.watch('file') as File | undefined;
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     try {
@@ -87,17 +86,17 @@ export default function WaterJetForm() {
         },
         {
           category: 'water-jet',
-          successRedirectPath: '/dashboard',
+          successRedirectPath: '/dashboard/print',
           errorMessagePrefix: 'Water jet order submit failed',
         },
-        router
+        router,
       );
     } catch (err) {
-      toast.error('Failed to submit water jet request. ' + (err instanceof Error ? err.message : ''));
+      toast.error(
+        'Failed to submit water jet request. ' + (err instanceof Error ? err.message : ''),
+      );
     }
   }
-
-
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center px-4">
@@ -193,8 +192,10 @@ export default function WaterJetForm() {
                   />
                 </FormControl>
                 {/* Show filename preview when present */}
-                {selectedFile && (
-                  <div className="mt-2 text-sm text-muted-foreground">{selectedFile.name}</div>
+                {field.value && (
+                  <div className="mt-2 text-sm text-muted-foreground">
+                    {(field.value as File).name}
+                  </div>
                 )}
                 <FormMessage />
               </FormItem>

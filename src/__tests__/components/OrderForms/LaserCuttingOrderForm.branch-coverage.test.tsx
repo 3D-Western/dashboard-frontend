@@ -123,7 +123,7 @@ describe('LaserCuttingOrderForm branch coverage', () => {
       });
     });
 
-    expect(mockPush).toHaveBeenCalledWith('/dashboard');
+    expect(mockPush).toHaveBeenCalledWith('/dashboard/print');
   });
 
   it('handles fetch error gracefully', async () => {

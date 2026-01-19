@@ -16,7 +16,7 @@ export interface OrderSubmissionOptions {
 export async function submitOrder(
   data: OrderSubmissionData,
   options: OrderSubmissionOptions,
-  router: { push: (path: string) => void; refresh?: () => void }
+  router: { push: (path: string) => void; refresh?: () => void },
 ) {
   const { file } = data;
   const {
