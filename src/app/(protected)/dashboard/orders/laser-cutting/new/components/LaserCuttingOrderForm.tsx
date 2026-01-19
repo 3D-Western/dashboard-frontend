@@ -24,9 +24,9 @@ import {
   SelectItem,
 } from '@/components/ui/select';
 import { UnsavedChangesGuard } from '@/components/ui/unsaved-changes-guard';
-import { endpoints } from '@/api/client/endpoints';
 import { toast } from 'sonner';
 import { FileDropZone } from '@/components/manufacturing/FileDropZone';
+import { submitOrder } from '@/lib/order-submission';
 
 const LASER_MATERIALS = [
   { value: 'acrylic', label: 'Acrylic' },
@@ -77,40 +77,20 @@ export default function LaserCuttingOrderForm() {
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     try {
-      const file = values.file as File;
-
-      let fileId: string | null = null;
-
-      await new Promise((res) => setTimeout(res, 500));
-      if (file) fileId = `mock-laser-file-${Date.now()}`;
-
-      const payload = {
-        category: 'laser-cutting',
-        name: values.name,
-        description: values.description,
-        material: values.material,
-        fileId: fileId || '',
-        priority: 'standard',
-        urgency: 'normal',
-      };
-
-      const submitRes = await fetch(endpoints.orders.create, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      });
-
-      if (!submitRes.ok) {
-        const text = await submitRes.text();
-        throw new Error(text || 'Laser cutting order submit failed');
-      }
-
-      await submitRes.json();
-
-      router.push('/dashboard/print');
-      if (typeof router.refresh === 'function') {
-        router.refresh();
-      }
+      await submitOrder(
+        {
+          name: values.name,
+          description: values.description,
+          material: values.material,
+          file: values.file as File,
+        },
+        {
+          category: 'laser-cutting',
+          successRedirectPath: '/dashboard/print',
+          errorMessagePrefix: 'Laser cutting order submit failed',
+        },
+        router
+      );
     } catch (err) {
       toast.error('Failed to submit laser cutting request. ' + (err instanceof Error ? err.message : ''));
     }

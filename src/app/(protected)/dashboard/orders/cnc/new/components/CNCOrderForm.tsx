@@ -25,9 +25,9 @@ import {
   SelectItem,
 } from '@/components/ui/select';
 import { UnsavedChangesGuard } from '@/components/ui/unsaved-changes-guard';
-import { endpoints } from '@/api/client/endpoints';
 import { toast } from 'sonner';
 import { FileDropZone } from '@/components/manufacturing/FileDropZone';
+import { submitOrder } from '@/lib/order-submission';
 
 const CNC_MATERIALS = [
   { value: 'aluminum', label: 'Aluminum' },
@@ -73,40 +73,20 @@ export default function CNCOrderForm() {
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     try {
-      const file = values.file as File;
-
-      let fileId: string | null = null;
-
-      await new Promise((res) => setTimeout(res, 500));
-      if (file) fileId = `mock-cnc-file-${Date.now()}`;
-
-      const payload = {
-        category: 'cnc',
-        name: values.name,
-        description: values.description,
-        material: values.material,
-        fileId: fileId || '',
-        priority: 'standard',
-        urgency: 'normal',
-      };
-
-      const submitRes = await fetch(endpoints.orders.create, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      });
-
-      if (!submitRes.ok) {
-        const text = await submitRes.text();
-        throw new Error(text || 'CNC order submit failed');
-      }
-
-      await submitRes.json();
-
-      router.push('/dashboard/print');
-      if (typeof router.refresh === 'function') {
-        router.refresh();
-      }
+      await submitOrder(
+        {
+          name: values.name,
+          description: values.description,
+          material: values.material,
+          file: values.file as File,
+        },
+        {
+          category: 'cnc',
+          successRedirectPath: '/dashboard/print',
+          errorMessagePrefix: 'CNC order submit failed',
+        },
+        router
+      );
     } catch (err) {
       toast.error('Failed to submit CNC request. ' + (err instanceof Error ? err.message : ''));
     }
