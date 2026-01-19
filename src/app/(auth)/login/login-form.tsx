@@ -155,7 +155,6 @@ export function LoginForm({
         emailVerification: currentError.emailVerification,
       });
     } catch (error) {
-      console.error('Failed to resend verification email:', error);
       if (error instanceof ApiError) {
         setCurrentError({
           title: 'Failed to Resend Email',

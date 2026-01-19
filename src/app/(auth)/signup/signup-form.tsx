@@ -150,8 +150,6 @@ export function SignupForm({ className, ...props }: React.ComponentProps<'div'>)
 
       router.push(Routes.checkEmail);
     } catch (error) {
-      console.error('Signup error:', error);
-
       if (error instanceof ApiError) {
         // Handle specific API errors
         toast.error(error.message);

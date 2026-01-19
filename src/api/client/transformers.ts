@@ -15,7 +15,7 @@ export function transformExperienceLevelToBackend(experienceLevel: UserExperienc
     advanced: 'Advanced',
   };
 
-  return mapping[experienceLevel];
+  return mapping[experienceLevel] || mapping['no_experience'];
 }
 
 /**
@@ -56,7 +56,7 @@ export function transformFacultyToBackend(faculty: UserFaculty): string {
     social_science: 'SocialScience',
   };
 
-  return mapping[faculty];
+  return mapping[faculty] || mapping['undeclared'];
 }
 
 /**
