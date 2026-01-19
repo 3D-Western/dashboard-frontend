@@ -1,13 +1,13 @@
 'use client';
-import { useState } from 'react';
-import { toast } from 'sonner';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
+import { ApiError } from '@/api/client/errors';
+import { sessionApi } from '@/api/client/session';
+import {
+  transformExperienceLevelToBackend,
+  transformFacultyToBackend,
+} from '@/api/client/transformers';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Input } from '@/components/ui/input';
 import { FieldDescription } from '@/components/ui/field';
 import {
   Form,
@@ -17,6 +17,7 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
 import {
   Select,
   SelectContent,
@@ -24,13 +25,20 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { EXPERIENCE_LEVELS, EXPERIENCE_LEVEL_OPTIONS } from '@/constants/experience-levels';
+import { FACULTIES, FACULTY_OPTIONS } from '@/constants/faculties';
+import { Routes } from '@/lib/routes';
+import { cn } from '@/lib/utils';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { ArrowLeft, ArrowRight, Info } from 'lucide-react';
+import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { EXPERIENCE_LEVELS, EXPERIENCE_LEVEL_OPTIONS } from '@/constants/experience-levels';
-import { Routes } from '@/lib/routes';
-import { ArrowLeft, ArrowRight } from 'lucide-react';
-import Image from 'next/image';
-import { cn } from '@/lib/utils';
+import { useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { toast } from 'sonner';
+import { z } from 'zod';
 
 const formSchema = z.object({
   studentId: z
@@ -57,9 +65,25 @@ const formSchema = z.object({
   inviteCode: z.string().min(1, 'Invite code is required'),
   firstName: z.string().min(1, 'First name is required'),
   lastName: z.string().min(1, 'Last name is required'),
-  experienceLevel: z
-    .enum([EXPERIENCE_LEVELS.NO_EXPERIENCE, EXPERIENCE_LEVELS.BEGINNER, EXPERIENCE_LEVELS.ADVANCED])
-    .optional(),
+  experienceLevel: z.enum([
+    EXPERIENCE_LEVELS.NO_EXPERIENCE,
+    EXPERIENCE_LEVELS.BEGINNER,
+    EXPERIENCE_LEVELS.ADVANCED,
+  ]),
+  faculty: z.enum([
+    FACULTIES.UNDECLARED,
+    FACULTIES.ARTS_AND_HUMANITIES,
+    FACULTIES.MUSIC,
+    FACULTIES.EDUCATION,
+    FACULTIES.ENGINEERING,
+    FACULTIES.HEALTH_SCIENCES,
+    FACULTIES.INFORMATION_AND_MEDIA_STUDIES,
+    FACULTIES.IVEY_BUSINESS_SCHOOL,
+    FACULTIES.LAW,
+    FACULTIES.SCHULICH_MEDICINE_AND_DENTISTRY,
+    FACULTIES.SCIENCE,
+    FACULTIES.SOCIAL_SCIENCE,
+  ]),
   agreedToTerms: z.boolean().refine((val) => val === true, {
     message: 'You must agree to the terms and conditions',
   }),
@@ -81,14 +105,22 @@ export function SignupForm({ className, ...props }: React.ComponentProps<'div'>)
       inviteCode: '',
       firstName: '',
       lastName: '',
-      experienceLevel: undefined,
+      experienceLevel: EXPERIENCE_LEVELS.NO_EXPERIENCE,
+      faculty: FACULTIES.UNDECLARED,
       agreedToTerms: false,
     },
   });
 
   // Step 1 validation
   const validateStep1 = async () => {
-    const fields = ['email', 'password', 'inviteCode', 'studentId'] as const;
+    const fields = [
+      'firstName',
+      'lastName',
+      'studentId',
+      'email',
+      'password',
+      'inviteCode',
+    ] as const;
     const isValid = await form.trigger(fields);
 
     if (isValid) {
@@ -101,53 +133,30 @@ export function SignupForm({ className, ...props }: React.ComponentProps<'div'>)
     try {
       setIsLoading(true);
 
-      // Validate experienceLevel is selected
-      if (!values.experienceLevel) {
-        toast.error('Please select your experience level');
-        return;
-      }
-
-      // Convert studentId to number and prepare data for submission
-      const { studentId, ...rest } = values;
-      const submitData = {
-        studentId: parseInt(studentId, 10),
-        email: rest.email,
-        password: rest.password,
-        inviteCode: rest.inviteCode,
-        firstName: rest.firstName,
-        lastName: rest.lastName,
-        experienceLevel: values.experienceLevel,
+      // Convert studentId to number and prepare data for API
+      const signupData = {
+        studentId: parseInt(values.studentId, 10),
+        email: values.email,
+        password: values.password,
+        inviteCode: values.inviteCode,
+        firstName: values.firstName,
+        lastName: values.lastName,
+        experienceLevel: transformExperienceLevelToBackend(values.experienceLevel),
+        faculty: transformFacultyToBackend(values.faculty),
       };
 
-      // Make API call to signup endpoint
-      const response = await fetch('/api/signup', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(submitData),
-      });
+      // Call signup API endpoint
+      await sessionApi.signup(signupData);
 
-      // Handle error responses (400-500 status codes)
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({ message: 'An error occurred' }));
-        toast.error(errorData.message || `Error: ${response.status} - ${response.statusText}`);
-        return;
-      }
-
-      // Handle successful response (200 status code)
-      const data = await response.json();
-
-      // Store the session token as a cookie
-      document.cookie = `sessionToken=${data.sessionToken}; path=/; max-age=${60 * 60 * 24 * 7}; SameSite=Strict`;
-
-      toast.success('Registration successful! Redirecting...');
-
-      // Redirect to dashboard homepage
-      router.push('/dashboard');
+      router.push(Routes.checkEmail);
     } catch (error) {
-      console.error('Form submission error', error);
-      toast.error('Failed to connect to the server. Please try again.');
+      if (error instanceof ApiError) {
+        // Handle specific API errors
+        toast.error(error.message);
+      } else {
+        // Handle network or unexpected errors
+        toast.error('Failed to connect to the server. Please try again.');
+      }
     } finally {
       setIsLoading(false);
     }
@@ -159,7 +168,7 @@ export function SignupForm({ className, ...props }: React.ComponentProps<'div'>)
         <CardContent className="grid p-0 md:grid-cols-2">
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="p-6 md:p-8">
-              <div className="grid gap-6">
+              <div className="flex min-h-[600px] flex-col gap-6">
                 {/* Header */}
                 <div className="flex flex-col items-center gap-2 text-center">
                   <div className="mb-2 flex items-center gap-2">
@@ -185,9 +194,53 @@ export function SignupForm({ className, ...props }: React.ComponentProps<'div'>)
                   </p>
                 </div>
 
-                {/* Step 1: Credentials */}
+                {/* Step 1: Your Identity */}
                 {currentStep === 1 && (
                   <>
+                    <div className="grid gap-4 sm:grid-cols-2">
+                      <FormField
+                        control={form.control}
+                        name="firstName"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>First Name</FormLabel>
+                            <FormControl>
+                              <Input placeholder="John" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={form.control}
+                        name="lastName"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Last Name</FormLabel>
+                            <FormControl>
+                              <Input placeholder="Doe" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+
+                    <FormField
+                      control={form.control}
+                      name="studentId"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Student ID</FormLabel>
+                          <FormControl>
+                            <Input placeholder="251000000" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
                     <FormField
                       control={form.control}
                       name="email"
@@ -221,7 +274,20 @@ export function SignupForm({ className, ...props }: React.ComponentProps<'div'>)
                       name="inviteCode"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Invite Code</FormLabel>
+                          <FormLabel className="flex items-center gap-1.5">
+                            Invite Code
+                            <Tooltip>
+                              <TooltipTrigger type="button">
+                                <Info className="h-4 w-4 text-muted-foreground" />
+                              </TooltipTrigger>
+                              <TooltipContent side="right" className="max-w-xs">
+                                <p>
+                                  Currently we are in invite only testing. If you want to give it a
+                                  try, email support@3dwestern.ca
+                                </p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </FormLabel>
                           <FormControl>
                             <Input placeholder="Enter your invite code" {...field} />
                           </FormControl>
@@ -230,19 +296,7 @@ export function SignupForm({ className, ...props }: React.ComponentProps<'div'>)
                       )}
                     />
 
-                    <FormField
-                      control={form.control}
-                      name="studentId"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Student ID</FormLabel>
-                          <FormControl>
-                            <Input placeholder="251000000" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
+                    <div className="grow" />
 
                     <Button type="button" onClick={validateStep1} className="w-full">
                       Continue
@@ -251,44 +305,16 @@ export function SignupForm({ className, ...props }: React.ComponentProps<'div'>)
                   </>
                 )}
 
-                {/* Step 2: Personal Information */}
+                {/* Step 2: Complete Your Profile */}
                 {currentStep === 2 && (
                   <>
-                    <FormField
-                      control={form.control}
-                      name="firstName"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>First Name</FormLabel>
-                          <FormControl>
-                            <Input placeholder="John" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={form.control}
-                      name="lastName"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Last Name</FormLabel>
-                          <FormControl>
-                            <Input placeholder="Doe" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
                     <FormField
                       control={form.control}
                       name="experienceLevel"
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>Experience Level</FormLabel>
-                          <Select onValueChange={field.onChange} defaultValue={field.value}>
+                          <Select onValueChange={field.onChange} value={field.value}>
                             <FormControl>
                               <SelectTrigger>
                                 <SelectValue placeholder="Select your experience level" />
@@ -296,6 +322,31 @@ export function SignupForm({ className, ...props }: React.ComponentProps<'div'>)
                             </FormControl>
                             <SelectContent>
                               {EXPERIENCE_LEVEL_OPTIONS.map((option) => (
+                                <SelectItem key={option.value} value={option.value}>
+                                  {option.label}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="faculty"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Faculty</FormLabel>
+                          <Select onValueChange={field.onChange} value={field.value}>
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select your faculty" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              {FACULTY_OPTIONS.map((option) => (
                                 <SelectItem key={option.value} value={option.value}>
                                   {option.label}
                                 </SelectItem>
@@ -331,6 +382,8 @@ export function SignupForm({ className, ...props }: React.ComponentProps<'div'>)
                         </FormItem>
                       )}
                     />
+
+                    <div className="grow" />
 
                     <Button type="submit" disabled={isLoading} className="w-full">
                       {isLoading ? 'Creating Account...' : 'Create Account'}

@@ -33,8 +33,12 @@ export const endpoints = {
     download: (fileId: string) => `/api/v1/files/${fileId}/download`,
   },
   mfa: {
-    verifyEmail: '/api/v1/mfa/email/verify',
-    resendEmail: (challengeId: number) => `/api/v1/mfa/email/challenge/${challengeId}/resend`,
+    verifyOtp: '/api/v1/mfa/email/verify',
+    resendOtp: (challengeId: number) => `/api/v1/mfa/email/challenge/${challengeId}/resend`,
+  },
+  emailVerify: {
+    verifyEmail: '/api/v1/auth/verify-email',
+    resendEmail: `/api/v1/auth/resend-verification`,
   },
   invitations: {
     list: '/api/v1/admin/invitations',

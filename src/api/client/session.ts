@@ -1,4 +1,11 @@
-import { ApiGetCurrentSessionResponse, ApiLoginResponse, ApiVerifyMfaResponse } from '../types';
+import {
+  ApiGetCurrentSessionResponse,
+  ApiLoginResponse,
+  ApiVerifyMfaResponse,
+  ApiSignupRequest,
+  ApiSignupResponse,
+  VerifyEmailResponse,
+} from '../types';
 import { apiRequest } from './base';
 import { endpoints } from './endpoints';
 import { getBaseUrl } from './utils';
@@ -72,9 +79,50 @@ export const sessionApi = {
   verifyMfa: async (challengeId: number, code: string, options?: RequestInit) => {
     const serverUrl = getBaseUrl();
 
-    return apiRequest<ApiVerifyMfaResponse>(`${serverUrl}${endpoints.mfa.verifyEmail}`, {
+    return apiRequest<ApiVerifyMfaResponse>(`${serverUrl}${endpoints.mfa.verifyOtp}`, {
       method: 'POST',
       body: JSON.stringify({ challengeId, code }),
+      credentials: 'include',
+      ...options,
+    });
+  },
+  resendMfaOtp: async (challengeId: number, options?: RequestInit) => {
+    const serverUrl = getBaseUrl();
+
+    return apiRequest<{ challengeId: number }>(
+      `${serverUrl}${endpoints.mfa.resendOtp(challengeId)}`,
+      {
+        method: 'POST',
+        credentials: 'include',
+        ...options,
+      },
+    );
+  },
+  signup: async (signupData: ApiSignupRequest, options?: RequestInit) => {
+    const serverUrl = getBaseUrl();
+
+    return apiRequest<ApiSignupResponse>(`${serverUrl}${endpoints.auth.signup}`, {
+      method: 'POST',
+      body: JSON.stringify(signupData),
+      credentials: 'include',
+      ...options,
+    });
+  },
+  resendEmailVerification: async (studentId: number, options?: RequestInit) => {
+    const serverUrl = getBaseUrl();
+
+    return apiRequest<void>(`${serverUrl}${endpoints.emailVerify.resendEmail}`, {
+      method: 'POST',
+      credentials: 'include',
+      body: JSON.stringify({ studentId }),
+      ...options,
+    });
+  },
+  verifyEmail: async (token: string, options?: RequestInit) => {
+    const serverUrl = getBaseUrl();
+    return apiRequest<VerifyEmailResponse>(`${serverUrl}${endpoints.emailVerify.verifyEmail}`, {
+      method: 'POST',
+      body: JSON.stringify({ token }),
       credentials: 'include',
       ...options,
     });

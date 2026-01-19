@@ -23,6 +23,7 @@ export interface UserResponse {
   lastName: string;
   status: string; // Backend sends "Admin" or "User"
   experienceLevel?: string;
+  faculty?: string;
 }
 
 export interface ApiGetCurrentSessionResponse {
@@ -39,6 +40,23 @@ export interface ApiLoginResponse {
 export interface ApiVerifyMfaResponse {
   sessionToken: string;
 }
+
+export interface ApiSignupRequest {
+  studentId: number;
+  email: string;
+  password: string;
+  inviteCode: string;
+  firstName: string;
+  lastName: string;
+  experienceLevel: string;
+  faculty: string;
+}
+
+export interface VerifyEmailResponse {
+  message: string;
+}
+
+export type ApiSignupResponse = ApiLoginResponse;
 
 // Print Jobs API Response Types
 export type PrintJobListResponse = PaginatedResponse<PrintJob>;
