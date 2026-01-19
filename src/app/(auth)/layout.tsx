@@ -16,7 +16,7 @@ export default async function AuthLayout({ children }: { children: React.ReactNo
   return (
     <div className="relative bg-muted">
       {/* Theme Toggle - Top Right Corner */}
-      <div className="absolute right-4 top-4 z-10">
+      <div className="absolute top-4 right-4 z-10">
         <ThemeToggle />
       </div>
       {children}

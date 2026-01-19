@@ -1,6 +1,5 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, waitFor } from '@test/utils/render';
-import userEvent from '@testing-library/user-event';
 import { http, HttpResponse } from 'msw';
 import { mockServer } from '@/api/mocks';
 import { endpoints } from '@/api/client/endpoints';
@@ -44,7 +43,9 @@ describe('VerifyEmailContent Integration', () => {
       render(<VerifyEmailContent />);
 
       expect(screen.getByText(/verifying your email/i)).toBeInTheDocument();
-      expect(screen.getByText(/please wait while we verify your email address/i)).toBeInTheDocument();
+      expect(
+        screen.getByText(/please wait while we verify your email address/i),
+      ).toBeInTheDocument();
     });
   });
 
@@ -70,9 +71,7 @@ describe('VerifyEmailContent Integration', () => {
         { timeout: 3000 },
       );
 
-      expect(
-        screen.getByText(/your email has been successfully verified/i),
-      ).toBeInTheDocument();
+      expect(screen.getByText(/your email has been successfully verified/i)).toBeInTheDocument();
     });
 
     it('displays countdown timer after successful verification', async () => {
@@ -293,9 +292,7 @@ describe('VerifyEmailContent Integration', () => {
       );
 
       expect(screen.getByText(/invalid token/i)).toBeInTheDocument();
-      expect(
-        screen.getByText(/this verification link is invalid/i),
-      ).toBeInTheDocument();
+      expect(screen.getByText(/this verification link is invalid/i)).toBeInTheDocument();
     });
 
     it('does not call API when token is missing', async () => {
@@ -396,9 +393,7 @@ describe('VerifyEmailContent Integration', () => {
         { timeout: 3000 },
       );
 
-      expect(
-        screen.getByText(/the verification link has expired/i),
-      ).toBeInTheDocument();
+      expect(screen.getByText(/the verification link has expired/i)).toBeInTheDocument();
     });
 
     it('handles already verified error', async () => {
@@ -428,9 +423,7 @@ describe('VerifyEmailContent Integration', () => {
         { timeout: 3000 },
       );
 
-      expect(
-        screen.getByText(/this email address has already been verified/i),
-      ).toBeInTheDocument();
+      expect(screen.getByText(/this email address has already been verified/i)).toBeInTheDocument();
     });
   });
 

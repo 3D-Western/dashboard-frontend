@@ -13,10 +13,7 @@ export function StatusAlertExamples() {
   return (
     <div className="space-y-4 p-4">
       {/* Basic usage - Default variant */}
-      <StatusAlert
-        title="Information"
-        description="This is a default informational alert."
-      />
+      <StatusAlert title="Information" description="This is a default informational alert." />
 
       {/* Warning variant with custom action */}
       <StatusAlert

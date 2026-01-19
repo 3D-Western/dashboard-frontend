@@ -40,7 +40,9 @@ export function VerifyEmailContent({ className, ...props }: React.ComponentProps
     async function verifyEmail() {
       if (!token) {
         setStatus('invalid-token');
-        setErrorMessage('This verification link is invalid. Please check your email for the correct link.');
+        setErrorMessage(
+          'This verification link is invalid. Please check your email for the correct link.',
+        );
         return;
       }
 
@@ -50,7 +52,10 @@ export function VerifyEmailContent({ className, ...props }: React.ComponentProps
       } catch (error) {
         setStatus('error');
         if (error instanceof ApiError) {
-          setErrorMessage(error.message || 'We couldn\'t verify your email. The link may have expired or already been used.');
+          setErrorMessage(
+            error.message ||
+              "We couldn't verify your email. The link may have expired or already been used.",
+          );
         } else {
           setErrorMessage('An unexpected error occurred. Please try again.');
         }
@@ -99,7 +104,8 @@ export function VerifyEmailContent({ className, ...props }: React.ComponentProps
                     <div className="space-y-2">
                       <h1 className="text-2xl font-bold">Email verified</h1>
                       <p className="text-balance text-muted-foreground">
-                        Your email has been successfully verified. You can now log in to your account.
+                        Your email has been successfully verified. You can now log in to your
+                        account.
                       </p>
                     </div>
                     <p className="text-sm text-muted-foreground">

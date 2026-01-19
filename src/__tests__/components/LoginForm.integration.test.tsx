@@ -5,7 +5,6 @@ import { mockSuccessfulLogin, mockFailedLogin } from '@test/utils/authHelpers';
 import { http, HttpResponse } from 'msw';
 import { mockServer } from '@/api/mocks';
 import { endpoints } from '@/api/client/endpoints';
-import { toast } from 'sonner';
 import { LoginForm } from '@/app/(auth)/login/login-form';
 
 // Mock Next.js router
