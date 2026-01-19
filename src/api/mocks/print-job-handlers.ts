@@ -116,6 +116,26 @@ export const orderHandlers = [
     const category = body.category || '3d-print';
     const fileId = body.stlFileId || body.fileId || `mock-${category}-file-${Date.now()}`;
 
+    // Helper function to get appropriate file extension and name based on category
+    const getFileDetails = (category: string) => {
+      switch (category) {
+        case '3d-print':
+          return { extension: '.stl', name: 'design.stl' };
+        case 'cnc':
+          return { extension: '.stl', name: 'design.stl' };
+        case 'laser-cutting':
+          // DXF is the most common format for laser cutting (also supports .ai, .svg, .dwg)
+          return { extension: '.dxf', name: 'design.dxf' };
+        case 'water-jet':
+          // DXF is the most common format for water jet cutting (also supports .ai, .svg, .dwg)
+          return { extension: '.dxf', name: 'design.dxf' };
+        default:
+          return { extension: '.stl', name: 'design.stl' };
+      }
+    };
+
+    const fileDetails = getFileDetails(category);
+
     const newOrder = {
       id: `order-${Date.now()}`,
       kind: 'active-print-job' as const,
@@ -126,8 +146,8 @@ export const orderHandlers = [
       status: 'IN_QUEUE' as const,
       stlFile: {
         id: fileId,
-        name: category === '3d-print' ? 'file.stl' : `file-${category}.stl`,
-        path: `/uploads/file-${category}.stl`,
+        name: fileDetails.name,
+        path: `/uploads/${fileDetails.name}`,
       },
       reprint: body.reprint || null,
       // Store category for filtering/display
