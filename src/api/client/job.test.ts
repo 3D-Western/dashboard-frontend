@@ -331,4 +331,321 @@ describe('jobApi', () => {
       await expect(jobApi.cancelJob(jobId)).rejects.toThrow();
     });
   });
+
+  describe('createOrder', () => {
+    it('creates order successfully with required fields', async () => {
+      const mockResponse = {
+        orderId: 'test-order-id',
+        createdAt: '2024-01-15T10:30:00Z',
+        fileId: 'test-file-id',
+        uploadUrl: 'https://storage.example.com/presigned-url',
+        uploadExpiresIn: 900,
+      };
+
+      mockServer.use(
+        http.post(`${baseUrl}${endpoints.orders.create}`, () => {
+          return HttpResponse.json({
+            success: true,
+            data: mockResponse,
+          });
+        }),
+      );
+
+      const result = await jobApi.createOrder({
+        printName: 'Test Print',
+        description: 'Test Description',
+        formAnswerJson: '{"test": "value"}',
+        material1: 'PLA',
+        color1: 'red',
+        material2: 'PLA',
+        color2: 'blue',
+      });
+
+      expect(result.orderId).toBe('test-order-id');
+      expect(result.uploadUrl).toBe('https://storage.example.com/presigned-url');
+    });
+
+    it('sends correct request body with optional fields', async () => {
+      let requestBody: Record<string, unknown> | null = null;
+
+      mockServer.use(
+        http.post(`${baseUrl}${endpoints.orders.create}`, async ({ request }) => {
+          requestBody = (await request.json()) as Record<string, unknown>;
+          return HttpResponse.json({
+            success: true,
+            data: {
+              orderId: 'test-order-id',
+              createdAt: '2024-01-15T10:30:00Z',
+              fileId: 'test-file-id',
+              uploadUrl: 'https://storage.example.com/presigned-url',
+              uploadExpiresIn: 900,
+            },
+          });
+        }),
+      );
+
+      await jobApi.createOrder({
+        printName: 'Test Print',
+        description: 'Test Description',
+        formAnswerJson: '{"test": "value"}',
+        material1: 'PLA',
+        color1: 'red',
+        material2: 'PLA',
+        color2: 'blue',
+        goal: 'Functional part',
+        durability: 'High',
+        infill: '20%',
+        support: 'Yes',
+      });
+
+      expect(requestBody).toEqual({
+        printName: 'Test Print',
+        description: 'Test Description',
+        formAnswerJson: '{"test": "value"}',
+        material1: 'PLA',
+        color1: 'red',
+        material2: 'PLA',
+        color2: 'blue',
+        goal: 'Functional part',
+        durability: 'High',
+        infill: '20%',
+        support: 'Yes',
+      });
+    });
+
+    it('handles print job limit error', async () => {
+      mockServer.use(
+        http.post(`${baseUrl}${endpoints.orders.create}`, () => {
+          return HttpResponse.json(
+            {
+              error: {
+                code: 'PRINT_JOB_LIMIT_REACHED',
+                message: 'You already have 1 active print job(s).',
+              },
+            },
+            { status: 409 },
+          );
+        }),
+      );
+
+      await expect(
+        jobApi.createOrder({
+          printName: 'Test Print',
+          description: 'Test Description',
+          formAnswerJson: '{}',
+          material1: 'PLA',
+          color1: 'red',
+          material2: 'PLA',
+          color2: 'blue',
+        }),
+      ).rejects.toThrow(ApiError);
+    });
+  });
+
+  describe('completeUpload', () => {
+    it('completes upload with full payload', async () => {
+      const orderId = 'test-order-id';
+      let requestBody: Record<string, unknown> | null = null;
+
+      mockServer.use(
+        http.post(`${baseUrl}${endpoints.orders.completeUpload(orderId)}`, async ({ request }) => {
+          requestBody = (await request.json()) as Record<string, unknown>;
+          return HttpResponse.json({
+            success: true,
+            data: null,
+          });
+        }),
+      );
+
+      await jobApi.completeUpload(orderId, {
+        fileName: 'test-file.stl',
+        fileSize: 2457600,
+        contentType: 'model/stl',
+        checksum: 'sha256:abc123',
+      });
+
+      expect(requestBody).toEqual({
+        fileName: 'test-file.stl',
+        fileSize: 2457600,
+        contentType: 'model/stl',
+        checksum: 'sha256:abc123',
+      });
+    });
+
+    it('handles file not found error', async () => {
+      const orderId = 'test-order-id';
+
+      mockServer.use(
+        http.post(`${baseUrl}${endpoints.orders.completeUpload(orderId)}`, () => {
+          return HttpResponse.json(
+            {
+              error: {
+                code: 'VALIDATION_FAILED',
+                message: 'File not found in storage',
+              },
+            },
+            { status: 400 },
+          );
+        }),
+      );
+
+      await expect(
+        jobApi.completeUpload(orderId, {
+          fileName: 'test-file.stl',
+          fileSize: 2457600,
+          contentType: 'model/stl',
+          checksum: 'sha256:abc123',
+        }),
+      ).rejects.toThrow(ApiError);
+    });
+
+    it('handles invalid order status error', async () => {
+      const orderId = 'test-order-id';
+
+      mockServer.use(
+        http.post(`${baseUrl}${endpoints.orders.completeUpload(orderId)}`, () => {
+          return HttpResponse.json(
+            {
+              error: {
+                code: 'INVALID_STATUS',
+                message: 'Only print jobs with PENDING_FILE status can complete upload',
+              },
+            },
+            { status: 409 },
+          );
+        }),
+      );
+
+      await expect(
+        jobApi.completeUpload(orderId, {
+          fileName: 'test-file.stl',
+          fileSize: 2457600,
+          contentType: 'model/stl',
+          checksum: 'sha256:abc123',
+        }),
+      ).rejects.toThrow(ApiError);
+    });
+  });
+
+  describe('retryUpload', () => {
+    it('returns new presigned URL on success', async () => {
+      const orderId = 'test-order-id';
+      const mockResponse = {
+        fileId: 'test-file-id',
+        presignedUrl: 'https://storage.example.com/new-presigned-url',
+        expiresIn: 900,
+        storageKey: 'prints/123456/orders/test-order-id/uuid-here',
+      };
+
+      mockServer.use(
+        http.post(`${baseUrl}${endpoints.orders.retryUpload(orderId)}`, () => {
+          return HttpResponse.json({
+            success: true,
+            data: mockResponse,
+          });
+        }),
+      );
+
+      const result = await jobApi.retryUpload(orderId);
+
+      expect(result.fileId).toBe('test-file-id');
+      expect(result.presignedUrl).toBe('https://storage.example.com/new-presigned-url');
+      expect(result.expiresIn).toBe(900);
+      expect(result.storageKey).toBe('prints/123456/orders/test-order-id/uuid-here');
+    });
+
+    it('handles rate limit error', async () => {
+      const orderId = 'test-order-id';
+
+      mockServer.use(
+        http.post(`${baseUrl}${endpoints.orders.retryUpload(orderId)}`, () => {
+          return HttpResponse.json(
+            {
+              error: {
+                code: 'RATE_LIMIT_EXCEEDED',
+                message: 'Maximum upload retry limit reached for this order',
+              },
+            },
+            { status: 429 },
+          );
+        }),
+      );
+
+      await expect(jobApi.retryUpload(orderId)).rejects.toThrow(ApiError);
+    });
+
+    it('handles invalid order status error', async () => {
+      const orderId = 'test-order-id';
+
+      mockServer.use(
+        http.post(`${baseUrl}${endpoints.orders.retryUpload(orderId)}`, () => {
+          return HttpResponse.json(
+            {
+              error: {
+                code: 'INVALID_STATUS',
+                message: 'Only print jobs with PENDING_FILE status can retry upload',
+              },
+            },
+            { status: 409 },
+          );
+        }),
+      );
+
+      await expect(jobApi.retryUpload(orderId)).rejects.toThrow(ApiError);
+    });
+
+    it('includes credentials in request', async () => {
+      const orderId = 'test-order-id';
+      let requestCredentials: RequestCredentials | undefined;
+
+      mockServer.use(
+        http.post(`${baseUrl}${endpoints.orders.retryUpload(orderId)}`, ({ request }) => {
+          requestCredentials = request.credentials;
+          return HttpResponse.json({
+            success: true,
+            data: {
+              fileId: 'test-file-id',
+              presignedUrl: 'https://storage.example.com/presigned-url',
+              expiresIn: 900,
+              storageKey: 'prints/123456/orders/test-order-id/uuid-here',
+            },
+          });
+        }),
+      );
+
+      await jobApi.retryUpload(orderId);
+      expect(requestCredentials).toBe('include');
+    });
+  });
+
+  describe('uploadOrderFile', () => {
+    it('uploads file to presigned URL', async () => {
+      const uploadUrl = 'https://storage.example.com/presigned-url';
+      const file = new File(['test content'], 'test.stl', { type: 'model/stl' });
+
+      mockServer.use(
+        http.put(uploadUrl, () => {
+          return new HttpResponse(null, { status: 200 });
+        }),
+      );
+
+      const response = await jobApi.uploadOrderFile(uploadUrl, file);
+      expect(response.ok).toBe(true);
+    });
+
+    it('throws error on upload failure', async () => {
+      const uploadUrl = 'https://storage.example.com/presigned-url';
+      const file = new File(['test content'], 'test.stl', { type: 'model/stl' });
+
+      mockServer.use(
+        http.put(uploadUrl, () => {
+          return new HttpResponse(null, { status: 403 });
+        }),
+      );
+
+      await expect(jobApi.uploadOrderFile(uploadUrl, file)).rejects.toThrow(
+        'File upload failed with status 403',
+      );
+    });
+  });
 });

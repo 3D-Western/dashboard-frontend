@@ -103,7 +103,7 @@ describe('NewPrintForm branch coverage (fallbacks)', () => {
     await user.click(submitButton);
 
     await waitFor(() => {
-      expect(mockPush).toHaveBeenCalledWith('/dashboard/print');
+      expect(mockPush).toHaveBeenCalledWith('/dashboard/orders');
       expect(mockRefresh).toHaveBeenCalled();
     });
   });
@@ -117,7 +117,7 @@ describe('NewPrintForm branch coverage (fallbacks)', () => {
     await user.click(submitButton);
 
     await waitFor(() => {
-      expect(mockPush).toHaveBeenCalledWith('/dashboard/print');
+      expect(mockPush).toHaveBeenCalledWith('/dashboard/orders');
     });
   });
 

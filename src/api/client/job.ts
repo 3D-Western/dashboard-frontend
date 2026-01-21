@@ -1,5 +1,11 @@
 import { PrintJob, PrintJobStatus } from '@/types/jobs';
-import { CreateOrderRequest, CreateOrderResponse, PrintJobListResponse } from '../types';
+import {
+  CreateOrderRequest,
+  CreateOrderResponse,
+  CompleteUploadRequest,
+  RetryUploadResponse,
+  PrintJobListResponse,
+} from '../types';
 import { OrderListParams } from '@/types/common';
 import { apiRequest } from './base';
 import { endpoints } from './endpoints';
@@ -88,12 +94,23 @@ export const jobApi = {
 
     return response;
   },
-  completeUpload: async (orderId: string, checksum: string, options?: RequestInit) => {
+  completeUpload: async (orderId: string, payload: CompleteUploadRequest, options?: RequestInit) => {
     return apiRequest<null>(`${getBaseUrl()}${endpoints.orders.completeUpload(orderId)}`, {
       method: 'POST',
       credentials: 'include',
-      body: JSON.stringify({ checksum }),
+      body: JSON.stringify(payload),
       ...options,
     });
+  },
+
+  retryUpload: async (orderId: string, options?: RequestInit) => {
+    return apiRequest<RetryUploadResponse>(
+      `${getBaseUrl()}${endpoints.orders.retryUpload(orderId)}`,
+      {
+        method: 'POST',
+        credentials: 'include',
+        ...options,
+      },
+    );
   },
 };

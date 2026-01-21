@@ -3,12 +3,15 @@ import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import NewPrintForm from '@/app/(protected)/dashboard/orders/print/new/components/PrintOrderForm';
 import { jobApi } from '@/api/client/job';
+import { toast } from 'sonner';
 
 // Mock next/navigation
 const mockPush = vi.fn();
+const mockRefresh = vi.fn();
 vi.mock('next/navigation', () => ({
   useRouter: () => ({
     push: mockPush,
+    refresh: mockRefresh,
   }),
 }));
 
@@ -22,6 +25,13 @@ vi.mock('@/api/client/job', () => ({
 
 vi.mock('@/lib/file-utils', () => ({
   calculateFileChecksum: vi.fn(() => Promise.resolve('sha256:test')),
+}));
+
+vi.mock('sonner', () => ({
+  toast: {
+    success: vi.fn(),
+    error: vi.fn(),
+  },
 }));
 
 const setupUser = () => userEvent.setup({ pointerEventsCheck: 0 });
@@ -40,9 +50,12 @@ const selectComboboxOption = async (
 describe('NewPrintForm Integration', () => {
   beforeEach(() => {
     mockPush.mockClear();
+    mockRefresh.mockClear();
     vi.mocked(jobApi.createOrder).mockReset();
     vi.mocked(jobApi.uploadOrderFile).mockReset();
     vi.mocked(jobApi.completeUpload).mockReset();
+    vi.mocked(toast.success).mockClear();
+    vi.mocked(toast.error).mockClear();
   });
 
   describe('form rendering', () => {
@@ -269,7 +282,7 @@ describe('NewPrintForm Integration', () => {
       await user.click(submitButton);
 
       await waitFor(() => {
-        expect(mockPush).toHaveBeenCalledWith('/dashboard/print');
+        expect(mockPush).toHaveBeenCalledWith('/dashboard/orders');
       });
     });
 
@@ -362,14 +375,12 @@ describe('NewPrintForm Integration', () => {
         expect(jobApi.createOrder).toHaveBeenCalledTimes(1);
         expect(jobApi.uploadOrderFile).toHaveBeenCalledTimes(1);
         expect(jobApi.completeUpload).toHaveBeenCalledTimes(1);
-        expect(mockPush).toHaveBeenCalledWith('/dashboard/print');
+        expect(mockPush).toHaveBeenCalledWith('/dashboard/orders');
       });
     });
 
     it('handles upload failure in real flow', async () => {
       const user = setupUser();
-      const alertSpy = vi.fn();
-      vi.stubGlobal('alert', alertSpy);
 
       vi.mocked(jobApi.createOrder).mockResolvedValue({
         orderId: 'order-123',
@@ -389,19 +400,16 @@ describe('NewPrintForm Integration', () => {
       await user.click(submitButton);
 
       await waitFor(() => {
-        expect(alertSpy).toHaveBeenCalledWith(
+        expect(toast.error).toHaveBeenCalledWith(
           expect.stringContaining('File upload failed with status 400'),
         );
       });
 
       expect(mockPush).not.toHaveBeenCalled();
-      vi.unstubAllGlobals();
     });
 
     it('handles order creation failure in real flow', async () => {
       const user = setupUser();
-      const alertSpy = vi.fn();
-      vi.stubGlobal('alert', alertSpy);
 
       vi.mocked(jobApi.createOrder).mockRejectedValue(new Error('Order creation failed'));
 
@@ -412,16 +420,12 @@ describe('NewPrintForm Integration', () => {
       await user.click(submitButton);
 
       await waitFor(() => {
-        expect(alertSpy).toHaveBeenCalledWith(expect.stringContaining('Order creation failed'));
+        expect(toast.error).toHaveBeenCalledWith(expect.stringContaining('Order creation failed'));
       });
-
-      vi.unstubAllGlobals();
     });
 
     it('handles complete upload failure in real flow', async () => {
       const user = setupUser();
-      const alertSpy = vi.fn();
-      vi.stubGlobal('alert', alertSpy);
 
       vi.mocked(jobApi.createOrder).mockResolvedValue({
         orderId: 'order-456',
@@ -440,19 +444,16 @@ describe('NewPrintForm Integration', () => {
       await user.click(submitButton);
 
       await waitFor(() => {
-        expect(alertSpy).toHaveBeenCalledWith(
+        expect(toast.error).toHaveBeenCalledWith(
           expect.stringContaining('Failed to complete upload'),
         );
       });
 
       expect(mockPush).not.toHaveBeenCalled();
-      vi.unstubAllGlobals();
     });
 
     it('handles non-Error throw in submit flow', async () => {
       const user = setupUser();
-      const alertSpy = vi.fn();
-      vi.stubGlobal('alert', alertSpy);
 
       vi.mocked(jobApi.createOrder).mockRejectedValue('boom');
 
@@ -463,10 +464,10 @@ describe('NewPrintForm Integration', () => {
       await user.click(submitButton);
 
       await waitFor(() => {
-        expect(alertSpy).toHaveBeenCalledWith('Failed to submit print request. ');
+        expect(toast.error).toHaveBeenCalledWith(
+          'Failed to submit print request. Unknown error',
+        );
       });
-
-      vi.unstubAllGlobals();
     });
   });
 

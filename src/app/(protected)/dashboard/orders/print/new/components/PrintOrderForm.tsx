@@ -31,6 +31,7 @@ import { jobApi } from '@/api/client/job';
 import { calculateFileChecksum } from '@/lib/file-utils';
 import { Routes } from '@/lib/routes';
 import { toast } from 'sonner';
+import { CreateOrderRequest } from '@/api/types';
 
 const MATERIAL_OPTIONS = [
   { value: 'pla', label: 'PLA' },
@@ -112,12 +113,9 @@ export default function NewPrintForm({ mockMode = false }: NewPrintFormProps = {
       }
 
       // STEP 1: Create order with file metadata (not the file itself)
-      const createOrderPayload = {
+      const createOrderPayload: CreateOrderRequest = {
         printName: values.printName,
         description: values.description,
-        fileName: file.name,
-        fileSize: file.size,
-        contentType: file.type || 'application/sla',
         material1: values.material1,
         color1: values.color1,
         material2: values.material2,
@@ -126,6 +124,17 @@ export default function NewPrintForm({ mockMode = false }: NewPrintFormProps = {
         durability: values.durability,
         infill: values.infill,
         support: values.support,
+        formAnswerJson: JSON.stringify({
+          contentType: file.type || 'application/sla',
+          material1: values.material1,
+          color1: values.color1,
+          material2: values.material2,
+          color2: values.color2,
+          goal: values.goal,
+          durability: values.durability,
+          infill: values.infill,
+          support: values.support,
+        }),
       };
 
       const createOrderResponse = await jobApi.createOrder(createOrderPayload);
@@ -134,11 +143,18 @@ export default function NewPrintForm({ mockMode = false }: NewPrintFormProps = {
         throw new Error('Invalid response from server: missing orderId or uploadUrl');
       }
 
+      // STEP 2: Upload file to presigned URL
       await jobApi.uploadOrderFile(createOrderResponse.uploadUrl, file);
 
+      // STEP 3: Complete upload with file metadata
       const checksum = await calculateFileChecksum(file);
 
-      await jobApi.completeUpload(createOrderResponse.orderId, checksum);
+      await jobApi.completeUpload(createOrderResponse.orderId, {
+        fileName: file.name,
+        fileSize: file.size,
+        contentType: file.type || 'application/sla',
+        checksum: checksum,
+      });
 
       // Reset form to prevent unsaved changes warning
       form.reset();
@@ -148,7 +164,9 @@ export default function NewPrintForm({ mockMode = false }: NewPrintFormProps = {
       router.push(Routes.orders.home);
       router.refresh();
     } catch (err) {
-      toast.error('Failed to submit print request. ' + (err instanceof Error ? err.message : 'Unknown error'));
+      toast.error(
+        'Failed to submit print request. ' + (err instanceof Error ? err.message : 'Unknown error'),
+      );
     }
   }
 

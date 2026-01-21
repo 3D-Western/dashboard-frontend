@@ -57,21 +57,20 @@ export interface VerifyEmailResponse {
 }
 
 export interface CreateOrderRequest {
+  // Required fields
   printName: string;
   description: string;
-  fileName: string;
-  
+  formAnswerJson: string;
+  material1: string;
+  color1: string;
+  material2: string;
+  color2: string;
+
+  // Optional fields
   goal?: string;
   durability?: string;
   infill?: string;
-  material1?: string;
-  color1?: string;
-  material2?: string;
-  color2?: string;
   support?: string;
-  material?: string;
-  priority?: string;
-  urgency?: string;
 }
 
 export interface CreateOrderResponse {
@@ -80,6 +79,20 @@ export interface CreateOrderResponse {
   fileId: string;
   uploadUrl: string;
   uploadExpiresIn: number;
+}
+
+export interface CompleteUploadRequest {
+  fileName: string;
+  fileSize: number;
+  contentType: string;
+  checksum: string;
+}
+
+export interface RetryUploadResponse {
+  fileId: string;
+  presignedUrl: string;
+  expiresIn: number;
+  storageKey: string;
 }
 
 

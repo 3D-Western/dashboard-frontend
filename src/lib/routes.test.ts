@@ -60,16 +60,32 @@ describe('Routes', () => {
       expect(Routes).toHaveProperty('resetPassword');
       expect(Routes).toHaveProperty('adminUsersManagement');
       expect(Routes).toHaveProperty('adminPrintsManagement');
+      expect(Routes).toHaveProperty('orders');
     });
 
+    // Helper to get all string routes (flattens nested objects)
+    const getAllRoutes = (obj: Record<string, unknown>, prefix = ''): string[] => {
+      const routes: string[] = [];
+      for (const [key, value] of Object.entries(obj)) {
+        if (typeof value === 'string') {
+          routes.push(value);
+        } else if (typeof value === 'object' && value !== null) {
+          routes.push(...getAllRoutes(value as Record<string, unknown>, `${prefix}${key}.`));
+        }
+      }
+      return routes;
+    };
+
     it('all routes are strings', () => {
-      Object.values(Routes).forEach((route) => {
+      const allRoutes = getAllRoutes(Routes);
+      allRoutes.forEach((route) => {
         expect(typeof route).toBe('string');
       });
     });
 
     it('all routes start with forward slash', () => {
-      Object.values(Routes).forEach((route) => {
+      const allRoutes = getAllRoutes(Routes);
+      allRoutes.forEach((route) => {
         expect(route).toMatch(/^\//);
       });
     });
@@ -84,4 +100,5 @@ describe('Routes', () => {
       expect(Routes.dashboardUserSettings).toMatch(/^\/dashboard/);
     });
   });
+
 });
