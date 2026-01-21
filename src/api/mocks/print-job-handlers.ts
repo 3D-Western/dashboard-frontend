@@ -82,7 +82,7 @@ export const orderHandlers = [
     );
   }),
 
-  // POST /orders - Create new order
+  // POST /orders - Create new order (Step 1: Returns presigned URL)
   http.post(`${apiUrl}${endpoints.orders.create}`, async ({ cookies, request }) => {
     const sessionId = cookies['sessionToken'] || '';
     const user = db.validateSession(sessionId);
@@ -91,9 +91,11 @@ export const orderHandlers = [
     }
 
     const body = (await request.json()) as {
-      category?: string;
-      name: string;
+      printName: string;
       description: string;
+      fileName: string;
+      fileSize: number;
+      contentType: string;
       // 3D Print specific fields
       goal?: string;
       durability?: string;
@@ -103,60 +105,37 @@ export const orderHandlers = [
       material2?: string;
       color2?: string;
       support?: string;
-      stlFileId?: string;
-      reprint?: string | null;
       // CNC/Laser/WaterJet specific fields
       material?: string;
-      fileId?: string;
       priority?: string;
       urgency?: string;
     };
 
-    // Create new order and add to database
-    const category = body.category || '3d-print';
-    const fileId = body.stlFileId || body.fileId || `mock-${category}-file-${Date.now()}`;
+    // Generate IDs
+    const orderId = `order-${Date.now()}`;
+    const fileId = `file-${Date.now()}`;
 
-    // Helper function to get appropriate file extension and name based on category
-    const getFileDetails = (category: string) => {
-      switch (category) {
-        case '3d-print':
-          return { extension: '.stl', name: 'design.stl' };
-        case 'cnc':
-          return { extension: '.stl', name: 'design.stl' };
-        case 'laser-cutting':
-          // DXF is the most common format for laser cutting (also supports .ai, .svg, .dwg)
-          return { extension: '.dxf', name: 'design.dxf' };
-        case 'water-jet':
-          // DXF is the most common format for water jet cutting (also supports .ai, .svg, .dwg)
-          return { extension: '.dxf', name: 'design.dxf' };
-        default:
-          return { extension: '.stl', name: 'design.stl' };
-      }
-    };
-
-    const fileDetails = getFileDetails(category);
-
+    // Create order with PENDING_FILE status
     const newOrder = {
-      id: `order-${Date.now()}`,
+      id: orderId,
       kind: 'active-print-job' as const,
       studentId: user.studentId,
-      name: body.name,
+      name: body.printName,
       description: body.description,
       orderPlaced: new Date().toISOString(),
-      status: 'IN_QUEUE' as const,
+      status: 'PENDING_FILE' as const,
       stlFile: {
         id: fileId,
-        name: fileDetails.name,
-        path: `/uploads/${fileDetails.name}`,
+        name: body.fileName,
+        path: `/uploads/${body.fileName}`,
       },
-      reprint: body.reprint || null,
-      // Store category for filtering/display
-      category: category,
+      reprint: null,
+      category: '3d-print',
       // 3D Print specific fields
       goal: body.goal,
       durability: body.durability,
       infill: body.infill,
-      material1: body.material1 || body.material, // Support both formats
+      material1: body.material1 || body.material,
       color1: body.color1,
       material2: body.material2,
       color2: body.color2,
@@ -168,7 +147,117 @@ export const orderHandlers = [
     };
     db.addPrintJob(newOrder);
 
-    return HttpResponse.json(generateSuccessResponse({ order: newOrder }));
+    // Return presigned URL response
+    const mockPresignedUrl = `http://mock-storage.local/uploads/${fileId}?signature=mock`;
+
+    return HttpResponse.json(
+      generateSuccessResponse({
+        orderId,
+        createdAt: newOrder.orderPlaced,
+        fileId,
+        uploadUrl: mockPresignedUrl,
+        uploadExpiresIn: 900, // 15 minutes
+      }),
+      { status: 201 },
+    );
+  }),
+
+  // PUT to presigned URL (Step 2: Upload file directly to storage)
+  http.put('http://mock-storage.local/uploads/:fileId', async ({ request }) => {
+    // Simulate successful file upload to storage
+    // In a real scenario, this would be handled by SeaweedFS/S3
+    const body = await request.blob();
+
+    // Simulate storage processing time
+    await new Promise((resolve) => setTimeout(resolve, 100));
+
+    return new HttpResponse(null, { status: 200 });
+  }),
+
+  // POST /orders/:orderId/complete-upload (Step 3: Complete upload)
+  http.post(`${apiUrl}/api/v1/orders/:orderId/complete-upload`, async ({ cookies, params, request }) => {
+    const sessionId = cookies['sessionToken'] || '';
+    const user = db.validateSession(sessionId);
+    if (!user) {
+      return createInvalidSessionResponse();
+    }
+
+    const { orderId } = params;
+    const body = (await request.json()) as { checksum: string };
+
+    // Find the order
+    const order = db.getPrintJobs({ userId: user.studentId }).find((o) => o.id === orderId);
+    if (!order) {
+      return HttpResponse.json(
+        { success: false, error: { code: 'ORDER_NOT_FOUND', message: 'Order not found' } },
+        { status: 404 },
+      );
+    }
+
+    // Check if order is in PENDING_FILE status
+    if (order.status !== 'PENDING_FILE') {
+      return HttpResponse.json(
+        {
+          success: false,
+          error: {
+            code: 'INVALID_STATUS',
+            message: 'Only orders with PENDING_FILE status can complete upload',
+          },
+        },
+        { status: 409 },
+      );
+    }
+
+    // Update order status to IN_QUEUE
+    db.updatePrintJobStatus(orderId as string, 'IN_QUEUE');
+
+    return HttpResponse.json(generateSuccessResponse({ data: null }));
+  }),
+
+  // POST /orders/:orderId/retry-upload (Retry presigned URL)
+  http.post(`${apiUrl}/api/v1/orders/:orderId/retry-upload`, ({ cookies, params }) => {
+    const sessionId = cookies['sessionToken'] || '';
+    const user = db.validateSession(sessionId);
+    if (!user) {
+      return createInvalidSessionResponse();
+    }
+
+    const { orderId } = params;
+
+    // Find the order
+    const order = db.getPrintJobs({ userId: user.studentId }).find((o) => o.id === orderId);
+    if (!order) {
+      return HttpResponse.json(
+        { success: false, error: { code: 'ORDER_NOT_FOUND', message: 'Order not found' } },
+        { status: 404 },
+      );
+    }
+
+    // Check if order is in PENDING_FILE status
+    if (order.status !== 'PENDING_FILE') {
+      return HttpResponse.json(
+        {
+          success: false,
+          error: {
+            code: 'INVALID_STATUS',
+            message: 'Only orders with PENDING_FILE status can retry upload',
+          },
+        },
+        { status: 409 },
+      );
+    }
+
+    // Return new presigned URL
+    const mockPresignedUrl = `http://mock-storage.local/uploads/${order.stlFile.id}?signature=mock-retry`;
+
+    return HttpResponse.json(
+      generateSuccessResponse({
+        fileId: order.stlFile.id,
+        presignedUrl: mockPresignedUrl,
+        expiresIn: 900,
+        storageKey: `prints/tmp/${order.stlFile.id}`,
+      }),
+    );
   }),
 
   // PATCH /orders/:orderId - Update order status

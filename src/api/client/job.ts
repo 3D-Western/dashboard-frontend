@@ -1,5 +1,5 @@
 import { PrintJob, PrintJobStatus } from '@/types/jobs';
-import { PrintJobListResponse } from '../types';
+import { CreateOrderRequest, CreateOrderResponse, PrintJobListResponse } from '../types';
 import { OrderListParams } from '@/types/common';
 import { apiRequest } from './base';
 import { endpoints } from './endpoints';
@@ -61,6 +61,38 @@ export const jobApi = {
     return apiRequest<{ job: PrintJob }>(`${getBaseUrl()}${endpoints.orders.cancel(jobId)}`, {
       method: 'POST',
       credentials: 'include',
+      ...options,
+    });
+  },
+  createOrder: async (payload: CreateOrderRequest, options?: RequestInit) => {
+    return apiRequest<CreateOrderResponse>(`${getBaseUrl()}${endpoints.orders.create}`, {
+      method: 'POST',
+      credentials: 'include',
+      body: JSON.stringify(payload),
+      ...options,
+    });
+  },
+  uploadOrderFile: async (uploadUrl: string, file: File, options?: RequestInit) => {
+    const response = await fetch(uploadUrl, {
+      method: 'PUT',
+      body: file,
+      headers: {
+        'Content-Type': file.type || 'application/sla',
+      },
+      ...options,
+    });
+
+    if (!response.ok) {
+      throw new Error(`File upload failed with status ${response.status}`);
+    }
+
+    return response;
+  },
+  completeUpload: async (orderId: string, checksum: string, options?: RequestInit) => {
+    return apiRequest<null>(`${getBaseUrl()}${endpoints.orders.completeUpload(orderId)}`, {
+      method: 'POST',
+      credentials: 'include',
+      body: JSON.stringify({ checksum }),
       ...options,
     });
   },

@@ -27,6 +27,7 @@ export interface BasePrintJob {
 }
 
 export type PrintJobStatus =
+  | 'PENDING_FILE'
   | 'DRAFT'
   | 'IN_QUEUE'
   | 'PRINTING'

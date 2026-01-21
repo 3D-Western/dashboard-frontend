@@ -56,6 +56,33 @@ export interface VerifyEmailResponse {
   message: string;
 }
 
+export interface CreateOrderRequest {
+  printName: string;
+  description: string;
+  fileName: string;
+  
+  goal?: string;
+  durability?: string;
+  infill?: string;
+  material1?: string;
+  color1?: string;
+  material2?: string;
+  color2?: string;
+  support?: string;
+  material?: string;
+  priority?: string;
+  urgency?: string;
+}
+
+export interface CreateOrderResponse {
+  orderId: string;
+  createdAt: string;
+  fileId: string;
+  uploadUrl: string;
+  uploadExpiresIn: number;
+}
+
+
 export type ApiSignupResponse = ApiLoginResponse;
 
 // Print Jobs API Response Types
