@@ -41,19 +41,19 @@ describe('PrintJobsTable Integration', () => {
       createMockPrintJob({
         id: '1',
         name: 'Test Print 1',
-        status: 'IN_QUEUE',
+        status: 'InQueue',
         orderPlaced: '2024-01-15T10:00:00Z',
       }),
       createMockPrintJob({
         id: '2',
         name: 'Test Print 2',
-        status: 'PRINTING',
+        status: 'Printing',
         orderPlaced: '2024-01-16T11:00:00Z',
       }),
       createMockPrintJob({
         id: '3',
         name: 'Test Print 3',
-        status: 'READY',
+        status: 'Ready',
         orderPlaced: '2024-01-17T12:00:00Z',
       }),
     ];
@@ -220,18 +220,18 @@ describe('PrintJobsTable Integration', () => {
       expect(copyButton).toBeEnabled();
     });
 
-    it('shows cancel option for IN_QUEUE jobs', async () => {
+    it('shows cancel option for InQueue jobs', async () => {
       const user = userEvent.setup();
       const pagination = createMockPagination(mockJobs);
       render(<PrintJobsTable printJobs={mockJobs} pagination={pagination} />);
 
       const actionButtons = screen.getAllByLabelText(/Actions for/i);
-      await user.click(actionButtons[0]); // First job is IN_QUEUE
+      await user.click(actionButtons[0]); // First job is InQueue
 
       expect(screen.getByText('Cancel Print')).toBeInTheDocument();
     });
 
-    it('cancel action updates job status to CANCELLED', async () => {
+    it('cancel action updates job status to Failed', async () => {
       const user = userEvent.setup();
       const pagination = createMockPagination(mockJobs);
       render(<PrintJobsTable printJobs={mockJobs} pagination={pagination} />);
@@ -247,9 +247,9 @@ describe('PrintJobsTable Integration', () => {
       expect(screen.getByText('Test Print 1')).toBeInTheDocument();
     });
 
-    it('does not show cancel for non-IN_QUEUE jobs', async () => {
+    it('does not show cancel for non-InQueue jobs', async () => {
       const user = userEvent.setup();
-      const printingJob = createMockPrintJob({ status: 'PRINTING' });
+      const printingJob = createMockPrintJob({ status: 'Printing' });
       const pagination = createMockPagination([printingJob]);
       render(<PrintJobsTable printJobs={[printingJob]} pagination={pagination} />);
 

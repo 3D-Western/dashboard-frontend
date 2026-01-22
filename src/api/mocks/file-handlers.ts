@@ -251,22 +251,8 @@ export const fileHandlers = [
       );
     }
 
-    // Check if file is associated with any orders
-    const allJobs = db.getAllPrintJobs();
-    const associatedJobs = allJobs.filter((job) => job.stlFile.id === file.id);
-
-    if (associatedJobs.length > 0) {
-      return HttpResponse.json(
-        generateErrorResponse({
-          code: 'FILE_IN_USE',
-          message: 'Cannot delete file associated with active orders',
-          details: {
-            activeOrders: associatedJobs.map((job) => job.id),
-          },
-        }),
-        { status: 409 },
-      );
-    }
+    // Note: File association with orders has been removed
+    // Files are now managed separately from print jobs
 
     try {
       // Delete from disk

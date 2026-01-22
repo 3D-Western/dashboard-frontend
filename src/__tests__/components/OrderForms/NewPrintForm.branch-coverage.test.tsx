@@ -97,47 +97,28 @@ describe('NewPrintForm branch coverage (fallbacks)', () => {
 
   it('submits without file in mock mode', async () => {
     const user = setupUser();
-
-    // Mock fetch to bypass MSW authentication
-    const fetchSpy = vi.spyOn(global, 'fetch').mockResolvedValueOnce(
-      new Response(JSON.stringify({ success: true, data: { order: { id: 'test-order' } } }), {
-        status: 200,
-        headers: { 'Content-Type': 'application/json' },
-      }),
-    );
-
-    render(<NewPrintForm />);
+    render(<NewPrintForm mockMode />);
 
     const submitButton = screen.getByRole('button', { name: /Submit/i });
     await user.click(submitButton);
 
     await waitFor(() => {
-      expect(mockPush).toHaveBeenCalledWith('/dashboard/print');
+      expect(mockPush).toHaveBeenCalledWith('/dashboard/orders');
       expect(mockRefresh).toHaveBeenCalled();
     });
-
-    fetchSpy.mockRestore();
   });
 
-  it('submits without file using fetch directly', async () => {
+  it('submits without file using mock mode', async () => {
     const user = setupUser();
-    const fetchSpy = vi.spyOn(global, 'fetch').mockResolvedValueOnce(
-      new Response(JSON.stringify({ success: true, data: { order: { id: 'test-123' } } }), {
-        status: 200,
-        headers: { 'Content-Type': 'application/json' },
-      }),
-    );
 
-    render(<NewPrintForm />);
+    render(<NewPrintForm mockMode />);
 
     const submitButton = screen.getByRole('button', { name: /Submit/i });
     await user.click(submitButton);
 
     await waitFor(() => {
-      expect(fetchSpy).toHaveBeenCalledTimes(1);
+      expect(mockPush).toHaveBeenCalledWith('/dashboard/orders');
     });
-
-    fetchSpy.mockRestore();
   });
 
   it('handles undefined select values', async () => {

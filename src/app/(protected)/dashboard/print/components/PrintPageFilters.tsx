@@ -7,12 +7,11 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { useCallback } from 'react';
 
 const USER_STATUS_OPTIONS: PrintJobStatus[] = [
-  'IN_QUEUE',
-  'PRINTING',
-  'READY',
-  'CANCELLED',
-  'SUCCESS',
-  'FAIL',
+  'InQueue',
+  'Printing',
+  'Ready',
+  'Succeeded',
+  'Failed',
 ];
 
 export function PrintPageFilters() {

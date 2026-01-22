@@ -25,7 +25,6 @@ describe('useColumns', () => {
       expect(columnIds).toContain('name');
       expect(columnIds).toContain('status');
       expect(columnIds).toContain('orderPlaced');
-      expect(columnIds).toContain('stlFile');
       expect(columnIds).toContain('actions');
       expect(columnIds).not.toContain('student');
     });
@@ -40,7 +39,6 @@ describe('useColumns', () => {
       expect(columnIds).toContain('student');
       expect(columnIds).toContain('status');
       expect(columnIds).toContain('orderPlaced');
-      expect(columnIds).toContain('stlFile');
       expect(columnIds).toContain('actions');
     });
 

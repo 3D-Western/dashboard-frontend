@@ -2,13 +2,36 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import NewPrintForm from '@/app/(protected)/dashboard/orders/print/new/components/PrintOrderForm';
+import { jobApi } from '@/api/client/job';
+import { toast } from 'sonner';
 
 // Mock next/navigation
 const mockPush = vi.fn();
+const mockRefresh = vi.fn();
 vi.mock('next/navigation', () => ({
   useRouter: () => ({
     push: mockPush,
+    refresh: mockRefresh,
   }),
+}));
+
+vi.mock('@/api/client/job', () => ({
+  jobApi: {
+    createOrder: vi.fn(),
+    uploadOrderFile: vi.fn(),
+    completeUpload: vi.fn(),
+  },
+}));
+
+vi.mock('@/lib/file-utils', () => ({
+  calculateFileChecksum: vi.fn(() => Promise.resolve('sha256:test')),
+}));
+
+vi.mock('sonner', () => ({
+  toast: {
+    success: vi.fn(),
+    error: vi.fn(),
+  },
 }));
 
 const setupUser = () => userEvent.setup({ pointerEventsCheck: 0 });
@@ -27,6 +50,12 @@ const selectComboboxOption = async (
 describe('NewPrintForm Integration', () => {
   beforeEach(() => {
     mockPush.mockClear();
+    mockRefresh.mockClear();
+    vi.mocked(jobApi.createOrder).mockReset();
+    vi.mocked(jobApi.uploadOrderFile).mockReset();
+    vi.mocked(jobApi.completeUpload).mockReset();
+    vi.mocked(toast.success).mockClear();
+    vi.mocked(toast.error).mockClear();
   });
 
   describe('form rendering', () => {
@@ -245,15 +274,7 @@ describe('NewPrintForm Integration', () => {
     it('submits valid data and redirects in mock mode', async () => {
       const user = setupUser();
 
-      // Mock fetch to bypass MSW authentication
-      const fetchSpy = vi.spyOn(global, 'fetch').mockResolvedValueOnce(
-        new Response(JSON.stringify({ success: true, data: { order: { id: 'test-order' } } }), {
-          status: 200,
-          headers: { 'Content-Type': 'application/json' },
-        }),
-      );
-
-      render(<NewPrintForm />);
+      render(<NewPrintForm mockMode />);
 
       await fillRequiredFields(user);
 
@@ -261,10 +282,8 @@ describe('NewPrintForm Integration', () => {
       await user.click(submitButton);
 
       await waitFor(() => {
-        expect(mockPush).toHaveBeenCalledWith('/dashboard/print');
+        expect(mockPush).toHaveBeenCalledWith('/dashboard/orders');
       });
-
-      fetchSpy.mockRestore();
     });
 
     it('form submission with all valid data succeeds in mock mode', async () => {
@@ -336,21 +355,15 @@ describe('NewPrintForm Integration', () => {
 
     it('submits real flow when mockMode is false', async () => {
       const user = setupUser();
-      const fetchSpy = vi.spyOn(global, 'fetch');
-
-      fetchSpy
-        .mockResolvedValueOnce(
-          new Response(JSON.stringify({ id: 'file-123' }), {
-            status: 200,
-            headers: { 'Content-Type': 'application/json' },
-          }),
-        )
-        .mockResolvedValueOnce(
-          new Response(JSON.stringify({ success: true, data: { order: { id: 'order-123' } } }), {
-            status: 200,
-            headers: { 'Content-Type': 'application/json' },
-          }),
-        );
+      vi.mocked(jobApi.createOrder).mockResolvedValue({
+        orderId: 'order-123',
+        createdAt: new Date().toISOString(),
+        fileId: 'file-123',
+        uploadUrl: 'http://example.com/upload',
+        uploadExpiresIn: 900,
+      });
+      vi.mocked(jobApi.uploadOrderFile).mockResolvedValue(new Response());
+      vi.mocked(jobApi.completeUpload).mockResolvedValue(null);
 
       render(<NewPrintForm mockMode={false} />);
       await fillRequiredFields(user);
@@ -359,97 +372,26 @@ describe('NewPrintForm Integration', () => {
       await user.click(submitButton);
 
       await waitFor(() => {
-        expect(fetchSpy).toHaveBeenCalledTimes(2);
+        expect(jobApi.createOrder).toHaveBeenCalledTimes(1);
+        expect(jobApi.uploadOrderFile).toHaveBeenCalledTimes(1);
+        expect(jobApi.completeUpload).toHaveBeenCalledTimes(1);
+        expect(mockPush).toHaveBeenCalledWith('/dashboard/orders');
       });
-
-      const submitCall = fetchSpy.mock.calls[1];
-      const submitOptions = submitCall[1] as RequestInit;
-      const payload = JSON.parse(submitOptions.body as string);
-      expect(payload.stlFileId).toBe('file-123');
-      expect(mockPush).toHaveBeenCalledWith('/dashboard/print');
-
-      fetchSpy.mockRestore();
-    });
-
-    it('uses uploadJson.fileId when id is missing', async () => {
-      const user = setupUser();
-      const fetchSpy = vi.spyOn(global, 'fetch');
-
-      fetchSpy
-        .mockResolvedValueOnce(
-          new Response(JSON.stringify({ fileId: 'file-abc' }), {
-            status: 200,
-            headers: { 'Content-Type': 'application/json' },
-          }),
-        )
-        .mockResolvedValueOnce(
-          new Response(JSON.stringify({ success: true, data: { order: { id: 'order-abc' } } }), {
-            status: 200,
-            headers: { 'Content-Type': 'application/json' },
-          }),
-        );
-
-      render(<NewPrintForm mockMode={false} />);
-      await fillRequiredFields(user);
-
-      const submitButton = screen.getByRole('button', { name: /Submit/i });
-      await user.click(submitButton);
-
-      await waitFor(() => {
-        expect(fetchSpy).toHaveBeenCalledTimes(2);
-      });
-
-      const submitCall = fetchSpy.mock.calls[1];
-      const submitOptions = submitCall[1] as RequestInit;
-      const payload = JSON.parse(submitOptions.body as string);
-      expect(payload.stlFileId).toBe('file-abc');
-
-      fetchSpy.mockRestore();
-    });
-
-    it('uses null fileId when upload response has no id fields', async () => {
-      const user = setupUser();
-      const fetchSpy = vi.spyOn(global, 'fetch');
-
-      fetchSpy
-        .mockResolvedValueOnce(
-          new Response(JSON.stringify({}), {
-            status: 200,
-            headers: { 'Content-Type': 'application/json' },
-          }),
-        )
-        .mockResolvedValueOnce(
-          new Response(JSON.stringify({ success: true, data: { order: { id: 'order-null' } } }), {
-            status: 200,
-            headers: { 'Content-Type': 'application/json' },
-          }),
-        );
-
-      render(<NewPrintForm mockMode={false} />);
-      await fillRequiredFields(user);
-
-      const submitButton = screen.getByRole('button', { name: /Submit/i });
-      await user.click(submitButton);
-
-      await waitFor(() => {
-        expect(fetchSpy).toHaveBeenCalledTimes(2);
-      });
-
-      const submitCall = fetchSpy.mock.calls[1];
-      const submitOptions = submitCall[1] as RequestInit;
-      const payload = JSON.parse(submitOptions.body as string);
-      expect(payload.stlFileId).toBe('');
-
-      fetchSpy.mockRestore();
     });
 
     it('handles upload failure in real flow', async () => {
       const user = setupUser();
-      const fetchSpy = vi.spyOn(global, 'fetch');
-      const alertSpy = vi.fn();
-      vi.stubGlobal('alert', alertSpy);
 
-      fetchSpy.mockResolvedValueOnce(new Response('Upload failed', { status: 400 }));
+      vi.mocked(jobApi.createOrder).mockResolvedValue({
+        orderId: 'order-123',
+        createdAt: new Date().toISOString(),
+        fileId: 'file-123',
+        uploadUrl: 'http://example.com/upload',
+        uploadExpiresIn: 900,
+      });
+      vi.mocked(jobApi.uploadOrderFile).mockRejectedValue(
+        new Error('File upload failed with status 400'),
+      );
 
       render(<NewPrintForm mockMode={false} />);
       await fillRequiredFields(user);
@@ -458,21 +400,18 @@ describe('NewPrintForm Integration', () => {
       await user.click(submitButton);
 
       await waitFor(() => {
-        expect(alertSpy).toHaveBeenCalledWith(expect.stringContaining('Upload failed'));
+        expect(toast.error).toHaveBeenCalledWith(
+          expect.stringContaining('File upload failed with status 400'),
+        );
       });
 
       expect(mockPush).not.toHaveBeenCalled();
-      fetchSpy.mockRestore();
-      vi.unstubAllGlobals();
     });
 
-    it('uses fallback upload error message when response is empty', async () => {
+    it('handles order creation failure in real flow', async () => {
       const user = setupUser();
-      const fetchSpy = vi.spyOn(global, 'fetch');
-      const alertSpy = vi.fn();
-      vi.stubGlobal('alert', alertSpy);
 
-      fetchSpy.mockResolvedValueOnce(new Response('', { status: 400 }));
+      vi.mocked(jobApi.createOrder).mockRejectedValue(new Error('Order creation failed'));
 
       render(<NewPrintForm mockMode={false} />);
       await fillRequiredFields(user);
@@ -481,27 +420,22 @@ describe('NewPrintForm Integration', () => {
       await user.click(submitButton);
 
       await waitFor(() => {
-        expect(alertSpy).toHaveBeenCalledWith(expect.stringContaining('File upload failed'));
+        expect(toast.error).toHaveBeenCalledWith(expect.stringContaining('Order creation failed'));
       });
-
-      fetchSpy.mockRestore();
-      vi.unstubAllGlobals();
     });
 
-    it('handles submit failure in real flow', async () => {
+    it('handles complete upload failure in real flow', async () => {
       const user = setupUser();
-      const fetchSpy = vi.spyOn(global, 'fetch');
-      const alertSpy = vi.fn();
-      vi.stubGlobal('alert', alertSpy);
 
-      fetchSpy
-        .mockResolvedValueOnce(
-          new Response(JSON.stringify({ fileId: 'file-456' }), {
-            status: 200,
-            headers: { 'Content-Type': 'application/json' },
-          }),
-        )
-        .mockResolvedValueOnce(new Response('Submit failed', { status: 400 }));
+      vi.mocked(jobApi.createOrder).mockResolvedValue({
+        orderId: 'order-456',
+        createdAt: new Date().toISOString(),
+        fileId: 'file-456',
+        uploadUrl: 'http://example.com/upload',
+        uploadExpiresIn: 900,
+      });
+      vi.mocked(jobApi.uploadOrderFile).mockResolvedValue(new Response());
+      vi.mocked(jobApi.completeUpload).mockRejectedValue(new Error('Failed to complete upload'));
 
       render(<NewPrintForm mockMode={false} />);
       await fillRequiredFields(user);
@@ -510,50 +444,18 @@ describe('NewPrintForm Integration', () => {
       await user.click(submitButton);
 
       await waitFor(() => {
-        expect(alertSpy).toHaveBeenCalledWith(expect.stringContaining('Submit failed'));
+        expect(toast.error).toHaveBeenCalledWith(
+          expect.stringContaining('Failed to complete upload'),
+        );
       });
 
       expect(mockPush).not.toHaveBeenCalled();
-      fetchSpy.mockRestore();
-      vi.unstubAllGlobals();
-    });
-
-    it('uses fallback submit error message when response is empty', async () => {
-      const user = setupUser();
-      const fetchSpy = vi.spyOn(global, 'fetch');
-      const alertSpy = vi.fn();
-      vi.stubGlobal('alert', alertSpy);
-
-      fetchSpy
-        .mockResolvedValueOnce(
-          new Response(JSON.stringify({ id: 'file-789' }), {
-            status: 200,
-            headers: { 'Content-Type': 'application/json' },
-          }),
-        )
-        .mockResolvedValueOnce(new Response('', { status: 400 }));
-
-      render(<NewPrintForm mockMode={false} />);
-      await fillRequiredFields(user);
-
-      const submitButton = screen.getByRole('button', { name: /Submit/i });
-      await user.click(submitButton);
-
-      await waitFor(() => {
-        expect(alertSpy).toHaveBeenCalledWith(expect.stringContaining('Submit failed'));
-      });
-
-      fetchSpy.mockRestore();
-      vi.unstubAllGlobals();
     });
 
     it('handles non-Error throw in submit flow', async () => {
       const user = setupUser();
-      const fetchSpy = vi.spyOn(global, 'fetch');
-      const alertSpy = vi.fn();
-      vi.stubGlobal('alert', alertSpy);
 
-      fetchSpy.mockRejectedValueOnce('boom');
+      vi.mocked(jobApi.createOrder).mockRejectedValue('boom');
 
       render(<NewPrintForm mockMode={false} />);
       await fillRequiredFields(user);
@@ -562,11 +464,8 @@ describe('NewPrintForm Integration', () => {
       await user.click(submitButton);
 
       await waitFor(() => {
-        expect(alertSpy).toHaveBeenCalledWith('Failed to submit print request. ');
+        expect(toast.error).toHaveBeenCalledWith('Failed to submit print request. Unknown error');
       });
-
-      fetchSpy.mockRestore();
-      vi.unstubAllGlobals();
     });
   });
 

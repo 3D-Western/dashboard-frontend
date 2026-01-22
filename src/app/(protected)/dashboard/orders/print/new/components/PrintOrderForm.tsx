@@ -27,146 +27,138 @@ import {
   SelectItem,
 } from '@/components/ui/select';
 import { UnsavedChangesGuard } from '@/components/ui/unsaved-changes-guard';
-import { endpoints } from '@/api/client/endpoints';
+import { jobApi } from '@/api/client/job';
+import { calculateFileChecksum } from '@/lib/file-utils';
+import { Routes } from '@/lib/routes';
+import { toast } from 'sonner';
+import { CreateOrderRequest } from '@/api/types';
+
+const MATERIAL_OPTIONS = [
+  { value: 'pla', label: 'PLA' },
+  { value: 'abs', label: 'ABS' },
+  { value: 'petg', label: 'PETG' },
+  { value: 'nylon', label: 'Nylon' },
+] as const;
+
+const COLOR_OPTIONS = [
+  { value: 'black', label: 'Black' },
+  { value: 'white', label: 'White' },
+  { value: 'red', label: 'Red' },
+  { value: 'blue', label: 'Blue' },
+  { value: 'natural', label: 'Natural' },
+] as const;
+
+const formSchema = z.object({
+  printName: z.string().min(1, { message: 'Must have a name for the print request' }).max(30),
+  description: z
+    .string()
+    .min(2, { message: 'Must have a description for the print request' })
+    .max(200),
+  file: z.any().refine((f) => f instanceof File, { message: 'Please upload an STL file' }),
+  material1: z.string().min(1, { message: 'Select at least one material' }),
+  color1: z.string().min(1, { message: 'Select at least one color' }),
+  goal: z.string().optional(),
+  durability: z.string().optional(),
+  infill: z.string().optional(),
+  material2: z.string().min(1, { message: 'Select at least one material' }),
+  color2: z.string().min(1, { message: 'Select at least one color' }),
+  support: z.string().optional(),
+});
 
 type NewPrintFormProps = {
   mockMode?: boolean;
 };
 
-export default function NewPrintForm({ mockMode = true }: NewPrintFormProps = {}) {
+export default function NewPrintForm({ mockMode = false }: NewPrintFormProps = {}) {
   const router = useRouter();
-  // file will be stored in react-hook-form (we don't need a provider)
-
-  const formSchema = z.object({
-    'print-name': z.string().min(1, { message: 'Must have a name for the print request' }).max(30),
-    description: z
-      .string()
-      .min(2, { message: 'Must have a description for the print request' })
-      .max(200),
-    file: z.any().refine((f) => f instanceof File, { message: 'Please upload an STL file' }),
-    'material-1': z.string().min(1, { message: 'Select at least one material' }),
-    'color-1': z.string().min(1, { message: 'Select at least one color' }),
-    goal: z.string().optional(),
-    durability: z.string().optional(),
-    infill: z.string().optional(),
-    'material-2': z.string().min(1, { message: 'Select at least one material' }),
-    'color-2': z.string().min(1, { message: 'Select at least one color' }),
-    support: z.string().optional(),
-  });
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      'print-name': '',
+      printName: '',
       description: '',
       goal: 'high-quality',
       durability: 'general-use',
       infill: 'grid',
-      'material-1': '',
-      'material-2': '',
-      'color-1': '',
-      'color-2': '',
+      material1: '',
+      material2: '',
+      color1: '',
+      color2: '',
       file: undefined,
       support: 'no',
     },
   });
-  // material and color option lists
-  const MATERIAL_OPTIONS = [
-    { value: 'pla', label: 'PLA' },
-    { value: 'abs', label: 'ABS' },
-    { value: 'petg', label: 'PETG' },
-    { value: 'nylon', label: 'Nylon' },
-  ];
-
-  const COLOR_OPTIONS = [
-    { value: 'black', label: 'Black' },
-    { value: 'white', label: 'White' },
-    { value: 'red', label: 'Red' },
-    { value: 'blue', label: 'Blue' },
-    { value: 'natural', label: 'Natural' },
-  ];
 
   // watch fields so UI updates reactively when the other choice changes
-  const material1Watch = form.watch('material-1');
-  const material2Watch = form.watch('material-2');
-  const color1Watch = form.watch('color-1');
-  const color2Watch = form.watch('color-2');
+  const material1Watch = form.watch('material1');
+  const material2Watch = form.watch('material2');
+  const color1Watch = form.watch('color1');
+  const color2Watch = form.watch('color2');
+  const fileWatch = form.watch('file');
 
   const { isDirty, isSubmitting } = form.formState;
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     try {
       const file = values.file as File;
-      let fileId: string | null = null;
 
-      // Handle file upload based on mode
       if (mockMode) {
-        // Mock mode: simulate file upload
+        // Mock mode: simulate the entire flow
         await new Promise((res) => setTimeout(res, 500));
-        if (file) fileId = `mock-file-${Date.now()}`;
-      } else {
-        // Real mode: actually upload the file
-        if (file) {
-          const fd = new FormData();
-          fd.append('file', file, file.name);
-
-          const uploadRes = await fetch(endpoints.files.upload, {
-            method: 'POST',
-            body: fd,
-          });
-
-          if (!uploadRes.ok) {
-            const text = await uploadRes.text();
-            throw new Error(text || 'File upload failed');
-          }
-
-          const uploadJson = await uploadRes.json();
-          fileId = (uploadJson.id ?? uploadJson.fileId ?? null) as string | null;
-        }
+        form.reset();
+        toast.success('Print request submitted successfully');
+        router.push(Routes.orders.home);
+        router.refresh();
+        return;
       }
 
-      // Prepare order payload
-      const payload = {
-        category: '3d-print',
-        name: values['print-name'],
+      // STEP 1: Create order with file metadata (not the file itself)
+      const createOrderPayload: CreateOrderRequest = {
+        printName: values.printName,
         description: values.description,
-        goal: values.goal,
-        durability: values.durability,
-        infill: values.infill,
-        material1: values['material-1'],
-        color1: values['color-1'],
-        material2: values['material-2'],
-        color2: values['color-2'],
-        support: values.support,
-        stlFileId: fileId || '',
-        reprint: null,
+        formAnswerJson: JSON.stringify({
+          contentType: file.type || 'application/sla',
+          material1: values.material1,
+          color1: values.color1,
+          material2: values.material2,
+          color2: values.color2,
+          goal: values.goal,
+          durability: values.durability,
+          infill: values.infill,
+          support: values.support,
+        }),
       };
 
-      // Submit order
-      const submitRes = await fetch(endpoints.orders.create, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
+      const createOrderResponse = await jobApi.createOrder(createOrderPayload);
+
+      if (!createOrderResponse.orderId || !createOrderResponse.uploadUrl) {
+        throw new Error('Invalid response from server: missing orderId or uploadUrl');
+      }
+
+      // STEP 2: Upload file to presigned URL
+      await jobApi.uploadOrderFile(createOrderResponse.uploadUrl, file);
+
+      // STEP 3: Complete upload with file metadata
+      const checksum = await calculateFileChecksum(file);
+
+      await jobApi.completeUpload(createOrderResponse.orderId, {
+        fileName: file.name,
+        fileSize: file.size,
+        contentType: file.type || 'application/sla',
+        checksum: checksum,
       });
 
-      if (!submitRes.ok) {
-        const text = await submitRes.text();
-        throw new Error(text || 'Submit failed');
-      }
-
-      await submitRes.json();
+      // Reset form to prevent unsaved changes warning
+      form.reset();
+      toast.success('Print request submitted successfully');
 
       // Navigate to dashboard and force refresh to show new data
-      router.push('/dashboard/print');
-      if (typeof router.refresh === 'function') {
-        router.refresh(); // Force server component to re-run
-      }
+      router.push(Routes.orders.home);
+      router.refresh();
     } catch (err) {
-      if (typeof window !== 'undefined' && typeof window.alert === 'function') {
-        window.alert(
-          'Failed to submit print request. ' + (err instanceof Error ? err.message : ''),
-        );
-      }
+      toast.error(
+        'Failed to submit print request. ' + (err instanceof Error ? err.message : 'Unknown error'),
+      );
     }
   }
 
@@ -175,7 +167,7 @@ export default function NewPrintForm({ mockMode = true }: NewPrintFormProps = {}
     initialFile,
   }: {
     onFileAccepted: (file: File | null) => void;
-    initialFile?: File | undefined;
+    initialFile?: File;
   }) {
     const [localFiles, setLocalFiles] = useState<File[] | undefined>(
       initialFile ? [initialFile] : undefined,
@@ -225,7 +217,7 @@ export default function NewPrintForm({ mockMode = true }: NewPrintFormProps = {}
         <form onSubmit={form.handleSubmit(onSubmit)} className="w-full max-w-xl space-y-4">
           <FormField
             control={form.control}
-            name="print-name"
+            name="printName"
             render={({ field }) => (
               <FormItem>
                 <FormLabel className="text-lg">Print Name</FormLabel>
@@ -268,9 +260,9 @@ export default function NewPrintForm({ mockMode = true }: NewPrintFormProps = {}
                   />
                 </FormControl>
                 {/* show filename preview when present */}
-                {form.watch('file') && (
+                {fileWatch && (
                   <div className="mt-2 text-sm text-muted-foreground">
-                    {(form.watch('file') as File).name}
+                    {(fileWatch as File).name}
                   </div>
                 )}
                 <FormMessage />
@@ -405,7 +397,7 @@ export default function NewPrintForm({ mockMode = true }: NewPrintFormProps = {}
               <div className="mt-4 grid grid-cols-2 items-start gap-4">
                 <FormField
                   control={form.control}
-                  name="material-1"
+                  name="material1"
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel className="text-sm">Material:</FormLabel>
@@ -413,8 +405,8 @@ export default function NewPrintForm({ mockMode = true }: NewPrintFormProps = {}
                         <Select
                           value={field.value}
                           onValueChange={(val) => {
-                            if (form.getValues('material-2') === val) {
-                              form.setValue('material-2', '');
+                            if (form.getValues('material2') === val) {
+                              form.setValue('material2', '');
                             }
                             field.onChange(val ?? '');
                           }}
@@ -441,7 +433,7 @@ export default function NewPrintForm({ mockMode = true }: NewPrintFormProps = {}
 
                 <FormField
                   control={form.control}
-                  name="color-1"
+                  name="color1"
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel className="text-sm">Color:</FormLabel>
@@ -449,8 +441,8 @@ export default function NewPrintForm({ mockMode = true }: NewPrintFormProps = {}
                         <Select
                           value={field.value}
                           onValueChange={(val) => {
-                            if (form.getValues('color-2') === val) {
-                              form.setValue('color-2', '');
+                            if (form.getValues('color2') === val) {
+                              form.setValue('color2', '');
                             }
                             field.onChange(val ?? '');
                           }}
@@ -480,7 +472,7 @@ export default function NewPrintForm({ mockMode = true }: NewPrintFormProps = {}
               <div className="mt-4 grid grid-cols-2 items-start gap-4">
                 <FormField
                   control={form.control}
-                  name="material-2"
+                  name="material2"
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel className="text-sm">Material:</FormLabel>
@@ -488,12 +480,12 @@ export default function NewPrintForm({ mockMode = true }: NewPrintFormProps = {}
                         <Select
                           value={field.value}
                           onValueChange={(val) => {
-                            if (form.getValues('material-1') === val) {
-                              form.setValue('material-1', '');
+                            if (form.getValues('material1') === val) {
+                              form.setValue('material1', '');
                             }
-                            field.onChange(val ?? undefined);
+                            field.onChange(val ?? '');
                           }}
-                          defaultValue={undefined}
+                          defaultValue={''}
                         >
                           <SelectTrigger className="w-[200px]">
                             <SelectValue placeholder="Select a material" />
@@ -516,7 +508,7 @@ export default function NewPrintForm({ mockMode = true }: NewPrintFormProps = {}
 
                 <FormField
                   control={form.control}
-                  name="color-2"
+                  name="color2"
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel className="text-sm">Color:</FormLabel>
@@ -524,12 +516,12 @@ export default function NewPrintForm({ mockMode = true }: NewPrintFormProps = {}
                         <Select
                           value={field.value}
                           onValueChange={(val) => {
-                            if (form.getValues('color-1') === val) {
-                              form.setValue('color-1', '');
+                            if (form.getValues('color1') === val) {
+                              form.setValue('color1', '');
                             }
-                            field.onChange(val ?? undefined);
+                            field.onChange(val ?? '');
                           }}
-                          defaultValue={undefined}
+                          defaultValue={''}
                         >
                           <SelectTrigger className="w-[200px]">
                             <SelectValue placeholder="Select a color" />

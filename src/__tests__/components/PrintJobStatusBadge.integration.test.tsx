@@ -3,56 +3,50 @@ import { render, screen } from '@test/utils/render';
 import { PrintJobStatusBadge } from '@/components/PrintJobStatusBadge';
 
 describe('PrintJobStatusBadge Integration', () => {
-  it('renders DRAFT status correctly', () => {
-    render(<PrintJobStatusBadge status="DRAFT" />);
+  it('renders PendingFile status correctly', () => {
+    render(<PrintJobStatusBadge status="PendingFile" />);
 
-    expect(screen.getByText('Draft')).toBeInTheDocument();
+    expect(screen.getByText('Pending File')).toBeInTheDocument();
   });
 
-  it('renders IN_QUEUE status correctly', () => {
-    render(<PrintJobStatusBadge status="IN_QUEUE" />);
+  it('renders InQueue status correctly', () => {
+    render(<PrintJobStatusBadge status="InQueue" />);
 
     expect(screen.getByText('In Queue')).toBeInTheDocument();
   });
 
-  it('renders PRINTING status correctly', () => {
-    render(<PrintJobStatusBadge status="PRINTING" />);
+  it('renders Printing status correctly', () => {
+    render(<PrintJobStatusBadge status="Printing" />);
 
     expect(screen.getByText('Printing')).toBeInTheDocument();
   });
 
-  it('renders READY status correctly', () => {
-    render(<PrintJobStatusBadge status="READY" />);
+  it('renders Ready status correctly', () => {
+    render(<PrintJobStatusBadge status="Ready" />);
 
     expect(screen.getByText('Ready')).toBeInTheDocument();
   });
 
-  it('renders FLAGGED status correctly', () => {
-    render(<PrintJobStatusBadge status="FLAGGED" />);
+  it('renders Flagged status correctly', () => {
+    render(<PrintJobStatusBadge status="Flagged" />);
 
     expect(screen.getByText('Flagged')).toBeInTheDocument();
   });
 
-  it('renders ERROR status correctly', () => {
-    render(<PrintJobStatusBadge status="ERROR" />);
+  it('renders Error status correctly', () => {
+    render(<PrintJobStatusBadge status="Error" />);
 
     expect(screen.getByText('Error')).toBeInTheDocument();
   });
 
-  it('renders CANCELLED status correctly', () => {
-    render(<PrintJobStatusBadge status="CANCELLED" />);
+  it('renders Succeeded status correctly', () => {
+    render(<PrintJobStatusBadge status="Succeeded" />);
 
-    expect(screen.getByText('Cancelled')).toBeInTheDocument();
+    expect(screen.getByText('Succeeded')).toBeInTheDocument();
   });
 
-  it('renders SUCCESS status correctly', () => {
-    render(<PrintJobStatusBadge status="SUCCESS" />);
-
-    expect(screen.getByText('Success')).toBeInTheDocument();
-  });
-
-  it('renders FAIL status correctly', () => {
-    render(<PrintJobStatusBadge status="FAIL" />);
+  it('renders Failed status correctly', () => {
+    render(<PrintJobStatusBadge status="Failed" />);
 
     expect(screen.getByText('Failed')).toBeInTheDocument();
   });
@@ -64,7 +58,7 @@ describe('PrintJobStatusBadge Integration', () => {
   });
 
   it('applies correct styling classes', () => {
-    const { container } = render(<PrintJobStatusBadge status="IN_QUEUE" />);
+    const { container } = render(<PrintJobStatusBadge status="InQueue" />);
 
     const badge = container.querySelector('.inline-flex');
     expect(badge).toBeInTheDocument();

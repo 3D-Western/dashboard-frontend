@@ -14,4 +14,12 @@ export const Routes = {
   adminUsersManagement: '/admin/users',
   adminPrintsManagement: '/admin/prints',
   adminInvitationManagement: '/admin/invitations',
+
+  orders: {
+    home: '/dashboard/orders',
+    newCncOrder: '/dashboard/orders/cnc/new',
+    newPrintOrder: '/dashboard/orders/print/new',
+    newWaterJetOrder: '/dashboard/orders/water-jet/new',
+    newLaserCuttingOrder: '/dashboard/orders/laser-cutting/new',
+  },
 };

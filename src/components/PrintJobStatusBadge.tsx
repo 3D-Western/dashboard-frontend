@@ -7,39 +7,36 @@ import { cn } from '@/lib/utils';
 const statusBadgeVariants = cva('border-transparent transition-colors', {
   variants: {
     status: {
-      DRAFT: 'bg-status-draft text-status-draft-foreground',
-      IN_QUEUE: 'bg-status-in-queue text-status-in-queue-foreground',
-      PRINTING: 'bg-status-printing text-status-printing-foreground',
-      READY: 'bg-status-ready text-status-ready-foreground',
-      FLAGGED: 'bg-status-flagged text-status-flagged-foreground',
-      ERROR: 'bg-status-error text-status-error-foreground',
-      SUCCESS: 'bg-status-success text-status-success-foreground',
-      FAIL: 'bg-status-fail text-status-fail-foreground',
-      CANCELLED: 'bg-status-flagged text-status-flagged-foreground', // reuse flagged style or customize
+      InQueue: 'bg-status-in-queue text-status-in-queue-foreground',
+      Printing: 'bg-status-printing text-status-printing-foreground',
+      Ready: 'bg-status-ready text-status-ready-foreground',
+      Flagged: 'bg-status-flagged text-status-flagged-foreground',
+      Error: 'bg-status-error text-status-error-foreground',
+      Succeeded: 'bg-status-success text-status-success-foreground',
+      Failed: 'bg-status-fail text-status-fail-foreground',
+      PendingFile: 'bg-status-draft text-status-draft-foreground',
     },
   },
 });
 
 const mapPrintJobStatusToDisplayLabel = (status: PrintJobStatus): string => {
   switch (status) {
-    case 'DRAFT':
-      return 'Draft';
-    case 'IN_QUEUE':
+    case 'InQueue':
       return 'In Queue';
-    case 'PRINTING':
+    case 'Printing':
       return 'Printing';
-    case 'READY':
+    case 'Ready':
       return 'Ready';
-    case 'FLAGGED':
+    case 'Flagged':
       return 'Flagged';
-    case 'ERROR':
+    case 'Error':
       return 'Error';
-    case 'SUCCESS':
-      return 'Success';
-    case 'FAIL':
+    case 'Succeeded':
+      return 'Succeeded';
+    case 'Failed':
       return 'Failed';
-    case 'CANCELLED':
-      return 'Cancelled';
+    case 'PendingFile':
+      return 'Pending File';
     default:
       return 'Unknown';
   }
