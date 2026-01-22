@@ -12,42 +12,57 @@ vi.mock('next/navigation', () => ({
 }));
 
 vi.mock('@/components/ui/dropzone', () => {
+  const DropzoneContext = React.createContext<{ src?: File[] } | undefined>(undefined);
+
   const Dropzone = ({
     onDrop,
+    src,
     children,
   }: {
     onDrop?: (files: File[]) => void;
+    src?: File[];
     children?: React.ReactNode;
   }) => {
     return (
-      <div>
-        <button type="button" onClick={() => onDrop?.([])}>
-          drop-empty
-        </button>
-        <button
-          type="button"
-          onClick={() =>
-            onDrop?.([
-              new File(['a'], 'note.txt', { type: 'text/plain' }),
-              new File(['b'], 'model.stl', { type: 'model/stl' }),
-            ])
-          }
-        >
-          drop-stl
-        </button>
-        <button
-          type="button"
-          onClick={() => onDrop?.([new File(['c'], 'fallback.bin', { type: 'application/bin' })])}
-        >
-          drop-fallback
-        </button>
-        {children}
-      </div>
+      <DropzoneContext.Provider value={{ src }}>
+        <div>
+          <button type="button" onClick={() => onDrop?.([])}>
+            drop-empty
+          </button>
+          <button
+            type="button"
+            onClick={() =>
+              onDrop?.([
+                new File(['a'], 'note.txt', { type: 'text/plain' }),
+                new File(['b'], 'model.stl', { type: 'model/stl' }),
+              ])
+            }
+          >
+            drop-stl
+          </button>
+          <button
+            type="button"
+            onClick={() => onDrop?.([new File(['c'], 'fallback.bin', { type: 'application/bin' })])}
+          >
+            drop-fallback
+          </button>
+          {children}
+        </div>
+      </DropzoneContext.Provider>
     );
   };
 
-  const DropzoneEmptyState = () => <div>empty</div>;
-  const DropzoneContent = () => <div>content</div>;
+  const DropzoneEmptyState = () => {
+    const context = React.useContext(DropzoneContext);
+    if (context?.src) return null;
+    return <div>empty</div>;
+  };
+
+  const DropzoneContent = () => {
+    const context = React.useContext(DropzoneContext);
+    if (!context?.src) return null;
+    return <div>content</div>;
+  };
 
   return {
     __esModule: true,
@@ -158,10 +173,11 @@ describe('NewPrintForm Dropzone Integration', () => {
     render(<NewPrintForm />);
 
     await user.click(screen.getByRole('button', { name: 'drop-fallback' }));
-    expect(screen.getByText('fallback.bin')).toBeInTheDocument();
+    expect(screen.getByText('content')).toBeInTheDocument();
 
     await user.click(screen.getByRole('button', { name: 'drop-empty' }));
-    expect(screen.queryByText('fallback.bin')).not.toBeInTheDocument();
+    expect(screen.getByText('empty')).toBeInTheDocument();
+    expect(screen.queryByText('content')).not.toBeInTheDocument();
   });
 
   it('prefers STL file when multiple files are dropped', async () => {
@@ -170,7 +186,7 @@ describe('NewPrintForm Dropzone Integration', () => {
 
     await user.click(screen.getByRole('button', { name: 'drop-stl' }));
 
-    expect(screen.getByText('model.stl')).toBeInTheDocument();
+    expect(screen.getByText('content')).toBeInTheDocument();
   });
 
   it('falls back to first file when no STL file is present', async () => {
@@ -179,7 +195,7 @@ describe('NewPrintForm Dropzone Integration', () => {
 
     await user.click(screen.getByRole('button', { name: 'drop-fallback' }));
 
-    expect(screen.getByText('fallback.bin')).toBeInTheDocument();
+    expect(screen.getByText('content')).toBeInTheDocument();
   });
 });
 
