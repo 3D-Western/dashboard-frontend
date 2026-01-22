@@ -176,14 +176,6 @@ export const DropzoneContent = ({ children, className }: DropzoneContentProps) =
       <p className="w-full text-center text-xs text-wrap text-muted-foreground">
         Drag and drop or click to replace
       </p>
-
-      {/* bottom-right filename overlay */}
-      <div
-        className="absolute right-3 bottom-3 max-w-[60%] truncate rounded bg-background/80 px-2 py-1 text-right text-xs text-muted-foreground"
-        title=""
-      >
-        {src.map((f) => f.name).join(', ')}
-      </div>
     </div>
   );
 };
