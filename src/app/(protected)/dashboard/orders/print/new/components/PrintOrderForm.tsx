@@ -94,7 +94,6 @@ export default function NewPrintForm({ mockMode = false }: NewPrintFormProps = {
   const material2Watch = form.watch('material2');
   const color1Watch = form.watch('color1');
   const color2Watch = form.watch('color2');
-  const fileWatch = form.watch('file');
 
   const { isDirty, isSubmitting } = form.formState;
 
@@ -259,12 +258,6 @@ export default function NewPrintForm({ mockMode = false }: NewPrintFormProps = {
                     }}
                   />
                 </FormControl>
-                {/* show filename preview when present */}
-                {fileWatch && (
-                  <div className="mt-2 text-sm text-muted-foreground">
-                    {(fileWatch as File).name}
-                  </div>
-                )}
                 <FormMessage />
               </FormItem>
             )}
