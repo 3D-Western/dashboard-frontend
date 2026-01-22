@@ -2,11 +2,11 @@
 
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
-import Dropzone, { DropzoneContent, DropzoneEmptyState } from '@/components/ui/dropzone';
-import { useEffect, useState } from 'react';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
+import { FileUploadDropzone } from '../../../../../../../components/FileUploadDropzone';
+import { ColorSelect, type ColorOption } from '@/components/ColorSelect';
 import {
   Form,
   FormControl,
@@ -19,13 +19,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import {
-  Select,
-  SelectTrigger,
-  SelectValue,
-  SelectContent,
-  SelectItem,
-} from '@/components/ui/select';
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select';
 import { UnsavedChangesGuard } from '@/components/ui/unsaved-changes-guard';
 import { jobApi } from '@/api/client/job';
 import { calculateFileChecksum } from '@/lib/file-utils';
@@ -33,19 +27,64 @@ import { Routes } from '@/lib/routes';
 import { toast } from 'sonner';
 import { CreateOrderRequest } from '@/api/types';
 
-const MATERIAL_OPTIONS = [
+// Type definitions for form options
+type RadioOption = {
+  readonly value: string;
+  readonly label: string;
+  readonly id: string;
+};
+
+type MaterialOption = {
+  readonly value: string;
+  readonly label: string;
+};
+
+const MATERIAL_OPTIONS: readonly MaterialOption[] = [
   { value: 'pla', label: 'PLA' },
   { value: 'abs', label: 'ABS' },
   { value: 'petg', label: 'PETG' },
   { value: 'nylon', label: 'Nylon' },
 ] as const;
 
-const COLOR_OPTIONS = [
-  { value: 'black', label: 'Black' },
-  { value: 'white', label: 'White' },
-  { value: 'red', label: 'Red' },
-  { value: 'blue', label: 'Blue' },
-  { value: 'natural', label: 'Natural' },
+const COLOR_OPTIONS: readonly ColorOption[] = [
+  { value: 'black', label: 'Black', hexColor: '#000000' },
+  { value: 'white', label: 'White', hexColor: '#FFFFFF' },
+  { value: 'red', label: 'Red', hexColor: '#EF4444' },
+  { value: 'blue', label: 'Blue', hexColor: '#3B82F6' },
+  { value: 'natural', label: 'Natural', hexColor: '#F5F5DC' },
+] as const;
+
+const GOAL_OPTIONS: readonly RadioOption[] = [
+  { value: 'high-quality', label: 'High Quality', id: 'high-quality' },
+  { value: 'standard', label: 'Standard', id: 'standard' },
+  { value: 'rapid-prototyping', label: 'Rapid Prototyping', id: 'rapid-prototyping' },
+] as const;
+
+const DURABILITY_OPTIONS: readonly RadioOption[] = [
+  { value: 'aesthetics', label: 'Aesthetics / Display only', id: 'aesthetics' },
+  { value: 'low-infill', label: 'Low infill', id: 'low-infill' },
+  { value: 'general-use', label: 'General use (light stress)', id: 'general-use' },
+  { value: 'engineering', label: 'Engineering project (high stress)', id: 'engineering' },
+  {
+    value: 'as-strong-as-possible',
+    label: 'As strong as possible',
+    id: 'as-strong-as-possible',
+  },
+] as const;
+
+const INFILL_OPTIONS: readonly RadioOption[] = [
+  { value: 'cubic', label: 'Cubic', id: 'cubic' },
+  { value: 'gyroid', label: 'Gyroid', id: 'gyroid' },
+  { value: 'lines', label: 'Lines', id: 'lines' },
+  { value: 'honeycomb', label: 'Honeycomb', id: 'honeycomb' },
+  { value: 'grid', label: 'Grid (default)', id: 'grid' },
+  { value: 'rectilinear', label: 'Rectilinear', id: 'rectilinear' },
+  { value: 'other', label: 'Other', id: 'infill-other' },
+] as const;
+
+const SUPPORT_OPTIONS: readonly RadioOption[] = [
+  { value: 'yes', label: 'Yes, disable supports', id: 'supports-yes' },
+  { value: 'no', label: 'No, keep supports enabled', id: 'supports-no' },
 ] as const;
 
 const formSchema = z.object({
@@ -161,51 +200,6 @@ export default function NewPrintForm({ mockMode = false }: NewPrintFormProps = {
     }
   }
 
-  function CustomDropZone({
-    onFileAccepted,
-    initialFile,
-  }: {
-    onFileAccepted: (file: File | null) => void;
-    initialFile?: File;
-  }) {
-    const [localFiles, setLocalFiles] = useState<File[] | undefined>(
-      initialFile ? [initialFile] : undefined,
-    );
-
-    useEffect(() => {
-      if (initialFile) setLocalFiles([initialFile]);
-    }, [initialFile]);
-
-    return (
-      <Dropzone
-        src={localFiles}
-        maxFiles={1}
-        accept={{
-          'model/stl': ['.stl'],
-          // fallback to common .stl MIME types
-          'application/sla': ['.stl'],
-          'application/octet-stream': ['.stl'],
-        }}
-        onDrop={(acceptedFiles: File[]) => {
-          if (!acceptedFiles || acceptedFiles.length === 0) {
-            setLocalFiles(undefined);
-            onFileAccepted(null);
-            return;
-          }
-
-          // pick first .stl by extension, fallback to first file
-          const stl =
-            acceptedFiles.find((f) => f.name.toLowerCase().endsWith('.stl')) ?? acceptedFiles[0];
-          setLocalFiles([stl]);
-          onFileAccepted(stl);
-        }}
-      >
-        <DropzoneEmptyState />
-        <DropzoneContent />
-      </Dropzone>
-    );
-  }
-
   return (
     <div className="flex min-h-screen flex-col items-center justify-center px-4">
       <div className="mb-6 text-center">
@@ -230,19 +224,39 @@ export default function NewPrintForm({ mockMode = false }: NewPrintFormProps = {
           <FormField
             control={form.control}
             name="description"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel className="text-lg">Print Description</FormLabel>
+            render={({ field }) => {
+              const charCount = field.value?.length || 0;
+              const maxChars = 200;
+              const isNearLimit = charCount > maxChars * 0.8;
+              const isOverLimit = charCount > maxChars;
 
-                <FormDescription>
-                  If this is a part of a project involving multiple prints, please specify.*
-                </FormDescription>
-                <FormControl>
-                  <Textarea placeholder="" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
+              return (
+                <FormItem>
+                  <FormLabel className="text-lg">Print Description</FormLabel>
+
+                  <FormDescription>
+                    If this is a part of a project involving multiple prints, please specify.*
+                  </FormDescription>
+                  <FormControl>
+                    <Textarea placeholder="" {...field} />
+                  </FormControl>
+                  <div className="flex justify-between items-center">
+                    <FormMessage />
+                    <span
+                      className={`text-sm ${
+                        isOverLimit
+                          ? 'text-destructive font-medium'
+                          : isNearLimit
+                            ? 'text-amber-600 dark:text-amber-500'
+                            : 'text-muted-foreground'
+                      }`}
+                    >
+                      {charCount}/{maxChars}
+                    </span>
+                  </div>
+                </FormItem>
+              );
+            }}
           />
           <FormField
             control={form.control}
@@ -251,10 +265,15 @@ export default function NewPrintForm({ mockMode = false }: NewPrintFormProps = {
               <FormItem>
                 <FormLabel className="text-lg">Upload STL</FormLabel>
                 <FormControl>
-                  <CustomDropZone
+                  <FileUploadDropzone
                     initialFile={field.value as File | undefined}
                     onFileAccepted={(f) => {
                       field.onChange(f ?? undefined);
+                    }}
+                    accept={{
+                      'model/stl': ['.stl'],
+                      'application/sla': ['.stl'],
+                      'application/octet-stream': ['.stl'],
                     }}
                   />
                 </FormControl>
@@ -273,18 +292,12 @@ export default function NewPrintForm({ mockMode = false }: NewPrintFormProps = {
                 </FormDescription>
                 <FormControl>
                   <RadioGroup onValueChange={field.onChange} value={field.value ?? 'high-quality'}>
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="high-quality" id="high-quality" />
-                      <label htmlFor="high-quality">High Quality</label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="standard" id="standard" />
-                      <label htmlFor="standard">Standard</label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="rapid-prototyping" id="rapid-prototyping" />
-                      <label htmlFor="rapid-prototyping">Rapid Prototyping</label>
-                    </div>
+                    {GOAL_OPTIONS.map((option) => (
+                      <div key={option.value} className="flex items-center space-x-2">
+                        <RadioGroupItem value={option.value} id={option.id} />
+                        <label htmlFor={option.id}>{option.label}</label>
+                      </div>
+                    ))}
                   </RadioGroup>
                 </FormControl>
                 <FormMessage />
@@ -301,26 +314,12 @@ export default function NewPrintForm({ mockMode = false }: NewPrintFormProps = {
                 <FormControl>
                   <RadioGroup onValueChange={field.onChange} value={field.value ?? 'general-use'}>
                     <div className="mt-2 flex flex-col space-y-2">
-                      <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="aesthetics" id="aesthetics" />
-                        <label htmlFor="aesthetics">Aesthetics / Display only</label>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="low-infill" id="low-infill" />
-                        <label htmlFor="low-infill">Low infill</label>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="general-use" id="general-use" />
-                        <label htmlFor="general-use">General use (light stress)</label>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="engineering" id="engineering" />
-                        <label htmlFor="engineering">Engineering project (high stress)</label>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="as-strong-as-possible" id="as-strong-as-possible" />
-                        <label htmlFor="as-strong-as-possible">As strong as possible</label>
-                      </div>
+                      {DURABILITY_OPTIONS.map((option) => (
+                        <div key={option.value} className="flex items-center space-x-2">
+                          <RadioGroupItem value={option.value} id={option.id} />
+                          <label htmlFor={option.id}>{option.label}</label>
+                        </div>
+                      ))}
                     </div>
                   </RadioGroup>
                 </FormControl>
@@ -338,34 +337,12 @@ export default function NewPrintForm({ mockMode = false }: NewPrintFormProps = {
                 <FormControl>
                   <RadioGroup onValueChange={field.onChange} value={field.value ?? 'grid'}>
                     <div className="mt-2 flex flex-col space-y-2">
-                      <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="cubic" id="cubic" />
-                        <label htmlFor="cubic">Cubic</label>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="gyroid" id="gyroid" />
-                        <label htmlFor="gyroid">Gyroid</label>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="lines" id="lines" />
-                        <label htmlFor="lines">Lines</label>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="honeycomb" id="honeycomb" />
-                        <label htmlFor="honeycomb">Honeycomb</label>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="grid" id="grid" />
-                        <label htmlFor="grid">Grid (default)</label>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="rectilinear" id="rectilinear" />
-                        <label htmlFor="rectilinear">Rectilinear</label>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="other" id="infill-other" />
-                        <label htmlFor="infill-other">Other</label>
-                      </div>
+                      {INFILL_OPTIONS.map((option) => (
+                        <div key={option.value} className="flex items-center space-x-2">
+                          <RadioGroupItem value={option.value} id={option.id} />
+                          <label htmlFor={option.id}>{option.label}</label>
+                        </div>
+                      ))}
                     </div>
                   </RadioGroup>
                 </FormControl>
@@ -431,7 +408,7 @@ export default function NewPrintForm({ mockMode = false }: NewPrintFormProps = {
                     <FormItem>
                       <FormLabel className="text-sm">Color:</FormLabel>
                       <FormControl>
-                        <Select
+                        <ColorSelect
                           value={field.value}
                           onValueChange={(val) => {
                             if (form.getValues('color2') === val) {
@@ -439,19 +416,10 @@ export default function NewPrintForm({ mockMode = false }: NewPrintFormProps = {
                             }
                             field.onChange(val ?? '');
                           }}
-                          defaultValue={''}
-                        >
-                          <SelectTrigger className="w-[200px]">
-                            <SelectValue placeholder="Select a color" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {COLOR_OPTIONS.filter((o) => o.value !== color2Watch).map((opt) => (
-                              <SelectItem key={opt.value} value={opt.value}>
-                                {opt.label}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
+                          options={COLOR_OPTIONS}
+                          excludeValue={color2Watch}
+                          placeholder="Select a color"
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -506,7 +474,7 @@ export default function NewPrintForm({ mockMode = false }: NewPrintFormProps = {
                     <FormItem>
                       <FormLabel className="text-sm">Color:</FormLabel>
                       <FormControl>
-                        <Select
+                        <ColorSelect
                           value={field.value}
                           onValueChange={(val) => {
                             if (form.getValues('color1') === val) {
@@ -514,19 +482,10 @@ export default function NewPrintForm({ mockMode = false }: NewPrintFormProps = {
                             }
                             field.onChange(val ?? '');
                           }}
-                          defaultValue={''}
-                        >
-                          <SelectTrigger className="w-[200px]">
-                            <SelectValue placeholder="Select a color" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {COLOR_OPTIONS.filter((o) => o.value !== color1Watch).map((opt) => (
-                              <SelectItem key={opt.value} value={opt.value}>
-                                {opt.label}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
+                          options={COLOR_OPTIONS}
+                          excludeValue={color1Watch}
+                          placeholder="Select a color"
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -541,19 +500,19 @@ export default function NewPrintForm({ mockMode = false }: NewPrintFormProps = {
             name="support"
             render={({ field }) => (
               <FormItem>
-                <FormLabel className="text-lg">Do you want to disable print supports?</FormLabel>
-                <FormDescription>Print supports are enabled by default.</FormDescription>
+                <FormLabel className="text-lg">Print Supports</FormLabel>
+                <FormDescription>
+                  Supports help prevent sagging and improve print quality for overhangs.
+                </FormDescription>
                 <FormControl>
                   <RadioGroup onValueChange={field.onChange} value={field.value ?? 'no'}>
                     <div className="mt-2 flex items-center space-x-4">
-                      <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="yes" id="supports-yes" />
-                        <label htmlFor="supports-yes">Yes</label>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="no" id="supports-no" />
-                        <label htmlFor="supports-no">No</label>
-                      </div>
+                      {SUPPORT_OPTIONS.map((option) => (
+                        <div key={option.value} className="flex items-center space-x-2">
+                          <RadioGroupItem value={option.value} id={option.id} />
+                          <label htmlFor={option.id}>{option.label}</label>
+                        </div>
+                      ))}
                     </div>
                   </RadioGroup>
                 </FormControl>
