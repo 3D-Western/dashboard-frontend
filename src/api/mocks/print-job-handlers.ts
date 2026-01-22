@@ -93,23 +93,17 @@ export const orderHandlers = [
     const body = (await request.json()) as {
       printName: string;
       description: string;
-      fileName: string;
-      fileSize: number;
-      contentType: string;
-      // 3D Print specific fields
-      goal?: string;
-      durability?: string;
-      infill?: string;
-      material1?: string;
-      color1?: string;
-      material2?: string;
-      color2?: string;
-      support?: string;
-      // CNC/Laser/WaterJet specific fields
-      material?: string;
-      priority?: string;
-      urgency?: string;
+      formAnswerJson: string;
     };
+
+    // Parse formAnswerJson to extract fields
+    let formData: Record<string, unknown> = {};
+    try {
+      formData = JSON.parse(body.formAnswerJson);
+    } catch {
+      // If formAnswerJson is invalid, use empty object
+      formData = {};
+    }
 
     // Generate IDs
     const orderId = `order-${Date.now()}`;
@@ -126,19 +120,19 @@ export const orderHandlers = [
       status: 'PendingFile' as const,
       reprint: null,
       category: '3d-print',
-      // 3D Print specific fields
-      goal: body.goal,
-      durability: body.durability,
-      infill: body.infill,
-      material1: body.material1 || body.material,
-      color1: body.color1,
-      material2: body.material2,
-      color2: body.color2,
-      support: body.support,
-      // CNC/Laser/WaterJet specific fields
-      material: body.material,
-      priority: body.priority,
-      urgency: body.urgency,
+      // 3D Print specific fields from formAnswerJson
+      goal: formData.goal as string | undefined,
+      durability: formData.durability as string | undefined,
+      infill: formData.infill as string | undefined,
+      material1: (formData.material1 || formData.material) as string | undefined,
+      color1: formData.color1 as string | undefined,
+      material2: formData.material2 as string | undefined,
+      color2: formData.color2 as string | undefined,
+      support: formData.support as string | undefined,
+      // CNC/Laser/WaterJet specific fields from formAnswerJson
+      material: formData.material as string | undefined,
+      priority: formData.priority as string | undefined,
+      urgency: formData.urgency as string | undefined,
     };
     db.addPrintJob(newOrder);
 

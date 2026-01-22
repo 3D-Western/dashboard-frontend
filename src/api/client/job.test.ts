@@ -354,11 +354,12 @@ describe('jobApi', () => {
       const result = await jobApi.createOrder({
         printName: 'Test Print',
         description: 'Test Description',
-        formAnswerJson: '{"test": "value"}',
-        material1: 'PLA',
-        color1: 'red',
-        material2: 'PLA',
-        color2: 'blue',
+        formAnswerJson: JSON.stringify({
+          material1: 'PLA',
+          color1: 'red',
+          material2: 'PLA',
+          color2: 'blue',
+        }),
       });
 
       expect(result.orderId).toBe('test-order-id');
@@ -384,10 +385,7 @@ describe('jobApi', () => {
         }),
       );
 
-      await jobApi.createOrder({
-        printName: 'Test Print',
-        description: 'Test Description',
-        formAnswerJson: '{"test": "value"}',
+      const formData = {
         material1: 'PLA',
         color1: 'red',
         material2: 'PLA',
@@ -396,20 +394,18 @@ describe('jobApi', () => {
         durability: 'High',
         infill: '20%',
         support: 'Yes',
+      };
+
+      await jobApi.createOrder({
+        printName: 'Test Print',
+        description: 'Test Description',
+        formAnswerJson: JSON.stringify(formData),
       });
 
       expect(requestBody).toEqual({
         printName: 'Test Print',
         description: 'Test Description',
-        formAnswerJson: '{"test": "value"}',
-        material1: 'PLA',
-        color1: 'red',
-        material2: 'PLA',
-        color2: 'blue',
-        goal: 'Functional part',
-        durability: 'High',
-        infill: '20%',
-        support: 'Yes',
+        formAnswerJson: JSON.stringify(formData),
       });
     });
 
@@ -432,11 +428,12 @@ describe('jobApi', () => {
         jobApi.createOrder({
           printName: 'Test Print',
           description: 'Test Description',
-          formAnswerJson: '{}',
-          material1: 'PLA',
-          color1: 'red',
-          material2: 'PLA',
-          color2: 'blue',
+          formAnswerJson: JSON.stringify({
+            material1: 'PLA',
+            color1: 'red',
+            material2: 'PLA',
+            color2: 'blue',
+          }),
         }),
       ).rejects.toThrow(ApiError);
     });
@@ -646,6 +643,82 @@ describe('jobApi', () => {
       await expect(jobApi.uploadOrderFile(uploadUrl, file)).rejects.toThrow(
         'File upload failed with status 403',
       );
+    });
+
+    it('sets Content-Type header from file type', async () => {
+      const uploadUrl = 'https://storage.example.com/presigned-url';
+      const file = new File(['test content'], 'test.stl', { type: 'model/stl' });
+      let requestHeaders: Headers | undefined;
+
+      mockServer.use(
+        http.put(uploadUrl, ({ request }) => {
+          requestHeaders = request.headers;
+          return new HttpResponse(null, { status: 200 });
+        }),
+      );
+
+      await jobApi.uploadOrderFile(uploadUrl, file);
+      expect(requestHeaders?.get('Content-Type')).toBe('model/stl');
+    });
+
+    it('uses application/sla as default Content-Type when file type is missing', async () => {
+      const uploadUrl = 'https://storage.example.com/presigned-url';
+      const file = new File(['test content'], 'test.stl', { type: '' });
+      let requestHeaders: Headers | undefined;
+
+      mockServer.use(
+        http.put(uploadUrl, ({ request }) => {
+          requestHeaders = request.headers;
+          return new HttpResponse(null, { status: 200 });
+        }),
+      );
+
+      await jobApi.uploadOrderFile(uploadUrl, file);
+      expect(requestHeaders?.get('Content-Type')).toBe('application/sla');
+    });
+
+    it('prevents Content-Type header override from options', async () => {
+      const uploadUrl = 'https://storage.example.com/presigned-url';
+      const file = new File(['test content'], 'test.stl', { type: 'model/stl' });
+      let requestHeaders: Headers | undefined;
+
+      mockServer.use(
+        http.put(uploadUrl, ({ request }) => {
+          requestHeaders = request.headers;
+          return new HttpResponse(null, { status: 200 });
+        }),
+      );
+
+      await jobApi.uploadOrderFile(uploadUrl, file, {
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      // Content-Type should be model/stl from file, not application/json from options
+      expect(requestHeaders?.get('Content-Type')).toBe('model/stl');
+    });
+
+    it('preserves other custom headers from options', async () => {
+      const uploadUrl = 'https://storage.example.com/presigned-url';
+      const file = new File(['test content'], 'test.stl', { type: 'model/stl' });
+      let requestHeaders: Headers | undefined;
+
+      mockServer.use(
+        http.put(uploadUrl, ({ request }) => {
+          requestHeaders = request.headers;
+          return new HttpResponse(null, { status: 200 });
+        }),
+      );
+
+      await jobApi.uploadOrderFile(uploadUrl, file, {
+        headers: {
+          'X-Custom-Header': 'custom-value',
+        },
+      });
+
+      expect(requestHeaders?.get('Content-Type')).toBe('model/stl');
+      expect(requestHeaders?.get('X-Custom-Header')).toBe('custom-value');
     });
   });
 });

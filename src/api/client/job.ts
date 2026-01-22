@@ -82,10 +82,11 @@ export const jobApi = {
     const response = await fetch(uploadUrl, {
       method: 'PUT',
       body: file,
+      ...(options || {}),
       headers: {
+        ...(options && options.headers ? options.headers : {}),
         'Content-Type': file.type || 'application/sla',
       },
-      ...options,
     });
 
     if (!response.ok) {
