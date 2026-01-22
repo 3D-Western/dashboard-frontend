@@ -168,8 +168,35 @@ export const orderHandlers = [
       }
 
       const { orderId } = params;
-      (await request.json()) as { checksum: string };
+      const body = (await request.json()) as {
+        fileName?: string;
+        fileSize?: number;
+        contentType?: string;
+        checksum?: string;
+      };
 
+      if (
+        typeof body.fileName !== 'string' ||
+        body.fileName.length === 0 ||
+        typeof body.fileSize !== 'number' ||
+        !Number.isFinite(body.fileSize) ||
+        typeof body.contentType !== 'string' ||
+        body.contentType.length === 0 ||
+        typeof body.checksum !== 'string' ||
+        body.checksum.length === 0
+      ) {
+        return HttpResponse.json(
+          {
+            success: false,
+            error: {
+              code: 'INVALID_REQUEST',
+              message:
+                'Missing or invalid fields in request body. Required: fileName, fileSize, contentType, checksum.',
+            },
+          },
+          { status: 400 },
+        );
+      }
       // Find the order
       const order = db.getPrintJobs({ userId: user.studentId }).find((o) => o.id === orderId);
       if (!order) {
