@@ -63,14 +63,14 @@ describe('jobApi', () => {
 
       await jobApi.listAllJobs({
         userId: 123,
-        status: 'IN_QUEUE',
+        status: 'InQueue',
         page: 2,
         pageSize: 20,
         snapshotCreatedBefore: '2024-01-01',
       });
 
       expect(requestUrl).toContain('userId=123');
-      expect(requestUrl).toContain('status=IN_QUEUE');
+      expect(requestUrl).toContain('status=InQueue');
       expect(requestUrl).toContain('page=2');
       expect(requestUrl).toContain('pageSize=20');
       expect(requestUrl).toContain('snapshotCreatedBefore=2024-01-01');
@@ -132,8 +132,8 @@ describe('jobApi', () => {
 
   describe('updateJobStatus', () => {
     it('updates status successfully', async () => {
-      const mockJob = createMockPrintJob({ status: 'IN_QUEUE' });
-      const newStatus: PrintJobStatus = 'PRINTING';
+      const mockJob = createMockPrintJob({ status: 'InQueue' });
+      const newStatus: PrintJobStatus = 'Printing';
 
       mockServer.use(
         http.patch(`${baseUrl}${endpoints.orders.byId(mockJob.id)}`, async ({ request }) => {
@@ -152,7 +152,7 @@ describe('jobApi', () => {
 
     it('sends correct request body', async () => {
       const jobId = 'test-job-id';
-      const status: PrintJobStatus = 'READY';
+      const status: PrintJobStatus = 'Ready';
       let requestBody: { status: PrintJobStatus } | null = null;
 
       mockServer.use(
@@ -183,7 +183,7 @@ describe('jobApi', () => {
         }),
       );
 
-      await jobApi.updateJobStatus(jobId, 'PRINTING');
+      await jobApi.updateJobStatus(jobId, 'Printing');
       expect(requestCredentials).toBe('include');
     });
 
@@ -204,7 +204,7 @@ describe('jobApi', () => {
         }),
       );
 
-      await expect(jobApi.updateJobStatus(jobId, 'PRINTING')).rejects.toThrow(ApiError);
+      await expect(jobApi.updateJobStatus(jobId, 'Printing')).rejects.toThrow(ApiError);
     });
   });
 
@@ -265,20 +265,20 @@ describe('jobApi', () => {
   });
 
   describe('cancelJob', () => {
-    it('cancels job with IN_QUEUE status successfully', async () => {
-      const mockJob = createMockPrintJob({ status: 'IN_QUEUE' });
+    it('cancels job with InQueue status successfully', async () => {
+      const mockJob = createMockPrintJob({ status: 'InQueue' });
 
       mockServer.use(
         http.post(`${baseUrl}${endpoints.orders.cancel(mockJob.id)}`, () => {
           return HttpResponse.json({
             success: true,
-            data: { job: { ...mockJob, status: 'CANCELLED' as PrintJobStatus } },
+            data: { job: { ...mockJob, status: 'Failed' as PrintJobStatus } },
           });
         }),
       );
 
       const result = await jobApi.cancelJob(mockJob.id);
-      expect(result.job.status).toBe('CANCELLED');
+      expect(result.job.status).toBe('Failed');
     });
 
     it('includes credentials in request', async () => {
@@ -290,7 +290,7 @@ describe('jobApi', () => {
           requestCredentials = request.credentials;
           return HttpResponse.json({
             success: true,
-            data: { job: createMockPrintJob({ id: jobId, status: 'CANCELLED' }) },
+            data: { job: createMockPrintJob({ id: jobId, status: 'Failed' }) },
           });
         }),
       );

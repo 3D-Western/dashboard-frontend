@@ -11,7 +11,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { File, PrintJob, PrintJobStatus } from '@/types/jobs';
+import { PrintJob, PrintJobStatus } from '@/types/jobs';
 import { ColumnDef } from '@tanstack/react-table';
 import { ArrowUpDown, MoreHorizontal } from 'lucide-react';
 import Link from 'next/link';
@@ -145,19 +145,10 @@ export const useColumns = (opts: UseColumnsOptions = {}) => {
         cell: ({ row }) => <DateCell date={row.getValue('orderPlaced') as string} />,
       },
       {
-        accessorKey: 'stlFile',
-        header: 'STL File',
-        cell: ({ row }) => {
-          const stlFile = row.getValue('stlFile') as File;
-          return <span>{stlFile.path}</span>;
-        },
-      },
-      {
         id: 'actions',
         cell: ({ row }) => {
           const printJob = row.original;
-          const canCancel = printJob.status === 'IN_QUEUE';
-          const isCancelled = printJob.status === 'CANCELLED';
+          const canCancel = printJob.status === 'InQueue';
           return (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -194,7 +185,7 @@ export const useColumns = (opts: UseColumnsOptions = {}) => {
                     //     console.log('Cancel Print: API result', result);
                     //     setJobs(prev => {
                     //       const updated = prev.map(j =>
-                    //         j.id === printJob.id ? { ...j, status: 'CANCELLED' as PrintJobStatus } : j
+                    //         j.id === printJob.id ? { ...j, status: 'Failed' as PrintJobStatus } : j
                     //       );
                     //       console.log('Cancel Print: Updated jobs state', updated);
                     //       return updated;
@@ -206,21 +197,13 @@ export const useColumns = (opts: UseColumnsOptions = {}) => {
                     onClick={() => {
                       setJobs((prev) => {
                         const updated = prev.map((j) =>
-                          j.id === printJob.id
-                            ? { ...j, status: 'CANCELLED' as PrintJobStatus }
-                            : j,
+                          j.id === printJob.id ? { ...j, status: 'Failed' as PrintJobStatus } : j,
                         );
                         return updated;
                       });
                     }}
-                    disabled={isCancelled}
                   >
                     Cancel Print
-                  </DropdownMenuItem>
-                )}
-                {isCancelled && (
-                  <DropdownMenuItem disabled>
-                    <span className="text-muted-foreground">Cancelled</span>
                   </DropdownMenuItem>
                 )}
                 <DropdownMenuSeparator />

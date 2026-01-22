@@ -7,15 +7,14 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { useCallback } from 'react';
 
 const ADMIN_STATUS_OPTIONS: PrintJobStatus[] = [
-  'DRAFT',
-  'IN_QUEUE',
-  'PRINTING',
-  'READY',
-  'FLAGGED',
-  'ERROR',
-  'CANCELLED',
-  'SUCCESS',
-  'FAIL',
+  'PendingFile',
+  'InQueue',
+  'Printing',
+  'Ready',
+  'Flagged',
+  'Error',
+  'Succeeded',
+  'Failed',
 ];
 
 export function AdminPrintFilters() {

@@ -85,9 +85,8 @@ describe('useColumns', () => {
     const printJob = {
       id: 'job-123',
       name: 'Test Job',
-      status: 'IN_QUEUE',
+      status: 'InQueue',
       orderPlaced: new Date().toISOString(),
-      stlFile: { id: 'file-1', filename: 'file.stl', path: '/file.stl', size: 10 },
     } as PrintJob;
 
     const cell = actionsColumn?.cell?.({

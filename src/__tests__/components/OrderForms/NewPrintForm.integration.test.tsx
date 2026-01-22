@@ -464,9 +464,7 @@ describe('NewPrintForm Integration', () => {
       await user.click(submitButton);
 
       await waitFor(() => {
-        expect(toast.error).toHaveBeenCalledWith(
-          'Failed to submit print request. Unknown error',
-        );
+        expect(toast.error).toHaveBeenCalledWith('Failed to submit print request. Unknown error');
       });
     });
   });

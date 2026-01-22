@@ -27,21 +27,19 @@ export interface BasePrintJob {
 }
 
 export type PrintJobStatus =
-  | 'PENDING_FILE'
-  | 'DRAFT'
-  | 'IN_QUEUE'
-  | 'PRINTING'
-  | 'READY'
-  | 'FLAGGED'
-  | 'ERROR'
-  | 'SUCCESS'
-  | 'FAIL';
-export type CompletePrintJobStatus = 'SUCCESS' | 'FAIL';
+  | 'InQueue'
+  | 'Printing'
+  | 'Ready'
+  | 'Flagged'
+  | 'Error'
+  | 'Succeeded'
+  | 'Failed'
+  | 'PendingFile';
+export type CompletePrintJobStatus = 'Succeeded' | 'Failed';
 
 export interface PrintJob extends BasePrintJob {
   kind: 'active-print-job'; // For type checking
   status: PrintJobStatus;
-  stlFile: File;
 }
 
 export interface CompletedPrintJob extends BasePrintJob {

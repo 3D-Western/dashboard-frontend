@@ -20,15 +20,14 @@ export interface StatusFilterProps {
 
 // Human-readable labels for print job statuses
 const statusLabels: Record<PrintJobStatus, string> = {
-  DRAFT: 'Draft',
-  IN_QUEUE: 'In Queue',
-  CANCELLED: 'Cancelled',
-  PRINTING: 'Printing',
-  READY: 'Ready',
-  FLAGGED: 'Flagged',
-  ERROR: 'Error',
-  SUCCESS: 'Success',
-  FAIL: 'Failed',
+  InQueue: 'In Queue',
+  Printing: 'Printing',
+  Ready: 'Ready',
+  Flagged: 'Flagged',
+  Error: 'Error',
+  Succeeded: 'Succeeded',
+  Failed: 'Failed',
+  PendingFile: 'Pending File',
 };
 
 export function StatusFilter({

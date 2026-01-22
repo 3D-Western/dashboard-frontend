@@ -85,7 +85,6 @@ export interface RetryUploadResponse {
   storageKey: string;
 }
 
-
 export type ApiSignupResponse = ApiLoginResponse;
 
 // Print Jobs API Response Types

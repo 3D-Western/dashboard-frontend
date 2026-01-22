@@ -94,7 +94,11 @@ export const jobApi = {
 
     return response;
   },
-  completeUpload: async (orderId: string, payload: CompleteUploadRequest, options?: RequestInit) => {
+  completeUpload: async (
+    orderId: string,
+    payload: CompleteUploadRequest,
+    options?: RequestInit,
+  ) => {
     return apiRequest<null>(`${getBaseUrl()}${endpoints.orders.completeUpload(orderId)}`, {
       method: 'POST',
       credentials: 'include',

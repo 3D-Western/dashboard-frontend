@@ -100,5 +100,4 @@ describe('Routes', () => {
       expect(Routes.dashboardUserSettings).toMatch(/^\/dashboard/);
     });
   });
-
 });

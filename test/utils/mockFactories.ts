@@ -65,13 +65,8 @@ export const createMockPrintJob = (overrides?: Partial<PrintJob>): PrintJob => (
   studentId: faker.number.int({ min: 251000000, max: 251999999 }),
   name: faker.commerce.productName(),
   description: faker.commerce.productDescription(),
-  status: 'IN_QUEUE' as PrintJobStatus,
+  status: 'InQueue' as PrintJobStatus,
   orderPlaced: faker.date.recent().toISOString(),
-  stlFile: {
-    id: faker.string.uuid(),
-    name: `${faker.system.fileName({ extensionCount: 0 })}.stl`,
-    path: `/uploads/${faker.string.uuid()}.stl`,
-  },
   ...overrides,
 });
 
