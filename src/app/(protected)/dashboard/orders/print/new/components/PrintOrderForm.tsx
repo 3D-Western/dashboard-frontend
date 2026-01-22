@@ -201,13 +201,9 @@ export default function NewPrintForm({ mockMode = false }: NewPrintFormProps = {
   }
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center px-4">
-      <div className="mb-6 text-center">
-        <h1 className="text-2xl font-semibold">Create New Print Request</h1>
-        <p className="mt-2 text-muted-foreground">Fill out the form to submit a 3D Print.</p>
-      </div>
+    <div className="w-full max-w-5xl">
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="w-full max-w-xl space-y-4">
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
           <FormField
             control={form.control}
             name="printName"
@@ -351,10 +347,10 @@ export default function NewPrintForm({ mockMode = false }: NewPrintFormProps = {
             )}
           />
 
-          <div className="grid grid-cols-1 gap-6">
+          <div className="space-y-6 rounded-lg border p-6">
             <div className="space-y-2">
               <div className="text-lg font-medium">
-                Any preferred materials and colors for this print? (2 Choices)
+                Preferred Materials and Colors (2 Choices)
               </div>
               <div className="text-sm text-muted-foreground">
                 Some options may run out during busy seasons. Please select a priority (first
@@ -362,8 +358,8 @@ export default function NewPrintForm({ mockMode = false }: NewPrintFormProps = {
               </div>
             </div>
 
-            <div>
-              <FormLabel className="text-lg">First Choice:</FormLabel>
+            <div className="space-y-4">
+              <FormLabel className="text-base font-semibold">First Choice:</FormLabel>
               <div className="mt-4 grid grid-cols-2 items-start gap-4">
                 <FormField
                   control={form.control}
@@ -428,9 +424,9 @@ export default function NewPrintForm({ mockMode = false }: NewPrintFormProps = {
               </div>
             </div>
 
-            <div>
-              <FormLabel className="text-lg">Second Choice:</FormLabel>
-              <div className="mt-4 grid grid-cols-2 items-start gap-4">
+            <div className="space-y-4">
+              <FormLabel className="text-base font-semibold">Second Choice:</FormLabel>
+              <div className="grid grid-cols-2 items-start gap-4">
                 <FormField
                   control={form.control}
                   name="material2"
@@ -520,15 +516,15 @@ export default function NewPrintForm({ mockMode = false }: NewPrintFormProps = {
               </FormItem>
             )}
           />
-          <div className="flex justify-end">
-            <div className="flex items-center gap-3">
-              <Button
-                type="submit"
-                size="sm"
-                variant="default"
-                disabled={form.formState.isSubmitting}
-                aria-busy={form.formState.isSubmitting}
-              >
+          <div className="flex justify-end border-t pt-6">
+            <Button
+              type="submit"
+              size="default"
+              variant="default"
+              disabled={form.formState.isSubmitting}
+              aria-busy={form.formState.isSubmitting}
+              className="min-w-[120px]"
+            >
                 {form.formState.isSubmitting ? (
                   <span className="inline-flex items-center">
                     <svg
@@ -556,8 +552,7 @@ export default function NewPrintForm({ mockMode = false }: NewPrintFormProps = {
                 ) : (
                   'Submit'
                 )}
-              </Button>
-            </div>
+            </Button>
           </div>
         </form>
       </Form>
