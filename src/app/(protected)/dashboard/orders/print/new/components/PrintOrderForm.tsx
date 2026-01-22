@@ -116,14 +116,6 @@ export default function NewPrintForm({ mockMode = false }: NewPrintFormProps = {
       const createOrderPayload: CreateOrderRequest = {
         printName: values.printName,
         description: values.description,
-        material1: values.material1,
-        color1: values.color1,
-        material2: values.material2,
-        color2: values.color2,
-        goal: values.goal,
-        durability: values.durability,
-        infill: values.infill,
-        support: values.support,
         formAnswerJson: JSON.stringify({
           contentType: file.type || 'application/sla',
           material1: values.material1,

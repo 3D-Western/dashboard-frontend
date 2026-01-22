@@ -61,16 +61,6 @@ export interface CreateOrderRequest {
   printName: string;
   description: string;
   formAnswerJson: string;
-  material1: string;
-  color1: string;
-  material2: string;
-  color2: string;
-
-  // Optional fields
-  goal?: string;
-  durability?: string;
-  infill?: string;
-  support?: string;
 }
 
 export interface CreateOrderResponse {
