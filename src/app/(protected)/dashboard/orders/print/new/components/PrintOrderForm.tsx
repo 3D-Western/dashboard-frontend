@@ -241,7 +241,7 @@ export default function NewPrintForm({ mockMode = false }: NewPrintFormProps = {
                     If this is a part of a project involving multiple prints, please specify.*
                   </FormDescription>
                   <FormControl>
-                    <Textarea placeholder="" {...field} />
+                    <Textarea placeholder="" maxLength={maxChars} {...field} />
                   </FormControl>
                   <div className="flex items-center justify-between">
                     <FormMessage />
