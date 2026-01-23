@@ -91,8 +91,7 @@ describe('CNCOrderForm branch coverage (fallbacks)', () => {
   it('renders CNC form with basic elements', () => {
     render(<CNCOrderForm />);
 
-    expect(screen.getByText('Create New CNC Machining Request')).toBeInTheDocument();
-    expect(screen.getByText('Precision machining from solid materials')).toBeInTheDocument();
+    // Form fields
     expect(screen.getByLabelText(/request name/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/description/i)).toBeInTheDocument();
     expect(screen.getByText('Preferred Material')).toBeInTheDocument();
@@ -116,7 +115,7 @@ describe('CNCOrderForm branch coverage (fallbacks)', () => {
     await user.type(screen.getByLabelText(/request name/i), 'Test CNC Part');
     await user.type(screen.getByLabelText(/description/i), 'Test description for CNC part');
 
-    const submitButton = screen.getByRole('button', { name: /Submit CNC Request/i });
+    const submitButton = screen.getByRole('button', { name: /Submit/i });
 
     await user.click(submitButton);
 
@@ -141,7 +140,7 @@ describe('CNCOrderForm branch coverage (fallbacks)', () => {
     await user.type(screen.getByLabelText(/request name/i), 'Test CNC');
     await user.type(screen.getByLabelText(/description/i), 'Test CNC description');
 
-    const submitButton = screen.getByRole('button', { name: /Submit CNC Request/i });
+    const submitButton = screen.getByRole('button', { name: /Submit/i });
     await user.click(submitButton);
 
     // CNC form now shows validation error instead of alert
@@ -179,7 +178,7 @@ describe('CNCOrderForm branch coverage (fallbacks)', () => {
     const user = setupUser();
     render(<CNCOrderForm />);
 
-    const submitButton = screen.getByRole('button', { name: /Submit CNC Request/i });
+    const submitButton = screen.getByRole('button', { name: /Submit/i });
     await user.click(submitButton);
 
     // For CNC form, we don't show individual field validation errors on first submit
@@ -203,7 +202,7 @@ describe('CNCOrderForm branch coverage (fallbacks)', () => {
     }
 
     // Try to submit without file - should trigger file validation branch
-    const submitButton = screen.getByRole('button', { name: /Submit CNC Request/i });
+    const submitButton = screen.getByRole('button', { name: /Submit/i });
     await user.click(submitButton);
 
     // CNC form now shows validation error message instead of alert

@@ -31,17 +31,17 @@ import { Routes } from '@/lib/routes';
 const navigationItems = [
   {
     title: 'Dashboard',
-    url: '/dashboard',
+    url: Routes.dashboard,
     icon: LayoutDashboard,
   },
   {
-    title: 'Prints',
-    url: '/dashboard/print',
+    title: 'My Orders',
+    url: Routes.orders.home,
     icon: Printer,
   },
   {
     title: 'New Order',
-    url: '/dashboard/orders/new',
+    url: Routes.orders.newOrder,
     icon: FilePlus,
   },
 ];

@@ -84,8 +84,13 @@ export default function LaserCuttingOrderForm() {
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     try {
-      // TODO Enable when backend is ready
+      // TODO: Enable actual submission when backend is ready
+      // For now, show success message and redirect to orders page
+      toast.success('Laser cutting order submission will be available soon');
+      router.push(Routes.orders.home);
       return;
+
+      // Actual submission logic (to be enabled when backend is ready)
       await submitOrder(
         {
           name: values.name,
@@ -227,8 +232,7 @@ export default function LaserCuttingOrderForm() {
               type="submit"
               size="default"
               variant="default"
-              // disabled={isSubmitting}
-              disabled={true}
+              disabled={isSubmitting}
               aria-busy={isSubmitting}
               className="min-w-[120px]"
             >

@@ -1,7 +1,5 @@
 import type { Metadata } from 'next';
 import PrintJobsTable from '@/components/PrintJobsTable';
-import { Button } from '@/components/ui/button';
-import Link from 'next/link';
 import { withSessionErrorHandling } from '@/lib/server-utils';
 import { userApi } from '@/api/client/user';
 import { PrintPageFilters } from './components/PrintPageFilters';
@@ -30,14 +28,6 @@ export default async function PrintPage({ searchParams }: PrintPageProps) {
 
   return (
     <div className="container space-y-6 p-6">
-      <div>
-        <Link href="/dashboard/orders/new">
-          <Button size={'sm'} title="New Order">
-            New Order
-          </Button>
-        </Link>
-      </div>
-
       <PrintPageFilters />
 
       <div>

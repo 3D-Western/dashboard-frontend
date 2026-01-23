@@ -90,9 +90,9 @@ describe('NewPrintForm branch coverage (fallbacks)', () => {
     render(<NewPrintForm />);
 
     expect(screen.getByLabelText(/High Quality/i)).toBeChecked();
-    expect(screen.getByLabelText(/General use/i)).toBeChecked();
+    expect(screen.getByLabelText(/General use \(light stress\)/i)).toBeChecked();
     expect(screen.getByLabelText(/Grid \(default\)/i)).toBeChecked();
-    expect(screen.getByLabelText(/^No$/i)).toBeChecked();
+    expect(screen.getByLabelText(/No, keep supports enabled/i)).toBeChecked();
   });
 
   it('submits without file in mock mode', async () => {
