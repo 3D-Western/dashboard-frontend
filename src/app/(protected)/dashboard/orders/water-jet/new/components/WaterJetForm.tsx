@@ -149,7 +149,7 @@ export default function WaterJetForm() {
                     Describe your water jet cutting requirements, dimensions, thickness, etc.
                   </FormDescription>
                   <FormControl>
-                    <Textarea placeholder="" {...field} />
+                    <Textarea placeholder="" maxLength={maxChars} {...field} />
                   </FormControl>
                   <div className="flex items-center justify-between">
                     <FormMessage />
