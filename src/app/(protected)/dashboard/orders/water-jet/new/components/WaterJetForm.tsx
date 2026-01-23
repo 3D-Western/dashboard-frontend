@@ -3,6 +3,7 @@
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { FileDropZone } from '@/components/manufacturing/FileDropZone';
+import { Loader2 } from 'lucide-react';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
@@ -27,6 +28,7 @@ import {
 import { UnsavedChangesGuard } from '@/components/ui/unsaved-changes-guard';
 import { toast } from 'sonner';
 import { submitOrder } from '@/lib/order-submission';
+import { Routes } from '@/lib/routes';
 
 // Type definitions for form options
 type MaterialOption = {
@@ -83,6 +85,7 @@ export default function WaterJetForm() {
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     try {
+      return; // TODO Enable when backend is ready
       await submitOrder(
         {
           name: values.name,
@@ -92,7 +95,7 @@ export default function WaterJetForm() {
         },
         {
           category: 'water-jet',
-          successRedirectPath: '/dashboard/print',
+          successRedirectPath: Routes.orders.home,
           errorMessagePrefix: 'Water jet order submit failed',
         },
         router,
@@ -142,12 +145,12 @@ export default function WaterJetForm() {
                   <FormControl>
                     <Textarea placeholder="" {...field} />
                   </FormControl>
-                  <div className="flex justify-between items-center">
+                  <div className="flex items-center justify-between">
                     <FormMessage />
                     <span
                       className={`text-sm ${
                         isOverLimit
-                          ? 'text-destructive font-medium'
+                          ? 'font-medium text-destructive'
                           : isNearLimit
                             ? 'text-amber-600 dark:text-amber-500'
                             : 'text-muted-foreground'
@@ -226,32 +229,14 @@ export default function WaterJetForm() {
               type="submit"
               size="default"
               variant="default"
-              disabled={isSubmitting}
+              // disabled={isSubmitting}
+              disabled={true}
               aria-busy={isSubmitting}
               className="min-w-[120px]"
             >
               {isSubmitting ? (
                 <span className="inline-flex items-center">
-                  <svg
-                    className="mr-2 -ml-1 h-4 w-4 animate-spin text-current"
-                    xmlns="http://www.w3.org/2000/svg"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                  >
-                    <circle
-                      className="opacity-25"
-                      cx="12"
-                      cy="12"
-                      r="10"
-                      stroke="currentColor"
-                      strokeWidth="4"
-                    ></circle>
-                    <path
-                      className="opacity-75"
-                      fill="currentColor"
-                      d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
-                    ></path>
-                  </svg>
+                  <Loader2 className="mr-2 -ml-1 h-4 w-4 animate-spin" />
                   Submitting...
                 </span>
               ) : (
