@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Printer, Wrench, Zap, Droplet } from 'lucide-react';
+import { Routes } from '@/lib/routes';
 
 export const metadata: Metadata = {
   title: 'New Order',
@@ -16,8 +17,9 @@ export default function NewOrderPage() {
       title: '3D Printing',
       description: 'Additive manufacturing with various materials',
       icon: Printer,
-      href: '/dashboard/orders/print/new',
+      href: Routes.orders.newPrintOrder,
       color: 'blue',
+      disabled: false,
       features: [
         'PLA, ABS, PETG materials',
         'Complex geometries',
@@ -30,7 +32,8 @@ export default function NewOrderPage() {
       title: 'CNC Machining',
       description: 'Precision subtractive manufacturing',
       icon: Wrench,
-      href: '/dashboard/orders/cnc/new',
+      href: Routes.orders.newCncOrder,
+      disabled: true,
       color: 'green',
       features: ['Metal & plastic materials', 'High precision', 'Strong parts', 'Tight tolerances'],
     },
@@ -39,7 +42,8 @@ export default function NewOrderPage() {
       title: 'Laser Cutting',
       description: 'Precise cutting of sheet materials',
       icon: Zap,
-      href: '/dashboard/orders/laser-cutting/new',
+      href: Routes.orders.newLaserCuttingOrder,
+      disabled: true,
       color: 'orange',
       features: ['Wood, acrylic, cardboard', '2D designs', 'Clean edges', 'Fast turnaround'],
     },
@@ -48,7 +52,8 @@ export default function NewOrderPage() {
       title: 'Water Jet Cutting',
       description: 'High-pressure cutting for thick materials',
       icon: Droplet,
-      href: '/dashboard/orders/water-jet/new',
+      href: Routes.orders.newWaterJetOrder,
+      disabled: true,
       color: 'cyan',
       features: ['Thick metals & stone', 'No heat-affected zone', 'Very precise', 'Any thickness'],
     },
@@ -104,9 +109,15 @@ export default function NewOrderPage() {
                     ))}
                   </ul>
                 </div>
-                <Button asChild className="w-full" size="sm">
-                  <Link href={orderType.href}>Create {orderType.title} Order</Link>
-                </Button>
+                {orderType.disabled ? (
+                  <Button className="w-full" size="sm" disabled>
+                    Create {orderType.title} Order
+                  </Button>
+                ) : (
+                  <Button asChild className="w-full" size="sm">
+                    <Link href={orderType.href}>Create {orderType.title} Order</Link>
+                  </Button>
+                )}
               </CardContent>
             </Card>
           );

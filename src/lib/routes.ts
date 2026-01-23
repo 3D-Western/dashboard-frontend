@@ -17,6 +17,7 @@ export const Routes = {
 
   orders: {
     home: '/dashboard/orders',
+    newOrder: '/dashboard/orders/new',
     newCncOrder: '/dashboard/orders/cnc/new',
     newPrintOrder: '/dashboard/orders/print/new',
     newWaterJetOrder: '/dashboard/orders/water-jet/new',

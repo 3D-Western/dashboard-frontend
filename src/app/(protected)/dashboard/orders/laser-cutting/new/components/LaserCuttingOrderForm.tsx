@@ -2,6 +2,7 @@
 
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
+import { Loader2 } from 'lucide-react';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
@@ -27,8 +28,15 @@ import { UnsavedChangesGuard } from '@/components/ui/unsaved-changes-guard';
 import { toast } from 'sonner';
 import { FileDropZone } from '@/components/manufacturing/FileDropZone';
 import { submitOrder } from '@/lib/order-submission';
+import { Routes } from '@/lib/routes';
 
-const LASER_MATERIALS = [
+// Type definitions for form options
+type MaterialOption = {
+  readonly value: string;
+  readonly label: string;
+};
+
+const LASER_MATERIALS: readonly MaterialOption[] = [
   { value: 'acrylic', label: 'Acrylic' },
   { value: 'wood', label: 'Wood (Plywood/MDF)' },
   { value: 'cardboard', label: 'Cardboard' },
@@ -36,7 +44,7 @@ const LASER_MATERIALS = [
   { value: 'leather', label: 'Leather' },
   { value: 'paper', label: 'Paper' },
   { value: 'foam', label: 'Foam' },
-];
+] as const;
 
 const LASER_FILE_TYPES = {
   accept: {
@@ -76,6 +84,13 @@ export default function LaserCuttingOrderForm() {
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     try {
+      // TODO: Enable actual submission when backend is ready
+      // For now, show success message and redirect to orders page
+      toast.success('Laser cutting order submission will be available soon');
+      router.push(Routes.orders.home);
+      return;
+
+      // Actual submission logic (to be enabled when backend is ready)
       await submitOrder(
         {
           name: values.name,
@@ -85,7 +100,7 @@ export default function LaserCuttingOrderForm() {
         },
         {
           category: 'laser-cutting',
-          successRedirectPath: '/dashboard/print',
+          successRedirectPath: Routes.orders.home,
           errorMessagePrefix: 'Laser cutting order submit failed',
         },
         router,
@@ -98,14 +113,9 @@ export default function LaserCuttingOrderForm() {
   }
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center px-4">
-      <div className="mb-6 text-center">
-        <h1 className="text-2xl font-semibold">Create New Laser Cutting Request</h1>
-        <p className="mt-2 text-muted-foreground">Precise cutting of 2D designs</p>
-      </div>
-
+    <div className="w-full max-w-5xl">
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="w-full max-w-xl space-y-4">
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
           {/* Request Name */}
           <FormField
             control={form.control}
@@ -114,7 +124,7 @@ export default function LaserCuttingOrderForm() {
               <FormItem>
                 <FormLabel className="text-lg">Request Name</FormLabel>
                 <FormControl>
-                  <Input placeholder="Enter request name" {...field} />
+                  <Input placeholder="" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -125,21 +135,38 @@ export default function LaserCuttingOrderForm() {
           <FormField
             control={form.control}
             name="description"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel className="text-lg">Description</FormLabel>
-                <FormDescription>
-                  Describe your laser cutting requirements, dimensions, thickness, etc.
-                </FormDescription>
-                <FormControl>
-                  <Textarea
-                    placeholder="Describe your laser cutting request in detail..."
-                    {...field}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
+            render={({ field }) => {
+              const charCount = field.value?.length || 0;
+              const maxChars = 500;
+              const isNearLimit = charCount > maxChars * 0.8;
+              const isOverLimit = charCount > maxChars;
+
+              return (
+                <FormItem>
+                  <FormLabel className="text-lg">Description</FormLabel>
+                  <FormDescription>
+                    Describe your laser cutting requirements, dimensions, thickness, etc.
+                  </FormDescription>
+                  <FormControl>
+                    <Textarea placeholder="" maxLength={maxChars} {...field} />
+                  </FormControl>
+                  <div className="flex items-center justify-between">
+                    <FormMessage />
+                    <span
+                      className={`text-sm ${
+                        isOverLimit
+                          ? 'font-medium text-destructive'
+                          : isNearLimit
+                            ? 'text-amber-600 dark:text-amber-500'
+                            : 'text-muted-foreground'
+                      }`}
+                    >
+                      {charCount}/{maxChars}
+                    </span>
+                  </div>
+                </FormItem>
+              );
+            }}
           />
 
           {/* Material Selection */}
@@ -182,7 +209,6 @@ export default function LaserCuttingOrderForm() {
                 <FormControl>
                   <FileDropZone
                     accept={LASER_FILE_TYPES.accept}
-                    initialFile={field.value as File | undefined}
                     onFileAccepted={(f) => {
                       field.onChange(f ?? undefined);
                     }}
@@ -200,40 +226,22 @@ export default function LaserCuttingOrderForm() {
           />
 
           {/* Submit Button */}
-          <div className="flex justify-end">
+          <div className="flex justify-end border-t pt-6">
             <Button
               type="submit"
-              size="sm"
+              size="default"
               variant="default"
               disabled={isSubmitting}
               aria-busy={isSubmitting}
+              className="min-w-[120px]"
             >
               {isSubmitting ? (
                 <span className="inline-flex items-center">
-                  <svg
-                    className="mr-2 -ml-1 h-4 w-4 animate-spin text-current"
-                    xmlns="http://www.w3.org/2000/svg"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                  >
-                    <circle
-                      className="opacity-25"
-                      cx="12"
-                      cy="12"
-                      r="10"
-                      stroke="currentColor"
-                      strokeWidth="4"
-                    ></circle>
-                    <path
-                      className="opacity-75"
-                      fill="currentColor"
-                      d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
-                    ></path>
-                  </svg>
+                  <Loader2 className="mr-2 -ml-1 h-4 w-4 animate-spin" />
                   Submitting...
                 </span>
               ) : (
-                'Submit Laser Cutting Request'
+                'Submit'
               )}
             </Button>
           </div>

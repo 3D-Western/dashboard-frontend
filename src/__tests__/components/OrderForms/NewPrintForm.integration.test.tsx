@@ -62,17 +62,15 @@ describe('NewPrintForm Integration', () => {
     it('renders all fields correctly', () => {
       render(<NewPrintForm />);
 
-      expect(screen.getByText('Create New Print Request')).toBeInTheDocument();
+      // Form fields
       expect(screen.getByLabelText(/Print Name/i)).toBeInTheDocument();
       expect(screen.getByLabelText(/Print Description/i)).toBeInTheDocument();
       expect(screen.getByText(/Upload STL/i)).toBeInTheDocument();
       expect(screen.getByText(/What is the primary goal of this print/i)).toBeInTheDocument();
       expect(screen.getByText(/How strong does the print have to be/i)).toBeInTheDocument();
       expect(screen.getByText(/Do you have a preferred infill pattern/i)).toBeInTheDocument();
-      expect(
-        screen.getByText(/Any preferred materials and colors for this print/i),
-      ).toBeInTheDocument();
-      expect(screen.getByText(/Do you want to disable print supports/i)).toBeInTheDocument();
+      expect(screen.getByText(/Preferred Materials and Colors/i)).toBeInTheDocument();
+      expect(screen.getByText(/Print Supports/i)).toBeInTheDocument();
     });
 
     it('has submit button', () => {

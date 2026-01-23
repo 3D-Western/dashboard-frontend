@@ -32,8 +32,7 @@ describe('LaserCuttingOrderForm branch coverage', () => {
   it('renders the laser cutting form with proper title and fields', () => {
     render(<LaserCuttingOrderForm />);
 
-    expect(screen.getByText('Create New Laser Cutting Request')).toBeInTheDocument();
-    expect(screen.getByText('Precise cutting of 2D designs')).toBeInTheDocument();
+    // Form fields
     expect(screen.getByLabelText(/request name/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/description/i)).toBeInTheDocument();
     expect(screen.getByText('Preferred Material')).toBeInTheDocument();
@@ -59,7 +58,7 @@ describe('LaserCuttingOrderForm branch coverage', () => {
     await user.click(screen.getByRole('option', { name: /acrylic/i }));
 
     // Submit form without file
-    const submitButton = screen.getByRole('button', { name: /submit laser cutting request/i });
+    const submitButton = screen.getByRole('button', { name: /submit/i });
     await user.click(submitButton);
 
     // Should show form validation error instead of alert
@@ -75,14 +74,6 @@ describe('LaserCuttingOrderForm branch coverage', () => {
   it('covers successful submission with valid file', async () => {
     const user = userEvent.setup();
     render(<LaserCuttingOrderForm />);
-
-    const mockFetchResponse = {
-      ok: true,
-      json: vi.fn().mockResolvedValue({
-        data: { order: { id: 'test-123' } },
-      }),
-    };
-    (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValue(mockFetchResponse);
 
     // Fill required fields
     await user.type(screen.getByLabelText(/request name/i), 'Test Part');
@@ -111,22 +102,18 @@ describe('LaserCuttingOrderForm branch coverage', () => {
     });
 
     // Submit form
-    const submitButton = screen.getByRole('button', { name: /submit laser cutting request/i });
+    const submitButton = screen.getByRole('button', { name: /submit/i });
     await user.click(submitButton);
 
-    // Should call fetch with correct payload
+    // TODO: Update this test when backend is ready
+    // For now, form shows "coming soon" message and redirects
     await waitFor(() => {
-      expect(global.fetch).toHaveBeenCalledWith('/api/v1/orders', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: expect.stringContaining('"category":"laser-cutting"'),
-      });
+      expect(mockPush).toHaveBeenCalledWith('/dashboard/orders');
     });
-
-    expect(mockPush).toHaveBeenCalledWith('/dashboard/print');
   });
 
-  it('handles fetch error gracefully', async () => {
+  // TODO: Re-enable when backend is ready - this test is for actual fetch error handling
+  it.skip('handles fetch error gracefully', async () => {
     const user = userEvent.setup();
     render(<LaserCuttingOrderForm />);
 
@@ -149,7 +136,7 @@ describe('LaserCuttingOrderForm branch coverage', () => {
     await user.upload(fileInput, validFile);
 
     // Submit form
-    const submitButton = screen.getByRole('button', { name: /submit laser cutting request/i });
+    const submitButton = screen.getByRole('button', { name: /submit/i });
     await user.click(submitButton);
 
     // Should handle error gracefully
@@ -191,7 +178,7 @@ describe('LaserCuttingOrderForm branch coverage', () => {
     await user.click(screen.getByRole('option', { name: /acrylic/i }));
 
     // Submit form - should trigger form validation error for missing file
-    const submitButton = screen.getByRole('button', { name: /submit laser cutting request/i });
+    const submitButton = screen.getByRole('button', { name: /submit/i });
     await user.click(submitButton);
 
     // Should show validation error for no file uploaded
@@ -204,7 +191,8 @@ describe('LaserCuttingOrderForm branch coverage', () => {
     expect(global.fetch).not.toHaveBeenCalled();
   });
 
-  it('handles non-ok fetch response', async () => {
+  // TODO: Re-enable when backend is ready - this test is for actual fetch error handling
+  it.skip('handles non-ok fetch response', async () => {
     const user = userEvent.setup();
     render(<LaserCuttingOrderForm />);
 
@@ -231,7 +219,7 @@ describe('LaserCuttingOrderForm branch coverage', () => {
     await user.upload(fileInput, validFile);
 
     // Submit form
-    const submitButton = screen.getByRole('button', { name: /submit laser cutting request/i });
+    const submitButton = screen.getByRole('button', { name: /submit/i });
     await user.click(submitButton);
 
     // Should handle fetch error
