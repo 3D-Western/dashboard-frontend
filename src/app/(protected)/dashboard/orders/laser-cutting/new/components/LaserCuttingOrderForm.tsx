@@ -148,7 +148,7 @@ export default function LaserCuttingOrderForm() {
                     Describe your laser cutting requirements, dimensions, thickness, etc.
                   </FormDescription>
                   <FormControl>
-                    <Textarea placeholder="" {...field} />
+                    <Textarea placeholder="" maxLength={maxChars} {...field} />
                   </FormControl>
                   <div className="flex items-center justify-between">
                     <FormMessage />
