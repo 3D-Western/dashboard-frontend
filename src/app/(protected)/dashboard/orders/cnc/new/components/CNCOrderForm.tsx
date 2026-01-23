@@ -141,7 +141,7 @@ export default function CNCOrderForm() {
                     Describe your CNC requirements, dimensions, tolerances, etc.
                   </FormDescription>
                   <FormControl>
-                    <Textarea placeholder="" {...field} />
+                    <Textarea placeholder="" maxLength={maxChars} {...field} />
                   </FormControl>
                   <div className="flex items-center justify-between">
                     <FormMessage />
