@@ -28,7 +28,13 @@ import { toast } from 'sonner';
 import { FileDropZone } from '@/components/manufacturing/FileDropZone';
 import { submitOrder } from '@/lib/order-submission';
 
-const LASER_MATERIALS = [
+// Type definitions for form options
+type MaterialOption = {
+  readonly value: string;
+  readonly label: string;
+};
+
+const LASER_MATERIALS: readonly MaterialOption[] = [
   { value: 'acrylic', label: 'Acrylic' },
   { value: 'wood', label: 'Wood (Plywood/MDF)' },
   { value: 'cardboard', label: 'Cardboard' },
@@ -36,7 +42,7 @@ const LASER_MATERIALS = [
   { value: 'leather', label: 'Leather' },
   { value: 'paper', label: 'Paper' },
   { value: 'foam', label: 'Foam' },
-];
+] as const;
 
 const LASER_FILE_TYPES = {
   accept: {
@@ -98,14 +104,9 @@ export default function LaserCuttingOrderForm() {
   }
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center px-4">
-      <div className="mb-6 text-center">
-        <h1 className="text-2xl font-semibold">Create New Laser Cutting Request</h1>
-        <p className="mt-2 text-muted-foreground">Precise cutting of 2D designs</p>
-      </div>
-
+    <div className="w-full max-w-5xl">
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="w-full max-w-xl space-y-4">
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
           {/* Request Name */}
           <FormField
             control={form.control}
@@ -114,7 +115,7 @@ export default function LaserCuttingOrderForm() {
               <FormItem>
                 <FormLabel className="text-lg">Request Name</FormLabel>
                 <FormControl>
-                  <Input placeholder="Enter request name" {...field} />
+                  <Input placeholder="" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -125,21 +126,38 @@ export default function LaserCuttingOrderForm() {
           <FormField
             control={form.control}
             name="description"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel className="text-lg">Description</FormLabel>
-                <FormDescription>
-                  Describe your laser cutting requirements, dimensions, thickness, etc.
-                </FormDescription>
-                <FormControl>
-                  <Textarea
-                    placeholder="Describe your laser cutting request in detail..."
-                    {...field}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
+            render={({ field }) => {
+              const charCount = field.value?.length || 0;
+              const maxChars = 500;
+              const isNearLimit = charCount > maxChars * 0.8;
+              const isOverLimit = charCount > maxChars;
+
+              return (
+                <FormItem>
+                  <FormLabel className="text-lg">Description</FormLabel>
+                  <FormDescription>
+                    Describe your laser cutting requirements, dimensions, thickness, etc.
+                  </FormDescription>
+                  <FormControl>
+                    <Textarea placeholder="" {...field} />
+                  </FormControl>
+                  <div className="flex justify-between items-center">
+                    <FormMessage />
+                    <span
+                      className={`text-sm ${
+                        isOverLimit
+                          ? 'text-destructive font-medium'
+                          : isNearLimit
+                            ? 'text-amber-600 dark:text-amber-500'
+                            : 'text-muted-foreground'
+                      }`}
+                    >
+                      {charCount}/{maxChars}
+                    </span>
+                  </div>
+                </FormItem>
+              );
+            }}
           />
 
           {/* Material Selection */}
@@ -200,13 +218,14 @@ export default function LaserCuttingOrderForm() {
           />
 
           {/* Submit Button */}
-          <div className="flex justify-end">
+          <div className="flex justify-end border-t pt-6">
             <Button
               type="submit"
-              size="sm"
+              size="default"
               variant="default"
               disabled={isSubmitting}
               aria-busy={isSubmitting}
+              className="min-w-[120px]"
             >
               {isSubmitting ? (
                 <span className="inline-flex items-center">
@@ -233,7 +252,7 @@ export default function LaserCuttingOrderForm() {
                   Submitting...
                 </span>
               ) : (
-                'Submit Laser Cutting Request'
+                'Submit'
               )}
             </Button>
           </div>
