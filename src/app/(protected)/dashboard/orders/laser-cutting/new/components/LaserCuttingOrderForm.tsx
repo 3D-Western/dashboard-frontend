@@ -209,7 +209,6 @@ export default function LaserCuttingOrderForm() {
                 <FormControl>
                   <FileDropZone
                     accept={LASER_FILE_TYPES.accept}
-                    initialFile={field.value as File | undefined}
                     onFileAccepted={(f) => {
                       field.onChange(f ?? undefined);
                     }}

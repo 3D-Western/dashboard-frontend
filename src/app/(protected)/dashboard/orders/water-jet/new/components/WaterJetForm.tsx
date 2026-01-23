@@ -212,7 +212,6 @@ export default function WaterJetForm() {
                 <FormControl>
                   <FileDropZone
                     accept={WATERJET_FILE_TYPES.accept}
-                    initialFile={field.value as File | undefined}
                     onFileAccepted={(f) => {
                       field.onChange(f ?? undefined);
                     }}

@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
-import { FileUploadDropzone } from '../../../../../../../components/FileUploadDropzone';
+import { FileUploadDropzone } from '@/components/FileUploadDropzone';
 import { ColorSelect, type ColorOption } from '@/components/ColorSelect';
 import { Loader2 } from 'lucide-react';
 import {
