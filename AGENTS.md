@@ -67,7 +67,7 @@ The app uses Next.js 15 App Router with route groups:
 **Protected Routes (require authentication):**
 
 - `(protected)/dashboard/` - User dashboard
-- `(protected)/dashboard/print/` - Print jobs
+- `(protected)/dashboard/orders/` - User orders
 - `(protected)/dashboard/settings/` - User settings
 - `(protected)/admin/` - Admin panel (admin role required)
 

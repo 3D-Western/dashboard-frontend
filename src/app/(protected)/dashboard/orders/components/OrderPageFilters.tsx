@@ -14,7 +14,7 @@ const USER_STATUS_OPTIONS: PrintJobStatus[] = [
   'Failed',
 ];
 
-export function PrintPageFilters() {
+export function OrderPageFilters() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -67,8 +67,8 @@ export function PrintPageFilters() {
       <SearchFilter
         value={currentSearch}
         onChange={handleSearchChange}
-        placeholder="Search prints..."
-        label="Search print jobs"
+        placeholder="Search orders..."
+        label="Search orders"
       />
     </div>
   );

@@ -71,9 +71,9 @@ export default async function DashboardPage({
         <h2 className="text-lg font-semibold">Quick Actions</h2>
         <div className="flex gap-4">
           <Button asChild>
-            <Link href="/print">
+            <Link href="/dashboard/orders">
               <Printer className="mr-2 h-4 w-4" />
-              View All Prints
+              View All Orders
             </Link>
           </Button>
         </div>

@@ -19,11 +19,11 @@ describe('PageHeader', () => {
     expect(screen.getByText('Dashboard')).toBeInTheDocument();
   });
 
-  it('renders Prints title for prints route', () => {
-    mockUsePathname.mockReturnValue(Routes.prints);
+  it('renders My Orders title for orders route', () => {
+    mockUsePathname.mockReturnValue(Routes.orders.home);
     render(<PageHeader />);
 
-    expect(screen.getByText('Prints')).toBeInTheDocument();
+    expect(screen.getByText('My Orders')).toBeInTheDocument();
   });
 
   it('renders Settings title for settings route', () => {
@@ -40,11 +40,11 @@ describe('PageHeader', () => {
     expect(screen.getByText('User Management')).toBeInTheDocument();
   });
 
-  it('renders Print Management title for admin prints route', () => {
-    mockUsePathname.mockReturnValue(Routes.adminPrintsManagement);
+  it('renders Order Management title for admin orders route', () => {
+    mockUsePathname.mockReturnValue(Routes.adminOrdersManagement);
     render(<PageHeader />);
 
-    expect(screen.getByText('Print Management')).toBeInTheDocument();
+    expect(screen.getByText('Order Management')).toBeInTheDocument();
   });
 
   it('renders Dashboard as default title for unknown route', () => {
@@ -76,9 +76,9 @@ describe('PageHeader', () => {
     const { rerender } = render(<PageHeader />);
     expect(screen.getByText('Dashboard')).toBeInTheDocument();
 
-    mockUsePathname.mockReturnValue(Routes.prints);
+    mockUsePathname.mockReturnValue(Routes.orders.home);
     rerender(<PageHeader />);
-    expect(screen.getByText('Prints')).toBeInTheDocument();
+    expect(screen.getByText('My Orders')).toBeInTheDocument();
   });
 
   it('handles empty pathname', () => {

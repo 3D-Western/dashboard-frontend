@@ -58,8 +58,8 @@ const adminNavigationItems = [
     icon: Users,
   },
   {
-    title: 'Print Management',
-    url: Routes.adminPrintsManagement,
+    title: 'Order Management',
+    url: Routes.adminOrdersManagement,
     icon: Settings,
   },
   {

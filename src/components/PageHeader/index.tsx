@@ -5,10 +5,10 @@ import { usePathname } from 'next/navigation';
 
 const pageTitles: Record<string, string> = {
   [Routes.dashboard]: 'Dashboard',
-  [Routes.prints]: 'Prints',
+  [Routes.orders.home]: 'My Orders',
   [Routes.dashboardUserSettings]: 'Settings',
   [Routes.adminUsersManagement]: 'User Management',
-  [Routes.adminPrintsManagement]: 'Print Management',
+  [Routes.adminOrdersManagement]: 'Order Management',
   [Routes.adminInvitationManagement]: 'Invitation Management',
 };
 
