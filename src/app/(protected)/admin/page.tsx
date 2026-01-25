@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Shield, Users, Printer } from 'lucide-react';
 import Link from 'next/link';
+import PageTitle from '@/components/PageTitle';
 
 export const metadata: Metadata = {
   title: 'Admin Dashboard',
@@ -11,10 +12,7 @@ export const metadata: Metadata = {
 export default async function AdminDashboardPage() {
   return (
     <div className="container space-y-6 p-6">
-      <div className="mb-4 flex items-center gap-2">
-        <Shield className="h-6 w-6" />
-        <h1 className="text-2xl font-bold">Admin Dashboard</h1>
-      </div>
+      <PageTitle title="Admin Dashboard" description="Administrative dashboard for 3D Western" />
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         <Link href="/admin/users">

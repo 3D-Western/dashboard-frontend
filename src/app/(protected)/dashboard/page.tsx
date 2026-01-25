@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Printer, LayoutDashboard, Clock, AlertCircle } from 'lucide-react';
 import Link from 'next/link';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import PageTitle from '@/components/PageTitle';
 
 export const metadata: Metadata = {
   title: 'Dashboard',
@@ -34,10 +35,10 @@ export default async function DashboardPage({
         </Alert>
       )}
 
-      {/* Welcome Section */}
-      <div className="space-y-2">
-        <p className="text-muted-foreground">Welcome to Western 3D Print Club Dashboard</p>
-      </div>
+      <PageTitle
+        title="Dashboard"
+        description="Welcome to Western 3D Print Club Dashboard"
+      />
 
       {/* Quick Stats - Placeholder for now */}
       <div className="grid gap-4 md:grid-cols-3">

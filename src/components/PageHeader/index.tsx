@@ -6,7 +6,13 @@ import { usePathname } from 'next/navigation';
 const pageTitles: Record<string, string> = {
   [Routes.dashboard]: 'Dashboard',
   [Routes.orders.home]: 'My Orders',
+  [Routes.orders.newOrder]: 'Create New Order',
+  [Routes.orders.newPrintOrder]: 'Create 3D Print Order',
+  [Routes.orders.newCncOrder]: 'Create CNC Machining Order',
+  [Routes.orders.newLaserCuttingOrder]: 'Create Laser Cutting Order',
+  [Routes.orders.newWaterJetOrder]: 'Create Water Jet Cutting Order',
   [Routes.dashboardUserSettings]: 'Settings',
+  ['/admin']: 'Admin Dashboard',
   [Routes.adminUsersManagement]: 'User Management',
   [Routes.adminOrdersManagement]: 'Order Management',
   [Routes.adminInvitationManagement]: 'Invitation Management',

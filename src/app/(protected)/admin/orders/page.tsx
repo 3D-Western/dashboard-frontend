@@ -5,6 +5,7 @@ import { withSessionErrorHandling } from '@/lib/server-utils';
 import { Settings } from 'lucide-react';
 import { AdminOrderFilters } from './components/AdminOrderFilters';
 import { PrintJobStatus } from '@/types/jobs';
+import PageTitle from '@/components/PageTitle';
 
 export const metadata: Metadata = {
   title: 'Order Management',
@@ -29,10 +30,10 @@ export default async function OrderManagementPage({ searchParams }: OrderManagem
 
   return (
     <div className="container space-y-6 p-6">
-      <div className="mb-4 flex items-center gap-2 text-muted-foreground">
-        <Settings className="h-5 w-5" />
-        <span className="text-sm">Manage all orders across users</span>
-      </div>
+      <PageTitle
+        title="Order Management"
+        description="Manage all orders across users"
+      />
 
       <AdminOrderFilters />
 
