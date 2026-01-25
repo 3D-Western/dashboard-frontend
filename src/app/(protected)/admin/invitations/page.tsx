@@ -38,10 +38,12 @@ export default async function InvitationManagementPage({
   return (
     <div className="container space-y-6 p-6">
       <div className="flex items-center justify-between">
-        <PageTitle
-          title="Invitation Management"
-          description="Manage user registration invitations"
-        />
+        <div className="flex-1">
+          <PageTitle
+            title="Invitation Management"
+            description="Manage user registration invitations"
+          />
+        </div>
         <CreateInvitationButton />
       </div>
 

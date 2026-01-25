@@ -23,7 +23,7 @@ interface UseColumnsOptions {
 }
 
 export const useColumns = (opts: UseColumnsOptions = {}) => {
-  const { mode = 'user', setJobs: _setJobs } = opts;
+  const { mode = 'user' } = opts;
 
   return useMemo<ColumnDef<PrintJob>[]>(
     () => [
