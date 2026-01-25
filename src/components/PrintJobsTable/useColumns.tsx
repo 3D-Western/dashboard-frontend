@@ -11,7 +11,6 @@ import {
 import { PrintJob, PrintJobStatus } from '@/types/jobs';
 import { ColumnDef } from '@tanstack/react-table';
 import { ArrowUpDown, MoreHorizontal } from 'lucide-react';
-import Link from 'next/link';
 import { useMemo } from 'react';
 import { DateCell } from './DateCell';
 
@@ -51,19 +50,9 @@ export const useColumns = (opts: UseColumnsOptions = {}) => {
         },
         cell: ({ row }) => {
           const name = row.getValue('name') as string;
-          const jobId = row.original.id;
 
           if (mode === 'admin') {
-            return (
-              <div>
-                <Link
-                  href={`/admin/prints/${jobId}`}
-                  className="text-primary underline-offset-4 hover:underline"
-                >
-                  {name}
-                </Link>
-              </div>
-            );
+            return <div>{name}</div>;
           }
 
           return (
