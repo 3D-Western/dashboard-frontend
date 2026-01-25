@@ -2,13 +2,10 @@
 
 import { PrintJobStatusBadge } from '@/components/PrintJobStatusBadge';
 import { Button } from '@/components/ui/button';
-import { Checkbox } from '@/components/ui/checkbox';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { PrintJob, PrintJobStatus } from '@/types/jobs';
@@ -26,40 +23,31 @@ interface UseColumnsOptions {
 }
 
 export const useColumns = (opts: UseColumnsOptions = {}) => {
-  const { mode = 'user', setJobs } = opts;
+  const { mode = 'user', setJobs: _setJobs } = opts;
 
   return useMemo<ColumnDef<PrintJob>[]>(
     () => [
       {
-        id: 'select',
-        header: ({ table }) => (
-          <Checkbox
-            checked={
-              table.getIsAllPageRowsSelected() ||
-              (table.getIsSomePageRowsSelected() && 'indeterminate')
-            }
-            onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
-            aria-label={
-              table.getIsAllPageRowsSelected()
-                ? 'Deselect all print jobs on this page'
-                : 'Select all print jobs on this page'
-            }
-          />
-        ),
-        cell: ({ row }) => (
-          <Checkbox
-            checked={row.getIsSelected()}
-            onCheckedChange={(value) => row.toggleSelected(!!value)}
-            aria-label={`Select print job ${row.original.name}`}
-          />
-        ),
-        enableSorting: false,
-        enableHiding: false,
-      },
-      {
         accessorKey: 'name',
-        header: () => {
-          return <div className="w-full text-center">Name</div>;
+        header: ({ column }) => {
+          const sortDirection = column.getIsSorted();
+          return (
+            <Button
+              variant={'ghost'}
+              className="w-full justify-start px-0 hover:bg-transparent"
+              onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
+              aria-label={`Sort by name ${
+                sortDirection === 'asc'
+                  ? 'descending'
+                  : sortDirection === 'desc'
+                    ? 'ascending'
+                    : 'ascending'
+              }`}
+            >
+              Name
+              <ArrowUpDown className="ml-2 h-4 w-4" aria-hidden="true" />
+            </Button>
+          );
         },
         cell: ({ row }) => {
           const name = row.getValue('name') as string;
@@ -67,7 +55,7 @@ export const useColumns = (opts: UseColumnsOptions = {}) => {
 
           if (mode === 'admin') {
             return (
-              <div className="w-full text-center">
+              <div>
                 <Link
                   href={`/admin/prints/${jobId}`}
                   className="text-primary underline-offset-4 hover:underline"
@@ -79,7 +67,7 @@ export const useColumns = (opts: UseColumnsOptions = {}) => {
           }
 
           return (
-            <div className="w-full text-center">
+            <div>
               <span>{name}</span>
             </div>
           );
@@ -89,27 +77,71 @@ export const useColumns = (opts: UseColumnsOptions = {}) => {
         ? [
             {
               accessorKey: 'student',
-              header: () => {
-                return <div className="w-full text-center">Student</div>;
+              header: ({ column }) => {
+                const sortDirection = column.getIsSorted();
+                return (
+                  <Button
+                    variant={'ghost'}
+                    className="w-full justify-start px-0 hover:bg-transparent"
+                    onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
+                    aria-label={`Sort by student ${
+                      sortDirection === 'asc'
+                        ? 'descending'
+                        : sortDirection === 'desc'
+                          ? 'ascending'
+                          : 'ascending'
+                    }`}
+                  >
+                    Student
+                    <ArrowUpDown className="ml-2 h-4 w-4" aria-hidden="true" />
+                  </Button>
+                );
               },
               cell: ({ row }) => {
                 const student = row.original.student;
                 if (!student) {
-                  return <div className="w-full text-center text-muted-foreground">-</div>;
+                  return <div className="text-muted-foreground">-</div>;
                 }
                 return (
-                  <div className="w-full text-center">
+                  <div>
                     <span>{`${student.firstName} ${student.lastName}`}</span>
                   </div>
                 );
+              },
+              sortingFn: (rowA, rowB) => {
+                const studentA = rowA.original.student;
+                const studentB = rowB.original.student;
+                if (!studentA && !studentB) return 0;
+                if (!studentA) return 1;
+                if (!studentB) return -1;
+                const nameA = `${studentA.firstName} ${studentA.lastName}`.toLowerCase();
+                const nameB = `${studentB.firstName} ${studentB.lastName}`.toLowerCase();
+                return nameA.localeCompare(nameB);
               },
             } as ColumnDef<PrintJob>,
           ]
         : []),
       {
         accessorKey: 'status',
-        header: () => {
-          return <div className="w-full text-center">Status</div>;
+        header: ({ column }) => {
+          const sortDirection = column.getIsSorted();
+          return (
+            <Button
+              variant={'ghost'}
+              className="w-full"
+              onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
+              aria-label={`Sort by status ${
+                sortDirection === 'asc'
+                  ? 'descending'
+                  : sortDirection === 'desc'
+                    ? 'ascending'
+                    : 'ascending'
+              }`}
+            >
+              Status
+              <ArrowUpDown className="ml-2 h-4 w-4" aria-hidden="true" />
+            </Button>
+          );
         },
         cell: ({ row }) => {
           const status = row.getValue('status') as PrintJobStatus;
@@ -118,6 +150,21 @@ export const useColumns = (opts: UseColumnsOptions = {}) => {
               <PrintJobStatusBadge status={status} />
             </div>
           );
+        },
+        sortingFn: (rowA, rowB) => {
+          const statusOrder: Record<PrintJobStatus, number> = {
+            Error: 0,
+            Failed: 1,
+            Flagged: 2,
+            PendingFile: 3,
+            InQueue: 4,
+            Printing: 5,
+            Ready: 6,
+            Succeeded: 7,
+          };
+          const statusA = rowA.getValue('status') as PrintJobStatus;
+          const statusB = rowB.getValue('status') as PrintJobStatus;
+          return statusOrder[statusA] - statusOrder[statusB];
         },
       },
       {
@@ -148,7 +195,6 @@ export const useColumns = (opts: UseColumnsOptions = {}) => {
         id: 'actions',
         cell: ({ row }) => {
           const printJob = row.original;
-          const canCancel = printJob.status === 'InQueue';
           return (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -163,7 +209,6 @@ export const useColumns = (opts: UseColumnsOptions = {}) => {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
-                <DropdownMenuLabel>Actions</DropdownMenuLabel>
                 <DropdownMenuItem
                   onSelect={async () => {
                     try {
@@ -175,7 +220,8 @@ export const useColumns = (opts: UseColumnsOptions = {}) => {
                 >
                   Copy Job ID
                 </DropdownMenuItem>
-                {canCancel && setJobs && (
+                {/* TODO: Future improvement - Implement cancel print functionality */}
+                {/* {canCancel && setJobs && (
                   <DropdownMenuItem
                     // Uncomment and replace below onclick handle once backend is ready to enable api call
                     // onClick={async () => {
@@ -205,17 +251,18 @@ export const useColumns = (opts: UseColumnsOptions = {}) => {
                   >
                     Cancel Print
                   </DropdownMenuItem>
-                )}
-                <DropdownMenuSeparator />
+                )} */}
+                {/* TODO: Future improvement - Implement download STL functionality */}
+                {/* <DropdownMenuSeparator />
                 <DropdownMenuItem disabled aria-disabled="true">
                   Download STL (Coming soon)
-                </DropdownMenuItem>
+                </DropdownMenuItem> */}
               </DropdownMenuContent>
             </DropdownMenu>
           );
         },
       },
     ],
-    [mode, setJobs],
+    [mode],
   );
 };
