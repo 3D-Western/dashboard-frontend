@@ -465,6 +465,52 @@ describe('NewPrintForm Integration', () => {
         expect(toast.error).toHaveBeenCalledWith('Failed to submit print request. Unknown error');
       });
     });
+
+    it('handles invalid API response (missing orderId)', async () => {
+      const user = setupUser();
+
+      vi.mocked(jobApi.createOrder).mockResolvedValue({
+        orderId: undefined as any,
+        uploadUrl: 'https://example.com/upload',
+      });
+
+      render(<NewPrintForm mockMode={false} />);
+      await fillRequiredFields(user);
+
+      const submitButton = screen.getByRole('button', { name: /Submit/i });
+      await user.click(submitButton);
+
+      await waitFor(() => {
+        expect(toast.error).toHaveBeenCalledWith(
+          expect.stringContaining('Invalid response from server')
+        );
+      });
+
+      expect(mockPush).not.toHaveBeenCalled();
+    });
+
+    it('handles invalid API response (missing uploadUrl)', async () => {
+      const user = setupUser();
+
+      vi.mocked(jobApi.createOrder).mockResolvedValue({
+        orderId: 'test-order-id',
+        uploadUrl: undefined as any,
+      });
+
+      render(<NewPrintForm mockMode={false} />);
+      await fillRequiredFields(user);
+
+      const submitButton = screen.getByRole('button', { name: /Submit/i });
+      await user.click(submitButton);
+
+      await waitFor(() => {
+        expect(toast.error).toHaveBeenCalledWith(
+          expect.stringContaining('Invalid response from server')
+        );
+      });
+
+      expect(mockPush).not.toHaveBeenCalled();
+    });
   });
 
   describe('material and color selection logic', () => {
@@ -511,6 +557,48 @@ describe('NewPrintForm Integration', () => {
       const listbox2 = await screen.findByRole('listbox');
 
       expect(within(listbox2).queryByRole('option', { name: 'PLA' })).not.toBeInTheDocument();
+    });
+
+    it('material options are filtered to prevent duplicates', async () => {
+      const user = setupUser();
+      render(<NewPrintForm />);
+
+      // Select PLA for material1
+      await selectComboboxOption(user, 0, 'PLA');
+
+      // Open material2 dropdown
+      const material2Trigger = screen.getAllByRole('combobox')[2];
+      await user.click(material2Trigger);
+
+      // Wait for listbox to appear
+      const listbox = await screen.findByRole('listbox');
+
+      // PLA should be filtered out from material2 options
+      expect(within(listbox).queryByRole('option', { name: 'PLA' })).not.toBeInTheDocument();
+
+      // But other materials should be available
+      expect(within(listbox).getByRole('option', { name: 'ABS' })).toBeInTheDocument();
+    });
+
+    it('color options are filtered to prevent duplicates', async () => {
+      const user = setupUser();
+      render(<NewPrintForm />);
+
+      // Select Black for color1
+      await selectComboboxOption(user, 1, 'Black');
+
+      // Open color2 dropdown
+      const color2Trigger = screen.getAllByRole('combobox')[3];
+      await user.click(color2Trigger);
+
+      // Wait for listbox to appear
+      const listbox = await screen.findByRole('listbox');
+
+      // Black should be filtered out from color2 options
+      expect(within(listbox).queryByRole('option', { name: 'Black' })).not.toBeInTheDocument();
+
+      // But other colors should be available
+      expect(within(listbox).getByRole('option', { name: 'White' })).toBeInTheDocument();
     });
   });
 
