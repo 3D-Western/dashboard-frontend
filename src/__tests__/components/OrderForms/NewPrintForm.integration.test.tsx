@@ -485,7 +485,7 @@ describe('NewPrintForm Integration', () => {
 
       await waitFor(() => {
         expect(toast.error).toHaveBeenCalledWith(
-          expect.stringContaining('Invalid response from server')
+          expect.stringContaining('Invalid response from server'),
         );
       });
 
@@ -511,7 +511,7 @@ describe('NewPrintForm Integration', () => {
 
       await waitFor(() => {
         expect(toast.error).toHaveBeenCalledWith(
-          expect.stringContaining('Invalid response from server')
+          expect.stringContaining('Invalid response from server'),
         );
       });
 

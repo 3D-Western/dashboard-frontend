@@ -35,10 +35,7 @@ export default async function DashboardPage({
         </Alert>
       )}
 
-      <PageTitle
-        title="Dashboard"
-        description="Welcome to Western 3D Print Club Dashboard"
-      />
+      <PageTitle title="Dashboard" description="Welcome to Western 3D Print Club Dashboard" />
 
       {/* Quick Stats - Placeholder for now */}
       <div className="grid gap-4 md:grid-cols-3">

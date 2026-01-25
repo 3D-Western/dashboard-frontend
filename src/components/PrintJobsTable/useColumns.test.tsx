@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
 import { renderHook } from '@testing-library/react';
-import type { ColumnDef } from '@tanstack/react-table';
+import type { ColumnDef, Row } from '@tanstack/react-table';
 import type { PrintJob } from '@/types/jobs';
 import { useColumns } from './useColumns';
 
@@ -62,9 +62,12 @@ describe('useColumns', () => {
     });
 
     it('returns new reference when mode changes', () => {
-      const { result, rerender } = renderHook(({ mode }) => useColumns({ mode }), {
-        initialProps: { mode: 'user' as const },
-      });
+      const { result, rerender } = renderHook(
+        ({ mode }: { mode: 'user' | 'admin' }) => useColumns({ mode }),
+        {
+          initialProps: { mode: 'user' },
+        },
+      );
 
       const userColumns = result.current;
       rerender({ mode: 'admin' as const });
@@ -123,48 +126,57 @@ describe('useColumns', () => {
         expect(studentColumn).toBeDefined();
         expect(studentColumn?.sortingFn).toBeDefined();
 
-        const sortingFn = studentColumn!.sortingFn!;
+        const sortingFn = studentColumn?.sortingFn;
+        if (typeof sortingFn !== 'function') {
+          throw new Error('Expected student sortingFn to be a function');
+        }
 
         const rowAlice = {
           original: { student: { firstName: 'Alice', lastName: 'Smith' } },
-        } as any;
+        } as unknown as Row<PrintJob>;
         const rowBob = {
           original: { student: { firstName: 'Bob', lastName: 'Jones' } },
-        } as any;
+        } as unknown as Row<PrintJob>;
 
         expect(sortingFn(rowAlice, rowBob, 'student')).toBeLessThan(0);
         expect(sortingFn(rowBob, rowAlice, 'student')).toBeGreaterThan(0);
       });
 
-      it('handles null student data - nulls sort last', () => {
+      it('handles missing student data - missing sorts last', () => {
         const { result } = renderHook(() => useColumns({ mode: 'admin' }));
         const columns = result.current;
         const studentColumn = columns.find((col) => hasAccessorKey(col, 'student'));
 
-        const sortingFn = studentColumn!.sortingFn!;
+        const sortingFn = studentColumn?.sortingFn;
+        if (typeof sortingFn !== 'function') {
+          throw new Error('Expected student sortingFn to be a function');
+        }
 
         const withStudent = {
           original: { student: { firstName: 'Alice', lastName: 'Smith' } },
-        } as any;
-        const withoutStudent = { original: { student: null } } as any;
+        } as unknown as Row<PrintJob>;
+        const withoutStudent = { original: { student: undefined } } as unknown as Row<PrintJob>;
 
-        // Student should come before null
+        // Student should come before missing data
         expect(sortingFn(withStudent, withoutStudent, 'student')).toBeLessThan(0);
-        // Null should come after student
+        // Missing data should come after student
         expect(sortingFn(withoutStudent, withStudent, 'student')).toBeGreaterThan(0);
       });
 
-      it('handles both students being null - sorts equal', () => {
+      it('handles both students missing - sorts equal', () => {
         const { result } = renderHook(() => useColumns({ mode: 'admin' }));
         const columns = result.current;
         const studentColumn = columns.find((col) => hasAccessorKey(col, 'student'));
 
-        const sortingFn = studentColumn!.sortingFn!;
+        const sortingFn = studentColumn?.sortingFn;
+        if (typeof sortingFn !== 'function') {
+          throw new Error('Expected student sortingFn to be a function');
+        }
 
-        const nullA = { original: { student: null } } as any;
-        const nullB = { original: { student: null } } as any;
+        const missingA = { original: { student: undefined } } as unknown as Row<PrintJob>;
+        const missingB = { original: { student: undefined } } as unknown as Row<PrintJob>;
 
-        expect(sortingFn(nullA, nullB, 'student')).toBe(0);
+        expect(sortingFn(missingA, missingB, 'student')).toBe(0);
       });
 
       it('sorts case-insensitively', () => {
@@ -172,14 +184,17 @@ describe('useColumns', () => {
         const columns = result.current;
         const studentColumn = columns.find((col) => hasAccessorKey(col, 'student'));
 
-        const sortingFn = studentColumn!.sortingFn!;
+        const sortingFn = studentColumn?.sortingFn;
+        if (typeof sortingFn !== 'function') {
+          throw new Error('Expected student sortingFn to be a function');
+        }
 
         const lowercase = {
           original: { student: { firstName: 'alice', lastName: 'smith' } },
-        } as any;
+        } as unknown as Row<PrintJob>;
         const uppercase = {
           original: { student: { firstName: 'ALICE', lastName: 'SMITH' } },
-        } as any;
+        } as unknown as Row<PrintJob>;
 
         expect(sortingFn(lowercase, uppercase, 'student')).toBe(0);
       });
@@ -194,9 +209,15 @@ describe('useColumns', () => {
         expect(statusColumn).toBeDefined();
         expect(statusColumn?.sortingFn).toBeDefined();
 
-        const sortingFn = statusColumn!.sortingFn!;
+        const sortingFn = statusColumn?.sortingFn;
+        if (typeof sortingFn !== 'function') {
+          throw new Error('Expected status sortingFn to be a function');
+        }
 
-        const createRow = (status: string) => ({ getValue: () => status } as any);
+        const createRow = (status: string) =>
+          ({
+            getValue: () => status,
+          }) as unknown as Row<PrintJob>;
 
         // Error comes before all others
         expect(sortingFn(createRow('Error'), createRow('Succeeded'), 'status')).toBeLessThan(0);
@@ -218,8 +239,15 @@ describe('useColumns', () => {
         const columns = result.current;
         const statusColumn = columns.find((col) => hasAccessorKey(col, 'status'));
 
-        const sortingFn = statusColumn!.sortingFn!;
-        const createRow = (status: string) => ({ getValue: () => status } as any);
+        const sortingFn = statusColumn?.sortingFn;
+        if (typeof sortingFn !== 'function') {
+          throw new Error('Expected status sortingFn to be a function');
+        }
+
+        const createRow = (status: string) =>
+          ({
+            getValue: () => status,
+          }) as unknown as Row<PrintJob>;
 
         const expectedOrder = [
           'Error',
@@ -245,8 +273,15 @@ describe('useColumns', () => {
         const columns = result.current;
         const statusColumn = columns.find((col) => hasAccessorKey(col, 'status'));
 
-        const sortingFn = statusColumn!.sortingFn!;
-        const createRow = (status: string) => ({ getValue: () => status } as any);
+        const sortingFn = statusColumn?.sortingFn;
+        if (typeof sortingFn !== 'function') {
+          throw new Error('Expected status sortingFn to be a function');
+        }
+
+        const createRow = (status: string) =>
+          ({
+            getValue: () => status,
+          }) as unknown as Row<PrintJob>;
 
         expect(sortingFn(createRow('InQueue'), createRow('InQueue'), 'status')).toBe(0);
         expect(sortingFn(createRow('Error'), createRow('Error'), 'status')).toBe(0);

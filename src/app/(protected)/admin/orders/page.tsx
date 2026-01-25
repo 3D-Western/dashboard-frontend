@@ -2,7 +2,6 @@ import type { Metadata } from 'next';
 import PrintJobsTable from '@/components/PrintJobsTable';
 import { jobApi } from '@/api/client/job';
 import { withSessionErrorHandling } from '@/lib/server-utils';
-import { Settings } from 'lucide-react';
 import { AdminOrderFilters } from './components/AdminOrderFilters';
 import { PrintJobStatus } from '@/types/jobs';
 import PageTitle from '@/components/PageTitle';
@@ -30,10 +29,7 @@ export default async function OrderManagementPage({ searchParams }: OrderManagem
 
   return (
     <div className="container space-y-6 p-6">
-      <PageTitle
-        title="Order Management"
-        description="Manage all orders across users"
-      />
+      <PageTitle title="Order Management" description="Manage all orders across users" />
 
       <AdminOrderFilters />
 

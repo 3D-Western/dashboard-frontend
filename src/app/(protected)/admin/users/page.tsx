@@ -11,10 +11,7 @@ export const metadata: Metadata = {
 export default async function UserManagementPage() {
   return (
     <div className="container space-y-6 p-6">
-      <PageTitle
-        title="User Management"
-        description="Manage user accounts and permissions"
-      />
+      <PageTitle title="User Management" description="Manage user accounts and permissions" />
 
       <div className="space-y-4 rounded-lg border p-8 text-center">
         <Users className="mx-auto h-12 w-12 text-muted-foreground" />
