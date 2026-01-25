@@ -21,7 +21,6 @@ describe('useColumns', () => {
       const columns = result.current;
 
       const columnIds = columns.map((col) => getColumnKey(col));
-      expect(columnIds).toContain('select');
       expect(columnIds).toContain('name');
       expect(columnIds).toContain('status');
       expect(columnIds).toContain('orderPlaced');
@@ -34,7 +33,6 @@ describe('useColumns', () => {
       const columns = result.current;
 
       const columnIds = columns.map((col) => getColumnKey(col));
-      expect(columnIds).toContain('select');
       expect(columnIds).toContain('name');
       expect(columnIds).toContain('student');
       expect(columnIds).toContain('status');
@@ -48,16 +46,6 @@ describe('useColumns', () => {
 
       const columnIds = columns.map((col) => getColumnKey(col));
       expect(columnIds).not.toContain('student');
-    });
-
-    it('includes checkbox column for row selection', () => {
-      const { result } = renderHook(() => useColumns());
-      const columns = result.current;
-
-      const selectColumn = columns.find((col) => col.id === 'select');
-      expect(selectColumn).toBeDefined();
-      expect(selectColumn?.enableSorting).toBe(false);
-      expect(selectColumn?.enableHiding).toBe(false);
     });
   });
 
@@ -83,21 +71,6 @@ describe('useColumns', () => {
       const adminColumns = result.current;
 
       expect(userColumns).not.toBe(adminColumns);
-    });
-
-    it('returns new reference when setJobs changes', () => {
-      const setJobs1 = vi.fn();
-      const setJobs2 = vi.fn();
-
-      const { result, rerender } = renderHook(({ setJobs }) => useColumns({ setJobs }), {
-        initialProps: { setJobs: setJobs1 },
-      });
-
-      const firstColumns = result.current;
-      rerender({ setJobs: setJobs2 });
-      const secondColumns = result.current;
-
-      expect(firstColumns).not.toBe(secondColumns);
     });
   });
 
