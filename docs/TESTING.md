@@ -4,15 +4,21 @@ This guide covers all testing approaches in the 3D Printing Dashboard applicatio
 
 ## Table of Contents
 
+- [Table of Contents](#table-of-contents)
 - [Overview](#overview)
 - [Quick Start](#quick-start)
 - [What to Test (and What NOT to Test)](#what-to-test-and-what-not-to-test)
 - [Testing Stack](#testing-stack)
 - [Running Tests](#running-tests)
-- [Writing Tests](#writing-tests)
+- [Unit \& Integration Tests (Vitest)](#unit--integration-tests-vitest)
+- [End-to-End Tests (Playwright)](#end-to-end-tests-playwright)
 - [Test Utilities](#test-utilities)
+- [Writing Tests](#writing-tests)
+- [Coverage](#coverage)
 - [Best Practices](#best-practices)
 - [Continuous Integration](#continuous-integration)
+- [Resources](#resources)
+- [Summary: Quick Decision Guide](#summary-quick-decision-guide)
 
 ## Overview
 
@@ -23,6 +29,7 @@ The project uses a **focused testing strategy** that emphasizes user-facing beha
 - **E2E Tests**: Test complete user workflows in a real browser
 
 **Testing Philosophy:**
+
 - Focus on what users see and do, not how code is implemented
 - Avoid redundant tests for shared components
 - Don't test framework-level concerns (Next.js handles SSR, routing, etc.)
@@ -49,13 +56,16 @@ npm run test:all
 ### ✅ DO Write These Tests
 
 #### 1. **E2E Tests for Critical User Paths**
+
 Test complete workflows that users actually perform:
+
 - ✅ Login → Dashboard → Logout
 - ✅ Create new print job with file upload
 - ✅ Admin managing print jobs
 - ✅ Navigation between protected routes
 
 **Example:**
+
 ```typescript
 test('user can create and submit print job', async ({ page }) => {
   await loginAsUser(page);
@@ -67,13 +77,16 @@ test('user can create and submit print job', async ({ page }) => {
 ```
 
 #### 2. **Integration Tests for Component + API Flows**
+
 Test components that interact with APIs or complex state:
+
 - ✅ Login form with authentication
 - ✅ Print job forms with submission
 - ✅ Data tables with filtering/sorting
 - ✅ Components using context providers
 
 **Example:**
+
 ```typescript
 it('submits login form and redirects', async () => {
   mockSuccessfulLogin();
@@ -87,13 +100,16 @@ it('submits login form and redirects', async () => {
 ```
 
 #### 3. **Unit Tests for Pure Functions and Utilities**
+
 Test logic without UI or API dependencies:
+
 - ✅ Utility functions (`lib/utils.ts`)
 - ✅ Custom hooks (`useLocalTime`, `useIsMobile`)
 - ✅ Data transformations
 - ✅ Validation functions
 
 **Example:**
+
 ```typescript
 it('formats date to local timezone', () => {
   const result = formatToLocalTime('2024-01-01T00:00:00Z');
@@ -106,7 +122,9 @@ it('formats date to local timezone', () => {
 ### ❌ DON'T Write These Tests
 
 #### 1. **Branch Coverage Tests (Testing Line Numbers)**
+
 **Why:** Breaks on every refactor, tests implementation not behavior
+
 ```typescript
 // ❌ BAD - Testing line numbers
 it('handles generic non-ApiError in onSubmit (line 137)', async () => {
@@ -120,7 +138,9 @@ it('shows error message when login fails', async () => {
 ```
 
 #### 2. **Duplicate Tests for Shared Components**
+
 **Why:** If a component is used in 4 places, test it once, not 4 times
+
 ```typescript
 // ❌ BAD - Testing dropzone 4 times
 // NewPrintForm.dropzone.test.tsx
@@ -134,7 +154,9 @@ it('shows error message when login fails', async () => {
 ```
 
 #### 3. **Server-Side Rendering (SSR) Tests**
+
 **Why:** Next.js handles SSR correctly, this is a framework concern
+
 ```typescript
 // ❌ BAD - Testing framework behavior
 it('handles missing window during SSR', () => {
@@ -146,7 +168,9 @@ it('handles missing window during SSR', () => {
 ```
 
 #### 4. **Implementation Detail Tests**
+
 **Why:** Users don't care about internal state, timer cleanup, or memoization
+
 ```typescript
 // ❌ BAD - Testing implementation
 it('cleans up timer when component unmounts during cooldown', () => {
@@ -163,7 +187,9 @@ it('disables resend button for 60 seconds after clicking', async () => {
 ```
 
 #### 5. **Trivial Tests**
+
 **Why:** No value, wastes maintenance time
+
 ```typescript
 // ❌ BAD - Testing obvious behavior
 it('uses correct pluralization for selected rows', () => {
@@ -180,15 +206,15 @@ it('renders password input with type="password"', () => {
 
 ### 📋 Decision Guide: Which Test Type?
 
-| Scenario | Test Type | Why |
-|----------|-----------|-----|
-| Complete user workflow (login → create job → logout) | **E2E** | Tests real browser behavior |
-| Form submission with API call | **Integration** | Tests component + API interaction |
-| Utility function (date formatting, validation) | **Unit** | Pure function, no dependencies |
-| Shared component behavior (dropzone, dialog) | **Unit** (once) | Test component, not every usage |
-| Framework features (SSR, routing) | **None** | Next.js handles this |
-| Internal state, timers, cleanup | **None** | Implementation detail |
-| Error boundary, suspense fallback | **E2E or Integration** | User-visible behavior |
+| Scenario                                             | Test Type              | Why                               |
+| ---------------------------------------------------- | ---------------------- | --------------------------------- |
+| Complete user workflow (login → create job → logout) | **E2E**                | Tests real browser behavior       |
+| Form submission with API call                        | **Integration**        | Tests component + API interaction |
+| Utility function (date formatting, validation)       | **Unit**               | Pure function, no dependencies    |
+| Shared component behavior (dropzone, dialog)         | **Unit** (once)        | Test component, not every usage   |
+| Framework features (SSR, routing)                    | **None**               | Next.js handles this              |
+| Internal state, timers, cleanup                      | **None**               | Implementation detail             |
+| Error boundary, suspense fallback                    | **E2E or Integration** | User-visible behavior             |
 
 ---
 
@@ -468,6 +494,7 @@ mockFailedLogin();
   - ✅ `e2e/print-jobs.spec.ts`
 
 **Avoid these patterns:**
+
 - ❌ `*.branch-coverage.test.tsx` - Tests implementation details
 - ❌ `*.server-coverage.test.tsx` - Tests framework concerns
 - ❌ `ComponentName.dropzone.test.tsx` - Duplicate tests for shared components
@@ -495,6 +522,7 @@ it('should do something', async () => {
 See the comprehensive guide in [What to Test (and What NOT to Test)](#what-to-test-and-what-not-to-test) section above.
 
 **Quick Reference:**
+
 - **E2E** → Complete user workflows (login to logout)
 - **Integration** → Component + API interactions
 - **Unit** → Pure functions, utilities, hooks
@@ -610,6 +638,7 @@ The following are excluded from coverage:
 ### Writing Quality Tests
 
 **DO:**
+
 - ✅ Use descriptive test names (active voice, no "should")
 - ✅ Use factories for test data (`createMockUser()`)
 - ✅ Test error states and loading states
@@ -617,6 +646,7 @@ The following are excluded from coverage:
 - ✅ Use accessible queries (`getByRole`, `getByLabel`)
 
 **DON'T:**
+
 - ❌ Test implementation details (internal state, timers, cleanup)
 - ❌ Write branch-coverage or line-specific tests
 - ❌ Test framework features (SSR, routing)
@@ -706,16 +736,19 @@ npm run test:all:ci
 ## Resources
 
 ### Documentation
+
 - [Vitest](https://vitest.dev) - Fast unit test runner
 - [React Testing Library](https://testing-library.com/react) - Component testing
 - [Playwright](https://playwright.dev) - E2E testing
 - [MSW](https://mswjs.io) - API mocking
 
 ### Best Practices
+
 - [Common Testing Mistakes](https://kentcdodds.com/blog/common-mistakes-with-react-testing-library) by Kent C. Dodds
 - [Testing Implementation Details](https://kentcdodds.com/blog/testing-implementation-details)
 
 ### Internal
+
 - `AGENTS.md` - Project architecture and testing strategy
 - `test/utils/` - Shared test utilities and helpers
 
@@ -754,5 +787,6 @@ Implementation detail (cleanup, timers)  → No test needed
 - 🚫 Tests that break on refactoring
 
 **Remember:**
+
 > "The more your tests resemble the way your software is used, the more confidence they can give you."
 > — Kent C. Dodds

@@ -161,6 +161,7 @@ Built with TanStack Table v8 in `src/components/PrintJobsTable/`:
 ### Philosophy
 
 Focus on **user-facing behavior** over implementation details:
+
 - Test what users see and do, not how code works internally
 - Avoid redundant tests for shared components
 - Don't test framework-level concerns (Next.js handles SSR, routing)
@@ -169,17 +170,20 @@ Focus on **user-facing behavior** over implementation details:
 ### Test Types
 
 **E2E Tests** (Playwright) - Complete user workflows:
+
 - Login → Dashboard → Logout
 - Creating and managing print jobs
 - Admin workflows
 - Navigation and protected routes
 
 **Integration Tests** (Vitest + RTL) - Component + API:
+
 - Form submission with API calls
 - Components using context providers
 - Multi-step user interactions
 
 **Unit Tests** (Vitest) - Pure functions:
+
 - Utilities (`lib/utils.ts`)
 - Custom hooks (`useLocalTime`, `useIsMobile`)
 - Data transformations and validation
@@ -211,6 +215,7 @@ dashboard-frontend/
 ### What NOT to Test
 
 **Avoid these patterns:**
+
 - ❌ Branch-coverage tests (testing line numbers)
 - ❌ Duplicate tests for shared components
 - ❌ Server-side rendering tests (framework concern)
@@ -220,12 +225,14 @@ dashboard-frontend/
 ### Test Configuration
 
 **Vitest** (`vitest.config.ts`):
+
 - Environment: `happy-dom` for fast DOM simulation
 - Coverage: V8 provider with 60-70% thresholds
 - Test Files: `src/**/*.{test,spec}.{ts,tsx}`
 - MSW mock server auto-started in `vitest.setup.ts`
 
 **Playwright** (`playwright.config.ts`):
+
 - Test Directory: `./e2e`
 - Base URL: `http://localhost:3000`
 - Browsers: Chromium, Firefox, WebKit, Mobile Chrome, Mobile Safari
