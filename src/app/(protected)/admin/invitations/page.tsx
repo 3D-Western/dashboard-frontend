@@ -5,6 +5,7 @@ import { AdminInvitationFilters } from './components/AdminInvitationFilters';
 import { CreateInvitationButton } from './components/CreateInvitationButton';
 import InvitationsTable from './components/InvitationsTable';
 import { InvitationStatus } from '@/types/invitation';
+import PageTitle from '@/components/PageTitle';
 
 export const metadata: Metadata = {
   title: 'Invitation Management',
@@ -37,6 +38,12 @@ export default async function InvitationManagementPage({
   return (
     <div className="container space-y-6 p-6">
       <div className="flex items-center justify-between">
+        <div className="flex-1">
+          <PageTitle
+            title="Invitation Management"
+            description="Manage user registration invitations"
+          />
+        </div>
         <CreateInvitationButton />
       </div>
 

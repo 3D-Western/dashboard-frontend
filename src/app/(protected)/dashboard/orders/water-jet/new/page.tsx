@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import WaterJetForm from './components/WaterJetForm';
+import PageTitle from '@/components/PageTitle';
 
 export const metadata: Metadata = {
   title: 'New Water Jet Cutting Order',
@@ -9,12 +10,10 @@ export const metadata: Metadata = {
 export default function NewWaterJetOrderPage() {
   return (
     <div className="px-6 py-8">
-      <div className="mb-8">
-        <h1 className="mb-2 text-3xl font-bold">Create Water Jet Cutting Order</h1>
-        <p className="text-muted-foreground">
-          Upload your design files and specify cutting requirements
-        </p>
-      </div>
+      <PageTitle
+        title="Create Water Jet Cutting Order"
+        description="Upload your design files and specify cutting requirements"
+      />
 
       <WaterJetForm />
     </div>

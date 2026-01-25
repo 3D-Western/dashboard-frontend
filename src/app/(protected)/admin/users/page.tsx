@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { Button } from '@/components/ui/button';
 import { Users } from 'lucide-react';
+import PageTitle from '@/components/PageTitle';
 
 export const metadata: Metadata = {
   title: 'User Management',
@@ -10,10 +11,7 @@ export const metadata: Metadata = {
 export default async function UserManagementPage() {
   return (
     <div className="container space-y-6 p-6">
-      <div className="mb-4 flex items-center gap-2 text-muted-foreground">
-        <Users className="h-5 w-5" />
-        <span className="text-sm">Manage user accounts and permissions</span>
-      </div>
+      <PageTitle title="User Management" description="Manage user accounts and permissions" />
 
       <div className="space-y-4 rounded-lg border p-8 text-center">
         <Users className="mx-auto h-12 w-12 text-muted-foreground" />

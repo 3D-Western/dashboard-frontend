@@ -1,7 +1,8 @@
 import type { Metadata } from 'next';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Shield, Users, Printer } from 'lucide-react';
+import { Users, Printer } from 'lucide-react';
 import Link from 'next/link';
+import PageTitle from '@/components/PageTitle';
 
 export const metadata: Metadata = {
   title: 'Admin Dashboard',
@@ -11,10 +12,7 @@ export const metadata: Metadata = {
 export default async function AdminDashboardPage() {
   return (
     <div className="container space-y-6 p-6">
-      <div className="mb-4 flex items-center gap-2">
-        <Shield className="h-6 w-6" />
-        <h1 className="text-2xl font-bold">Admin Dashboard</h1>
-      </div>
+      <PageTitle title="Admin Dashboard" description="Administrative dashboard for 3D Western" />
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         <Link href="/admin/users">
@@ -34,18 +32,18 @@ export default async function AdminDashboardPage() {
           </Card>
         </Link>
 
-        <Link href="/admin/prints">
+        <Link href="/admin/orders">
           <Card className="cursor-pointer transition-colors hover:bg-accent">
             <CardHeader>
               <div className="flex items-center gap-2">
                 <Printer className="h-5 w-5 text-muted-foreground" />
-                <CardTitle>Print Management</CardTitle>
+                <CardTitle>Order Management</CardTitle>
               </div>
-              <CardDescription>Manage all print jobs and settings</CardDescription>
+              <CardDescription>Manage all orders and settings</CardDescription>
             </CardHeader>
             <CardContent>
               <p className="text-sm text-muted-foreground">
-                Monitor, modify, and manage all print jobs across the system.
+                Monitor, modify, and manage all orders across the system.
               </p>
             </CardContent>
           </Card>

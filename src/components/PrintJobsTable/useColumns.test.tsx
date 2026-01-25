@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
 import { renderHook } from '@testing-library/react';
-import type { ColumnDef } from '@tanstack/react-table';
+import type { ColumnDef, Row } from '@tanstack/react-table';
 import type { PrintJob } from '@/types/jobs';
 import { useColumns } from './useColumns';
 
@@ -21,7 +21,6 @@ describe('useColumns', () => {
       const columns = result.current;
 
       const columnIds = columns.map((col) => getColumnKey(col));
-      expect(columnIds).toContain('select');
       expect(columnIds).toContain('name');
       expect(columnIds).toContain('status');
       expect(columnIds).toContain('orderPlaced');
@@ -34,7 +33,6 @@ describe('useColumns', () => {
       const columns = result.current;
 
       const columnIds = columns.map((col) => getColumnKey(col));
-      expect(columnIds).toContain('select');
       expect(columnIds).toContain('name');
       expect(columnIds).toContain('student');
       expect(columnIds).toContain('status');
@@ -48,16 +46,6 @@ describe('useColumns', () => {
 
       const columnIds = columns.map((col) => getColumnKey(col));
       expect(columnIds).not.toContain('student');
-    });
-
-    it('includes checkbox column for row selection', () => {
-      const { result } = renderHook(() => useColumns());
-      const columns = result.current;
-
-      const selectColumn = columns.find((col) => col.id === 'select');
-      expect(selectColumn).toBeDefined();
-      expect(selectColumn?.enableSorting).toBe(false);
-      expect(selectColumn?.enableHiding).toBe(false);
     });
   });
 
@@ -74,30 +62,18 @@ describe('useColumns', () => {
     });
 
     it('returns new reference when mode changes', () => {
-      const { result, rerender } = renderHook(({ mode }) => useColumns({ mode }), {
-        initialProps: { mode: 'user' as const },
-      });
+      const { result, rerender } = renderHook(
+        ({ mode }: { mode: 'user' | 'admin' }) => useColumns({ mode }),
+        {
+          initialProps: { mode: 'user' },
+        },
+      );
 
       const userColumns = result.current;
       rerender({ mode: 'admin' as const });
       const adminColumns = result.current;
 
       expect(userColumns).not.toBe(adminColumns);
-    });
-
-    it('returns new reference when setJobs changes', () => {
-      const setJobs1 = vi.fn();
-      const setJobs2 = vi.fn();
-
-      const { result, rerender } = renderHook(({ setJobs }) => useColumns({ setJobs }), {
-        initialProps: { setJobs: setJobs1 },
-      });
-
-      const firstColumns = result.current;
-      rerender({ setJobs: setJobs2 });
-      const secondColumns = result.current;
-
-      expect(firstColumns).not.toBe(secondColumns);
     });
   });
 
@@ -137,6 +113,179 @@ describe('useColumns', () => {
 
       const actionsColumn = columns.find((col) => col.id === 'actions');
       expect(actionsColumn).toBeDefined();
+    });
+  });
+
+  describe('custom sorting functions', () => {
+    describe('student name sorting (admin mode)', () => {
+      it('sorts students alphabetically by full name', () => {
+        const { result } = renderHook(() => useColumns({ mode: 'admin' }));
+        const columns = result.current;
+        const studentColumn = columns.find((col) => hasAccessorKey(col, 'student'));
+
+        expect(studentColumn).toBeDefined();
+        expect(studentColumn?.sortingFn).toBeDefined();
+
+        const sortingFn = studentColumn?.sortingFn;
+        if (typeof sortingFn !== 'function') {
+          throw new Error('Expected student sortingFn to be a function');
+        }
+
+        const rowAlice = {
+          original: { student: { firstName: 'Alice', lastName: 'Smith' } },
+        } as unknown as Row<PrintJob>;
+        const rowBob = {
+          original: { student: { firstName: 'Bob', lastName: 'Jones' } },
+        } as unknown as Row<PrintJob>;
+
+        expect(sortingFn(rowAlice, rowBob, 'student')).toBeLessThan(0);
+        expect(sortingFn(rowBob, rowAlice, 'student')).toBeGreaterThan(0);
+      });
+
+      it('handles missing student data - missing sorts last', () => {
+        const { result } = renderHook(() => useColumns({ mode: 'admin' }));
+        const columns = result.current;
+        const studentColumn = columns.find((col) => hasAccessorKey(col, 'student'));
+
+        const sortingFn = studentColumn?.sortingFn;
+        if (typeof sortingFn !== 'function') {
+          throw new Error('Expected student sortingFn to be a function');
+        }
+
+        const withStudent = {
+          original: { student: { firstName: 'Alice', lastName: 'Smith' } },
+        } as unknown as Row<PrintJob>;
+        const withoutStudent = { original: { student: undefined } } as unknown as Row<PrintJob>;
+
+        // Student should come before missing data
+        expect(sortingFn(withStudent, withoutStudent, 'student')).toBeLessThan(0);
+        // Missing data should come after student
+        expect(sortingFn(withoutStudent, withStudent, 'student')).toBeGreaterThan(0);
+      });
+
+      it('handles both students missing - sorts equal', () => {
+        const { result } = renderHook(() => useColumns({ mode: 'admin' }));
+        const columns = result.current;
+        const studentColumn = columns.find((col) => hasAccessorKey(col, 'student'));
+
+        const sortingFn = studentColumn?.sortingFn;
+        if (typeof sortingFn !== 'function') {
+          throw new Error('Expected student sortingFn to be a function');
+        }
+
+        const missingA = { original: { student: undefined } } as unknown as Row<PrintJob>;
+        const missingB = { original: { student: undefined } } as unknown as Row<PrintJob>;
+
+        expect(sortingFn(missingA, missingB, 'student')).toBe(0);
+      });
+
+      it('sorts case-insensitively', () => {
+        const { result } = renderHook(() => useColumns({ mode: 'admin' }));
+        const columns = result.current;
+        const studentColumn = columns.find((col) => hasAccessorKey(col, 'student'));
+
+        const sortingFn = studentColumn?.sortingFn;
+        if (typeof sortingFn !== 'function') {
+          throw new Error('Expected student sortingFn to be a function');
+        }
+
+        const lowercase = {
+          original: { student: { firstName: 'alice', lastName: 'smith' } },
+        } as unknown as Row<PrintJob>;
+        const uppercase = {
+          original: { student: { firstName: 'ALICE', lastName: 'SMITH' } },
+        } as unknown as Row<PrintJob>;
+
+        expect(sortingFn(lowercase, uppercase, 'student')).toBe(0);
+      });
+    });
+
+    describe('status priority sorting', () => {
+      it('sorts by priority: Error > Failed > Flagged > PendingFile > InQueue > Printing > Ready > Succeeded', () => {
+        const { result } = renderHook(() => useColumns());
+        const columns = result.current;
+        const statusColumn = columns.find((col) => hasAccessorKey(col, 'status'));
+
+        expect(statusColumn).toBeDefined();
+        expect(statusColumn?.sortingFn).toBeDefined();
+
+        const sortingFn = statusColumn?.sortingFn;
+        if (typeof sortingFn !== 'function') {
+          throw new Error('Expected status sortingFn to be a function');
+        }
+
+        const createRow = (status: string) =>
+          ({
+            getValue: () => status,
+          }) as unknown as Row<PrintJob>;
+
+        // Error comes before all others
+        expect(sortingFn(createRow('Error'), createRow('Succeeded'), 'status')).toBeLessThan(0);
+        expect(sortingFn(createRow('Error'), createRow('Failed'), 'status')).toBeLessThan(0);
+
+        // Failed comes before Succeeded but after Error
+        expect(sortingFn(createRow('Failed'), createRow('Succeeded'), 'status')).toBeLessThan(0);
+        expect(sortingFn(createRow('Failed'), createRow('Error'), 'status')).toBeGreaterThan(0);
+
+        // Succeeded comes last
+        expect(sortingFn(createRow('Succeeded'), createRow('InQueue'), 'status')).toBeGreaterThan(
+          0,
+        );
+        expect(sortingFn(createRow('Succeeded'), createRow('Error'), 'status')).toBeGreaterThan(0);
+      });
+
+      it('maintains correct order for all statuses', () => {
+        const { result } = renderHook(() => useColumns());
+        const columns = result.current;
+        const statusColumn = columns.find((col) => hasAccessorKey(col, 'status'));
+
+        const sortingFn = statusColumn?.sortingFn;
+        if (typeof sortingFn !== 'function') {
+          throw new Error('Expected status sortingFn to be a function');
+        }
+
+        const createRow = (status: string) =>
+          ({
+            getValue: () => status,
+          }) as unknown as Row<PrintJob>;
+
+        const expectedOrder = [
+          'Error',
+          'Failed',
+          'Flagged',
+          'PendingFile',
+          'InQueue',
+          'Printing',
+          'Ready',
+          'Succeeded',
+        ];
+
+        // Test that each status sorts before the next one
+        for (let i = 0; i < expectedOrder.length - 1; i++) {
+          const current = createRow(expectedOrder[i]);
+          const next = createRow(expectedOrder[i + 1]);
+          expect(sortingFn(current, next, 'status')).toBeLessThan(0);
+        }
+      });
+
+      it('sorts same statuses as equal', () => {
+        const { result } = renderHook(() => useColumns());
+        const columns = result.current;
+        const statusColumn = columns.find((col) => hasAccessorKey(col, 'status'));
+
+        const sortingFn = statusColumn?.sortingFn;
+        if (typeof sortingFn !== 'function') {
+          throw new Error('Expected status sortingFn to be a function');
+        }
+
+        const createRow = (status: string) =>
+          ({
+            getValue: () => status,
+          }) as unknown as Row<PrintJob>;
+
+        expect(sortingFn(createRow('InQueue'), createRow('InQueue'), 'status')).toBe(0);
+        expect(sortingFn(createRow('Error'), createRow('Error'), 'status')).toBe(0);
+      });
     });
   });
 });

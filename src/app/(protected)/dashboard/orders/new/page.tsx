@@ -4,6 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Printer, Wrench, Zap, Droplet } from 'lucide-react';
 import { Routes } from '@/lib/routes';
+import PageTitle from '@/components/PageTitle';
 
 export const metadata: Metadata = {
   title: 'New Order',
@@ -73,11 +74,11 @@ export default function NewOrderPage() {
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <div className="mb-8 text-center">
-        <h1 className="mb-2 text-3xl font-bold">Create New Order</h1>
-        <p className="text-muted-foreground">
-          Choose the manufacturing service that best fits your project needs
-        </p>
+      <div className="text-center">
+        <PageTitle
+          title="Create New Order"
+          description="Choose the manufacturing service that best fits your project needs"
+        />
       </div>
 
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-2">

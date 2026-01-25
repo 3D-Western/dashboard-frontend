@@ -2,39 +2,36 @@ import type { Metadata } from 'next';
 import PrintJobsTable from '@/components/PrintJobsTable';
 import { jobApi } from '@/api/client/job';
 import { withSessionErrorHandling } from '@/lib/server-utils';
-import { Settings } from 'lucide-react';
-import { AdminPrintFilters } from './components/AdminPrintFilters';
+import { AdminOrderFilters } from './components/AdminOrderFilters';
 import { PrintJobStatus } from '@/types/jobs';
+import PageTitle from '@/components/PageTitle';
 
 export const metadata: Metadata = {
-  title: 'Print Management',
-  description: 'Manage all print jobs across users',
+  title: 'Order Management',
+  description: 'Manage all orders across users',
 };
 
-interface PrintManagementPageProps {
+interface OrderManagementPageProps {
   searchParams: Promise<{ page?: string; pageSize?: string; status?: string; search?: string }>;
 }
 
-export default async function PrintManagementPage({ searchParams }: PrintManagementPageProps) {
+export default async function OrderManagementPage({ searchParams }: OrderManagementPageProps) {
   const params = await searchParams;
   const page = Number(params.page) || 1;
   const pageSize = Number(params.pageSize) || 10;
   const status = params.status as PrintJobStatus | undefined;
   const search = params.search;
 
-  // Fetch all print jobs with server-side pagination and filters
+  // Fetch all orders with server-side pagination and filters
   const { data: printJobs, pagination } = await withSessionErrorHandling(() =>
     jobApi.listAllJobs({ page, pageSize, status, search }),
   );
 
   return (
     <div className="container space-y-6 p-6">
-      <div className="mb-4 flex items-center gap-2 text-muted-foreground">
-        <Settings className="h-5 w-5" />
-        <span className="text-sm">Manage all print jobs across users</span>
-      </div>
+      <PageTitle title="Order Management" description="Manage all orders across users" />
 
-      <AdminPrintFilters />
+      <AdminOrderFilters />
 
       <div>
         <PrintJobsTable printJobs={printJobs} pagination={pagination} mode="admin" />

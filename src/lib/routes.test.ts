@@ -29,12 +29,12 @@ describe('Routes', () => {
       expect(Routes.dashboard).toBe('/dashboard');
     });
 
-    it('defines prints route', () => {
-      expect(Routes.prints).toBe('/print');
-    });
-
     it('defines dashboard user settings route', () => {
       expect(Routes.dashboardUserSettings).toBe('/dashboard/settings');
+    });
+
+    it('defines orders home route', () => {
+      expect(Routes.orders.home).toBe('/dashboard/orders');
     });
   });
 
@@ -43,15 +43,14 @@ describe('Routes', () => {
       expect(Routes.adminUsersManagement).toBe('/admin/users');
     });
 
-    it('defines admin prints management route', () => {
-      expect(Routes.adminPrintsManagement).toBe('/admin/prints');
+    it('defines admin orders management route', () => {
+      expect(Routes.adminOrdersManagement).toBe('/admin/orders');
     });
   });
 
   describe('route structure', () => {
     it('has all required routes', () => {
       expect(Routes).toHaveProperty('dashboard');
-      expect(Routes).toHaveProperty('prints');
       expect(Routes).toHaveProperty('login');
       expect(Routes).toHaveProperty('signup');
       expect(Routes).toHaveProperty('mfa');
@@ -59,7 +58,7 @@ describe('Routes', () => {
       expect(Routes).toHaveProperty('forgotPassword');
       expect(Routes).toHaveProperty('resetPassword');
       expect(Routes).toHaveProperty('adminUsersManagement');
-      expect(Routes).toHaveProperty('adminPrintsManagement');
+      expect(Routes).toHaveProperty('adminOrdersManagement');
       expect(Routes).toHaveProperty('orders');
     });
 
@@ -92,7 +91,7 @@ describe('Routes', () => {
 
     it('admin routes start with /admin', () => {
       expect(Routes.adminUsersManagement).toMatch(/^\/admin/);
-      expect(Routes.adminPrintsManagement).toMatch(/^\/admin/);
+      expect(Routes.adminOrdersManagement).toMatch(/^\/admin/);
     });
 
     it('dashboard routes start with /dashboard', () => {

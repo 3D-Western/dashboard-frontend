@@ -2,12 +2,12 @@ import type { Metadata } from 'next';
 import PrintJobsTable from '@/components/PrintJobsTable';
 import { withSessionErrorHandling } from '@/lib/server-utils';
 import { userApi } from '@/api/client/user';
-import { PrintPageFilters } from './components/PrintPageFilters';
+import { OrderPageFilters } from './components/OrderPageFilters';
 import { PrintJobStatus } from '@/types/jobs';
 
 export const metadata: Metadata = {
-  title: 'My Print Jobs',
-  description: 'View and manage your 3D print jobs',
+  title: 'My Orders',
+  description: 'View and manage your orders',
 };
 
 interface PrintPageProps {
@@ -28,7 +28,7 @@ export default async function PrintPage({ searchParams }: PrintPageProps) {
 
   return (
     <div className="container space-y-6 p-6">
-      <PrintPageFilters />
+      <OrderPageFilters />
 
       <div>
         <PrintJobsTable printJobs={printJobs} pagination={pagination} />

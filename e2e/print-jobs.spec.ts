@@ -145,7 +145,7 @@ test.describe('Print Jobs E2E', () => {
       await loginAsUser(page);
 
       // Navigate to new print form
-      await page.goto('/dashboard/print');
+      await page.goto('/dashboard/orders/print/new');
 
       // Should see form title
       await expect(page.getByText(/create new print request/i)).toBeVisible();
@@ -182,7 +182,7 @@ test.describe('Print Jobs E2E', () => {
       await loginAsAdmin(page);
 
       // Navigate to admin print jobs
-      await page.goto('/admin/prints');
+      await page.goto('/admin/orders');
 
       // Should see print jobs table with all users' jobs
       await expect(page.getByRole('table')).toBeVisible({ timeout: 10000 });
@@ -190,7 +190,7 @@ test.describe('Print Jobs E2E', () => {
 
     test('admin can see student ID column', async ({ page }) => {
       await loginAsAdmin(page);
-      await page.goto('/admin/prints');
+      await page.goto('/admin/orders');
 
       await expect(page.getByRole('table')).toBeVisible();
 
@@ -200,7 +200,7 @@ test.describe('Print Jobs E2E', () => {
 
     test('admin can update job status', async ({ page }) => {
       await loginAsAdmin(page);
-      await page.goto('/admin/prints');
+      await page.goto('/admin/orders');
 
       await expect(page.getByRole('table')).toBeVisible();
 
@@ -215,7 +215,7 @@ test.describe('Print Jobs E2E', () => {
 
     test('admin can delete any job', async ({ page }) => {
       await loginAsAdmin(page);
-      await page.goto('/admin/prints');
+      await page.goto('/admin/orders');
 
       await expect(page.getByRole('table')).toBeVisible();
 
@@ -230,8 +230,8 @@ test.describe('Print Jobs E2E', () => {
     test('non-admin cannot access admin print management', async ({ page }) => {
       await loginAsUser(page);
 
-      // Try to access admin prints page
-      await page.goto('/admin/prints');
+      // Try to access admin orders page
+      await page.goto('/admin/orders');
 
       // Should redirect or show access denied
       // Exact behavior depends on authorization implementation
@@ -239,7 +239,7 @@ test.describe('Print Jobs E2E', () => {
 
       // Should not be on admin page
       const url = page.url();
-      if (url.includes('/admin/prints')) {
+      if (url.includes('/admin/orders')) {
         // If still on page, should see access denied message
         await expect(page.getByText(/access denied|unauthorized/i)).toBeVisible();
       }

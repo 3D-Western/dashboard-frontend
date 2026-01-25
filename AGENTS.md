@@ -67,7 +67,7 @@ The app uses Next.js 15 App Router with route groups:
 **Protected Routes (require authentication):**
 
 - `(protected)/dashboard/` - User dashboard
-- `(protected)/dashboard/print/` - Print jobs
+- `(protected)/dashboard/orders/` - User orders
 - `(protected)/dashboard/settings/` - User settings
 - `(protected)/admin/` - Admin panel (admin role required)
 
@@ -158,34 +158,77 @@ Built with TanStack Table v8 in `src/components/PrintJobsTable/`:
 
 ## Testing Strategy
 
+### Philosophy
+
+Focus on **user-facing behavior** over implementation details:
+
+- Test what users see and do, not how code works internally
+- Avoid redundant tests for shared components
+- Don't test framework-level concerns (Next.js handles SSR, routing)
+- Keep tests maintainable and resistant to refactoring
+
+### Test Types
+
+**E2E Tests** (Playwright) - Complete user workflows:
+
+- Login → Dashboard → Logout
+- Creating and managing print jobs
+- Admin workflows
+- Navigation and protected routes
+
+**Integration Tests** (Vitest + RTL) - Component + API:
+
+- Form submission with API calls
+- Components using context providers
+- Multi-step user interactions
+
+**Unit Tests** (Vitest) - Pure functions:
+
+- Utilities (`lib/utils.ts`)
+- Custom hooks (`useLocalTime`, `useIsMobile`)
+- Data transformations and validation
+
 ### Test Organization
 
 ```
 dashboard-frontend/
+├── e2e/                              # E2E tests (Playwright)
+│   ├── auth.spec.ts                  # Authentication workflows
+│   ├── print-jobs.spec.ts            # Print job workflows
+│   └── helpers/                      # E2E test helpers
 ├── src/
 │   ├── __tests__/                    # Integration tests
-│   │   ├── components/               # Component integration tests
-│   │   ├── lib/                      # Library integration tests
-│   │   └── providers/                # Provider integration tests
-│   └── [feature]/
-│       └── [module].test.ts          # Unit tests (next to source)
-├── e2e/                              # E2E tests (Playwright)
+│   │   └── components/               # Component + API integration
+│   ├── components/
+│   │   └── *.test.tsx                # Component unit tests
+│   ├── hooks/
+│   │   └── *.test.tsx                # Hook unit tests
+│   └── lib/
+│       └── *.test.ts                 # Utility unit tests
 └── test/
     └── utils/                        # Shared test utilities
         ├── render.tsx                # Custom render with providers
         ├── mockFactories.ts          # Mock data generators
-        ├── authHelpers.ts            # Auth test helpers
-        └── testUtils.ts              # General test utilities
+        └── authHelpers.ts            # Auth test helpers
 ```
+
+### What NOT to Test
+
+**Avoid these patterns:**
+
+- ❌ Branch-coverage tests (testing line numbers)
+- ❌ Duplicate tests for shared components
+- ❌ Server-side rendering tests (framework concern)
+- ❌ Implementation details (timers, cleanup, internal state)
+- ❌ Trivial tests (pluralization, hardcoded text)
 
 ### Test Configuration
 
 **Vitest** (`vitest.config.ts`):
 
 - Environment: `happy-dom` for fast DOM simulation
-- Setup: Global configuration in `vitest.setup.ts`
 - Coverage: V8 provider with 60-70% thresholds
-- Test Files: `src/**/*.{test,spec}.{ts,tsx}` and `__tests__/**/*`
+- Test Files: `src/**/*.{test,spec}.{ts,tsx}`
 - MSW mock server auto-started in `vitest.setup.ts`
 
 **Playwright** (`playwright.config.ts`):
@@ -194,6 +237,19 @@ dashboard-frontend/
 - Base URL: `http://localhost:3000`
 - Browsers: Chromium, Firefox, WebKit, Mobile Chrome, Mobile Safari
 - Auto-starts dev server with `MOCK_ENABLED=true`
+
+### Quick Decision Guide
+
+```
+User workflow (multiple pages/steps)     → E2E Test
+Component + API interaction              → Integration Test
+Pure function/utility                    → Unit Test
+Shared component behavior                → Unit Test (once)
+Framework feature (SSR, routing)         → No test needed
+Implementation detail (cleanup, timers)  → No test needed
+```
+
+**Golden Rule:** "Would a user notice if this broke?" → If YES, write a test. If NO, skip it.
 
 ### Writing Tests
 

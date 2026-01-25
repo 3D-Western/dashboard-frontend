@@ -1,6 +1,5 @@
 export const Routes = {
   dashboard: '/dashboard',
-  prints: '/print',
   login: '/login',
   signup: '/signup',
   mfa: '/mfa',
@@ -12,7 +11,7 @@ export const Routes = {
 
   // Admin routes
   adminUsersManagement: '/admin/users',
-  adminPrintsManagement: '/admin/prints',
+  adminOrdersManagement: '/admin/orders',
   adminInvitationManagement: '/admin/invitations',
 
   orders: {

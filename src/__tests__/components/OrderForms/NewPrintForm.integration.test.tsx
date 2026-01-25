@@ -465,6 +465,58 @@ describe('NewPrintForm Integration', () => {
         expect(toast.error).toHaveBeenCalledWith('Failed to submit print request. Unknown error');
       });
     });
+
+    it('handles invalid API response (missing orderId)', async () => {
+      const user = setupUser();
+
+      vi.mocked(jobApi.createOrder).mockResolvedValue({
+        orderId: undefined as unknown as string,
+        createdAt: new Date().toISOString(),
+        fileId: 'file-123',
+        uploadUrl: 'https://example.com/upload',
+        uploadExpiresIn: 900,
+      });
+
+      render(<NewPrintForm mockMode={false} />);
+      await fillRequiredFields(user);
+
+      const submitButton = screen.getByRole('button', { name: /Submit/i });
+      await user.click(submitButton);
+
+      await waitFor(() => {
+        expect(toast.error).toHaveBeenCalledWith(
+          expect.stringContaining('Invalid response from server'),
+        );
+      });
+
+      expect(mockPush).not.toHaveBeenCalled();
+    });
+
+    it('handles invalid API response (missing uploadUrl)', async () => {
+      const user = setupUser();
+
+      vi.mocked(jobApi.createOrder).mockResolvedValue({
+        orderId: 'test-order-id',
+        createdAt: new Date().toISOString(),
+        fileId: 'file-123',
+        uploadUrl: undefined as unknown as string,
+        uploadExpiresIn: 900,
+      });
+
+      render(<NewPrintForm mockMode={false} />);
+      await fillRequiredFields(user);
+
+      const submitButton = screen.getByRole('button', { name: /Submit/i });
+      await user.click(submitButton);
+
+      await waitFor(() => {
+        expect(toast.error).toHaveBeenCalledWith(
+          expect.stringContaining('Invalid response from server'),
+        );
+      });
+
+      expect(mockPush).not.toHaveBeenCalled();
+    });
   });
 
   describe('material and color selection logic', () => {
