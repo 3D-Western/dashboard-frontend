@@ -34,6 +34,10 @@ vi.mock('@/components/ui/button', () => ({
   ),
 }));
 
+vi.mock('@/components/PrintJobsTable/ChangeStatusDialog', () => ({
+  ChangeStatusDialog: () => null,
+}));
+
 describe('useColumns', () => {
   const getColumns = (options?: Parameters<typeof useColumns>[0]) => {
     const { result } = renderHook(() => useColumns(options));
@@ -93,28 +97,22 @@ describe('useColumns', () => {
       row: { original: printJob },
     } as never);
 
-    const findOnSelect = (node: React.ReactNode): (() => Promise<void> | void) | null => {
-      if (!node || typeof node !== 'object') return null;
-      if (React.isValidElement(node) && typeof node.props.onSelect === 'function') {
-        return node.props.onSelect as () => Promise<void> | void;
-      }
-      if (!React.isValidElement(node)) return null;
-      const children = React.Children.toArray(node.props.children);
-      for (const child of children) {
-        const found = findOnSelect(child);
-        if (found) return found;
-      }
-      return null;
-    };
+    // Render the cell component
+    render(<>{cell}</>);
 
-    const onSelect = findOnSelect(cell ?? null);
-    expect(onSelect).toBeDefined();
+    // Find and click the "Copy Job ID" button
+    const copyButton = screen.getByText('Copy Job ID');
+    expect(copyButton).toBeInTheDocument();
 
-    await onSelect?.();
+    // Click the button which will trigger the onSelect handler
+    copyButton.click();
 
-    expect(consoleSpy).toHaveBeenCalledWith(
-      'Failed to copy Job ID to clipboard',
-      expect.any(Error),
-    );
+    // Wait for the async operation to complete
+    await vi.waitFor(() => {
+      expect(consoleSpy).toHaveBeenCalledWith(
+        'Failed to copy Job ID to clipboard',
+        expect.any(Error),
+      );
+    });
   });
 });

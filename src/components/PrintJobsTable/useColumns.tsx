@@ -2,17 +2,12 @@
 
 import { PrintJobStatusBadge } from '@/components/PrintJobStatusBadge';
 import { Button } from '@/components/ui/button';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
 import { PrintJob, PrintJobStatus } from '@/types/jobs';
 import { ColumnDef } from '@tanstack/react-table';
-import { ArrowUpDown, MoreHorizontal } from 'lucide-react';
+import { ArrowUpDown } from 'lucide-react';
 import { useMemo } from 'react';
 import { DateCell } from './DateCell';
+import { ActionsCell } from './ActionsCell';
 
 type TableMode = 'user' | 'admin';
 
@@ -184,70 +179,21 @@ export const useColumns = (opts: UseColumnsOptions = {}) => {
         id: 'actions',
         cell: ({ row }) => {
           const printJob = row.original;
+
+          const handleStatusChanged = (jobId: string, newStatus: PrintJobStatus) => {
+            if (opts.setJobs) {
+              opts.setJobs((prev) => {
+                return prev.map((j) => (j.id === jobId ? { ...j, status: newStatus } : j));
+              });
+            }
+          };
+
           return (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  variant="ghost"
-                  className="h-8 w-8 p-0"
-                  aria-label={`Actions for ${printJob.name}`}
-                  aria-haspopup="menu"
-                >
-                  <span className="sr-only">Open menu</span>
-                  <MoreHorizontal className="h-4 w-4" aria-hidden="true" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem
-                  onSelect={async () => {
-                    try {
-                      await navigator.clipboard.writeText(printJob.id);
-                    } catch (error) {
-                      console.error('Failed to copy Job ID to clipboard', error);
-                    }
-                  }}
-                >
-                  Copy Job ID
-                </DropdownMenuItem>
-                {/* TODO: Future improvement - Implement cancel print functionality */}
-                {/* {canCancel && setJobs && (
-                  <DropdownMenuItem
-                    // Uncomment and replace below onclick handle once backend is ready to enable api call
-                    // onClick={async () => {
-                    //   try {
-                    //     console.log('Cancel Print: Attempting to cancel job', printJob.id);
-                    //     const result = await jobApi.cancelJob(printJob.id);
-                    //     console.log('Cancel Print: API result', result);
-                    //     setJobs(prev => {
-                    //       const updated = prev.map(j =>
-                    //         j.id === printJob.id ? { ...j, status: 'Failed' as PrintJobStatus } : j
-                    //       );
-                    //       console.log('Cancel Print: Updated jobs state', updated);
-                    //       return updated;
-                    //     });
-                    //   } catch (e) {
-                    //     console.error('Cancel Print: API error', e);
-                    //   }
-                    // }}
-                    onClick={() => {
-                      setJobs((prev) => {
-                        const updated = prev.map((j) =>
-                          j.id === printJob.id ? { ...j, status: 'Failed' as PrintJobStatus } : j,
-                        );
-                        return updated;
-                      });
-                    }}
-                  >
-                    Cancel Print
-                  </DropdownMenuItem>
-                )} */}
-                {/* TODO: Future improvement - Implement download STL functionality */}
-                {/* <DropdownMenuSeparator />
-                <DropdownMenuItem disabled aria-disabled="true">
-                  Download STL (Coming soon)
-                </DropdownMenuItem> */}
-              </DropdownMenuContent>
-            </DropdownMenu>
+            <ActionsCell
+              printJob={printJob}
+              mode={mode}
+              onStatusChanged={handleStatusChanged}
+            />
           );
         },
       },
