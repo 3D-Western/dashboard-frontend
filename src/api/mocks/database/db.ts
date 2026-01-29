@@ -39,7 +39,7 @@ export class Database {
           ...job,
           userId: user.studentId,
           user: {
-            studentID: user.studentId,
+            studentId: user.studentId,
             firstName: user.firstName,
             lastName: user.lastName,
             email: user.email,
@@ -124,10 +124,10 @@ export class Database {
     this.activePrintJobsIDMap.set(printJob.id, printJob);
 
     // Add to user's jobs array
-    let userJobs = this.activePrintJobsUserMap.get(printJob.studentId);
+    let userJobs = this.activePrintJobsUserMap.get(printJob.user.studentId);
     if (!userJobs) {
       userJobs = [];
-      this.activePrintJobsUserMap.set(printJob.studentId, userJobs);
+      this.activePrintJobsUserMap.set(printJob.user.studentId, userJobs);
     }
     userJobs.push(printJob);
 
@@ -142,7 +142,7 @@ export class Database {
     // Remove from ID map
     this.activePrintJobsIDMap.delete(printJobId);
     // Remove from user's jobs array
-    const userJobs = this.activePrintJobsUserMap.get(job.studentId);
+    const userJobs = this.activePrintJobsUserMap.get(job.user.studentId);
     if (userJobs) {
       const index = userJobs.findIndex((j) => j.id === printJobId);
       if (index !== -1) {
@@ -171,7 +171,7 @@ export class Database {
 
     // Filter by userId if provided
     if (filters?.userId !== undefined) {
-      jobs = jobs.filter((job) => job.studentId === filters.userId);
+      jobs = jobs.filter((job) => job.user.studentId === filters.userId);
     }
 
     // Filter by status if provided

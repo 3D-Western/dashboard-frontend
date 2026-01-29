@@ -269,7 +269,7 @@ describe('PrintJobsTable Integration', () => {
       const adminJobs = [
         createMockPrintJob({
           user: {
-            studentID: 251000001,
+            studentId: 251000001,
             firstName: 'John',
             lastName: 'Doe',
             email: 'john@example.com',

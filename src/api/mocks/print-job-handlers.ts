@@ -99,7 +99,7 @@ export const orderHandlers = [
       kind: 'active-print-job' as const,
       userId: user.studentId,
       user: {
-        studentID: user.studentId,
+        studentId: user.studentId,
         firstName: user.firstName,
         lastName: user.lastName,
         email: user.email,

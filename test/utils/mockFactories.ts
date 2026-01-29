@@ -60,12 +60,12 @@ export const createMockUserResponse = (overrides?: Partial<UserResponse>): UserR
  * ```
  */
 export const createMockPrintJob = (overrides?: Partial<PrintJob>): PrintJob => {
-  const studentID = faker.number.int({ min: 251000000, max: 251999999 });
+  const studentId = faker.number.int({ min: 251000000, max: 251999999 });
   return {
     kind: 'active-print-job',
     id: faker.string.uuid(),
     user: {
-      studentID,
+      studentId,
       firstName: faker.person.firstName(),
       lastName: faker.person.lastName(),
       email: faker.internet.email(),

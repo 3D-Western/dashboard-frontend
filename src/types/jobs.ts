@@ -5,7 +5,7 @@ export interface File {
 }
 
 export interface UserInfo {
-  studentID: number;
+  studentId: number;
   firstName: string;
   lastName: string;
   email?: string;
