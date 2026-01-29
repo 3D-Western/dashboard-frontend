@@ -17,7 +17,7 @@ interface UseColumnsOptions {
 }
 
 export const useColumns = (opts: UseColumnsOptions = {}) => {
-  const { mode = 'user' } = opts;
+  const { mode = 'user', setJobs } = opts;
 
   return useMemo<ColumnDef<PrintJob>[]>(
     () => [
@@ -175,8 +175,8 @@ export const useColumns = (opts: UseColumnsOptions = {}) => {
           const printJob = row.original;
 
           const handleStatusChanged = (jobId: string, newStatus: PrintJobStatus) => {
-            if (opts.setJobs) {
-              opts.setJobs((prev) => {
+            if (setJobs) {
+              setJobs((prev) => {
                 return prev.map((j) => (j.id === jobId ? { ...j, status: newStatus } : j));
               });
             }
@@ -188,6 +188,6 @@ export const useColumns = (opts: UseColumnsOptions = {}) => {
         },
       },
     ],
-    [mode, opts],
+    [mode, setJobs],
   );
 };

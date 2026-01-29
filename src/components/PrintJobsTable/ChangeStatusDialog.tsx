@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import { PrintJob, PrintJobStatus } from '@/types/jobs';
 import { jobApi } from '@/api/client/job';
@@ -60,6 +60,13 @@ export function ChangeStatusDialog({
 }: ChangeStatusDialogProps) {
   const [selectedStatus, setSelectedStatus] = useState<PrintJobStatus>(printJob.status);
   const [isUpdating, setIsUpdating] = useState(false);
+
+  // Sync selectedStatus when dialog opens or printJob.status changes
+  useEffect(() => {
+    if (open) {
+      setSelectedStatus(printJob.status);
+    }
+  }, [open, printJob.status]);
 
   const handleConfirm = async () => {
     if (selectedStatus === printJob.status) {

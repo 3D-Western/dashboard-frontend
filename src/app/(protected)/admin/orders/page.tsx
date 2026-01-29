@@ -27,8 +27,6 @@ export default async function OrderManagementPage({ searchParams }: OrderManagem
     jobApi.listAllJobs({ page, pageSize, status, search }),
   );
 
-  console.log('Fetched print jobs for admin:', printJobs);
-
   return (
     <div className="container space-y-6 p-6">
       <PageTitle title="Order Management" description="Manage all orders across users" />

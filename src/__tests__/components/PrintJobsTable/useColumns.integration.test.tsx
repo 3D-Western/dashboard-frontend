@@ -1,9 +1,9 @@
 import React from 'react';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { render, screen } from '@test/utils/render';
+import { render, screen, waitFor } from '@test/utils/render';
 import { renderHook } from '@testing-library/react';
 import { useColumns } from '@/components/PrintJobsTable/useColumns';
-import { PrintJob } from '@/types/jobs';
+import { createMockPrintJob } from '@test/utils/mockFactories';
 
 vi.mock('@/components/ui/dropdown-menu', () => ({
   DropdownMenu: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
@@ -71,12 +71,11 @@ describe('useColumns', () => {
     const columns = getColumns();
     const actionsColumn = columns.find((column) => column.id === 'actions');
 
-    const printJob = {
+    const printJob = createMockPrintJob({
       id: 'job-123',
       name: 'Test Job',
       status: 'InQueue',
-      orderPlaced: new Date().toISOString(),
-    } as PrintJob;
+    });
 
     const cell = actionsColumn?.cell?.({
       row: { original: printJob },
@@ -93,7 +92,7 @@ describe('useColumns', () => {
     copyButton.click();
 
     // Wait for the async operation to complete
-    await vi.waitFor(() => {
+    await waitFor(() => {
       expect(consoleSpy).toHaveBeenCalledWith(
         'Failed to copy Job ID to clipboard',
         expect.any(Error),
