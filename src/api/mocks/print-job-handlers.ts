@@ -34,30 +34,14 @@ export const orderHandlers = [
     }
 
     // Get print jobs using the shared function with filters
-    let orders = db.getPrintJobs({
+    const orders = db.getPrintJobs({
       userId: userIdForFilter,
       status: statusFilter || undefined,
       search: searchFilter || undefined,
       snapshotCreatedBefore,
     });
 
-    // For admin users, populate student info
-    if (user.role === 'admin') {
-      orders = orders.map((order) => {
-        const student = db.getUserById(order.studentId);
-        return {
-          ...order,
-          student: student
-            ? {
-                studentId: student.studentId,
-                firstName: student.firstName,
-                lastName: student.lastName,
-                email: student.email,
-              }
-            : undefined,
-        };
-      });
-    }
+    // User info is now always populated in the order object
 
     // Calculate pagination
     const totalItems = orders.length;
@@ -113,7 +97,13 @@ export const orderHandlers = [
     const newOrder = {
       id: orderId,
       kind: 'active-print-job' as const,
-      studentId: user.studentId,
+      userId: user.studentId,
+      user: {
+        studentID: user.studentId,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        email: user.email,
+      },
       name: body.printName,
       description: body.description,
       orderPlaced: new Date().toISOString(),

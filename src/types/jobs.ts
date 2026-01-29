@@ -4,17 +4,16 @@ export interface File {
   path: string;
 }
 
-export interface StudentInfo {
-  studentId: number;
+export interface UserInfo {
+  studentID: number;
   firstName: string;
   lastName: string;
-  email: string;
+  email?: string;
 }
 
 export interface BasePrintJob {
   id: string;
-  studentId: number;
-  student?: StudentInfo; // Populated for admin views
+  user: UserInfo;
   orderPlaced: string; // ISO date string
   description: string;
   name: string;

@@ -60,7 +60,7 @@ export const useColumns = (opts: UseColumnsOptions = {}) => {
       ...(mode === 'admin'
         ? [
             {
-              accessorKey: 'student',
+              accessorKey: 'user',
               header: ({ column }) => {
                 const sortDirection = column.getIsSorted();
                 return (
@@ -68,7 +68,7 @@ export const useColumns = (opts: UseColumnsOptions = {}) => {
                     variant={'ghost'}
                     className="w-full justify-start px-0 hover:bg-transparent"
                     onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
-                    aria-label={`Sort by student ${
+                    aria-label={`Sort by user ${
                       sortDirection === 'asc'
                         ? 'descending'
                         : sortDirection === 'desc'
@@ -76,30 +76,24 @@ export const useColumns = (opts: UseColumnsOptions = {}) => {
                           : 'ascending'
                     }`}
                   >
-                    Student
+                    User
                     <ArrowUpDown className="ml-2 h-4 w-4" aria-hidden="true" />
                   </Button>
                 );
               },
               cell: ({ row }) => {
-                const student = row.original.student;
-                if (!student) {
-                  return <div className="text-muted-foreground">-</div>;
-                }
+                const user = row.original.user;
                 return (
                   <div>
-                    <span>{`${student.firstName} ${student.lastName}`}</span>
+                    <span>{`${user.firstName} ${user.lastName}`}</span>
                   </div>
                 );
               },
               sortingFn: (rowA, rowB) => {
-                const studentA = rowA.original.student;
-                const studentB = rowB.original.student;
-                if (!studentA && !studentB) return 0;
-                if (!studentA) return 1;
-                if (!studentB) return -1;
-                const nameA = `${studentA.firstName} ${studentA.lastName}`.toLowerCase();
-                const nameB = `${studentB.firstName} ${studentB.lastName}`.toLowerCase();
+                const userA = rowA.original.user;
+                const userB = rowB.original.user;
+                const nameA = `${userA.firstName} ${userA.lastName}`.toLowerCase();
+                const nameB = `${userB.firstName} ${userB.lastName}`.toLowerCase();
                 return nameA.localeCompare(nameB);
               },
             } as ColumnDef<PrintJob>,
@@ -189,15 +183,11 @@ export const useColumns = (opts: UseColumnsOptions = {}) => {
           };
 
           return (
-            <ActionsCell
-              printJob={printJob}
-              mode={mode}
-              onStatusChanged={handleStatusChanged}
-            />
+            <ActionsCell printJob={printJob} mode={mode} onStatusChanged={handleStatusChanged} />
           );
         },
       },
     ],
-    [mode],
+    [mode, opts],
   );
 };

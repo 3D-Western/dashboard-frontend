@@ -81,7 +81,8 @@ export function ChangeStatusDialog({
     } catch (error) {
       console.error('Failed to update status:', error);
       toast.error('Failed to update status', {
-        description: error instanceof Error ? error.message : 'An error occurred while updating the status',
+        description:
+          error instanceof Error ? error.message : 'An error occurred while updating the status',
       });
     } finally {
       setIsUpdating(false);
@@ -134,11 +135,7 @@ export function ChangeStatusDialog({
         </div>
 
         <DialogFooter>
-          <Button
-            variant="outline"
-            onClick={handleCancel}
-            disabled={isUpdating}
-          >
+          <Button variant="outline" onClick={handleCancel} disabled={isUpdating}>
             Cancel
           </Button>
           <Button

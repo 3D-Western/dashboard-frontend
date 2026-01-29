@@ -65,21 +65,6 @@ describe('useColumns', () => {
     vi.restoreAllMocks();
   });
 
-  it('renders placeholder when student data is missing in admin mode', () => {
-    const columns = getColumns({ mode: 'admin' });
-    const studentColumn = columns.find((column) => column.accessorKey === 'student');
-
-    expect(studentColumn).toBeDefined();
-
-    const cell = studentColumn?.cell?.({
-      row: { original: { student: null } },
-    } as never);
-
-    render(<>{cell}</>);
-
-    expect(screen.getByText('-')).toBeInTheDocument();
-  });
-
   it('logs an error when clipboard copy fails', async () => {
     const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => undefined);
 

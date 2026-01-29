@@ -35,7 +35,17 @@ export class Database {
       const userJobs: PrintJob[] = [];
       this.activePrintJobsUserMap.set(user.studentId, userJobs);
       mockPrintJobs.forEach((job) => {
-        const userJob = { ...job, studentId: user.studentId, id: `${user.studentId}-${job.id}` };
+        const userJob = {
+          ...job,
+          userId: user.studentId,
+          user: {
+            studentID: user.studentId,
+            firstName: user.firstName,
+            lastName: user.lastName,
+            email: user.email,
+          },
+          id: `${user.studentId}-${job.id}`,
+        };
         userJobs.push(userJob);
         this.activePrintJobsIDMap.set(userJob.id, userJob);
       });
