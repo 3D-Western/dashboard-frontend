@@ -108,7 +108,7 @@ export function ForgotPasswordForm({ className, ...props }: React.ComponentProps
                 <div className="flex flex-col items-center gap-2 text-center">
                   <h1 className="text-2xl font-bold">Reset your password</h1>
                   <p className="text-balance text-muted-foreground">
-                    Enter your Student ID and we&apos;ll send you a reset code
+                    Enter your Student ID and we&apos;ll send you a reset link
                   </p>
                 </div>
 
@@ -127,7 +127,7 @@ export function ForgotPasswordForm({ className, ...props }: React.ComponentProps
                 />
 
                 <Button type="submit" disabled={isLoading}>
-                  {isLoading ? 'Sending...' : 'Send Reset Code'}
+                  {isLoading ? 'Sending...' : 'Send Reset Link'}
                 </Button>
 
                 <FieldDescription className="text-center">

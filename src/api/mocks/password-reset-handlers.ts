@@ -6,12 +6,11 @@ import { ErrorCodes } from '../client/errors';
 
 const apiUrl = process.env.API_URL;
 
-// Mock storage for reset codes
-const resetCodes = new Map<number, { code: string; expiresAt: number }>();
+// Mock storage for reset tokens (matches backend behavior)
 const resetTokens = new Map<string, { studentId: number; expiresAt: number; used: boolean }>();
 
 export const passwordResetHandlers = [
-  // Request password reset
+  // Request password reset (forgot-password)
   http.post(`${apiUrl}${endpoints.passwordReset.request}`, async ({ request }) => {
     console.log('Password reset request received');
     const { studentId } = (await request.json()) as {
@@ -24,75 +23,47 @@ export const passwordResetHandlers = [
     // Always return success regardless of whether user exists (security best practice)
     // This prevents user enumeration attacks
     if (user) {
-      // Generate a 6-digit code
-      const code = Math.floor(100000 + Math.random() * 900000).toString();
-      const expiresAt = Date.now() + 15 * 60 * 1000; // 15 minutes
+      // Generate a secure reset token (mimics backend behavior)
+      const token = `mock-reset-token-${Math.random().toString(36).substring(2)}${Date.now()}`;
+      const expiresAt = Date.now() + 30 * 60 * 1000; // 30 minutes (matches backend default)
 
-      resetCodes.set(studentId, { code, expiresAt });
+      resetTokens.set(token, {
+        studentId,
+        expiresAt,
+        used: false,
+      });
 
-      console.log(`[MSW Mock] Password reset code for ${studentId}: ${code}`);
+      console.log(`[MSW Mock] Password reset token for ${studentId}: ${token}`);
+      console.log(`[MSW Mock] Reset link: http://localhost:3000/reset-password?token=${token}`);
     }
 
-    // Always return the same response
+    // Always return the same response (matches backend behavior)
     return HttpResponse.json(
-      generateSuccessResponse({
-        message:
-          'If an account exists with that Student ID, you will receive an email with a reset code.',
-      }),
-    );
-  }),
-
-  // Verify reset code
-  http.post(`${apiUrl}${endpoints.passwordReset.verify}`, async ({ request }) => {
-    console.log('Password reset verify received');
-    const { studentId, code } = (await request.json()) as {
-      studentId: number;
-      code: string;
-    };
-
-    const storedCode = resetCodes.get(studentId);
-
-    // Check if code exists and hasn't expired
-    if (!storedCode || storedCode.code !== code || Date.now() > storedCode.expiresAt) {
-      return HttpResponse.json(
-        generateErrorResponse({
-          code: ErrorCodes.INVALID_RESET_CODE,
-          message: 'Invalid or expired reset code',
-        }),
-        { status: 400 },
-      );
-    }
-
-    // Generate a reset token
-    const resetToken = `reset-${Math.random().toString(36).substring(2)}${Date.now()}`;
-    const tokenExpiresAt = Date.now() + 15 * 60 * 1000; // 15 minutes
-
-    resetTokens.set(resetToken, {
-      studentId,
-      expiresAt: tokenExpiresAt,
-      used: false,
-    });
-
-    // Clear the code so it can't be reused
-    resetCodes.delete(studentId);
-
-    return HttpResponse.json(
-      generateSuccessResponse({
-        message: 'Code verified successfully',
-        resetToken,
-      }),
+      generateSuccessResponse(null),
+      { status: 200 },
     );
   }),
 
   // Complete password reset
   http.post(`${apiUrl}${endpoints.passwordReset.complete}`, async ({ request }) => {
     console.log('Password reset complete received');
-    const { resetToken, newPassword } = (await request.json()) as {
-      resetToken: string;
+    const { token, newPassword } = (await request.json()) as {
+      token: string;
       newPassword: string;
     };
 
-    const tokenData = resetTokens.get(resetToken);
+    // Validate password length (backend requires 10+ characters)
+    if (newPassword.length < 10) {
+      return HttpResponse.json(
+        generateErrorResponse({
+          code: ErrorCodes.VALIDATION_FAILED,
+          message: 'Password must be at least 10 characters',
+        }),
+        { status: 400 },
+      );
+    }
+
+    const tokenData = resetTokens.get(token);
 
     // Check if token exists, hasn't expired, and hasn't been used
     if (!tokenData || Date.now() > tokenData.expiresAt || tokenData.used) {
@@ -101,7 +72,7 @@ export const passwordResetHandlers = [
           code: ErrorCodes.INVALID_RESET_TOKEN,
           message: 'Invalid or expired reset token',
         }),
-        { status: 400 },
+        { status: 401 },
       );
     }
 
@@ -117,7 +88,7 @@ export const passwordResetHandlers = [
       );
     }
 
-    // Update password
+    // Update password (in production, this would be hashed with BCrypt)
     user.password = newPassword;
 
     // Mark token as used
@@ -126,9 +97,8 @@ export const passwordResetHandlers = [
     console.log(`[MSW Mock] Password reset successful for student ${tokenData.studentId}`);
 
     return HttpResponse.json(
-      generateSuccessResponse({
-        message: 'Password reset successful',
-      }),
+      generateSuccessResponse(null),
+      { status: 200 },
     );
   }),
 ];

@@ -3,21 +3,27 @@ import { endpoints } from './endpoints';
 import { getBaseUrl } from './utils';
 
 export interface ApiPasswordResetRequestResponse {
-  message: string;
-}
-
-export interface ApiPasswordResetVerifyResponse {
-  message: string;
-  resetToken: string;
+  success: boolean;
+  data: null;
+  error?: {
+    code: string;
+    message: string;
+  };
 }
 
 export interface ApiPasswordResetCompleteResponse {
-  message: string;
+  success: boolean;
+  data: null;
+  error?: {
+    code: string;
+    message: string;
+  };
 }
 
 export const passwordResetApi = {
   /**
-   * Request a password reset code for a student ID
+   * Request a password reset link for a student ID
+   * Sends an email with a reset token link if the student ID exists
    */
   requestReset: async (studentId: number, options?: RequestInit) => {
     const serverUrl = getBaseUrl();
@@ -33,32 +39,18 @@ export const passwordResetApi = {
   },
 
   /**
-   * Verify the reset code sent to the user's email
+   * Complete the password reset with the token and new password
+   * Token is obtained from the reset link sent via email
+   * Password must be at least 10 characters
    */
-  verifyCode: async (studentId: number, code: string, options?: RequestInit) => {
-    const serverUrl = getBaseUrl();
-
-    return apiRequest<ApiPasswordResetVerifyResponse>(
-      `${serverUrl}${endpoints.passwordReset.verify}`,
-      {
-        method: 'POST',
-        body: JSON.stringify({ studentId, code }),
-        ...options,
-      },
-    );
-  },
-
-  /**
-   * Complete the password reset with a new password
-   */
-  resetPassword: async (resetToken: string, newPassword: string, options?: RequestInit) => {
+  resetPassword: async (token: string, newPassword: string, options?: RequestInit) => {
     const serverUrl = getBaseUrl();
 
     return apiRequest<ApiPasswordResetCompleteResponse>(
       `${serverUrl}${endpoints.passwordReset.complete}`,
       {
         method: 'POST',
-        body: JSON.stringify({ resetToken, newPassword }),
+        body: JSON.stringify({ token, newPassword }),
         ...options,
       },
     );
