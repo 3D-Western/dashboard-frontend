@@ -3,7 +3,8 @@ import { PrintJob } from '../database/types';
 export const mockPrintJobs: PrintJob[] = [
   {
     id: '123456',
-    studentId: 123456,
+    userId: 123456,
+    user: { studentId: 123456, firstName: 'Mock', lastName: 'User' },
     orderPlaced: '2023-10-01T10:00:00Z',
     description: 'A cool 3D print',
     name: 'CoolPrint1',
@@ -12,7 +13,8 @@ export const mockPrintJobs: PrintJob[] = [
   },
   {
     id: '789012',
-    studentId: 123456,
+    userId: 123456,
+    user: { studentId: 123456, firstName: 'Mock', lastName: 'User' },
     orderPlaced: '2023-10-02T11:30:00Z',
     description: 'Another cool 3D print',
     name: 'CoolPrint2',
@@ -21,7 +23,8 @@ export const mockPrintJobs: PrintJob[] = [
   },
   {
     id: '345678',
-    studentId: 123456,
+    userId: 123456,
+    user: { studentId: 123456, firstName: 'Mock', lastName: 'User' },
     orderPlaced: '2023-10-03T14:15:00Z',
     description: 'Yet another cool 3D print',
     name: 'CoolPrint3',
@@ -30,7 +33,8 @@ export const mockPrintJobs: PrintJob[] = [
   },
   {
     id: '901234',
-    studentId: 123456,
+    userId: 123456,
+    user: { studentId: 123456, firstName: 'Mock', lastName: 'User' },
     orderPlaced: '2023-10-04T09:45:00Z',
     description: 'A flagged 3D print',
     name: 'FlaggedPrint',
@@ -39,7 +43,8 @@ export const mockPrintJobs: PrintJob[] = [
   },
   {
     id: '567890',
-    studentId: 123456,
+    userId: 123456,
+    user: { studentId: 123456, firstName: 'Mock', lastName: 'User' },
     orderPlaced: '2023-10-05T16:20:00Z',
     description: 'A failed 3D print',
     name: 'FailedPrint',

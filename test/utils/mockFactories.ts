@@ -59,16 +59,24 @@ export const createMockUserResponse = (overrides?: Partial<UserResponse>): UserR
  * const job = createMockPrintJob({ status: 'IN_QUEUE' });
  * ```
  */
-export const createMockPrintJob = (overrides?: Partial<PrintJob>): PrintJob => ({
-  kind: 'active-print-job',
-  id: faker.string.uuid(),
-  studentId: faker.number.int({ min: 251000000, max: 251999999 }),
-  name: faker.commerce.productName(),
-  description: faker.commerce.productDescription(),
-  status: 'InQueue' as PrintJobStatus,
-  orderPlaced: faker.date.recent().toISOString(),
-  ...overrides,
-});
+export const createMockPrintJob = (overrides?: Partial<PrintJob>): PrintJob => {
+  const studentId = faker.number.int({ min: 251000000, max: 251999999 });
+  return {
+    kind: 'active-print-job',
+    id: faker.string.uuid(),
+    user: {
+      studentId,
+      firstName: faker.person.firstName(),
+      lastName: faker.person.lastName(),
+      email: faker.internet.email(),
+    },
+    name: faker.commerce.productName(),
+    description: faker.commerce.productDescription(),
+    status: 'InQueue' as PrintJobStatus,
+    orderPlaced: faker.date.recent().toISOString(),
+    ...overrides,
+  };
+};
 
 /**
  * Creates an array of mock PrintJob objects

@@ -1,9 +1,9 @@
 import React from 'react';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { render, screen } from '@test/utils/render';
+import { render, screen, waitFor } from '@test/utils/render';
 import { renderHook } from '@testing-library/react';
 import { useColumns } from '@/components/PrintJobsTable/useColumns';
-import { PrintJob } from '@/types/jobs';
+import { createMockPrintJob } from '@test/utils/mockFactories';
 
 vi.mock('@/components/ui/dropdown-menu', () => ({
   DropdownMenu: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
@@ -34,6 +34,10 @@ vi.mock('@/components/ui/button', () => ({
   ),
 }));
 
+vi.mock('@/components/PrintJobsTable/ChangeStatusDialog', () => ({
+  ChangeStatusDialog: () => null,
+}));
+
 describe('useColumns', () => {
   const getColumns = (options?: Parameters<typeof useColumns>[0]) => {
     const { result } = renderHook(() => useColumns(options));
@@ -61,60 +65,38 @@ describe('useColumns', () => {
     vi.restoreAllMocks();
   });
 
-  it('renders placeholder when student data is missing in admin mode', () => {
-    const columns = getColumns({ mode: 'admin' });
-    const studentColumn = columns.find((column) => column.accessorKey === 'student');
-
-    expect(studentColumn).toBeDefined();
-
-    const cell = studentColumn?.cell?.({
-      row: { original: { student: null } },
-    } as never);
-
-    render(<>{cell}</>);
-
-    expect(screen.getByText('-')).toBeInTheDocument();
-  });
-
   it('logs an error when clipboard copy fails', async () => {
     const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => undefined);
 
     const columns = getColumns();
     const actionsColumn = columns.find((column) => column.id === 'actions');
 
-    const printJob = {
+    const printJob = createMockPrintJob({
       id: 'job-123',
       name: 'Test Job',
       status: 'InQueue',
-      orderPlaced: new Date().toISOString(),
-    } as PrintJob;
+    });
 
     const cell = actionsColumn?.cell?.({
       row: { original: printJob },
     } as never);
 
-    const findOnSelect = (node: React.ReactNode): (() => Promise<void> | void) | null => {
-      if (!node || typeof node !== 'object') return null;
-      if (React.isValidElement(node) && typeof node.props.onSelect === 'function') {
-        return node.props.onSelect as () => Promise<void> | void;
-      }
-      if (!React.isValidElement(node)) return null;
-      const children = React.Children.toArray(node.props.children);
-      for (const child of children) {
-        const found = findOnSelect(child);
-        if (found) return found;
-      }
-      return null;
-    };
+    // Render the cell component
+    render(<>{cell}</>);
 
-    const onSelect = findOnSelect(cell ?? null);
-    expect(onSelect).toBeDefined();
+    // Find and click the "Copy Job ID" button
+    const copyButton = screen.getByText('Copy Job ID');
+    expect(copyButton).toBeInTheDocument();
 
-    await onSelect?.();
+    // Click the button which will trigger the onSelect handler
+    copyButton.click();
 
-    expect(consoleSpy).toHaveBeenCalledWith(
-      'Failed to copy Job ID to clipboard',
-      expect.any(Error),
-    );
+    // Wait for the async operation to complete
+    await waitFor(() => {
+      expect(consoleSpy).toHaveBeenCalledWith(
+        'Failed to copy Job ID to clipboard',
+        expect.any(Error),
+      );
+    });
   });
 });

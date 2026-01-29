@@ -25,7 +25,7 @@ describe('useColumns', () => {
       expect(columnIds).toContain('status');
       expect(columnIds).toContain('orderPlaced');
       expect(columnIds).toContain('actions');
-      expect(columnIds).not.toContain('student');
+      expect(columnIds).not.toContain('user');
     });
 
     it('returns correct columns for admin mode', () => {
@@ -34,7 +34,7 @@ describe('useColumns', () => {
 
       const columnIds = columns.map((col) => getColumnKey(col));
       expect(columnIds).toContain('name');
-      expect(columnIds).toContain('student');
+      expect(columnIds).toContain('user');
       expect(columnIds).toContain('status');
       expect(columnIds).toContain('orderPlaced');
       expect(columnIds).toContain('actions');
@@ -45,14 +45,15 @@ describe('useColumns', () => {
       const columns = result.current;
 
       const columnIds = columns.map((col) => getColumnKey(col));
-      expect(columnIds).not.toContain('student');
+      expect(columnIds).not.toContain('user');
     });
   });
 
   describe('column memoization', () => {
     it('returns same reference when dependencies do not change', () => {
       const setJobs = vi.fn();
-      const { result, rerender } = renderHook(() => useColumns({ mode: 'user', setJobs }));
+      const opts = { mode: 'user' as const, setJobs };
+      const { result, rerender } = renderHook(() => useColumns(opts));
 
       const firstColumns = result.current;
       rerender();
@@ -78,21 +79,12 @@ describe('useColumns', () => {
   });
 
   describe('admin mode specific behavior', () => {
-    it('student column shows full name', () => {
+    it('user column shows full name', () => {
       const { result } = renderHook(() => useColumns({ mode: 'admin' }));
       const columns = result.current;
 
-      const studentColumn = columns.find((col) => hasAccessorKey(col, 'student'));
-      expect(studentColumn).toBeDefined();
-    });
-
-    it('student column shows placeholder when student data is missing', () => {
-      const { result } = renderHook(() => useColumns({ mode: 'admin' }));
-      const columns = result.current;
-
-      const studentColumn = columns.find((col) => hasAccessorKey(col, 'student'));
-      expect(studentColumn).toBeDefined();
-      // Further testing of cell rendering would require integration tests
+      const userColumn = columns.find((col) => hasAccessorKey(col, 'user'));
+      expect(userColumn).toBeDefined();
     });
   });
 
@@ -117,86 +109,49 @@ describe('useColumns', () => {
   });
 
   describe('custom sorting functions', () => {
-    describe('student name sorting (admin mode)', () => {
-      it('sorts students alphabetically by full name', () => {
+    describe('user name sorting (admin mode)', () => {
+      it('sorts users alphabetically by full name', () => {
         const { result } = renderHook(() => useColumns({ mode: 'admin' }));
         const columns = result.current;
-        const studentColumn = columns.find((col) => hasAccessorKey(col, 'student'));
+        const userColumn = columns.find((col) => hasAccessorKey(col, 'user'));
 
-        expect(studentColumn).toBeDefined();
-        expect(studentColumn?.sortingFn).toBeDefined();
+        expect(userColumn).toBeDefined();
+        expect(userColumn?.sortingFn).toBeDefined();
 
-        const sortingFn = studentColumn?.sortingFn;
+        const sortingFn = userColumn?.sortingFn;
         if (typeof sortingFn !== 'function') {
-          throw new Error('Expected student sortingFn to be a function');
+          throw new Error('Expected user sortingFn to be a function');
         }
 
         const rowAlice = {
-          original: { student: { firstName: 'Alice', lastName: 'Smith' } },
+          original: { user: { firstName: 'Alice', lastName: 'Smith' } },
         } as unknown as Row<PrintJob>;
         const rowBob = {
-          original: { student: { firstName: 'Bob', lastName: 'Jones' } },
+          original: { user: { firstName: 'Bob', lastName: 'Jones' } },
         } as unknown as Row<PrintJob>;
 
-        expect(sortingFn(rowAlice, rowBob, 'student')).toBeLessThan(0);
-        expect(sortingFn(rowBob, rowAlice, 'student')).toBeGreaterThan(0);
-      });
-
-      it('handles missing student data - missing sorts last', () => {
-        const { result } = renderHook(() => useColumns({ mode: 'admin' }));
-        const columns = result.current;
-        const studentColumn = columns.find((col) => hasAccessorKey(col, 'student'));
-
-        const sortingFn = studentColumn?.sortingFn;
-        if (typeof sortingFn !== 'function') {
-          throw new Error('Expected student sortingFn to be a function');
-        }
-
-        const withStudent = {
-          original: { student: { firstName: 'Alice', lastName: 'Smith' } },
-        } as unknown as Row<PrintJob>;
-        const withoutStudent = { original: { student: undefined } } as unknown as Row<PrintJob>;
-
-        // Student should come before missing data
-        expect(sortingFn(withStudent, withoutStudent, 'student')).toBeLessThan(0);
-        // Missing data should come after student
-        expect(sortingFn(withoutStudent, withStudent, 'student')).toBeGreaterThan(0);
-      });
-
-      it('handles both students missing - sorts equal', () => {
-        const { result } = renderHook(() => useColumns({ mode: 'admin' }));
-        const columns = result.current;
-        const studentColumn = columns.find((col) => hasAccessorKey(col, 'student'));
-
-        const sortingFn = studentColumn?.sortingFn;
-        if (typeof sortingFn !== 'function') {
-          throw new Error('Expected student sortingFn to be a function');
-        }
-
-        const missingA = { original: { student: undefined } } as unknown as Row<PrintJob>;
-        const missingB = { original: { student: undefined } } as unknown as Row<PrintJob>;
-
-        expect(sortingFn(missingA, missingB, 'student')).toBe(0);
+        expect(sortingFn(rowAlice, rowBob, 'user')).toBeLessThan(0);
+        expect(sortingFn(rowBob, rowAlice, 'user')).toBeGreaterThan(0);
       });
 
       it('sorts case-insensitively', () => {
         const { result } = renderHook(() => useColumns({ mode: 'admin' }));
         const columns = result.current;
-        const studentColumn = columns.find((col) => hasAccessorKey(col, 'student'));
+        const userColumn = columns.find((col) => hasAccessorKey(col, 'user'));
 
-        const sortingFn = studentColumn?.sortingFn;
+        const sortingFn = userColumn?.sortingFn;
         if (typeof sortingFn !== 'function') {
-          throw new Error('Expected student sortingFn to be a function');
+          throw new Error('Expected user sortingFn to be a function');
         }
 
         const lowercase = {
-          original: { student: { firstName: 'alice', lastName: 'smith' } },
+          original: { user: { firstName: 'alice', lastName: 'smith' } },
         } as unknown as Row<PrintJob>;
         const uppercase = {
-          original: { student: { firstName: 'ALICE', lastName: 'SMITH' } },
+          original: { user: { firstName: 'ALICE', lastName: 'SMITH' } },
         } as unknown as Row<PrintJob>;
 
-        expect(sortingFn(lowercase, uppercase, 'student')).toBe(0);
+        expect(sortingFn(lowercase, uppercase, 'user')).toBe(0);
       });
     });
 

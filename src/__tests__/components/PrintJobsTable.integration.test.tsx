@@ -265,10 +265,10 @@ describe('PrintJobsTable Integration', () => {
   });
 
   describe('admin mode', () => {
-    it('shows student column in admin mode', () => {
+    it('shows user column in admin mode', () => {
       const adminJobs = [
         createMockPrintJob({
-          student: {
+          user: {
             studentId: 251000001,
             firstName: 'John',
             lastName: 'Doe',
@@ -280,15 +280,15 @@ describe('PrintJobsTable Integration', () => {
       const pagination = createMockPagination(adminJobs);
       render(<PrintJobsTable printJobs={adminJobs} pagination={pagination} mode="admin" />);
 
-      expect(screen.getByText('Student')).toBeInTheDocument();
+      expect(screen.getByText('User')).toBeInTheDocument();
       expect(screen.getByText('John Doe')).toBeInTheDocument();
     });
 
-    it('does not show student column in user mode', () => {
+    it('does not show user column in user mode', () => {
       const pagination = createMockPagination(mockJobs);
       render(<PrintJobsTable printJobs={mockJobs} pagination={pagination} mode="user" />);
 
-      expect(screen.queryByText('Student')).not.toBeInTheDocument();
+      expect(screen.queryByText('User')).not.toBeInTheDocument();
     });
   });
 });

@@ -17,9 +17,17 @@ export interface File {
   path: string;
 }
 
+export interface UserInfo {
+  studentId: number;
+  firstName: string;
+  lastName: string;
+  email?: string;
+}
+
 export interface BasePrintJob {
   id: string;
-  studentId: number;
+  userId: number; // Internal: for database tracking
+  user: UserInfo; // API response includes user info
   orderPlaced: string; // ISO date string
   description: string;
   name: string;

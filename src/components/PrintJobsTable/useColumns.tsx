@@ -2,17 +2,12 @@
 
 import { PrintJobStatusBadge } from '@/components/PrintJobStatusBadge';
 import { Button } from '@/components/ui/button';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
 import { PrintJob, PrintJobStatus } from '@/types/jobs';
 import { ColumnDef } from '@tanstack/react-table';
-import { ArrowUpDown, MoreHorizontal } from 'lucide-react';
+import { ArrowUpDown } from 'lucide-react';
 import { useMemo } from 'react';
 import { DateCell } from './DateCell';
+import { ActionsCell } from './ActionsCell';
 
 type TableMode = 'user' | 'admin';
 
@@ -22,7 +17,7 @@ interface UseColumnsOptions {
 }
 
 export const useColumns = (opts: UseColumnsOptions = {}) => {
-  const { mode = 'user' } = opts;
+  const { mode = 'user', setJobs } = opts;
 
   return useMemo<ColumnDef<PrintJob>[]>(
     () => [
@@ -65,7 +60,7 @@ export const useColumns = (opts: UseColumnsOptions = {}) => {
       ...(mode === 'admin'
         ? [
             {
-              accessorKey: 'student',
+              accessorKey: 'user',
               header: ({ column }) => {
                 const sortDirection = column.getIsSorted();
                 return (
@@ -73,7 +68,7 @@ export const useColumns = (opts: UseColumnsOptions = {}) => {
                     variant={'ghost'}
                     className="w-full justify-start px-0 hover:bg-transparent"
                     onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
-                    aria-label={`Sort by student ${
+                    aria-label={`Sort by user ${
                       sortDirection === 'asc'
                         ? 'descending'
                         : sortDirection === 'desc'
@@ -81,30 +76,24 @@ export const useColumns = (opts: UseColumnsOptions = {}) => {
                           : 'ascending'
                     }`}
                   >
-                    Student
+                    User
                     <ArrowUpDown className="ml-2 h-4 w-4" aria-hidden="true" />
                   </Button>
                 );
               },
               cell: ({ row }) => {
-                const student = row.original.student;
-                if (!student) {
-                  return <div className="text-muted-foreground">-</div>;
-                }
+                const user = row.original.user;
                 return (
                   <div>
-                    <span>{`${student.firstName} ${student.lastName}`}</span>
+                    <span>{`${user.firstName} ${user.lastName}`}</span>
                   </div>
                 );
               },
               sortingFn: (rowA, rowB) => {
-                const studentA = rowA.original.student;
-                const studentB = rowB.original.student;
-                if (!studentA && !studentB) return 0;
-                if (!studentA) return 1;
-                if (!studentB) return -1;
-                const nameA = `${studentA.firstName} ${studentA.lastName}`.toLowerCase();
-                const nameB = `${studentB.firstName} ${studentB.lastName}`.toLowerCase();
+                const userA = rowA.original.user;
+                const userB = rowB.original.user;
+                const nameA = `${userA.firstName} ${userA.lastName}`.toLowerCase();
+                const nameB = `${userB.firstName} ${userB.lastName}`.toLowerCase();
                 return nameA.localeCompare(nameB);
               },
             } as ColumnDef<PrintJob>,
@@ -184,74 +173,21 @@ export const useColumns = (opts: UseColumnsOptions = {}) => {
         id: 'actions',
         cell: ({ row }) => {
           const printJob = row.original;
+
+          const handleStatusChanged = (jobId: string, newStatus: PrintJobStatus) => {
+            if (setJobs) {
+              setJobs((prev) => {
+                return prev.map((j) => (j.id === jobId ? { ...j, status: newStatus } : j));
+              });
+            }
+          };
+
           return (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  variant="ghost"
-                  className="h-8 w-8 p-0"
-                  aria-label={`Actions for ${printJob.name}`}
-                  aria-haspopup="menu"
-                >
-                  <span className="sr-only">Open menu</span>
-                  <MoreHorizontal className="h-4 w-4" aria-hidden="true" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem
-                  onSelect={async () => {
-                    try {
-                      await navigator.clipboard.writeText(printJob.id);
-                    } catch (error) {
-                      console.error('Failed to copy Job ID to clipboard', error);
-                    }
-                  }}
-                >
-                  Copy Job ID
-                </DropdownMenuItem>
-                {/* TODO: Future improvement - Implement cancel print functionality */}
-                {/* {canCancel && setJobs && (
-                  <DropdownMenuItem
-                    // Uncomment and replace below onclick handle once backend is ready to enable api call
-                    // onClick={async () => {
-                    //   try {
-                    //     console.log('Cancel Print: Attempting to cancel job', printJob.id);
-                    //     const result = await jobApi.cancelJob(printJob.id);
-                    //     console.log('Cancel Print: API result', result);
-                    //     setJobs(prev => {
-                    //       const updated = prev.map(j =>
-                    //         j.id === printJob.id ? { ...j, status: 'Failed' as PrintJobStatus } : j
-                    //       );
-                    //       console.log('Cancel Print: Updated jobs state', updated);
-                    //       return updated;
-                    //     });
-                    //   } catch (e) {
-                    //     console.error('Cancel Print: API error', e);
-                    //   }
-                    // }}
-                    onClick={() => {
-                      setJobs((prev) => {
-                        const updated = prev.map((j) =>
-                          j.id === printJob.id ? { ...j, status: 'Failed' as PrintJobStatus } : j,
-                        );
-                        return updated;
-                      });
-                    }}
-                  >
-                    Cancel Print
-                  </DropdownMenuItem>
-                )} */}
-                {/* TODO: Future improvement - Implement download STL functionality */}
-                {/* <DropdownMenuSeparator />
-                <DropdownMenuItem disabled aria-disabled="true">
-                  Download STL (Coming soon)
-                </DropdownMenuItem> */}
-              </DropdownMenuContent>
-            </DropdownMenu>
+            <ActionsCell printJob={printJob} mode={mode} onStatusChanged={handleStatusChanged} />
           );
         },
       },
     ],
-    [mode],
+    [mode, setJobs],
   );
 };
