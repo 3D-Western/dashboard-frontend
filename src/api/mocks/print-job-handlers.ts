@@ -106,6 +106,8 @@ export const orderHandlers = [
       },
       name: body.printName,
       description: body.description,
+      purpose: formData.purpose as string | undefined,
+      design_intent: formData.design_intent as string | undefined,
       orderPlaced: new Date().toISOString(),
       status: 'PendingFile' as const,
       reprint: null,

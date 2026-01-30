@@ -35,6 +35,14 @@ vi.mock('sonner', () => ({
 }));
 
 const setupUser = () => userEvent.setup({ pointerEventsCheck: 0 });
+// FIXTEST
+const selectRadioOption = async (
+  user: ReturnType<typeof setupUser>,
+  index: number,
+) => {
+  const radios = screen.getAllByRole('radio');
+  await user.click(radios[index]);
+};
 const selectComboboxOption = async (
   user: ReturnType<typeof setupUser>,
   index: number,
@@ -65,6 +73,8 @@ describe('NewPrintForm Integration', () => {
       // Form fields
       expect(screen.getByLabelText(/Print Name/i)).toBeInTheDocument();
       expect(screen.getByLabelText(/Print Description/i)).toBeInTheDocument();
+      expect(screen.getByLabelText(/Purpose/i)).toBeInTheDocument();
+      expect(screen.getByLabelText(/Design Intent/i)).toBeInTheDocument();
       expect(screen.getByText(/Upload STL/i)).toBeInTheDocument();
       expect(screen.getByText(/What is the primary goal of this print/i)).toBeInTheDocument();
       expect(screen.getByText(/How strong does the print have to be/i)).toBeInTheDocument();
@@ -124,7 +134,29 @@ describe('NewPrintForm Integration', () => {
         ).toBeInTheDocument();
       });
     });
+    it('shows error when Project Purpose is not selected', async () => {
+      const user = setupUser();
+      render(<NewPrintForm />);
 
+      const submitButton = screen.getByRole('button', { name: /Submit/i });
+      await user.click(submitButton);
+
+      await waitFor(() => {
+        expect(screen.getByText(/Select a purpose/i)).toBeInTheDocument();
+      });
+    });
+    it('shows error when Design Intent is not selected', async () => {
+      const user = setupUser();
+      render(<NewPrintForm />);
+
+      const submitButton = screen.getByRole('button', { name: /Submit/i });
+      await user.click(submitButton);
+
+      await waitFor(() => {
+        const errors = screen.getAllByText(/Select a design intent/i);
+        expect(errors.length).toBeGreaterThan(0);
+      });
+    });
     it('shows error for missing STL file upload', async () => {
       const user = setupUser();
       render(<NewPrintForm />);
@@ -183,6 +215,23 @@ describe('NewPrintForm Integration', () => {
       await user.type(descriptionField, 'This is a test description for my print job');
 
       expect(descriptionField).toHaveValue('This is a test description for my print job');
+    });
+
+   // FIXTEST
+    it('purpose select is interactive', async () => {
+      render(<NewPrintForm />);
+      const selectTrigger = screen.getByRole('combobox');
+      expect(selectTrigger).toBeInTheDocument();
+    });
+    
+    it('design intent radio buttons work', async () => {
+      const user = setupUser();
+      render(<NewPrintForm />);
+
+      const standardRadio = screen.getByLabelText(/Standard/i);
+      await user.click(standardRadio);
+
+      expect(standardRadio).toBeChecked();
     });
 
     it('goal radio buttons work', async () => {
@@ -246,6 +295,9 @@ describe('NewPrintForm Integration', () => {
       const descriptionField = screen.getByLabelText(/Print Description/i);
       await user.type(descriptionField, 'This is a test description');
 
+      await selectComboboxOption(user, 0, 'casual');
+      await selectRadioOption(user, 1); // FIXTEST
+
       const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
       const file = new File(['dummy'], 'model.stl', { type: 'model/stl' });
       await user.upload(fileInput, file);
@@ -294,6 +346,12 @@ describe('NewPrintForm Integration', () => {
 
       const descriptionField = screen.getByLabelText(/Print Description/i);
       await user.type(descriptionField, 'This is a test description');
+
+      const purposeSelect = screen.getByLabelText(/Purpose/i); //FIXTEST
+      await user.click(purposeSelect);
+
+      const designIntent = await screen.findByText('casual');
+      await user.click(designIntent);
 
       // Select material 1
       const material1Trigger = screen.getAllByRole('combobox')[0];
