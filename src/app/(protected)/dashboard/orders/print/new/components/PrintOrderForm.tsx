@@ -140,6 +140,8 @@ export default function NewPrintForm({ mockMode = false }: NewPrintFormProps = {
     defaultValues: {
       printName: '',
       description: '',
+      purpose: '',
+      design_intent: '',
       goal: 'high-quality',
       durability: 'general-use',
       infill: 'grid',
@@ -149,8 +151,6 @@ export default function NewPrintForm({ mockMode = false }: NewPrintFormProps = {
       color2: '',
       file: undefined,
       support: 'no',
-      purpose: '',
-      design_intent: '',
     },
   });
 
@@ -178,9 +178,11 @@ export default function NewPrintForm({ mockMode = false }: NewPrintFormProps = {
 
       // STEP 1: Create order with file metadata (not the file itself)
       const createOrderPayload: CreateOrderRequest = {
-        printName: values.printName,
-        description: values.description,
-        formAnswerJson: JSON.stringify({
+          printName: values.printName,
+          description: values.description,
+          formAnswerJson: JSON.stringify({
+          purpose: values.purpose,
+          design_intent: values.design_intent,
           contentType: file.type || 'application/sla',
           material1: values.material1,
           color1: values.color1,
