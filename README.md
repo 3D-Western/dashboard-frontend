@@ -1,89 +1,59 @@
 # 3D Printing Dashboard
 
-A modern, full-featured dashboard application for managing 3D printing services. Built with Next.js 15, React Server Components, and shadcn/ui.
+A modern dashboard application for managing 3D printing services at Western University, built with Next.js 16 and shadcn/ui.
 
 ## Features
 
-- **User Dashboard**: View and manage print jobs with advanced filtering and sorting
-- **Authentication**: Secure session-based authentication with protected routes
-- **Admin Panel**: Administrative interface for managing users and print jobs
-- **Dark Mode**: Full dark/light theme support
-- **Responsive Design**: Mobile-friendly interface built with Tailwind CSS
-- **Data Tables**: Interactive tables with sorting, filtering, and selection powered by TanStack Table
-- **Mock API**: Development environment with MSW for API simulation
-- **Comprehensive Testing**: Unit, integration, and E2E tests with Vitest and Playwright
+- **Authentication** - Secure login/signup with email verification, MFA, and password reset
+- **User Dashboard** - View and manage orders with filtering, sorting, and file uploads
+- **Admin Panel** - Manage users, orders, and invitations
+- **User Settings** - Change password and manage account preferences
+- **Dark Mode** - Full dark/light theme support
+- **Responsive Design** - Mobile-friendly interface
+- **Mock API** - Development mode with MSW for backend simulation
 
 ## Tech Stack
 
-- **Framework**: [Next.js 15](https://nextjs.org/) with App Router and React Server Components
-- **UI Library**: [shadcn/ui](https://ui.shadcn.com/) with Radix UI primitives
-- **Styling**: [Tailwind CSS 4.x](https://tailwindcss.com/)
-- **State Management**: React Context API
-- **Data Tables**: [TanStack Table v8](https://tanstack.com/table/v8)
-- **Forms**: [React Hook Form](https://react-hook-form.com/) with [Zod](https://zod.dev/) validation
-- **Testing**: [Vitest](https://vitest.dev) + [Playwright](https://playwright.dev) + [MSW](https://mswjs.io)
-- **TypeScript**: Strict mode enabled
+Next.js 16 • React 19 • TypeScript • shadcn/ui • Tailwind CSS 4 • TanStack Table • React Hook Form • Zod • Vitest • Playwright • MSW
 
-## Quick Start
+## Getting Started
 
-### Prerequisites
-
-- Node.js 20.x or higher
-- npm, yarn, pnpm, or bun
-
-### Installation
+**Requirements:** Node.js 20+
 
 ```bash
-# Clone the repository
-git clone <repository-url>
-cd dashboard-frontend
-
 # Install dependencies
 npm install
 
-# Copy environment variables
+# Set up environment
 cp .env.example .env
 
 # Start development server
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) to view the app.
+Visit [http://localhost:3000](http://localhost:3000)
 
 ### Environment Variables
 
-Create a `.env` file:
-
 ```bash
-# Backend API URL
-API_URL=http://localhost:8000
-
-# Enable mock server (for development without backend)
-MOCK_ENABLED=true
-
-# Frontend URL
-NEXT_PUBLIC_SERVER_URL=http://localhost:3000
+API_URL=http://localhost:8000                  # Backend API URL
+MOCK_ENABLED=false                             # Enable mock server for development
+NEXT_PUBLIC_SERVER_URL=http://localhost:3000   # Frontend URL
+NEXT_BACKEND_URL=                              # Alternative backend URL (optional)
+REACT_EDITOR=code                              # Preferred editor for debugging
 ```
 
-## Development
-
-### Available Scripts
+## Scripts
 
 ```bash
-# Development
-npm run dev              # Start dev server with Turbopack
+npm run dev              # Start dev server
 npm run build            # Build for production
 npm run start            # Start production server
-
-# Code Quality
-npm run lint             # Run ESLint (auto-fix)
-npm run lint:ci          # Run ESLint with zero warnings
-npm run format           # Format with Prettier
-
-# Testing
+npm run lint             # Lint and auto-fix
+npm run format           # Format code with Prettier
 npm run test             # Run unit/integration tests
-npm run test:coverage    # Run tests with coverage
-npm run test:e2e         # Run E2E tests
+npm run test:e2e         # Run E2E tests with Playwright
+npm run test:coverage    # Generate coverage report
 npm run test:all         # Run all tests
 ```
 
@@ -94,115 +64,74 @@ dashboard-frontend/
 ├── src/
 │   ├── api/                  # API client and mocks
 │   ├── app/                  # Next.js App Router
-│   │   ├── (home)/           # Public pages
+│   │   ├── (home)/           # Landing page
+│   │   ├── (auth)/           # Auth pages (login, signup, MFA, forgot password, etc.)
 │   │   ├── (protected)/      # Protected routes
-│   │   └── api/              # API routes
+│   │   │   ├── dashboard/    # User dashboard, orders, settings
+│   │   │   └── admin/        # Admin panel (users, orders, invitations)
+│   │   ├── api/              # API routes
+│   │   └── faqs/             # FAQs page
 │   ├── components/           # React components
 │   │   └── ui/               # shadcn/ui components
-│   ├── hooks/                # Custom React hooks
+│   ├── hooks/                # Custom hooks
 │   ├── lib/                  # Utilities and helpers
-│   ├── providers/            # React context providers
+│   ├── providers/            # Context providers
 │   ├── types/                # TypeScript types
 │   └── __tests__/            # Integration tests
 ├── test/                     # Test utilities
-├── e2e/                      # End-to-end tests
-├── docs/                     # Documentation
-└── public/                   # Static assets
+├── e2e/                      # E2E tests
+└── docs/                     # Documentation
 ```
 
 ## Documentation
 
-Comprehensive documentation is available in the `docs/` folder:
+Comprehensive guides are available in the [`docs/`](docs/) folder:
 
-- **[Testing Guide](docs/TESTING.md)** - Unit, integration, and E2E testing
-- **[Architecture Guide](docs/ARCHITECTURE.md)** - Project architecture, routing, and API structure
-- **[Development Guide](docs/DEVELOPMENT.md)** - Development workflow and best practices
+- **[Documentation Index](docs/README.md)** - Guide to all documentation
+- **[Testing Guide](docs/TESTING.md)** - Testing strategies and best practices
+- **[Architecture Guide](docs/ARCHITECTURE.md)** - Project architecture and design decisions
+- **[Development Guide](docs/DEVELOPMENT.md)** - Development workflow and standards
 
-## Key Concepts
+## Key Features
 
-### Authentication
+### Authentication Flow
 
-The app uses server-side authentication with React Server Components:
+- Email/password authentication
+- Email verification
+- Multi-factor authentication (MFA)
+- Forgot/reset password flow
+- Session-based auth with server components
 
-- Protected routes automatically validate session on every request
-- Server-side `validateSession()` checks authentication status
-- Client-side `useUser()` hook provides user context
+### User Dashboard
 
-See [Architecture Guide](docs/ARCHITECTURE.md#authentication) for details.
+- View and track print orders
+- Upload 3D model files
+- Filter and sort orders
+- Manage account settings
+- Change password
 
-### Routing
+### Admin Panel
 
-Built with Next.js 15 App Router using route groups:
-
-- **`(home)/`** - Public landing page
-- **`(protected)/dashboard/`** - User dashboard (requires authentication)
-- **`(protected)/admin/`** - Admin panel (requires admin role)
-- **`login/`, `signup/`** - Authentication pages
-
-See [Architecture Guide](docs/ARCHITECTURE.md#routing--layouts) for details.
-
-### API Integration
-
-Centralized API client with type-safe requests:
-
-```typescript
-import { sessionApi } from '@/api/client/session';
-
-const user = await sessionApi.login(studentId, password);
-```
-
-Development mode uses MSW for API mocking. Set `MOCK_ENABLED=true` to enable.
-
-See [Architecture Guide](docs/ARCHITECTURE.md#api-architecture) for details.
-
-### Testing
-
-Comprehensive testing strategy:
-
-- **Unit Tests**: Test individual functions/components (Vitest)
-- **Integration Tests**: Test component + API interactions (Vitest + MSW)
-- **E2E Tests**: Test complete user workflows (Playwright)
-
-```bash
-npm run test              # Unit/integration tests
-npm run test:e2e          # E2E tests
-npm run test:coverage     # Coverage report
-```
-
-See [Testing Guide](docs/TESTING.md) for details.
+- User management with role-based access
+- Order management and status updates
+- Invitation system for new users
+- System-wide order tracking
 
 ## Adding Components
 
-### shadcn/ui Components
-
-Add pre-built components with the CLI:
+Use shadcn CLI to add pre-built components:
 
 ```bash
 npx shadcn@latest add button
 npx shadcn@latest add dialog
-npx shadcn@latest add dropdown-menu
+npx shadcn@latest add table
 ```
 
 Components are added to `src/components/ui/` with full TypeScript support.
 
-### Custom Components
-
-Create components in `src/components/`:
-
-```typescript
-// src/components/MyComponent.tsx
-export default function MyComponent() {
-  return <div>My Component</div>;
-}
-```
-
-Use Server Components by default. Add `'use client'` only when needed (state, effects, event handlers).
-
-See [Development Guide](docs/DEVELOPMENT.md#working-with-components) for details.
-
 ## Contributing
 
-We follow [Conventional Commits](https://www.conventionalcommits.org/) for commit messages:
+Follow [Conventional Commits](https://www.conventionalcommits.org/) for commit messages:
 
 ```bash
 feat: add new feature
@@ -214,27 +143,21 @@ refactor: refactor code
 
 ### Workflow
 
-1. Create a feature branch: `git checkout -b feat/my-feature`
-2. Make changes and commit: `git commit -m "feat: add my feature"`
-3. Push and create PR: `git push -u origin feat/my-feature`
-4. Get reviews and merge
+1. Create feature branch: `git checkout -b feat/my-feature`
+2. Make changes and test
+3. Commit: `git commit -m "feat: add my feature"`
+4. Push and create PR
 
 See [Development Guide](docs/DEVELOPMENT.md#git-workflow) for details.
 
 ## Deployment
-
-### Build for Production
 
 ```bash
 npm run build
 npm run start
 ```
 
-The build output will be in `.next/`.
-
-### Environment Variables
-
-Configure these for production:
+**Production Environment:**
 
 ```bash
 API_URL=https://api.your-domain.com
@@ -247,8 +170,6 @@ MOCK_ENABLED=false
 [Your License Here]
 
 ## Support
-
-For issues and questions:
 
 - Check the [documentation](docs/)
 - Search [existing issues](https://github.com/your-repo/issues)
