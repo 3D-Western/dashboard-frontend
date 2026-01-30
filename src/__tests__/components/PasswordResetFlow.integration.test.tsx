@@ -54,7 +54,7 @@ describe('Password Reset Flow Integration', () => {
   it('submits ForgotPasswordForm successfully', async () => {
     const user = userEvent.setup();
     mockServer.use(
-      http.post(`*${endpoints.passwordReset.request}`, () => {
+      http.post(`*${endpoints.resetPassword.forgotPassword}`, () => {
         return HttpResponse.json({
           success: true,
           data: { message: 'ok' },
@@ -73,7 +73,7 @@ describe('Password Reset Flow Integration', () => {
   it('shows loading state while sending reset code', async () => {
     const user = userEvent.setup();
     mockServer.use(
-      http.post(`*${endpoints.passwordReset.request}`, async () => {
+      http.post(`*${endpoints.resetPassword.forgotPassword}`, async () => {
         await new Promise((resolve) => setTimeout(resolve, 100));
         return HttpResponse.json({
           success: true,
@@ -97,7 +97,7 @@ describe('Password Reset Flow Integration', () => {
     const restoreConsole = suppressConsoleError();
 
     mockServer.use(
-      http.post(`*${endpoints.passwordReset.request}`, () => {
+      http.post(`*${endpoints.resetPassword.forgotPassword}`, () => {
         return HttpResponse.json(
           {
             success: false,
@@ -120,7 +120,7 @@ describe('Password Reset Flow Integration', () => {
   it('returns to login from success state in ForgotPasswordForm', async () => {
     const user = userEvent.setup();
     mockServer.use(
-      http.post(`*${endpoints.passwordReset.request}`, () => {
+      http.post(`*${endpoints.resetPassword.forgotPassword}`, () => {
         return HttpResponse.json({
           success: true,
           data: { message: 'ok' },
@@ -181,7 +181,7 @@ describe('Password Reset Flow Integration', () => {
   it('shows error for invalid reset code', async () => {
     const user = userEvent.setup();
     mockServer.use(
-      http.post(`*${endpoints.passwordReset.verify}`, () => {
+      http.post(`*${endpoints.resetPassword.verify}`, () => {
         return HttpResponse.json(
           {
             success: false,
@@ -210,13 +210,13 @@ describe('Password Reset Flow Integration', () => {
   it('submits ResetPasswordForm successfully', async () => {
     const user = userEvent.setup();
     mockServer.use(
-      http.post(`*${endpoints.passwordReset.verify}`, () => {
+      http.post(`*${endpoints.resetPassword.verify}`, () => {
         return HttpResponse.json({
           success: true,
           data: { message: 'Verified', resetToken: 'reset-token-123' },
         });
       }),
-      http.post(`*${endpoints.passwordReset.complete}`, () => {
+      http.post(`*${endpoints.resetPassword.resetPassword}`, () => {
         return HttpResponse.json({
           success: true,
           data: { message: 'Reset complete' },
@@ -243,14 +243,14 @@ describe('Password Reset Flow Integration', () => {
   it('shows loading state while resetting password', async () => {
     const user = userEvent.setup();
     mockServer.use(
-      http.post(`*${endpoints.passwordReset.verify}`, async () => {
+      http.post(`*${endpoints.resetPassword.verify}`, async () => {
         await new Promise((resolve) => setTimeout(resolve, 100));
         return HttpResponse.json({
           success: true,
           data: { message: 'Verified', resetToken: 'reset-token-loading' },
         });
       }),
-      http.post(`*${endpoints.passwordReset.complete}`, () => {
+      http.post(`*${endpoints.resetPassword.resetPassword}`, () => {
         return HttpResponse.json({
           success: true,
           data: { message: 'Reset complete' },
@@ -284,21 +284,21 @@ describe('Password Reset Flow Integration', () => {
     const completePayloads: Array<{ resetToken: string; newPassword: string }> = [];
 
     mockServer.use(
-      http.post(`*${endpoints.passwordReset.request}`, async ({ request }) => {
+      http.post(`*${endpoints.resetPassword.forgotPassword}`, async ({ request }) => {
         requestPayloads.push(await request.json());
         return HttpResponse.json({
           success: true,
           data: { message: 'Request accepted' },
         });
       }),
-      http.post(`*${endpoints.passwordReset.verify}`, async ({ request }) => {
+      http.post(`*${endpoints.resetPassword.verify}`, async ({ request }) => {
         verifyPayloads.push(await request.json());
         return HttpResponse.json({
           success: true,
           data: { message: 'Verified', resetToken: 'reset-token-456' },
         });
       }),
-      http.post(`*${endpoints.passwordReset.complete}`, async ({ request }) => {
+      http.post(`*${endpoints.resetPassword.resetPassword}`, async ({ request }) => {
         completePayloads.push(await request.json());
         return HttpResponse.json({
           success: true,

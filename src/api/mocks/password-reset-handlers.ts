@@ -11,7 +11,7 @@ const resetTokens = new Map<string, { studentId: number; expiresAt: number; used
 
 export const passwordResetHandlers = [
   // Request password reset (forgot-password)
-  http.post(`${apiUrl}${endpoints.passwordReset.request}`, async ({ request }) => {
+  http.post(`${apiUrl}${endpoints.resetPassword.forgotPassword}`, async ({ request }) => {
     console.log('Password reset request received');
     const { studentId } = (await request.json()) as {
       studentId: number;
@@ -38,14 +38,11 @@ export const passwordResetHandlers = [
     }
 
     // Always return the same response (matches backend behavior)
-    return HttpResponse.json(
-      generateSuccessResponse(null),
-      { status: 200 },
-    );
+    return HttpResponse.json(generateSuccessResponse(null), { status: 200 });
   }),
 
   // Complete password reset
-  http.post(`${apiUrl}${endpoints.passwordReset.complete}`, async ({ request }) => {
+  http.post(`${apiUrl}${endpoints.resetPassword.resetPassword}`, async ({ request }) => {
     console.log('Password reset complete received');
     const { token, newPassword } = (await request.json()) as {
       token: string;
@@ -96,9 +93,6 @@ export const passwordResetHandlers = [
 
     console.log(`[MSW Mock] Password reset successful for student ${tokenData.studentId}`);
 
-    return HttpResponse.json(
-      generateSuccessResponse(null),
-      { status: 200 },
-    );
+    return HttpResponse.json(generateSuccessResponse(null), { status: 200 });
   }),
 ];

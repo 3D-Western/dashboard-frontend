@@ -71,8 +71,8 @@ export function ForgotPasswordForm({ className, ...props }: React.ComponentProps
       <div className={cn('flex flex-col gap-6', className)} {...props}>
         <Card className="overflow-hidden p-0">
           <CardContent className="grid p-0 md:grid-cols-2">
-            <div className="flex items-center p-6 md:p-8 min-h-[500px]">
-              <div className="grid gap-6 w-full">
+            <div className="flex min-h-[500px] items-center p-6 md:p-8">
+              <div className="grid w-full gap-6">
                 <div className="flex flex-col items-center gap-2 text-center">
                   <h1 className="text-2xl font-bold">Check your email</h1>
                   <p className="text-balance text-muted-foreground">
@@ -103,8 +103,11 @@ export function ForgotPasswordForm({ className, ...props }: React.ComponentProps
       <Card className="overflow-hidden p-0">
         <CardContent className="grid p-0 md:grid-cols-2">
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="flex items-center p-6 md:p-8 min-h-[500px]">
-              <div className="grid gap-6 w-full">
+            <form
+              onSubmit={form.handleSubmit(onSubmit)}
+              className="flex min-h-[500px] items-center p-6 md:p-8"
+            >
+              <div className="grid w-full gap-6">
                 <div className="flex flex-col items-center gap-2 text-center">
                   <h1 className="text-2xl font-bold">Reset your password</h1>
                   <p className="text-balance text-muted-foreground">

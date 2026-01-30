@@ -29,7 +29,7 @@ export const passwordResetApi = {
     const serverUrl = getBaseUrl();
 
     return apiRequest<ApiPasswordResetRequestResponse>(
-      `${serverUrl}${endpoints.passwordReset.request}`,
+      `${serverUrl}${endpoints.resetPassword.forgotPassword}`,
       {
         method: 'POST',
         body: JSON.stringify({ studentId }),
@@ -47,7 +47,7 @@ export const passwordResetApi = {
     const serverUrl = getBaseUrl();
 
     return apiRequest<ApiPasswordResetCompleteResponse>(
-      `${serverUrl}${endpoints.passwordReset.complete}`,
+      `${serverUrl}${endpoints.resetPassword.resetPassword}`,
       {
         method: 'POST',
         body: JSON.stringify({ token, newPassword }),

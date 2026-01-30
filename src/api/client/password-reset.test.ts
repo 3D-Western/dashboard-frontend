@@ -9,7 +9,7 @@ describe('passwordResetApi', () => {
   describe('requestReset', () => {
     it('requests password reset successfully', async () => {
       mockServer.use(
-        http.post('*' + endpoints.passwordReset.request, () => {
+        http.post('*' + endpoints.resetPassword.forgotPassword, () => {
           return HttpResponse.json({
             success: true,
             data: null,
@@ -25,7 +25,7 @@ describe('passwordResetApi', () => {
     it('sends correct request body with student ID', async () => {
       let capturedBody: unknown = null;
       mockServer.use(
-        http.post('*' + endpoints.passwordReset.request, async ({ request }) => {
+        http.post('*' + endpoints.resetPassword.forgotPassword, async ({ request }) => {
           capturedBody = await request.json();
           return HttpResponse.json({
             success: true,
@@ -41,7 +41,7 @@ describe('passwordResetApi', () => {
 
     it('always returns success (prevents user enumeration)', async () => {
       mockServer.use(
-        http.post('*' + endpoints.passwordReset.request, () => {
+        http.post('*' + endpoints.resetPassword.forgotPassword, () => {
           return HttpResponse.json({
             success: true,
             data: null,
@@ -56,7 +56,7 @@ describe('passwordResetApi', () => {
 
     it('handles network errors', async () => {
       mockServer.use(
-        http.post('*' + endpoints.passwordReset.request, () => {
+        http.post('*' + endpoints.resetPassword.forgotPassword, () => {
           return HttpResponse.json({
             success: false,
             error: {
@@ -75,7 +75,7 @@ describe('passwordResetApi', () => {
     it('passes custom options to apiRequest', async () => {
       let capturedHeaders: Headers | null = null;
       mockServer.use(
-        http.post('*' + endpoints.passwordReset.request, ({ request }) => {
+        http.post('*' + endpoints.resetPassword.forgotPassword, ({ request }) => {
           capturedHeaders = request.headers;
           return HttpResponse.json({
             success: true,
@@ -95,7 +95,7 @@ describe('passwordResetApi', () => {
   describe('resetPassword', () => {
     it('resets password successfully', async () => {
       mockServer.use(
-        http.post('*' + endpoints.passwordReset.complete, () => {
+        http.post('*' + endpoints.resetPassword.resetPassword, () => {
           return HttpResponse.json({
             success: true,
             data: null,
@@ -111,7 +111,7 @@ describe('passwordResetApi', () => {
     it('sends correct request body with token and new password', async () => {
       let capturedBody: unknown = null;
       mockServer.use(
-        http.post('*' + endpoints.passwordReset.complete, async ({ request }) => {
+        http.post('*' + endpoints.resetPassword.resetPassword, async ({ request }) => {
           capturedBody = await request.json();
           return HttpResponse.json({
             success: true,
@@ -130,7 +130,7 @@ describe('passwordResetApi', () => {
 
     it('throws error for invalid reset token', async () => {
       mockServer.use(
-        http.post('*' + endpoints.passwordReset.complete, () => {
+        http.post('*' + endpoints.resetPassword.resetPassword, () => {
           return HttpResponse.json({
             success: false,
             error: {
@@ -150,7 +150,7 @@ describe('passwordResetApi', () => {
 
     it('throws error for password less than 10 characters', async () => {
       mockServer.use(
-        http.post('*' + endpoints.passwordReset.complete, () => {
+        http.post('*' + endpoints.resetPassword.resetPassword, () => {
           return HttpResponse.json({
             success: false,
             error: {
@@ -161,17 +161,17 @@ describe('passwordResetApi', () => {
         }),
       );
 
-      await expect(passwordResetApi.resetPassword('reset-token-123', 'short')).rejects.toMatchObject(
-        {
-          code: ErrorCodes.VALIDATION_FAILED,
-        },
-      );
+      await expect(
+        passwordResetApi.resetPassword('reset-token-123', 'short'),
+      ).rejects.toMatchObject({
+        code: ErrorCodes.VALIDATION_FAILED,
+      });
     });
 
     it('passes custom options to apiRequest', async () => {
       let capturedHeaders: Headers | null = null;
       mockServer.use(
-        http.post('*' + endpoints.passwordReset.complete, ({ request }) => {
+        http.post('*' + endpoints.resetPassword.resetPassword, ({ request }) => {
           capturedHeaders = request.headers;
           return HttpResponse.json({
             success: true,

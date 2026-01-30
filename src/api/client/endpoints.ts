@@ -8,9 +8,9 @@ export const endpoints = {
   session: {
     current: '/api/v1/session/current',
   },
-  passwordReset: {
-    request: '/api/v1/auth/forgot-password',
-    complete: '/api/v1/auth/reset-password',
+  resetPassword: {
+    forgotPassword: '/api/v1/auth/forgot-password',
+    resetPassword: '/api/v1/auth/reset-password',
   },
   users: {
     me: '/api/v1/users/me',
