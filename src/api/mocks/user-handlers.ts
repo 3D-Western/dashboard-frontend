@@ -1,7 +1,12 @@
 import { http, HttpResponse } from 'msw';
 import { endpoints } from '../client/endpoints';
 import db from './database/db';
-import { createInvalidSessionResponse, generateSuccessResponse } from './utils';
+import {
+  createInvalidSessionResponse,
+  generateSuccessResponse,
+  generateErrorResponse,
+} from './utils';
+import { ErrorCodes } from '../client/errors';
 
 const apiUrl = process.env.API_URL;
 
@@ -214,6 +219,77 @@ export const userHandlers = [
           snapshotCreatedBefore,
         },
       }),
+    );
+  }),
+
+  // POST /users/me/password - Change password
+  http.post(`${apiUrl}${endpoints.users.changePassword}`, async ({ cookies, request }) => {
+    const sessionId = cookies['sessionToken'] || '';
+    const user = db.validateSession(sessionId);
+    if (!user) {
+      return createInvalidSessionResponse();
+    }
+
+    const { currentPassword, newPassword, confirmNewPassword } = (await request.json()) as {
+      currentPassword: string;
+      newPassword: string;
+      confirmNewPassword: string;
+    };
+
+    // Validate current password
+    if (user.password !== currentPassword) {
+      return HttpResponse.json(
+        generateErrorResponse({
+          code: ErrorCodes.INVALID_CREDENTIALS,
+          message: 'Current password is incorrect',
+        }),
+        { status: 401 },
+      );
+    }
+
+    // Validate password length (backend requires 10+ characters)
+    if (newPassword.length < 10) {
+      return HttpResponse.json(
+        generateErrorResponse({
+          code: ErrorCodes.VALIDATION_FAILED,
+          message: 'Password must be at least 10 characters',
+        }),
+        { status: 400 },
+      );
+    }
+
+    // Validate passwords match
+    if (newPassword !== confirmNewPassword) {
+      return HttpResponse.json(
+        generateErrorResponse({
+          code: ErrorCodes.VALIDATION_FAILED,
+          message: 'Passwords do not match',
+        }),
+        { status: 400 },
+      );
+    }
+
+    // Prevent password reuse
+    if (currentPassword === newPassword) {
+      return HttpResponse.json(
+        generateErrorResponse({
+          code: ErrorCodes.VALIDATION_FAILED,
+          message: 'New password must be different from current password',
+        }),
+        { status: 400 },
+      );
+    }
+
+    // Update password (in production, this would be hashed)
+    user.password = newPassword;
+
+    console.log(`[MSW Mock] Password changed successfully for student ${user.studentId}`);
+
+    return HttpResponse.json(
+      generateSuccessResponse({
+        message: 'Password updated successfully',
+      }),
+      { status: 200 },
     );
   }),
 ];

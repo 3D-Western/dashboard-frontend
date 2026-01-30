@@ -25,6 +25,8 @@ import {
 } from '@/components/ui/select';
 import { EXPERIENCE_LEVEL_OPTIONS, EXPERIENCE_LEVELS } from '@/constants/experience-levels';
 import { useUser } from '@/providers/user-provider';
+import { userApi } from '@/api/client/user';
+import { ApiError } from '@/api/client/errors';
 
 // Password change form schema
 const passwordSchema = z
@@ -32,7 +34,7 @@ const passwordSchema = z
     currentPassword: z.string().min(1, 'Current password is required'),
     newPassword: z
       .string()
-      .min(8, 'Password must be at least 8 characters')
+      .min(10, 'Password must be at least 10 characters')
       .regex(/[A-Z]/, 'Password must contain at least one uppercase letter')
       .regex(/[a-z]/, 'Password must contain at least one lowercase letter')
       .regex(/[0-9]/, 'Password must contain at least one number'),
@@ -80,28 +82,22 @@ export function SettingsContent() {
     try {
       setIsPasswordLoading(true);
 
-      const response = await fetch('/api/user/password', {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          currentPassword: values.currentPassword,
-          newPassword: values.newPassword,
-        }),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({ message: 'An error occurred' }));
-        toast.error(errorData.message || 'Failed to update password');
-        return;
-      }
+      await userApi.changePassword(
+        values.currentPassword,
+        values.newPassword,
+        values.confirmPassword,
+      );
 
       toast.success('Password updated successfully');
       passwordForm.reset();
     } catch (error) {
       console.error('Password update error', error);
-      toast.error('Failed to connect to the server. Please try again.');
+
+      if (error instanceof ApiError) {
+        toast.error(error.message || 'Failed to update password');
+      } else {
+        toast.error('Failed to connect to the server. Please try again.');
+      }
     } finally {
       setIsPasswordLoading(false);
     }
