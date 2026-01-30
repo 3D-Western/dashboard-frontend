@@ -71,8 +71,8 @@ export function ForgotPasswordForm({ className, ...props }: React.ComponentProps
       <div className={cn('flex flex-col gap-6', className)} {...props}>
         <Card className="overflow-hidden p-0">
           <CardContent className="grid p-0 md:grid-cols-2">
-            <div className="p-6 md:p-8">
-              <div className="grid gap-6">
+            <div className="flex min-h-[500px] items-center p-6 md:p-8">
+              <div className="grid w-full gap-6">
                 <div className="flex flex-col items-center gap-2 text-center">
                   <h1 className="text-2xl font-bold">Check your email</h1>
                   <p className="text-balance text-muted-foreground">
@@ -103,12 +103,15 @@ export function ForgotPasswordForm({ className, ...props }: React.ComponentProps
       <Card className="overflow-hidden p-0">
         <CardContent className="grid p-0 md:grid-cols-2">
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="p-6 md:p-8">
-              <div className="grid gap-6">
+            <form
+              onSubmit={form.handleSubmit(onSubmit)}
+              className="flex min-h-[500px] items-center p-6 md:p-8"
+            >
+              <div className="grid w-full gap-6">
                 <div className="flex flex-col items-center gap-2 text-center">
                   <h1 className="text-2xl font-bold">Reset your password</h1>
                   <p className="text-balance text-muted-foreground">
-                    Enter your Student ID and we&apos;ll send you a reset code
+                    Enter your Student ID and we&apos;ll send you a reset link
                   </p>
                 </div>
 
@@ -127,7 +130,7 @@ export function ForgotPasswordForm({ className, ...props }: React.ComponentProps
                 />
 
                 <Button type="submit" disabled={isLoading}>
-                  {isLoading ? 'Sending...' : 'Send Reset Code'}
+                  {isLoading ? 'Sending...' : 'Send Reset Link'}
                 </Button>
 
                 <FieldDescription className="text-center">

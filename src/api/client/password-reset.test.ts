@@ -8,29 +8,28 @@ import { ErrorCodes } from './errors';
 describe('passwordResetApi', () => {
   describe('requestReset', () => {
     it('requests password reset successfully', async () => {
-      const mockResponse = { message: 'Reset code sent to your email' };
       mockServer.use(
-        http.post('*' + endpoints.passwordReset.request, () => {
+        http.post('*' + endpoints.resetPassword.forgotPassword, () => {
           return HttpResponse.json({
             success: true,
-            data: mockResponse,
+            data: null,
           });
         }),
       );
 
       const result = await passwordResetApi.requestReset(251000001);
 
-      expect(result).toEqual(mockResponse);
+      expect(result).toBeNull();
     });
 
     it('sends correct request body with student ID', async () => {
       let capturedBody: unknown = null;
       mockServer.use(
-        http.post('*' + endpoints.passwordReset.request, async ({ request }) => {
+        http.post('*' + endpoints.resetPassword.forgotPassword, async ({ request }) => {
           capturedBody = await request.json();
           return HttpResponse.json({
             success: true,
-            data: { message: 'Code sent' },
+            data: null,
           });
         }),
       );
@@ -40,27 +39,24 @@ describe('passwordResetApi', () => {
       expect(capturedBody).toEqual({ studentId: 251000001 });
     });
 
-    it('throws error for invalid student ID', async () => {
+    it('always returns success (prevents user enumeration)', async () => {
       mockServer.use(
-        http.post('*' + endpoints.passwordReset.request, () => {
+        http.post('*' + endpoints.resetPassword.forgotPassword, () => {
           return HttpResponse.json({
-            success: false,
-            error: {
-              code: ErrorCodes.USER_NOT_FOUND,
-              message: 'Student not found',
-            },
+            success: true,
+            data: null,
           });
         }),
       );
 
-      await expect(passwordResetApi.requestReset(999999999)).rejects.toMatchObject({
-        code: ErrorCodes.USER_NOT_FOUND,
-      });
+      const result = await passwordResetApi.requestReset(999999999);
+
+      expect(result).toBeNull();
     });
 
     it('handles network errors', async () => {
       mockServer.use(
-        http.post('*' + endpoints.passwordReset.request, () => {
+        http.post('*' + endpoints.resetPassword.forgotPassword, () => {
           return HttpResponse.json({
             success: false,
             error: {
@@ -79,11 +75,11 @@ describe('passwordResetApi', () => {
     it('passes custom options to apiRequest', async () => {
       let capturedHeaders: Headers | null = null;
       mockServer.use(
-        http.post('*' + endpoints.passwordReset.request, ({ request }) => {
+        http.post('*' + endpoints.resetPassword.forgotPassword, ({ request }) => {
           capturedHeaders = request.headers;
           return HttpResponse.json({
             success: true,
-            data: { message: 'Code sent' },
+            data: null,
           });
         }),
       );
@@ -96,129 +92,30 @@ describe('passwordResetApi', () => {
     });
   });
 
-  describe('verifyCode', () => {
-    it('verifies reset code successfully', async () => {
-      const mockResponse = {
-        message: 'Code verified',
-        resetToken: 'reset-token-123',
-      };
-      mockServer.use(
-        http.post('*' + endpoints.passwordReset.verify, () => {
-          return HttpResponse.json({
-            success: true,
-            data: mockResponse,
-          });
-        }),
-      );
-
-      const result = await passwordResetApi.verifyCode(251000001, '123456');
-
-      expect(result).toEqual(mockResponse);
-      expect(result.resetToken).toBe('reset-token-123');
-    });
-
-    it('sends correct request body with student ID and code', async () => {
-      let capturedBody: unknown = null;
-      mockServer.use(
-        http.post('*' + endpoints.passwordReset.verify, async ({ request }) => {
-          capturedBody = await request.json();
-          return HttpResponse.json({
-            success: true,
-            data: { message: 'Verified', resetToken: 'token' },
-          });
-        }),
-      );
-
-      await passwordResetApi.verifyCode(251000001, '123456');
-
-      expect(capturedBody).toEqual({
-        studentId: 251000001,
-        code: '123456',
-      });
-    });
-
-    it('throws error for invalid reset code', async () => {
-      mockServer.use(
-        http.post('*' + endpoints.passwordReset.verify, () => {
-          return HttpResponse.json({
-            success: false,
-            error: {
-              code: ErrorCodes.INVALID_RESET_CODE,
-              message: 'Invalid or expired reset code',
-            },
-          });
-        }),
-      );
-
-      await expect(passwordResetApi.verifyCode(251000001, '000000')).rejects.toMatchObject({
-        code: ErrorCodes.INVALID_RESET_CODE,
-      });
-    });
-
-    it('handles expired code error', async () => {
-      mockServer.use(
-        http.post('*' + endpoints.passwordReset.verify, () => {
-          return HttpResponse.json({
-            success: false,
-            error: {
-              code: ErrorCodes.INVALID_RESET_CODE,
-              message: 'Reset code has expired',
-            },
-          });
-        }),
-      );
-
-      await expect(passwordResetApi.verifyCode(251000001, '123456')).rejects.toMatchObject({
-        code: ErrorCodes.INVALID_RESET_CODE,
-        message: expect.stringContaining('expired'),
-      });
-    });
-
-    it('passes custom options to apiRequest', async () => {
-      let capturedHeaders: Headers | null = null;
-      mockServer.use(
-        http.post('*' + endpoints.passwordReset.verify, ({ request }) => {
-          capturedHeaders = request.headers;
-          return HttpResponse.json({
-            success: true,
-            data: { message: 'Verified', resetToken: 'token' },
-          });
-        }),
-      );
-
-      await passwordResetApi.verifyCode(251000001, '123456', {
-        headers: { 'X-Custom-Header': 'test' },
-      });
-
-      expect(capturedHeaders?.get('X-Custom-Header')).toBe('test');
-    });
-  });
-
   describe('resetPassword', () => {
     it('resets password successfully', async () => {
-      const mockResponse = { message: 'Password reset successful' };
       mockServer.use(
-        http.post('*' + endpoints.passwordReset.complete, () => {
+        http.post('*' + endpoints.resetPassword.resetPassword, () => {
           return HttpResponse.json({
             success: true,
-            data: mockResponse,
+            data: null,
           });
         }),
       );
 
       const result = await passwordResetApi.resetPassword('reset-token-123', 'NewPassword123!');
 
-      expect(result).toEqual(mockResponse);
+      expect(result).toBeNull();
     });
 
-    it('sends correct request body with reset token and new password', async () => {
+    it('sends correct request body with token and new password', async () => {
       let capturedBody: unknown = null;
       mockServer.use(
-        http.post('*' + endpoints.passwordReset.complete, async ({ request }) => {
+        http.post('*' + endpoints.resetPassword.resetPassword, async ({ request }) => {
           capturedBody = await request.json();
           return HttpResponse.json({
             success: true,
-            data: { message: 'Password reset' },
+            data: null,
           });
         }),
       );
@@ -226,14 +123,14 @@ describe('passwordResetApi', () => {
       await passwordResetApi.resetPassword('reset-token-123', 'NewPassword123!');
 
       expect(capturedBody).toEqual({
-        resetToken: 'reset-token-123',
+        token: 'reset-token-123',
         newPassword: 'NewPassword123!',
       });
     });
 
     it('throws error for invalid reset token', async () => {
       mockServer.use(
-        http.post('*' + endpoints.passwordReset.complete, () => {
+        http.post('*' + endpoints.resetPassword.resetPassword, () => {
           return HttpResponse.json({
             success: false,
             error: {
@@ -251,34 +148,34 @@ describe('passwordResetApi', () => {
       });
     });
 
-    it('throws error for weak password', async () => {
+    it('throws error for password less than 10 characters', async () => {
       mockServer.use(
-        http.post('*' + endpoints.passwordReset.complete, () => {
+        http.post('*' + endpoints.resetPassword.resetPassword, () => {
           return HttpResponse.json({
             success: false,
             error: {
               code: ErrorCodes.VALIDATION_FAILED,
-              message: 'Password does not meet requirements',
+              message: 'Password must be at least 10 characters',
             },
           });
         }),
       );
 
-      await expect(passwordResetApi.resetPassword('reset-token-123', 'weak')).rejects.toMatchObject(
-        {
-          code: ErrorCodes.VALIDATION_FAILED,
-        },
-      );
+      await expect(
+        passwordResetApi.resetPassword('reset-token-123', 'short'),
+      ).rejects.toMatchObject({
+        code: ErrorCodes.VALIDATION_FAILED,
+      });
     });
 
     it('passes custom options to apiRequest', async () => {
       let capturedHeaders: Headers | null = null;
       mockServer.use(
-        http.post('*' + endpoints.passwordReset.complete, ({ request }) => {
+        http.post('*' + endpoints.resetPassword.resetPassword, ({ request }) => {
           capturedHeaders = request.headers;
           return HttpResponse.json({
             success: true,
-            data: { message: 'Password reset' },
+            data: null,
           });
         }),
       );
