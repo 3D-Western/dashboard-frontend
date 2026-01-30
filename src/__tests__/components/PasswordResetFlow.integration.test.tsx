@@ -21,6 +21,9 @@ vi.mock('next/navigation', () => ({
     prefetch: vi.fn(),
     back: vi.fn(),
   }),
+  useSearchParams: () => ({
+    get: (key: string) => (key === 'token' ? 'test-token' : null),
+  }),
 }));
 
 vi.mock('next/image', () => ({
@@ -46,7 +49,7 @@ describe('Password Reset Flow Integration', () => {
     const user = userEvent.setup();
     render(<ForgotPasswordForm />);
 
-    await user.click(screen.getByRole('button', { name: /send reset code/i }));
+    await user.click(screen.getByRole('button', { name: /send reset link/i }));
 
     expect(await screen.findByText(/student id is required/i)).toBeInTheDocument();
   });
@@ -65,7 +68,7 @@ describe('Password Reset Flow Integration', () => {
     render(<ForgotPasswordForm />);
 
     await user.type(screen.getByLabelText(/student id/i), '251000001');
-    await user.click(screen.getByRole('button', { name: /send reset code/i }));
+    await user.click(screen.getByRole('button', { name: /send reset link/i }));
 
     expect(await screen.findByText(/check your email/i)).toBeInTheDocument();
   });
@@ -85,7 +88,7 @@ describe('Password Reset Flow Integration', () => {
     render(<ForgotPasswordForm />);
 
     await user.type(screen.getByLabelText(/student id/i), '251000001');
-    await user.click(screen.getByRole('button', { name: /send reset code/i }));
+    await user.click(screen.getByRole('button', { name: /send reset link/i }));
 
     await waitFor(() => {
       expect(screen.getByRole('button', { name: /sending/i })).toBeDisabled();
@@ -111,7 +114,7 @@ describe('Password Reset Flow Integration', () => {
     render(<ForgotPasswordForm />);
 
     await user.type(screen.getByLabelText(/student id/i), '251000001');
-    await user.click(screen.getByRole('button', { name: /send reset code/i }));
+    await user.click(screen.getByRole('button', { name: /send reset link/i }));
 
     expect(await screen.findByText(/check your email/i)).toBeInTheDocument();
     restoreConsole();
@@ -131,7 +134,7 @@ describe('Password Reset Flow Integration', () => {
     render(<ForgotPasswordForm />);
 
     await user.type(screen.getByLabelText(/student id/i), '251000001');
-    await user.click(screen.getByRole('button', { name: /send reset code/i }));
+    await user.click(screen.getByRole('button', { name: /send reset link/i }));
 
     const returnButton = await screen.findByRole('button', { name: /return to login/i });
     await user.click(returnButton);
@@ -139,53 +142,36 @@ describe('Password Reset Flow Integration', () => {
     expect(mockPush).toHaveBeenCalledWith(Routes.login);
   });
 
-  it('validates reset code in ResetPasswordForm', async () => {
-    const user = userEvent.setup();
-    render(<ResetPasswordForm />);
-
-    await user.type(screen.getByLabelText(/student id/i), '251000001');
-    await user.type(screen.getByLabelText(/reset code/i), '123');
-    await user.type(screen.getByLabelText(/new password/i), 'password123');
-    await user.type(screen.getByLabelText(/confirm password/i), 'password123');
-    await user.click(screen.getByRole('button', { name: /reset password/i }));
-
-    expect(await screen.findByText(/reset code must be exactly 6 digits/i)).toBeInTheDocument();
-  });
-
   it('validates password requirements', async () => {
     const user = userEvent.setup();
     render(<ResetPasswordForm />);
 
-    await user.type(screen.getByLabelText(/student id/i), '251000001');
-    await user.type(screen.getByLabelText(/reset code/i), '123456');
     await user.type(screen.getByLabelText(/new password/i), 'short');
     await user.type(screen.getByLabelText(/confirm password/i), 'short');
     await user.click(screen.getByRole('button', { name: /reset password/i }));
 
-    expect(await screen.findByText(/password must be at least 8 characters/i)).toBeInTheDocument();
+    expect(await screen.findByText(/password must be at least 10 characters/i)).toBeInTheDocument();
   });
 
   it('validates password confirmation match', async () => {
     const user = userEvent.setup();
     render(<ResetPasswordForm />);
 
-    await user.type(screen.getByLabelText(/student id/i), '251000001');
-    await user.type(screen.getByLabelText(/reset code/i), '123456');
-    await user.type(screen.getByLabelText(/new password/i), 'password123');
-    await user.type(screen.getByLabelText(/confirm password/i), 'password456');
+    await user.type(screen.getByLabelText(/new password/i), 'password123456');
+    await user.type(screen.getByLabelText(/confirm password/i), 'password654321');
     await user.click(screen.getByRole('button', { name: /reset password/i }));
 
     expect(await screen.findByText(/passwords don't match/i)).toBeInTheDocument();
   });
 
-  it('shows error for invalid reset code', async () => {
+  it('shows error for invalid reset token', async () => {
     const user = userEvent.setup();
     mockServer.use(
-      http.post(`*${endpoints.resetPassword.verify}`, () => {
+      http.post(`*${endpoints.resetPassword.resetPassword}`, () => {
         return HttpResponse.json(
           {
             success: false,
-            error: { code: 'INVALID_RESET_CODE', message: 'Invalid code' },
+            error: { code: 'INVALID_TOKEN', message: 'Invalid or expired token' },
           },
           { status: 400 },
         );
@@ -194,15 +180,13 @@ describe('Password Reset Flow Integration', () => {
 
     render(<ResetPasswordForm />);
 
-    await user.type(screen.getByLabelText(/student id/i), '251000001');
-    await user.type(screen.getByLabelText(/reset code/i), '123456');
-    await user.type(screen.getByLabelText(/new password/i), 'password123');
-    await user.type(screen.getByLabelText(/confirm password/i), 'password123');
+    await user.type(screen.getByLabelText(/new password/i), 'password123456');
+    await user.type(screen.getByLabelText(/confirm password/i), 'password123456');
     await user.click(screen.getByRole('button', { name: /reset password/i }));
 
     await waitFor(() => {
       expect(toast.error).toHaveBeenCalledWith(
-        expect.stringContaining('Invalid reset code or student ID'),
+        expect.stringContaining('Invalid or expired reset token'),
       );
     });
   });
@@ -210,26 +194,18 @@ describe('Password Reset Flow Integration', () => {
   it('submits ResetPasswordForm successfully', async () => {
     const user = userEvent.setup();
     mockServer.use(
-      http.post(`*${endpoints.resetPassword.verify}`, () => {
-        return HttpResponse.json({
-          success: true,
-          data: { message: 'Verified', resetToken: 'reset-token-123' },
-        });
-      }),
       http.post(`*${endpoints.resetPassword.resetPassword}`, () => {
         return HttpResponse.json({
           success: true,
-          data: { message: 'Reset complete' },
+          data: null,
         });
       }),
     );
 
     render(<ResetPasswordForm />);
 
-    await user.type(screen.getByLabelText(/student id/i), '251000001');
-    await user.type(screen.getByLabelText(/reset code/i), '123456');
-    await user.type(screen.getByLabelText(/new password/i), 'password123');
-    await user.type(screen.getByLabelText(/confirm password/i), 'password123');
+    await user.type(screen.getByLabelText(/new password/i), 'password123456');
+    await user.type(screen.getByLabelText(/confirm password/i), 'password123456');
     await user.click(screen.getByRole('button', { name: /reset password/i }));
 
     await waitFor(() => {
@@ -243,27 +219,19 @@ describe('Password Reset Flow Integration', () => {
   it('shows loading state while resetting password', async () => {
     const user = userEvent.setup();
     mockServer.use(
-      http.post(`*${endpoints.resetPassword.verify}`, async () => {
+      http.post(`*${endpoints.resetPassword.resetPassword}`, async () => {
         await new Promise((resolve) => setTimeout(resolve, 100));
         return HttpResponse.json({
           success: true,
-          data: { message: 'Verified', resetToken: 'reset-token-loading' },
-        });
-      }),
-      http.post(`*${endpoints.resetPassword.resetPassword}`, () => {
-        return HttpResponse.json({
-          success: true,
-          data: { message: 'Reset complete' },
+          data: null,
         });
       }),
     );
 
     render(<ResetPasswordForm />);
 
-    await user.type(screen.getByLabelText(/student id/i), '251000001');
-    await user.type(screen.getByLabelText(/reset code/i), '123456');
-    await user.type(screen.getByLabelText(/new password/i), 'password123');
-    await user.type(screen.getByLabelText(/confirm password/i), 'password123');
+    await user.type(screen.getByLabelText(/new password/i), 'password123456');
+    await user.type(screen.getByLabelText(/confirm password/i), 'password123456');
     await user.click(screen.getByRole('button', { name: /reset password/i }));
 
     await waitFor(() => {
@@ -280,43 +248,35 @@ describe('Password Reset Flow Integration', () => {
   it('completes the full password reset flow', async () => {
     const user = userEvent.setup();
     const requestPayloads: Array<{ studentId: number }> = [];
-    const verifyPayloads: Array<{ studentId: number; code: string }> = [];
-    const completePayloads: Array<{ resetToken: string; newPassword: string }> = [];
+    const resetPayloads: Array<{ token: string; newPassword: string }> = [];
 
     mockServer.use(
       http.post(`*${endpoints.resetPassword.forgotPassword}`, async ({ request }) => {
         requestPayloads.push(await request.json());
         return HttpResponse.json({
           success: true,
-          data: { message: 'Request accepted' },
-        });
-      }),
-      http.post(`*${endpoints.resetPassword.verify}`, async ({ request }) => {
-        verifyPayloads.push(await request.json());
-        return HttpResponse.json({
-          success: true,
-          data: { message: 'Verified', resetToken: 'reset-token-456' },
+          data: null,
         });
       }),
       http.post(`*${endpoints.resetPassword.resetPassword}`, async ({ request }) => {
-        completePayloads.push(await request.json());
+        resetPayloads.push(await request.json());
         return HttpResponse.json({
           success: true,
-          data: { message: 'Reset complete' },
+          data: null,
         });
       }),
     );
 
+    // Step 1: Request password reset
     render(<ForgotPasswordForm />);
     await user.type(screen.getByLabelText(/student id/i), '251000001');
-    await user.click(screen.getByRole('button', { name: /send reset code/i }));
+    await user.click(screen.getByRole('button', { name: /send reset link/i }));
     expect(await screen.findByText(/check your email/i)).toBeInTheDocument();
 
+    // Step 2: User receives email with token link and resets password
     render(<ResetPasswordForm />);
-    await user.type(screen.getByLabelText(/student id/i), '251000001');
-    await user.type(screen.getByLabelText(/reset code/i), '123456');
-    await user.type(screen.getByLabelText(/new password/i), 'password123');
-    await user.type(screen.getByLabelText(/confirm password/i), 'password123');
+    await user.type(screen.getByLabelText(/new password/i), 'password123456');
+    await user.type(screen.getByLabelText(/confirm password/i), 'password123456');
     await user.click(screen.getByRole('button', { name: /reset password/i }));
 
     await waitFor(() => {
@@ -327,10 +287,9 @@ describe('Password Reset Flow Integration', () => {
     });
 
     expect(requestPayloads[0]).toEqual({ studentId: 251000001 });
-    expect(verifyPayloads[0]).toEqual({ studentId: 251000001, code: '123456' });
-    expect(completePayloads[0]).toEqual({
-      resetToken: 'reset-token-456',
-      newPassword: 'password123',
+    expect(resetPayloads[0]).toEqual({
+      token: 'test-token',
+      newPassword: 'password123456',
     });
   });
 });
