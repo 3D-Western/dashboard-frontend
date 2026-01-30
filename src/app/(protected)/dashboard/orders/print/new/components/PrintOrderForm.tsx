@@ -46,6 +46,21 @@ type MaterialOption = {
   readonly label: string;
 };
 
+const PURPOSE_OPTIONS: readonly MaterialOption[] = [
+  { value: 'casual', label: 'Casual / Recreation' },
+  { value: 'personal', label: 'Personal Project' },
+  { value: 'school', label: 'School Project' },
+  { value: 'research', label: 'Academic Research' },
+  { value: 'community', label: 'Charity / Community' },
+  { value: 'product', label: 'Product Development' },
+] as const;
+
+const DESIGN_INTENT_OPTIONS: readonly MaterialOption[] = [
+  { value: 'functional', label: 'Optimized for standard fit, practical use, and assemblies' },
+  { value: 'visual', label: 'Optimized for appearance, aesthetics, and non-functional display' },
+  { value: 'structural', label: 'Optimized for load-bearing, high-stress, or tool-like use' },
+] as const;
+
 const MATERIAL_OPTIONS: readonly MaterialOption[] = [
   { value: 'pla', label: 'PLA' },
   { value: 'abs', label: 'ABS' },
@@ -100,6 +115,8 @@ const formSchema = z.object({
     .string()
     .min(2, { message: 'Must have a description for the print request' })
     .max(200),
+  purpose: z.string().min(1, { message: 'Select a purpose' }),
+  design_intent: z.string().min(1, { message: 'Select a design intent' }),
   file: z.any().refine((f) => f instanceof File, { message: 'Please upload an STL file' }),
   material1: z.string().min(1, { message: 'Select at least one material' }),
   color1: z.string().min(1, { message: 'Select at least one color' }),
@@ -132,6 +149,8 @@ export default function NewPrintForm({ mockMode = false }: NewPrintFormProps = {
       color2: '',
       file: undefined,
       support: 'no',
+      purpose: '',
+      design_intent: '',
     },
   });
 
@@ -216,9 +235,9 @@ export default function NewPrintForm({ mockMode = false }: NewPrintFormProps = {
             name="printName"
             render={({ field }) => (
               <FormItem>
-                <FormLabel className="text-lg">Print Name</FormLabel>
+                <FormLabel className="text-lg">Project Title</FormLabel>
                 <FormControl>
-                  <Input placeholder="" {...field} />
+                  <Input placeholder="e.g. Robot Arm Gear – Revision B" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -238,10 +257,11 @@ export default function NewPrintForm({ mockMode = false }: NewPrintFormProps = {
                   <FormLabel className="text-lg">Print Description</FormLabel>
 
                   <FormDescription>
-                    If this is a part of a project involving multiple prints, please specify.*
+                    Describe what you are making (1-2 sentences).*
                   </FormDescription>
                   <FormControl>
-                    <Textarea placeholder="" maxLength={maxChars} {...field} />
+                    <Textarea placeholder="e.g. A replacement gear for a robot arm in my MME 4499 capstone project." maxLength={maxChars} {...field} />
+                    {/* AI scans this text to auto-tag course codes, domains, or project types. */}
                   </FormControl>
                   <div className="flex items-center justify-between">
                     <FormMessage />
@@ -260,6 +280,68 @@ export default function NewPrintForm({ mockMode = false }: NewPrintFormProps = {
                 </FormItem>
               );
             }}
+          />
+
+          <FormField
+              control={form.control}
+              name="purpose"
+              render={({ field }) => (
+              <FormItem>
+                <FormLabel className="text-lg">Project Purpose</FormLabel>
+                <FormDescription>
+                  What is this project primarily for?*
+                </FormDescription>
+                <FormControl>
+                  <Select
+                    value={field.value}
+                    onValueChange={(val) => {
+                      if (form.getValues('purpose') === val) {
+                        form.setValue('purpose', '');
+                      }
+                      field.onChange(val ?? '');
+                    }}
+                    defaultValue={''}
+                  >
+                    <SelectTrigger className="w-[200px]">
+                      <SelectValue placeholder="Select a purpose" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {PURPOSE_OPTIONS.map((opt) => (
+                        <SelectItem key={opt.value} value={opt.value}>
+                          {opt.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="design_intent"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel className="text-lg">Design Intent</FormLabel>
+                 <FormDescription>
+                    How would you classify this object?*
+                  </FormDescription>
+                <FormControl>
+                  <RadioGroup onValueChange={field.onChange} value={field.value ?? 'grid'}>
+                    <div className="mt-2 flex flex-col space-y-2">
+                      {DESIGN_INTENT_OPTIONS.map((option) => (
+                        <div key={option.value} className="flex items-center space-x-2">
+                          <RadioGroupItem value={option.value} id={option.value} />
+                          <label htmlFor={option.value}>{option.label}</label>
+                        </div>
+                      ))}
+                    </div>
+                  </RadioGroup>
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
           />
           <FormField
             control={form.control}
@@ -330,7 +412,6 @@ export default function NewPrintForm({ mockMode = false }: NewPrintFormProps = {
               </FormItem>
             )}
           />
-
           <FormField
             control={form.control}
             name="infill"
