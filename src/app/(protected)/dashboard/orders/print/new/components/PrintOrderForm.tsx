@@ -178,9 +178,9 @@ export default function NewPrintForm({ mockMode = false }: NewPrintFormProps = {
 
       // STEP 1: Create order with file metadata (not the file itself)
       const createOrderPayload: CreateOrderRequest = {
-          printName: values.printName,
-          description: values.description,
-          formAnswerJson: JSON.stringify({
+        printName: values.printName,
+        description: values.description,
+        formAnswerJson: JSON.stringify({
           purpose: values.purpose,
           design_intent: values.design_intent,
           contentType: file.type || 'application/sla',
@@ -258,11 +258,13 @@ export default function NewPrintForm({ mockMode = false }: NewPrintFormProps = {
                 <FormItem>
                   <FormLabel className="text-lg">Print Description</FormLabel>
 
-                  <FormDescription>
-                    Describe what you are making (1-2 sentences).*
-                  </FormDescription>
+                  <FormDescription>Describe what you are making (1-2 sentences).*</FormDescription>
                   <FormControl>
-                    <Textarea placeholder="e.g. A replacement gear for a robot arm in my MME 4499 capstone project." maxLength={maxChars} {...field} />
+                    <Textarea
+                      placeholder="e.g. A replacement gear for a robot arm in my MME 4499 capstone project."
+                      maxLength={maxChars}
+                      {...field}
+                    />
                     {/* AI scans this text to auto-tag course codes, domains, or project types. */}
                   </FormControl>
                   <div className="flex items-center justify-between">
@@ -285,14 +287,12 @@ export default function NewPrintForm({ mockMode = false }: NewPrintFormProps = {
           />
 
           <FormField
-              control={form.control}
-              name="purpose"
-              render={({ field }) => (
+            control={form.control}
+            name="purpose"
+            render={({ field }) => (
               <FormItem>
                 <FormLabel className="text-lg">Project Purpose</FormLabel>
-                <FormDescription>
-                  What is this project primarily for?*
-                </FormDescription>
+                <FormDescription>What is this project primarily for?*</FormDescription>
                 <FormControl>
                   <Select
                     value={field.value}
@@ -326,9 +326,7 @@ export default function NewPrintForm({ mockMode = false }: NewPrintFormProps = {
             render={({ field }) => (
               <FormItem>
                 <FormLabel className="text-lg">Design Intent</FormLabel>
-                 <FormDescription>
-                    How would you classify this object?*
-                  </FormDescription>
+                <FormDescription>How would you classify this object?*</FormDescription>
                 <FormControl>
                   <RadioGroup onValueChange={field.onChange} value={field.value ?? 'grid'}>
                     <div className="mt-2 flex flex-col space-y-2">

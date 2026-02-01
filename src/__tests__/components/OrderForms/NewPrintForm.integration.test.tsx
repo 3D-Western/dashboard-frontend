@@ -36,14 +36,6 @@ vi.mock('sonner', () => ({
 
 const setupUser = () => userEvent.setup({ pointerEventsCheck: 0 });
 
-const selectRadioOption = async (
-  user: ReturnType<typeof setupUser>,
-  index: number,
-) => {
-  const radios = screen.getAllByRole('radio');
-  await user.click(radios[index]);
-};
-
 const selectComboboxOption = async (
   user: ReturnType<typeof setupUser>,
   index: number,
@@ -72,8 +64,8 @@ describe('NewPrintForm Integration', () => {
       render(<NewPrintForm />);
       expect(screen.getByLabelText(/Project Title/i)).toBeInTheDocument();
       expect(screen.getByLabelText(/Print Description/i)).toBeInTheDocument();
-      expect(screen.getByLabelText(/Project Purpose/i)).toBeInTheDocument();
-      expect(screen.getByLabelText(/Design Intent/i)).toBeInTheDocument();
+      expect(screen.getByText(/Project Purpose/i)).toBeInTheDocument();
+      expect(screen.getByText(/Design Intent/i)).toBeInTheDocument();
       expect(screen.getByText(/Upload STL/i)).toBeInTheDocument();
       expect(screen.getByText(/What is the primary goal of this print/i)).toBeInTheDocument();
       expect(screen.getByText(/How strong does the print have to be/i)).toBeInTheDocument();
@@ -106,7 +98,9 @@ describe('NewPrintForm Integration', () => {
       const submitButton = screen.getByRole('button', { name: /Submit/i });
       await user.click(submitButton);
       await waitFor(() => {
-        expect(screen.getByText(/Must have a description for the print request/i)).toBeInTheDocument();
+        expect(
+          screen.getByText(/Must have a description for the print request/i),
+        ).toBeInTheDocument();
       });
     });
 
@@ -118,7 +112,9 @@ describe('NewPrintForm Integration', () => {
       const submitButton = screen.getByRole('button', { name: /Submit/i });
       await user.click(submitButton);
       await waitFor(() => {
-        expect(screen.getByText(/Must have a description for the print request/i)).toBeInTheDocument();
+        expect(
+          screen.getByText(/Must have a description for the print request/i),
+        ).toBeInTheDocument();
       });
     });
 
@@ -128,7 +124,10 @@ describe('NewPrintForm Integration', () => {
       const submitButton = screen.getByRole('button', { name: /Submit/i });
       await user.click(submitButton);
       await waitFor(() => {
-        expect(screen.getByText(/Select a purpose/i)).toBeInTheDocument();
+        // Look for error message specifically, not placeholder text
+        const errorMessages = screen.getAllByText(/Select a purpose/i);
+        const errorMessage = errorMessages.find((el) => el.closest('[data-slot="form-message"]'));
+        expect(errorMessage).toBeInTheDocument();
       });
     });
 
@@ -194,8 +193,11 @@ describe('NewPrintForm Integration', () => {
 
     it('purpose select is interactive', async () => {
       render(<NewPrintForm />);
-      const selectTrigger = screen.getByLabelText(/Project Purpose/i);
-      expect(selectTrigger).toBeInTheDocument();
+      // Get the first combobox which should be the purpose select
+      const allComboboxes = screen.getAllByRole('combobox');
+      const purposeCombobox = allComboboxes[0];
+      const purposeSpan = within(purposeCombobox).getByText('Select a purpose');
+      expect(purposeSpan).toBeInTheDocument();
     });
 
     it('design intent radio buttons work', async () => {
@@ -209,7 +211,8 @@ describe('NewPrintForm Integration', () => {
     it('goal radio buttons work', async () => {
       const user = setupUser();
       render(<NewPrintForm />);
-      const standardRadio = screen.getByLabelText(/Standard/i);
+      // Use the radio button value to be more specific
+      const standardRadio = screen.getByDisplayValue('standard');
       await user.click(standardRadio);
       expect(standardRadio).toBeChecked();
     });
@@ -253,7 +256,8 @@ describe('NewPrintForm Integration', () => {
       await user.type(nameField, 'Test Print Job');
       const descriptionField = screen.getByLabelText(/Print Description/i);
       await user.type(descriptionField, 'This is a test description');
-      const purposeTrigger = screen.getByLabelText(/Project Purpose/i);
+      // Use role-based query for combobox instead of label text
+      const purposeTrigger = screen.getAllByRole('combobox')[0];
       await user.click(purposeTrigger);
       const purposeOption = await screen.findByRole('option', { name: /Casual \/ Recreation/i });
       await user.click(purposeOption);
@@ -514,8 +518,9 @@ describe('NewPrintForm Integration', () => {
 
     it('has default support value of no', () => {
       render(<NewPrintForm />);
-      const noRadio = screen.getByLabelText(/No/i);
-      expect(noRadio).toBeChecked();
+      // Use more specific selector since there are multiple "No" options
+      const supportNoRadio = screen.getByRole('radio', { name: /No/ });
+      expect(supportNoRadio).toBeChecked();
     });
   });
 });
