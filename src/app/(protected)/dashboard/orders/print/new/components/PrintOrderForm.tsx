@@ -166,16 +166,6 @@ export default function NewPrintForm({ mockMode = false }: NewPrintFormProps = {
     try {
       const file = values.file as File;
 
-      if (mockMode) {
-        // Mock mode: simulate the entire flow
-        await new Promise((res) => setTimeout(res, 500));
-        form.reset();
-        toast.success('Print request submitted successfully');
-        router.push(Routes.orders.home);
-        router.refresh();
-        return;
-      }
-
       // STEP 1: Create order with file metadata (not the file itself)
       const createOrderPayload: CreateOrderRequest = {
         printName: values.printName,
@@ -201,8 +191,10 @@ export default function NewPrintForm({ mockMode = false }: NewPrintFormProps = {
         throw new Error('Invalid response from server: missing orderId or uploadUrl');
       }
 
-      // STEP 2: Upload file to presigned URL
-      await jobApi.uploadOrderFile(createOrderResponse.uploadUrl, file);
+      // STEP 2: Upload file to presigned URL (skip in mock mode to avoid CORS)
+      if (!mockMode) {
+        await jobApi.uploadOrderFile(createOrderResponse.uploadUrl, file);
+      }
 
       // STEP 3: Complete upload with file metadata
       const checksum = await calculateFileChecksum(file);

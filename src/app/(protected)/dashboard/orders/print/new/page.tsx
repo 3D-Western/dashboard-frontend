@@ -8,6 +8,8 @@ export const metadata: Metadata = {
 };
 
 export default function NewPrintOrderPage() {
+  const mockMode = process.env.MOCK_ENABLED === 'true';
+
   return (
     <div className="px-6 py-8">
       <PageTitle
@@ -15,7 +17,7 @@ export default function NewPrintOrderPage() {
         description="Upload your 3D model and specify your printing requirements"
       />
 
-      <PrintOrderForm />
+      <PrintOrderForm mockMode={mockMode} />
     </div>
   );
 }
