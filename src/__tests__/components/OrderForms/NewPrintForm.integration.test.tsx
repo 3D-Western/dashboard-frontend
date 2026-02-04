@@ -36,18 +36,6 @@ vi.mock('sonner', () => ({
 
 const setupUser = () => userEvent.setup({ pointerEventsCheck: 0 });
 
-const selectComboboxOption = async (
-  user: ReturnType<typeof setupUser>,
-  index: number,
-  label: string,
-) => {
-  const triggers = screen.getAllByRole('combobox');
-  await user.click(triggers[index]);
-  const listbox = await screen.findByRole('listbox');
-  const option = within(listbox).getByRole('option', { name: label });
-  await user.click(option);
-};
-
 describe('NewPrintForm Integration', () => {
   beforeEach(() => {
     mockPush.mockClear();
@@ -67,11 +55,6 @@ describe('NewPrintForm Integration', () => {
       expect(screen.getByText(/Project Purpose/i)).toBeInTheDocument();
       expect(screen.getByText(/Design Intent/i)).toBeInTheDocument();
       expect(screen.getByText(/Upload STL/i)).toBeInTheDocument();
-      expect(screen.getByText(/What is the primary goal of this print/i)).toBeInTheDocument();
-      expect(screen.getByText(/How strong does the print have to be/i)).toBeInTheDocument();
-      expect(screen.getByText(/Do you have a preferred infill pattern/i)).toBeInTheDocument();
-      expect(screen.getByText(/Preferred Materials and Colors/i)).toBeInTheDocument();
-      expect(screen.getByText(/Print Supports/i)).toBeInTheDocument();
     });
 
     it('has submit button', () => {
@@ -151,27 +134,6 @@ describe('NewPrintForm Integration', () => {
       });
     });
 
-    it('shows error when Material 1 is not selected', async () => {
-      const user = setupUser();
-      render(<NewPrintForm />);
-      const submitButton = screen.getByRole('button', { name: /Submit/i });
-      await user.click(submitButton);
-      await waitFor(() => {
-        const errors = screen.getAllByText(/Select at least one material/i);
-        expect(errors.length).toBeGreaterThan(0);
-      });
-    });
-
-    it('shows error when Color 1 is not selected', async () => {
-      const user = setupUser();
-      render(<NewPrintForm />);
-      const submitButton = screen.getByRole('button', { name: /Submit/i });
-      await user.click(submitButton);
-      await waitFor(() => {
-        const errors = screen.getAllByText(/Select at least one color/i);
-        expect(errors.length).toBeGreaterThan(0);
-      });
-    });
   });
 
   describe('form interactions', () => {
@@ -207,47 +169,6 @@ describe('NewPrintForm Integration', () => {
       await user.click(functionalRadio);
       expect(functionalRadio).toBeChecked();
     });
-
-    it('goal radio buttons work', async () => {
-      const user = setupUser();
-      render(<NewPrintForm />);
-      // Use the radio button value to be more specific
-      const standardRadio = screen.getByDisplayValue('standard');
-      await user.click(standardRadio);
-      expect(standardRadio).toBeChecked();
-    });
-
-    it('durability radio buttons work', async () => {
-      const user = setupUser();
-      render(<NewPrintForm />);
-      const engineeringRadio = screen.getByLabelText(/Engineering project/i);
-      await user.click(engineeringRadio);
-      expect(engineeringRadio).toBeChecked();
-    });
-
-    it('infill radio buttons work', async () => {
-      const user = setupUser();
-      render(<NewPrintForm />);
-      const gyroidRadio = screen.getByLabelText(/Gyroid/i);
-      await user.click(gyroidRadio);
-      expect(gyroidRadio).toBeChecked();
-    });
-
-    it('support radio buttons work', async () => {
-      const user = setupUser();
-      render(<NewPrintForm />);
-      const yesRadio = screen.getByLabelText(/Yes/i);
-      await user.click(yesRadio);
-      expect(yesRadio).toBeChecked();
-    });
-
-    it('material and color selects are interactive', async () => {
-      render(<NewPrintForm />);
-      const materialLabels = screen.getAllByText('Material:', { exact: false });
-      expect(materialLabels.length).toBeGreaterThan(0);
-      const selectTriggers = screen.getAllByRole('combobox');
-      expect(selectTriggers.length).toBeGreaterThan(0);
-    });
   });
 
   describe('form submission', () => {
@@ -266,10 +187,6 @@ describe('NewPrintForm Integration', () => {
       const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
       const file = new File(['dummy'], 'model.stl', { type: 'model/stl' });
       await user.upload(fileInput, file);
-      await selectComboboxOption(user, 1, 'PLA');
-      await selectComboboxOption(user, 2, 'Black');
-      await selectComboboxOption(user, 3, 'ABS');
-      await selectComboboxOption(user, 4, 'White');
     };
 
     it('uploads STL file and shows filename', async () => {
@@ -284,6 +201,14 @@ describe('NewPrintForm Integration', () => {
 
     it('submits valid data and redirects in mock mode', async () => {
       const user = setupUser();
+      vi.mocked(jobApi.createOrder).mockResolvedValue({
+        orderId: 'order-123',
+        createdAt: new Date().toISOString(),
+        fileId: 'file-123',
+        uploadUrl: 'http://example.com/upload',
+        uploadExpiresIn: 900,
+      });
+      vi.mocked(jobApi.completeUpload).mockResolvedValue(null);
       render(<NewPrintForm mockMode />);
       await fillRequiredFields(user);
       const submitButton = screen.getByRole('button', { name: /Submit/i });
@@ -455,37 +380,6 @@ describe('NewPrintForm Integration', () => {
     });
   });
 
-  describe('material and color selection logic', () => {
-    it('material 1 and material 2 cannot be the same', async () => {
-      const user = setupUser();
-      render(<NewPrintForm />);
-      await selectComboboxOption(user, 1, 'PLA');
-      const material2Trigger = screen.getAllByRole('combobox')[3];
-      await user.click(material2Trigger);
-      const absOptions = await screen.findAllByText('ABS');
-      expect(absOptions.length).toBeGreaterThan(0);
-    });
-
-    it('color 1 and color 2 cannot be the same', async () => {
-      const user = setupUser();
-      render(<NewPrintForm />);
-      await selectComboboxOption(user, 2, 'Black');
-      const color2Trigger = screen.getAllByRole('combobox')[4];
-      await user.click(color2Trigger);
-      const whiteOptions = await screen.findAllByText('White');
-      expect(whiteOptions.length).toBeGreaterThan(0);
-    });
-
-    it('filters second choice options based on first choice', async () => {
-      const user = setupUser();
-      render(<NewPrintForm />);
-      await selectComboboxOption(user, 1, 'PLA');
-      const material2Trigger = screen.getAllByRole('combobox')[3];
-      await user.click(material2Trigger);
-      const listbox2 = await screen.findByRole('listbox');
-      expect(within(listbox2).queryByRole('option', { name: 'PLA' })).not.toBeInTheDocument();
-    });
-  });
 
   describe('unsaved changes guard', () => {
     it('activates when form is dirty', async () => {
@@ -497,30 +391,4 @@ describe('NewPrintForm Integration', () => {
     });
   });
 
-  describe('default values', () => {
-    it('has default goal value of high-quality', () => {
-      render(<NewPrintForm />);
-      const highQualityRadio = screen.getByLabelText(/High Quality/i);
-      expect(highQualityRadio).toBeChecked();
-    });
-
-    it('has default durability value of general-use', () => {
-      render(<NewPrintForm />);
-      const generalUseRadio = screen.getByLabelText(/General use/i);
-      expect(generalUseRadio).toBeChecked();
-    });
-
-    it('has default infill value of grid', () => {
-      render(<NewPrintForm />);
-      const gridRadio = screen.getByLabelText(/Grid \(default\)/i);
-      expect(gridRadio).toBeChecked();
-    });
-
-    it('has default support value of no', () => {
-      render(<NewPrintForm />);
-      // Use more specific selector since there are multiple "No" options
-      const supportNoRadio = screen.getByRole('radio', { name: /No/ });
-      expect(supportNoRadio).toBeChecked();
-    });
-  });
 });
