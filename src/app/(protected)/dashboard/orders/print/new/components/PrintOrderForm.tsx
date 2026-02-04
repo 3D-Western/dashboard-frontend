@@ -54,7 +54,6 @@ const DESIGN_INTENT_OPTIONS: readonly MaterialOption[] = [
   { value: 'structural', label: 'Optimized for load-bearing, high-stress, or tool-like use' },
 ] as const;
 
-
 const formSchema = z.object({
   printName: z.string().min(1, { message: 'Must have a name for the print request' }).max(30),
   description: z

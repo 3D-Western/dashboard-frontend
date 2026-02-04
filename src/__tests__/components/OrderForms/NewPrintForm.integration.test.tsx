@@ -133,7 +133,6 @@ describe('NewPrintForm Integration', () => {
         expect(screen.getByText(/Please upload an STL file/i)).toBeInTheDocument();
       });
     });
-
   });
 
   describe('form interactions', () => {
@@ -380,7 +379,6 @@ describe('NewPrintForm Integration', () => {
     });
   });
 
-
   describe('unsaved changes guard', () => {
     it('activates when form is dirty', async () => {
       const user = setupUser();
@@ -390,5 +388,4 @@ describe('NewPrintForm Integration', () => {
       expect(nameField).toHaveValue('Test');
     });
   });
-
 });
