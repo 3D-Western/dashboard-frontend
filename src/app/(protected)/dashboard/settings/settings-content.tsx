@@ -8,6 +8,7 @@ import { toast } from 'sonner';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Checkbox } from '@/components/ui/checkbox';
 import {
   Form,
   FormControl,
@@ -15,6 +16,7 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
+  FormDescription,
 } from '@/components/ui/form';
 import {
   Select,
@@ -27,6 +29,7 @@ import { EXPERIENCE_LEVEL_OPTIONS, EXPERIENCE_LEVELS } from '@/constants/experie
 import { useUser } from '@/providers/user-provider';
 import { userApi } from '@/api/client/user';
 import { ApiError } from '@/api/client/errors';
+import { useRouter } from 'next/navigation';
 
 // Password change form schema
 const passwordSchema = z
@@ -39,6 +42,7 @@ const passwordSchema = z
       .regex(/[a-z]/, 'Password must contain at least one lowercase letter')
       .regex(/[0-9]/, 'Password must contain at least one number'),
     confirmPassword: z.string().min(1, 'Please confirm your password'),
+    signOutAllSessions: z.boolean().default(false),
   })
   .refine((data) => data.newPassword === data.confirmPassword, {
     message: "Passwords don't match",
@@ -59,6 +63,7 @@ type ExperienceLevelFormData = z.infer<typeof experienceLevelSchema>;
 
 export function SettingsContent() {
   const user = useUser();
+  const router = useRouter();
   const [isPasswordLoading, setIsPasswordLoading] = useState(false);
   const [isExperienceLoading, setIsExperienceLoading] = useState(false);
 
@@ -68,6 +73,7 @@ export function SettingsContent() {
       currentPassword: '',
       newPassword: '',
       confirmPassword: '',
+      signOutAllSessions: false,
     },
   });
 
@@ -86,10 +92,16 @@ export function SettingsContent() {
         values.currentPassword,
         values.newPassword,
         values.confirmPassword,
+        values.signOutAllSessions,
       );
 
       toast.success('Password updated successfully');
       passwordForm.reset();
+
+      // If sign out all sessions was checked, redirect to login
+      if (values.signOutAllSessions) {
+        router.push('/login');
+      }
     } catch (error) {
       console.error('Password update error', error);
 
@@ -182,6 +194,25 @@ export function SettingsContent() {
                         <Input type="password" placeholder="Confirm new password" {...field} />
                       </FormControl>
                       <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={passwordForm.control}
+                  name="signOutAllSessions"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+                      <FormControl>
+                        <Checkbox checked={field.value} onCheckedChange={field.onChange} />
+                      </FormControl>
+                      <div className="space-y-1 leading-none">
+                        <FormLabel>Sign out all active sessions</FormLabel>
+                        <FormDescription>
+                          After changing your password, you will be signed out from all devices and
+                          redirected to the login page.
+                        </FormDescription>
+                      </div>
                     </FormItem>
                   )}
                 />

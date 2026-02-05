@@ -94,13 +94,19 @@ export const userApi = {
     currentPassword: string,
     newPassword: string,
     confirmNewPassword: string,
+    signOutAllSessions?: boolean,
     options?: RequestInit,
   ) => {
     const url = `${getBaseUrl()}${endpoints.users.changePassword}`;
 
     return apiRequest<{ message: string }>(url, {
       method: 'POST',
-      body: JSON.stringify({ currentPassword, newPassword, confirmNewPassword }),
+      body: JSON.stringify({
+        currentPassword,
+        newPassword,
+        confirmNewPassword,
+        signOutAllSessions: signOutAllSessions ?? false,
+      }),
       credentials: 'include',
       ...options,
     });

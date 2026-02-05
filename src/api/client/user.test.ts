@@ -925,6 +925,29 @@ describe('userApi', () => {
         currentPassword: 'oldPassword123',
         newPassword: 'newPassword456',
         confirmNewPassword: 'newPassword456',
+        signOutAllSessions: false,
+      });
+    });
+
+    it('sends signOutAllSessions when provided', async () => {
+      let capturedBody: unknown = null;
+      mockServer.use(
+        http.post('*' + endpoints.users.changePassword, async ({ request }) => {
+          capturedBody = await request.json();
+          return HttpResponse.json({
+            success: true,
+            data: { message: 'Password updated successfully' },
+          });
+        }),
+      );
+
+      await userApi.changePassword('oldPassword123', 'newPassword456', 'newPassword456', true);
+
+      expect(capturedBody).toEqual({
+        currentPassword: 'oldPassword123',
+        newPassword: 'newPassword456',
+        confirmNewPassword: 'newPassword456',
+        signOutAllSessions: true,
       });
     });
 
@@ -1081,7 +1104,7 @@ describe('userApi', () => {
         }),
       );
 
-      await userApi.changePassword('oldPassword123', 'newPassword456', 'newPassword456', {
+      await userApi.changePassword('oldPassword123', 'newPassword456', 'newPassword456', false, {
         headers: { 'X-Custom-Header': 'test' },
       });
 
