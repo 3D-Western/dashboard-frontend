@@ -925,11 +925,11 @@ describe('userApi', () => {
         currentPassword: 'oldPassword123',
         newPassword: 'newPassword456',
         confirmNewPassword: 'newPassword456',
-        signOutAllSessions: false,
+        invalidateAllSessions: false,
       });
     });
 
-    it('sends signOutAllSessions when provided', async () => {
+    it('sends invalidateAllSessions when provided', async () => {
       let capturedBody: unknown = null;
       mockServer.use(
         http.post('*' + endpoints.users.changePassword, async ({ request }) => {
@@ -947,7 +947,7 @@ describe('userApi', () => {
         currentPassword: 'oldPassword123',
         newPassword: 'newPassword456',
         confirmNewPassword: 'newPassword456',
-        signOutAllSessions: true,
+        invalidateAllSessions: true,
       });
     });
 

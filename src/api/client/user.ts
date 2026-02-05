@@ -94,7 +94,7 @@ export const userApi = {
     currentPassword: string,
     newPassword: string,
     confirmNewPassword: string,
-    signOutAllSessions?: boolean,
+    invalidateAllSessions?: boolean,
     options?: RequestInit,
   ) => {
     const url = `${getBaseUrl()}${endpoints.users.changePassword}`;
@@ -105,7 +105,7 @@ export const userApi = {
         currentPassword,
         newPassword,
         confirmNewPassword,
-        signOutAllSessions: signOutAllSessions ?? false,
+        invalidateAllSessions: invalidateAllSessions ?? false,
       }),
       credentials: 'include',
       ...options,

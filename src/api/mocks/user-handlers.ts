@@ -230,12 +230,12 @@ export const userHandlers = [
       return createInvalidSessionResponse();
     }
 
-    const { currentPassword, newPassword, confirmNewPassword, signOutAllSessions } =
+    const { currentPassword, newPassword, confirmNewPassword, invalidateAllSessions } =
       (await request.json()) as {
         currentPassword: string;
         newPassword: string;
         confirmNewPassword: string;
-        signOutAllSessions?: boolean;
+        invalidateAllSessions?: boolean;
       };
 
     // Validate current password
@@ -286,7 +286,7 @@ export const userHandlers = [
     user.password = newPassword;
 
     console.log(
-      `[MSW Mock] Password changed successfully for student ${user.studentId}${signOutAllSessions ? ' (signing out all sessions)' : ''}`,
+      `[MSW Mock] Password changed successfully for student ${user.studentId}${invalidateAllSessions ? ' (signing out all sessions)' : ''}`,
     );
 
     return HttpResponse.json(
