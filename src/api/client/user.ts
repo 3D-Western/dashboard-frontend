@@ -1,7 +1,7 @@
 import { User } from '@/types/user';
 import { PaginatedResponse } from '@/types/common';
 import { PrintJobListResponse, UserListResponseRaw, UserResponse } from '../types';
-import { CurrentUserOrderListParams, UserListParams } from '@/types/common';
+import { CurrentUserJobListParams, UserListParams } from '@/types/common';
 import { apiRequest } from './base';
 import { endpoints } from './endpoints';
 import { getBaseUrl } from './utils';
@@ -61,7 +61,7 @@ export const userApi = {
     return transformUserResponse(response);
   },
 
-  getCurrentUserOrders: async (params?: CurrentUserOrderListParams, options?: RequestInit) => {
+  getCurrentUserJobs: async (params?: CurrentUserJobListParams, options?: RequestInit) => {
     const searchParams = new URLSearchParams();
 
     if (params?.status !== undefined) {

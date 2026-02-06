@@ -14,7 +14,7 @@ const USER_STATUS_OPTIONS: PrintJobStatus[] = [
   'Failed',
 ];
 
-export function OrderPageFilters() {
+export function JobPageFilters() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -67,8 +67,8 @@ export function OrderPageFilters() {
       <SearchFilter
         value={currentSearch}
         onChange={handleSearchChange}
-        placeholder="Search orders..."
-        label="Search orders"
+        placeholder="Search jobs..."
+        label="Search jobs"
       />
     </div>
   );

@@ -1,5 +1,5 @@
 import { setupServer } from 'msw/node';
-import { orderHandlers } from './print-job-handlers';
+import { jobHandlers } from './print-job-handlers';
 import { sessionHandlers } from './session-handlers';
 import { passwordResetHandlers } from './password-reset-handlers';
 import { fileHandlers } from './file-handlers';
@@ -14,7 +14,7 @@ FileSystemUtils.initTmpDirectory();
 export const mockServer = setupServer(
   ...sessionHandlers,
   ...userHandlers,
-  ...orderHandlers,
+  ...jobHandlers,
   ...passwordResetHandlers,
   ...fileHandlers,
   ...mfaHandlers,

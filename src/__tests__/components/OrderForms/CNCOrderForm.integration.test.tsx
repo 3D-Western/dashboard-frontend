@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import CNCOrderForm from '@/app/(protected)/dashboard/orders/cnc/new/components/CNCOrderForm';
+import CNCOrderForm from '@/app/(protected)/dashboard/jobs/cnc/new/components/CNCJobForm';
 
 // Mock next/navigation
 const mockPush = vi.fn();

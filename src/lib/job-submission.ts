@@ -1,28 +1,28 @@
 import { endpoints } from '@/api/client/endpoints';
 
-export interface OrderSubmissionData {
+export interface JobSubmissionData {
   name: string;
   description: string;
   material: string;
   file?: File;
 }
 
-export interface OrderSubmissionOptions {
+export interface JobSubmissionOptions {
   category: string;
   successRedirectPath?: string;
   errorMessagePrefix?: string;
 }
 
-export async function submitOrder(
-  data: OrderSubmissionData,
-  options: OrderSubmissionOptions,
+export async function submitJob(
+  data: JobSubmissionData,
+  options: JobSubmissionOptions,
   router: { push: (path: string) => void; refresh?: () => void },
 ) {
   const { file } = data;
   const {
     category,
     successRedirectPath = '/dashboard',
-    errorMessagePrefix = 'Order submit failed',
+    errorMessagePrefix = 'Job submit failed',
   } = options;
 
   let fileId: string | null = null;
@@ -55,7 +55,7 @@ export async function submitOrder(
   }
 
   const result = await submitRes.json();
-  console.log(`MOCK: Created ${category} order`, result.data?.order?.id);
+  console.log(`MOCK: Created ${category} job`, result.data?.order?.id);
 
   router.push(successRedirectPath);
   if (typeof router.refresh === 'function') {

@@ -544,7 +544,7 @@ describe('userApi', () => {
     });
   });
 
-  describe('getCurrentUserOrders', () => {
+  describe('getCurrentUserJobs', () => {
     it('returns paginated print job list for current user successfully', async () => {
       const mockJobs = [
         { id: '1', name: 'Job 1', status: 'pending' },
@@ -572,7 +572,7 @@ describe('userApi', () => {
         }),
       );
 
-      const result = await userApi.getCurrentUserOrders();
+      const result = await userApi.getCurrentUserJobs();
 
       expect(result).toEqual(mockResponse);
       expect(result.data).toHaveLength(2);
@@ -601,7 +601,7 @@ describe('userApi', () => {
         }),
       );
 
-      await userApi.getCurrentUserOrders({ status: 'completed' });
+      await userApi.getCurrentUserJobs({ status: 'completed' });
 
       expect(capturedUrl).toContain('status=completed');
     });
@@ -629,7 +629,7 @@ describe('userApi', () => {
         }),
       );
 
-      await userApi.getCurrentUserOrders({ search: 'test job' });
+      await userApi.getCurrentUserJobs({ search: 'test job' });
 
       expect(capturedUrl).toContain('search=test+job');
     });
@@ -657,7 +657,7 @@ describe('userApi', () => {
         }),
       );
 
-      await userApi.getCurrentUserOrders({ page: 2 });
+      await userApi.getCurrentUserJobs({ page: 2 });
 
       expect(capturedUrl).toContain('page=2');
     });
@@ -685,7 +685,7 @@ describe('userApi', () => {
         }),
       );
 
-      await userApi.getCurrentUserOrders({ pageSize: 25 });
+      await userApi.getCurrentUserJobs({ pageSize: 25 });
 
       expect(capturedUrl).toContain('pageSize=25');
     });
@@ -713,7 +713,7 @@ describe('userApi', () => {
         }),
       );
 
-      await userApi.getCurrentUserOrders({ snapshotCreatedBefore: '2024-01-01T00:00:00Z' });
+      await userApi.getCurrentUserJobs({ snapshotCreatedBefore: '2024-01-01T00:00:00Z' });
 
       expect(capturedUrl).toContain('snapshotCreatedBefore=2024-01-01T00%3A00%3A00Z');
     });
@@ -741,7 +741,7 @@ describe('userApi', () => {
         }),
       );
 
-      await userApi.getCurrentUserOrders({
+      await userApi.getCurrentUserJobs({
         status: 'pending',
         search: 'job',
         page: 2,
@@ -777,7 +777,7 @@ describe('userApi', () => {
         }),
       );
 
-      await userApi.getCurrentUserOrders({ page: 1 });
+      await userApi.getCurrentUserJobs({ page: 1 });
 
       expect(capturedUrl).toContain('page=1');
       expect(capturedUrl).not.toContain('status=');
@@ -812,7 +812,7 @@ describe('userApi', () => {
         }),
       );
 
-      await userApi.getCurrentUserOrders();
+      await userApi.getCurrentUserJobs();
 
       expect(capturedCredentials).toBe('include');
 
@@ -832,7 +832,7 @@ describe('userApi', () => {
         }),
       );
 
-      await expect(userApi.getCurrentUserOrders()).rejects.toMatchObject({
+      await expect(userApi.getCurrentUserJobs()).rejects.toMatchObject({
         code: ErrorCodes.FORBIDDEN,
       });
     });
@@ -850,7 +850,7 @@ describe('userApi', () => {
         }),
       );
 
-      await expect(userApi.getCurrentUserOrders()).rejects.toMatchObject({
+      await expect(userApi.getCurrentUserJobs()).rejects.toMatchObject({
         code: ErrorCodes.REQUEST_FAILED,
       });
     });
@@ -878,7 +878,7 @@ describe('userApi', () => {
         }),
       );
 
-      await userApi.getCurrentUserOrders(undefined, {
+      await userApi.getCurrentUserJobs(undefined, {
         headers: { 'X-Custom-Header': 'test' },
       });
 

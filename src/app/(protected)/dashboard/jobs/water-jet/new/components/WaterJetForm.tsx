@@ -2,6 +2,7 @@
 
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
+import { FileDropZone } from '@/components/manufacturing/FileDropZone';
 import { Loader2 } from 'lucide-react';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -26,8 +27,7 @@ import {
 } from '@/components/ui/select';
 import { UnsavedChangesGuard } from '@/components/ui/unsaved-changes-guard';
 import { toast } from 'sonner';
-import { FileDropZone } from '@/components/manufacturing/FileDropZone';
-import { submitOrder } from '@/lib/order-submission';
+import { submitJob } from '@/lib/job-submission';
 import { Routes } from '@/lib/routes';
 
 // Type definitions for form options
@@ -36,33 +36,39 @@ type MaterialOption = {
   readonly label: string;
 };
 
-const CNC_MATERIALS: readonly MaterialOption[] = [
-  { value: 'aluminum', label: 'Aluminum' },
+const WATERJET_MATERIALS: readonly MaterialOption[] = [
   { value: 'steel', label: 'Steel' },
+  { value: 'stainless-steel', label: 'Stainless Steel' },
+  { value: 'aluminum', label: 'Aluminum' },
   { value: 'brass', label: 'Brass' },
   { value: 'copper', label: 'Copper' },
-  { value: 'plastic', label: 'Plastic (Delrin/Acetal)' },
-  { value: 'wood', label: 'Wood' },
+  { value: 'titanium', label: 'Titanium' },
+  { value: 'stone', label: 'Stone/Marble' },
+  { value: 'glass', label: 'Glass' },
 ] as const;
 
-const CNC_FILE_TYPES = {
+const WATERJET_FILE_TYPES = {
   accept: {
-    'model/stl': ['.stl'],
-    'application/sla': ['.stl'],
-    'application/octet-stream': ['.stl'],
+    'application/dxf': ['.dxf'],
+    'application/illustrator': ['.ai'],
+    'image/svg+xml': ['.svg'],
+    'application/dwg': ['.dwg'],
+    'application/acad': ['.dwg'],
   },
-  description: 'STL files only',
-  validation: 'Please upload an STL file',
+  description: 'DXF, AI, SVG, or DWG files',
+  validation: 'Please upload a DXF, AI, SVG, or DWG file',
 };
 
-export default function CNCOrderForm() {
+export default function WaterJetForm() {
   const router = useRouter();
 
   const formSchema = z.object({
     name: z.string().min(1, { message: 'Must have a name for the request' }).max(50),
     description: z.string().min(2, { message: 'Must have a description for the request' }).max(500),
     material: z.string().min(1, { message: 'Please select a material' }),
-    file: z.any().refine((f) => f instanceof File, { message: 'Please upload an STL file' }),
+    file: z
+      .any()
+      .refine((f) => f instanceof File, { message: 'Please upload a DXF, AI, SVG, or DWG file' }),
   });
 
   const form = useForm<z.infer<typeof formSchema>>({
@@ -81,12 +87,12 @@ export default function CNCOrderForm() {
     try {
       // TODO: Enable actual submission when backend is ready
       // For now, show success message and redirect to orders page
-      toast.success('CNC order submission will be available soon');
-      router.push(Routes.orders.home);
+      toast.success('Water jet order submission will be available soon');
+      router.push(Routes.jobs.home);
       return;
 
       // Actual submission logic (to be enabled when backend is ready)
-      await submitOrder(
+      await submitJob(
         {
           name: values.name,
           description: values.description,
@@ -94,14 +100,16 @@ export default function CNCOrderForm() {
           file: values.file as File,
         },
         {
-          category: 'cnc',
-          successRedirectPath: Routes.orders.home,
-          errorMessagePrefix: 'CNC order submit failed',
+          category: 'water-jet',
+          successRedirectPath: Routes.jobs.home,
+          errorMessagePrefix: 'Water jet order submit failed',
         },
         router,
       );
     } catch (err) {
-      toast.error('Failed to submit CNC request. ' + (err instanceof Error ? err.message : ''));
+      toast.error(
+        'Failed to submit water jet request. ' + (err instanceof Error ? err.message : ''),
+      );
     }
   }
 
@@ -138,7 +146,7 @@ export default function CNCOrderForm() {
                 <FormItem>
                   <FormLabel className="text-lg">Description</FormLabel>
                   <FormDescription>
-                    Describe your CNC requirements, dimensions, tolerances, etc.
+                    Describe your water jet cutting requirements, dimensions, thickness, etc.
                   </FormDescription>
                   <FormControl>
                     <Textarea placeholder="" maxLength={maxChars} {...field} />
@@ -169,14 +177,16 @@ export default function CNCOrderForm() {
             render={({ field }) => (
               <FormItem>
                 <FormLabel className="text-lg">Preferred Material</FormLabel>
-                <FormDescription>Select your preferred material for CNC machining</FormDescription>
+                <FormDescription>
+                  Select your preferred material for water jet cutting
+                </FormDescription>
                 <FormControl>
                   <Select value={field.value} onValueChange={field.onChange}>
                     <SelectTrigger>
                       <SelectValue placeholder="Select a material" />
                     </SelectTrigger>
                     <SelectContent>
-                      {CNC_MATERIALS.map((material) => (
+                      {WATERJET_MATERIALS.map((material) => (
                         <SelectItem key={material.value} value={material.value}>
                           {material.label}
                         </SelectItem>
@@ -197,11 +207,11 @@ export default function CNCOrderForm() {
               <FormItem>
                 <FormLabel className="text-lg">Design File</FormLabel>
                 <FormDescription>
-                  {CNC_FILE_TYPES.description} - {CNC_FILE_TYPES.validation}
+                  {WATERJET_FILE_TYPES.description} - {WATERJET_FILE_TYPES.validation}
                 </FormDescription>
                 <FormControl>
                   <FileDropZone
-                    accept={CNC_FILE_TYPES.accept}
+                    accept={WATERJET_FILE_TYPES.accept}
                     onFileAccepted={(f) => {
                       field.onChange(f ?? undefined);
                     }}

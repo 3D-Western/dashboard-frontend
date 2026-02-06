@@ -17,7 +17,7 @@ const ADMIN_STATUS_OPTIONS: PrintJobStatus[] = [
   'Failed',
 ];
 
-export function AdminOrderFilters() {
+export function AdminJobFilters() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -70,8 +70,8 @@ export function AdminOrderFilters() {
       <SearchFilter
         value={currentSearch}
         onChange={handleSearchChange}
-        placeholder="Search orders..."
-        label="Search orders"
+        placeholder="Search jobs..."
+        label="Search jobs"
       />
     </div>
   );

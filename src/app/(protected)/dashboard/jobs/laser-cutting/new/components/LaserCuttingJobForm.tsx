@@ -27,7 +27,7 @@ import {
 import { UnsavedChangesGuard } from '@/components/ui/unsaved-changes-guard';
 import { toast } from 'sonner';
 import { FileDropZone } from '@/components/manufacturing/FileDropZone';
-import { submitOrder } from '@/lib/order-submission';
+import { submitJob } from '@/lib/job-submission';
 import { Routes } from '@/lib/routes';
 
 // Type definitions for form options
@@ -87,11 +87,11 @@ export default function LaserCuttingOrderForm() {
       // TODO: Enable actual submission when backend is ready
       // For now, show success message and redirect to orders page
       toast.success('Laser cutting order submission will be available soon');
-      router.push(Routes.orders.home);
+      router.push(Routes.jobs.home);
       return;
 
       // Actual submission logic (to be enabled when backend is ready)
-      await submitOrder(
+      await submitJob(
         {
           name: values.name,
           description: values.description,
@@ -100,7 +100,7 @@ export default function LaserCuttingOrderForm() {
         },
         {
           category: 'laser-cutting',
-          successRedirectPath: Routes.orders.home,
+          successRedirectPath: Routes.jobs.home,
           errorMessagePrefix: 'Laser cutting order submit failed',
         },
         router,

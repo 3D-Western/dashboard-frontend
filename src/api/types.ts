@@ -56,14 +56,14 @@ export interface VerifyEmailResponse {
   message: string;
 }
 
-export interface CreateOrderRequest {
+export interface CreateJobRequest {
   // Required fields
   printName: string;
   description: string;
   formAnswerJson: string;
 }
 
-export interface CreateOrderResponse {
+export interface CreateJobResponse {
   orderId: string;
   createdAt: string;
   fileId: string;

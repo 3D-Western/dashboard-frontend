@@ -1,18 +1,18 @@
 import { PrintJob, PrintJobStatus } from '@/types/jobs';
 import {
-  CreateOrderRequest,
-  CreateOrderResponse,
+  CreateJobRequest,
+  CreateJobResponse,
   CompleteUploadRequest,
   RetryUploadResponse,
   PrintJobListResponse,
 } from '../types';
-import { OrderListParams } from '@/types/common';
+import { JobListParams } from '@/types/common';
 import { apiRequest } from './base';
 import { endpoints } from './endpoints';
 import { getBaseUrl } from './utils';
 
 export const jobApi = {
-  listAllJobs: async (params?: OrderListParams, options?: RequestInit) => {
+  listAllJobs: async (params?: JobListParams, options?: RequestInit) => {
     const searchParams = new URLSearchParams();
 
     if (params?.userId !== undefined) {
@@ -70,15 +70,15 @@ export const jobApi = {
       ...options,
     });
   },
-  createOrder: async (payload: CreateOrderRequest, options?: RequestInit) => {
-    return apiRequest<CreateOrderResponse>(`${getBaseUrl()}${endpoints.orders.create}`, {
+  createJob: async (payload: CreateJobRequest, options?: RequestInit) => {
+    return apiRequest<CreateJobResponse>(`${getBaseUrl()}${endpoints.orders.create}`, {
       method: 'POST',
       credentials: 'include',
       body: JSON.stringify(payload),
       ...options,
     });
   },
-  uploadOrderFile: async (uploadUrl: string, file: File, options?: RequestInit) => {
+  uploadJobFile: async (uploadUrl: string, file: File, options?: RequestInit) => {
     const response = await fetch(uploadUrl, {
       method: 'PUT',
       body: file,
@@ -95,12 +95,8 @@ export const jobApi = {
 
     return response;
   },
-  completeUpload: async (
-    orderId: string,
-    payload: CompleteUploadRequest,
-    options?: RequestInit,
-  ) => {
-    return apiRequest<null>(`${getBaseUrl()}${endpoints.orders.completeUpload(orderId)}`, {
+  completeUpload: async (jobId: string, payload: CompleteUploadRequest, options?: RequestInit) => {
+    return apiRequest<null>(`${getBaseUrl()}${endpoints.orders.completeUpload(jobId)}`, {
       method: 'POST',
       credentials: 'include',
       body: JSON.stringify(payload),
@@ -108,9 +104,9 @@ export const jobApi = {
     });
   },
 
-  retryUpload: async (orderId: string, options?: RequestInit) => {
+  retryUpload: async (jobId: string, options?: RequestInit) => {
     return apiRequest<RetryUploadResponse>(
-      `${getBaseUrl()}${endpoints.orders.retryUpload(orderId)}`,
+      `${getBaseUrl()}${endpoints.orders.retryUpload(jobId)}`,
       {
         method: 'POST',
         credentials: 'include',

@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import LaserCuttingOrderForm from '@/app/(protected)/dashboard/orders/laser-cutting/new/components/LaserCuttingOrderForm';
+import LaserCuttingOrderForm from '@/app/(protected)/dashboard/jobs/laser-cutting/new/components/LaserCuttingJobForm';
 import { toast } from 'sonner';
 
 // Mock next/navigation

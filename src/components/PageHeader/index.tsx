@@ -5,16 +5,16 @@ import { usePathname } from 'next/navigation';
 
 const pageTitles: Record<string, string> = {
   [Routes.dashboard]: 'Dashboard',
-  [Routes.orders.home]: 'My Orders',
-  [Routes.orders.newOrder]: 'Create New Order',
-  [Routes.orders.newPrintOrder]: 'Create 3D Print Order',
-  [Routes.orders.newCncOrder]: 'Create CNC Machining Order',
-  [Routes.orders.newLaserCuttingOrder]: 'Create Laser Cutting Order',
-  [Routes.orders.newWaterJetOrder]: 'Create Water Jet Cutting Order',
+  [Routes.jobs.home]: 'My Jobs',
+  [Routes.jobs.newJob]: 'Create New Job',
+  [Routes.jobs.newPrintJob]: 'Create 3D Print Job',
+  [Routes.jobs.newCncJob]: 'Create CNC Machining Job',
+  [Routes.jobs.newLaserCuttingJob]: 'Create Laser Cutting Job',
+  [Routes.jobs.newWaterJetJob]: 'Create Water Jet Cutting Job',
   [Routes.dashboardUserSettings]: 'Settings',
   ['/admin']: 'Admin Dashboard',
   [Routes.adminUsersManagement]: 'User Management',
-  [Routes.adminOrdersManagement]: 'Order Management',
+  [Routes.adminJobsManagement]: 'Job Management',
   [Routes.adminInvitationManagement]: 'Invitation Management',
 };
 

@@ -37,10 +37,10 @@ export interface BasePaginationParams {
 }
 
 /**
- * Order list query parameters
- * Used for fetching paginated list of orders
+ * Job list query parameters
+ * Used for fetching paginated list of jobs
  */
-export interface OrderListParams extends BasePaginationParams {
+export interface JobListParams extends BasePaginationParams {
   userId?: number;
   status?: string;
   search?: string;
@@ -57,7 +57,7 @@ export interface UserListParams extends BasePaginationParams {
   experienceLevel?: string;
 }
 
-export interface CurrentUserOrderListParams extends BasePaginationParams {
+export interface CurrentUserJobListParams extends BasePaginationParams {
   status?: string;
   search?: string;
 }

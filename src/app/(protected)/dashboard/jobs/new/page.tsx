@@ -7,18 +7,18 @@ import { Routes } from '@/lib/routes';
 import PageTitle from '@/components/PageTitle';
 
 export const metadata: Metadata = {
-  title: 'New Order',
+  title: 'New Job',
   description: 'Choose your manufacturing service',
 };
 
-export default function NewOrderPage() {
-  const orderTypes = [
+export default function NewJobPage() {
+  const jobTypes = [
     {
       type: 'print',
       title: '3D Printing',
       description: 'Additive manufacturing with various materials',
       icon: Printer,
-      href: Routes.orders.newPrintOrder,
+      href: Routes.jobs.newPrintJob,
       color: 'blue',
       disabled: false,
       features: [
@@ -33,7 +33,7 @@ export default function NewOrderPage() {
       title: 'CNC Machining',
       description: 'Precision subtractive manufacturing',
       icon: Wrench,
-      href: Routes.orders.newCncOrder,
+      href: Routes.jobs.newCncJob,
       disabled: true,
       color: 'green',
       features: ['Metal & plastic materials', 'High precision', 'Strong parts', 'Tight tolerances'],
@@ -43,7 +43,7 @@ export default function NewOrderPage() {
       title: 'Laser Cutting',
       description: 'Precise cutting of sheet materials',
       icon: Zap,
-      href: Routes.orders.newLaserCuttingOrder,
+      href: Routes.jobs.newLaserCuttingJob,
       disabled: true,
       color: 'orange',
       features: ['Wood, acrylic, cardboard', '2D designs', 'Clean edges', 'Fast turnaround'],
@@ -53,7 +53,7 @@ export default function NewOrderPage() {
       title: 'Water Jet Cutting',
       description: 'High-pressure cutting for thick materials',
       icon: Droplet,
-      href: Routes.orders.newWaterJetOrder,
+      href: Routes.jobs.newWaterJetJob,
       disabled: true,
       color: 'cyan',
       features: ['Thick metals & stone', 'No heat-affected zone', 'Very precise', 'Any thickness'],
@@ -76,33 +76,33 @@ export default function NewOrderPage() {
     <div className="container mx-auto px-4 py-8">
       <div className="text-center">
         <PageTitle
-          title="Create New Order"
+          title="Create New Job"
           description="Choose the manufacturing service that best fits your project needs"
         />
       </div>
 
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-2">
-        {orderTypes.map((orderType) => {
-          const Icon = orderType.icon;
+        {jobTypes.map((jobType) => {
+          const Icon = jobType.icon;
           return (
             <Card
-              key={orderType.type}
+              key={jobType.type}
               className="group transition-all duration-200 hover:scale-[1.02] hover:shadow-lg"
             >
               <CardHeader className="text-center">
                 <div
-                  className={`mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full ${getColorClasses(orderType.color)}`}
+                  className={`mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full ${getColorClasses(jobType.color)}`}
                 >
                   <Icon className="h-8 w-8" />
                 </div>
-                <CardTitle className="text-xl">{orderType.title}</CardTitle>
-                <CardDescription className="text-sm">{orderType.description}</CardDescription>
+                <CardTitle className="text-xl">{jobType.title}</CardTitle>
+                <CardDescription className="text-sm">{jobType.description}</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="space-y-2">
                   <h4 className="text-sm font-medium">Features:</h4>
                   <ul className="space-y-1 text-xs text-muted-foreground">
-                    {orderType.features.map((feature, index) => (
+                    {jobType.features.map((feature, index) => (
                       <li key={index} className="flex items-center">
                         <div className="mr-2 h-1 w-1 rounded-full bg-current"></div>
                         {feature}
@@ -110,13 +110,13 @@ export default function NewOrderPage() {
                     ))}
                   </ul>
                 </div>
-                {orderType.disabled ? (
+                {jobType.disabled ? (
                   <Button className="w-full" size="sm" disabled>
-                    Create {orderType.title} Order
+                    Create {jobType.title} Job
                   </Button>
                 ) : (
                   <Button asChild className="w-full" size="sm">
-                    <Link href={orderType.href}>Create {orderType.title} Order</Link>
+                    <Link href={jobType.href}>Create {jobType.title} Job</Link>
                   </Button>
                 )}
               </CardContent>

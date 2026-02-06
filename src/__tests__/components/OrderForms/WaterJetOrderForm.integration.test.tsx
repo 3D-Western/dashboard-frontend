@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import WaterJetForm from '@/app/(protected)/dashboard/orders/water-jet/new/components/WaterJetForm';
+import WaterJetForm from '@/app/(protected)/dashboard/jobs/water-jet/new/components/WaterJetForm';
 import { toast } from 'sonner';
 
 // Mock next/navigation

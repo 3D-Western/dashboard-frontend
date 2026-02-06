@@ -11,15 +11,15 @@ export const Routes = {
 
   // Admin routes
   adminUsersManagement: '/admin/users',
-  adminOrdersManagement: '/admin/orders',
+  adminJobsManagement: '/admin/jobs',
   adminInvitationManagement: '/admin/invitations',
 
-  orders: {
-    home: '/dashboard/orders',
-    newOrder: '/dashboard/orders/new',
-    newCncOrder: '/dashboard/orders/cnc/new',
-    newPrintOrder: '/dashboard/orders/print/new',
-    newWaterJetOrder: '/dashboard/orders/water-jet/new',
-    newLaserCuttingOrder: '/dashboard/orders/laser-cutting/new',
+  jobs: {
+    home: '/dashboard/jobs',
+    newJob: '/dashboard/jobs/new',
+    newCncJob: '/dashboard/jobs/cnc/new',
+    newPrintJob: '/dashboard/jobs/print/new',
+    newWaterJetJob: '/dashboard/jobs/water-jet/new',
+    newLaserCuttingJob: '/dashboard/jobs/laser-cutting/new',
   },
 };
