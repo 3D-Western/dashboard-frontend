@@ -1,21 +1,21 @@
 import type { Metadata } from 'next';
-import LaserCuttingOrderForm from './components/LaserCuttingOrderForm';
+import LaserCuttingJobForm from './components/LaserCuttingJobForm';
 import PageTitle from '@/components/PageTitle';
 
 export const metadata: Metadata = {
-  title: 'New Laser Cutting Order',
-  description: 'Create a new laser cutting order',
+  title: 'New Laser Cutting Job',
+  description: 'Create a new laser cutting job',
 };
 
-export default function NewLaserCuttingOrderPage() {
+export default function NewLaserCuttingJobPage() {
   return (
     <div className="px-6 py-8">
       <PageTitle
-        title="Create Laser Cutting Order"
+        title="Create Laser Cutting Job"
         description="Upload your 2D design files and specify cutting requirements"
       />
 
-      <LaserCuttingOrderForm />
+      <LaserCuttingJobForm />
     </div>
   );
 }

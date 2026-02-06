@@ -1,21 +1,21 @@
 import type { Metadata } from 'next';
-import CNCOrderForm from './components/CNCOrderForm';
+import CNCJobForm from './components/CNCJobForm';
 import PageTitle from '@/components/PageTitle';
 
 export const metadata: Metadata = {
-  title: 'New CNC Order',
-  description: 'Create a new CNC machining order',
+  title: 'New CNC Job',
+  description: 'Create a new CNC machining job',
 };
 
-export default function NewCNCOrderPage() {
+export default function NewCNCJobPage() {
   return (
     <div className="px-6 py-8">
       <PageTitle
-        title="Create CNC Machining Order"
+        title="Create CNC Machining Job"
         description="Upload your design files and specify machining requirements"
       />
 
-      <CNCOrderForm />
+      <CNCJobForm />
     </div>
   );
 }

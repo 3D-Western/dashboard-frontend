@@ -33,8 +33,8 @@ describe('Routes', () => {
       expect(Routes.dashboardUserSettings).toBe('/dashboard/settings');
     });
 
-    it('defines orders home route', () => {
-      expect(Routes.orders.home).toBe('/dashboard/orders');
+    it('defines jobs home route', () => {
+      expect(Routes.jobs.home).toBe('/dashboard/jobs');
     });
   });
 
@@ -43,8 +43,8 @@ describe('Routes', () => {
       expect(Routes.adminUsersManagement).toBe('/admin/users');
     });
 
-    it('defines admin orders management route', () => {
-      expect(Routes.adminOrdersManagement).toBe('/admin/orders');
+    it('defines admin jobs management route', () => {
+      expect(Routes.adminJobsManagement).toBe('/admin/jobs');
     });
   });
 
@@ -58,8 +58,8 @@ describe('Routes', () => {
       expect(Routes).toHaveProperty('forgotPassword');
       expect(Routes).toHaveProperty('resetPassword');
       expect(Routes).toHaveProperty('adminUsersManagement');
-      expect(Routes).toHaveProperty('adminOrdersManagement');
-      expect(Routes).toHaveProperty('orders');
+      expect(Routes).toHaveProperty('adminJobsManagement');
+      expect(Routes).toHaveProperty('jobs');
     });
 
     // Helper to get all string routes (flattens nested objects)
@@ -91,7 +91,7 @@ describe('Routes', () => {
 
     it('admin routes start with /admin', () => {
       expect(Routes.adminUsersManagement).toMatch(/^\/admin/);
-      expect(Routes.adminOrdersManagement).toMatch(/^\/admin/);
+      expect(Routes.adminJobsManagement).toMatch(/^\/admin/);
     });
 
     it('dashboard routes start with /dashboard', () => {

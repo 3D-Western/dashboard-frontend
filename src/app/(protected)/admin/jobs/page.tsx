@@ -1,37 +1,40 @@
 import type { Metadata } from 'next';
 import PrintJobsTable from '@/components/PrintJobsTable';
+import { jobApi } from '@/api/client/job';
 import { withSessionErrorHandling } from '@/lib/server-utils';
-import { userApi } from '@/api/client/user';
-import { OrderPageFilters } from './components/OrderPageFilters';
+import { AdminJobFilters } from './components/AdminJobFilters';
 import { PrintJobStatus } from '@/types/jobs';
+import PageTitle from '@/components/PageTitle';
 
 export const metadata: Metadata = {
-  title: 'My Orders',
-  description: 'View and manage your orders',
+  title: 'Job Management',
+  description: 'Manage all jobs across users',
 };
 
-interface PrintPageProps {
+interface JobManagementPageProps {
   searchParams: Promise<{ page?: string; pageSize?: string; status?: string; search?: string }>;
 }
 
-export default async function PrintPage({ searchParams }: PrintPageProps) {
+export default async function JobManagementPage({ searchParams }: JobManagementPageProps) {
   const params = await searchParams;
   const page = Number(params.page) || 1;
   const pageSize = Number(params.pageSize) || 10;
   const status = params.status as PrintJobStatus | undefined;
   const search = params.search;
 
-  // Fetch user's print jobs with server-side pagination and filters
+  // Fetch all jobs with server-side pagination and filters
   const { data: printJobs, pagination } = await withSessionErrorHandling(() =>
-    userApi.getCurrentUserOrders({ page, pageSize, status, search }),
+    jobApi.listAllJobs({ page, pageSize, status, search }),
   );
 
   return (
     <div className="container space-y-6 p-6">
-      <OrderPageFilters />
+      <PageTitle title="Job Management" description="Manage all jobs across users" />
+
+      <AdminJobFilters />
 
       <div>
-        <PrintJobsTable printJobs={printJobs} pagination={pagination} />
+        <PrintJobsTable printJobs={printJobs} pagination={pagination} mode="admin" />
       </div>
     </div>
   );

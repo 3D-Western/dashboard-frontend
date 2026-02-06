@@ -35,13 +35,13 @@ const navigationItems = [
     icon: LayoutDashboard,
   },
   {
-    title: 'My Orders',
-    url: Routes.orders.home,
+    title: 'My Jobs',
+    url: Routes.jobs.home,
     icon: Printer,
   },
   {
-    title: 'New Order',
-    url: Routes.orders.newOrder,
+    title: 'New Job',
+    url: Routes.jobs.newJob,
     icon: FilePlus,
   },
 ];
@@ -58,8 +58,8 @@ const adminNavigationItems = [
     icon: Users,
   },
   {
-    title: 'Order Management',
-    url: Routes.adminOrdersManagement,
+    title: 'Job Management',
+    url: Routes.adminJobsManagement,
     icon: Settings,
   },
   {

@@ -79,7 +79,7 @@ export function ChangeStatusDialog({
       await jobApi.updateJobStatus(printJob.id, selectedStatus);
 
       toast.success('Status updated successfully', {
-        description: `Order "${printJob.name}" status changed to ${STATUS_DISPLAY_LABELS[selectedStatus]}`,
+        description: `Job "${printJob.name}" status changed to ${STATUS_DISPLAY_LABELS[selectedStatus]}`,
       });
 
       // Notify parent component to update the table
@@ -105,9 +105,9 @@ export function ChangeStatusDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Change Order Status</DialogTitle>
+          <DialogTitle>Change Job Status</DialogTitle>
           <DialogDescription>
-            Update the status for order &quot;{printJob.name}&quot;
+            Update the status for job &quot;{printJob.name}&quot;
           </DialogDescription>
         </DialogHeader>
 

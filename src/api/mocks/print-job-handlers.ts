@@ -5,7 +5,7 @@ import { createInvalidSessionResponse, generateSuccessResponse } from './utils';
 
 const apiUrl = process.env.API_URL;
 
-export const orderHandlers = [
+export const jobHandlers = [
   // GET /orders with query params (status, userId, pagination)
   http.get(`${apiUrl}${endpoints.orders.list}`, ({ cookies, request }) => {
     const sessionId = cookies['sessionToken'] || '';

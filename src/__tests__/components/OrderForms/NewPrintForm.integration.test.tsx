@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import NewPrintForm from '@/app/(protected)/dashboard/orders/print/new/components/PrintOrderForm';
+import NewPrintForm from '@/app/(protected)/dashboard/jobs/print/new/components/PrintJobForm';
 import { jobApi } from '@/api/client/job';
 import { toast } from 'sonner';
 
@@ -17,8 +17,8 @@ vi.mock('next/navigation', () => ({
 
 vi.mock('@/api/client/job', () => ({
   jobApi: {
-    createOrder: vi.fn(),
-    uploadOrderFile: vi.fn(),
+    createJob: vi.fn(),
+    uploadJobFile: vi.fn(),
     completeUpload: vi.fn(),
   },
 }));
@@ -40,8 +40,8 @@ describe('NewPrintForm Integration', () => {
   beforeEach(() => {
     mockPush.mockClear();
     mockRefresh.mockClear();
-    vi.mocked(jobApi.createOrder).mockReset();
-    vi.mocked(jobApi.uploadOrderFile).mockReset();
+    vi.mocked(jobApi.createJob).mockReset();
+    vi.mocked(jobApi.uploadJobFile).mockReset();
     vi.mocked(jobApi.completeUpload).mockReset();
     vi.mocked(toast.success).mockClear();
     vi.mocked(toast.error).mockClear();
@@ -200,7 +200,7 @@ describe('NewPrintForm Integration', () => {
 
     it('submits valid data and redirects in mock mode', async () => {
       const user = setupUser();
-      vi.mocked(jobApi.createOrder).mockResolvedValue({
+      vi.mocked(jobApi.createJob).mockResolvedValue({
         orderId: 'order-123',
         createdAt: new Date().toISOString(),
         fileId: 'file-123',
@@ -213,7 +213,7 @@ describe('NewPrintForm Integration', () => {
       const submitButton = screen.getByRole('button', { name: /Submit/i });
       await user.click(submitButton);
       await waitFor(() => {
-        expect(mockPush).toHaveBeenCalledWith('/dashboard/orders');
+        expect(mockPush).toHaveBeenCalledWith('/dashboard/jobs');
       });
     });
 
@@ -244,37 +244,37 @@ describe('NewPrintForm Integration', () => {
 
     it('submits real flow when mockMode is false', async () => {
       const user = setupUser();
-      vi.mocked(jobApi.createOrder).mockResolvedValue({
+      vi.mocked(jobApi.createJob).mockResolvedValue({
         orderId: 'order-123',
         createdAt: new Date().toISOString(),
         fileId: 'file-123',
         uploadUrl: 'http://example.com/upload',
         uploadExpiresIn: 900,
       });
-      vi.mocked(jobApi.uploadOrderFile).mockResolvedValue(new Response());
+      vi.mocked(jobApi.uploadJobFile).mockResolvedValue(new Response());
       vi.mocked(jobApi.completeUpload).mockResolvedValue(null);
       render(<NewPrintForm mockMode={false} />);
       await fillRequiredFields(user);
       const submitButton = screen.getByRole('button', { name: /Submit/i });
       await user.click(submitButton);
       await waitFor(() => {
-        expect(jobApi.createOrder).toHaveBeenCalledTimes(1);
-        expect(jobApi.uploadOrderFile).toHaveBeenCalledTimes(1);
+        expect(jobApi.createJob).toHaveBeenCalledTimes(1);
+        expect(jobApi.uploadJobFile).toHaveBeenCalledTimes(1);
         expect(jobApi.completeUpload).toHaveBeenCalledTimes(1);
-        expect(mockPush).toHaveBeenCalledWith('/dashboard/orders');
+        expect(mockPush).toHaveBeenCalledWith('/dashboard/jobs');
       });
     });
 
     it('handles upload failure in real flow', async () => {
       const user = setupUser();
-      vi.mocked(jobApi.createOrder).mockResolvedValue({
+      vi.mocked(jobApi.createJob).mockResolvedValue({
         orderId: 'order-123',
         createdAt: new Date().toISOString(),
         fileId: 'file-123',
         uploadUrl: 'http://example.com/upload',
         uploadExpiresIn: 900,
       });
-      vi.mocked(jobApi.uploadOrderFile).mockRejectedValue(
+      vi.mocked(jobApi.uploadJobFile).mockRejectedValue(
         new Error('File upload failed with status 400'),
       );
       render(<NewPrintForm mockMode={false} />);
@@ -291,7 +291,7 @@ describe('NewPrintForm Integration', () => {
 
     it('handles order creation failure in real flow', async () => {
       const user = setupUser();
-      vi.mocked(jobApi.createOrder).mockRejectedValue(new Error('Order creation failed'));
+      vi.mocked(jobApi.createJob).mockRejectedValue(new Error('Order creation failed'));
       render(<NewPrintForm mockMode={false} />);
       await fillRequiredFields(user);
       const submitButton = screen.getByRole('button', { name: /Submit/i });
@@ -303,14 +303,14 @@ describe('NewPrintForm Integration', () => {
 
     it('handles complete upload failure in real flow', async () => {
       const user = setupUser();
-      vi.mocked(jobApi.createOrder).mockResolvedValue({
+      vi.mocked(jobApi.createJob).mockResolvedValue({
         orderId: 'order-456',
         createdAt: new Date().toISOString(),
         fileId: 'file-456',
         uploadUrl: 'http://example.com/upload',
         uploadExpiresIn: 900,
       });
-      vi.mocked(jobApi.uploadOrderFile).mockResolvedValue(new Response());
+      vi.mocked(jobApi.uploadJobFile).mockResolvedValue(new Response());
       vi.mocked(jobApi.completeUpload).mockRejectedValue(new Error('Failed to complete upload'));
       render(<NewPrintForm mockMode={false} />);
       await fillRequiredFields(user);
@@ -326,7 +326,7 @@ describe('NewPrintForm Integration', () => {
 
     it('handles non-Error throw in submit flow', async () => {
       const user = setupUser();
-      vi.mocked(jobApi.createOrder).mockRejectedValue('boom');
+      vi.mocked(jobApi.createJob).mockRejectedValue('boom');
       render(<NewPrintForm mockMode={false} />);
       await fillRequiredFields(user);
       const submitButton = screen.getByRole('button', { name: /Submit/i });
@@ -338,7 +338,7 @@ describe('NewPrintForm Integration', () => {
 
     it('handles invalid API response (missing orderId)', async () => {
       const user = setupUser();
-      vi.mocked(jobApi.createOrder).mockResolvedValue({
+      vi.mocked(jobApi.createJob).mockResolvedValue({
         orderId: undefined as unknown as string,
         createdAt: new Date().toISOString(),
         fileId: 'file-123',
@@ -359,7 +359,7 @@ describe('NewPrintForm Integration', () => {
 
     it('handles invalid API response (missing uploadUrl)', async () => {
       const user = setupUser();
-      vi.mocked(jobApi.createOrder).mockResolvedValue({
+      vi.mocked(jobApi.createJob).mockResolvedValue({
         orderId: 'test-order-id',
         createdAt: new Date().toISOString(),
         fileId: 'file-123',

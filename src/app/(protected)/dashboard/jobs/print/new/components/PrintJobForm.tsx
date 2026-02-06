@@ -31,7 +31,7 @@ import { jobApi } from '@/api/client/job';
 import { calculateFileChecksum } from '@/lib/file-utils';
 import { Routes } from '@/lib/routes';
 import { toast } from 'sonner';
-import { CreateOrderRequest } from '@/api/types';
+import { CreateJobRequest } from '@/api/types';
 
 // Type definitions for form options
 type MaterialOption = {
@@ -90,7 +90,7 @@ export default function NewPrintForm({ mockMode = false }: NewPrintFormProps = {
       const file = values.file as File;
 
       // STEP 1: Create order with file metadata (not the file itself)
-      const createOrderPayload: CreateOrderRequest = {
+      const createOrderPayload: CreateJobRequest = {
         printName: values.printName,
         description: values.description,
         formAnswerJson: JSON.stringify({
@@ -100,7 +100,7 @@ export default function NewPrintForm({ mockMode = false }: NewPrintFormProps = {
         }),
       };
 
-      const createOrderResponse = await jobApi.createOrder(createOrderPayload);
+      const createOrderResponse = await jobApi.createJob(createOrderPayload);
 
       if (!createOrderResponse.orderId || !createOrderResponse.uploadUrl) {
         throw new Error('Invalid response from server: missing orderId or uploadUrl');
@@ -108,7 +108,7 @@ export default function NewPrintForm({ mockMode = false }: NewPrintFormProps = {
 
       // STEP 2: Upload file to presigned URL (skip in mock mode to avoid CORS)
       if (!mockMode) {
-        await jobApi.uploadOrderFile(createOrderResponse.uploadUrl, file);
+        await jobApi.uploadJobFile(createOrderResponse.uploadUrl, file);
       }
 
       // STEP 3: Complete upload with file metadata
@@ -126,7 +126,7 @@ export default function NewPrintForm({ mockMode = false }: NewPrintFormProps = {
       toast.success('Print request submitted successfully');
 
       // Navigate to dashboard and force refresh to show new data
-      router.push(Routes.orders.home);
+      router.push(Routes.jobs.home);
       router.refresh();
     } catch (err) {
       toast.error(

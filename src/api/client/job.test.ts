@@ -351,7 +351,7 @@ describe('jobApi', () => {
         }),
       );
 
-      const result = await jobApi.createOrder({
+      const result = await jobApi.createJob({
         printName: 'Test Print',
         description: 'Test Description',
         formAnswerJson: JSON.stringify({
@@ -396,7 +396,7 @@ describe('jobApi', () => {
         support: 'Yes',
       };
 
-      await jobApi.createOrder({
+      await jobApi.createJob({
         printName: 'Test Print',
         description: 'Test Description',
         formAnswerJson: JSON.stringify(formData),
@@ -425,7 +425,7 @@ describe('jobApi', () => {
       );
 
       await expect(
-        jobApi.createOrder({
+        jobApi.createJob({
           printName: 'Test Print',
           description: 'Test Description',
           formAnswerJson: JSON.stringify({
@@ -626,7 +626,7 @@ describe('jobApi', () => {
         }),
       );
 
-      const response = await jobApi.uploadOrderFile(uploadUrl, file);
+      const response = await jobApi.uploadJobFile(uploadUrl, file);
       expect(response.ok).toBe(true);
     });
 
@@ -640,7 +640,7 @@ describe('jobApi', () => {
         }),
       );
 
-      await expect(jobApi.uploadOrderFile(uploadUrl, file)).rejects.toThrow(
+      await expect(jobApi.uploadJobFile(uploadUrl, file)).rejects.toThrow(
         'File upload failed with status 403',
       );
     });
@@ -657,7 +657,7 @@ describe('jobApi', () => {
         }),
       );
 
-      await jobApi.uploadOrderFile(uploadUrl, file);
+      await jobApi.uploadJobFile(uploadUrl, file);
       expect(requestHeaders?.get('Content-Type')).toBe('model/stl');
     });
 
@@ -673,7 +673,7 @@ describe('jobApi', () => {
         }),
       );
 
-      await jobApi.uploadOrderFile(uploadUrl, file);
+      await jobApi.uploadJobFile(uploadUrl, file);
       expect(requestHeaders?.get('Content-Type')).toBe('application/sla');
     });
 
@@ -689,7 +689,7 @@ describe('jobApi', () => {
         }),
       );
 
-      await jobApi.uploadOrderFile(uploadUrl, file, {
+      await jobApi.uploadJobFile(uploadUrl, file, {
         headers: {
           'Content-Type': 'application/json',
         },
@@ -711,7 +711,7 @@ describe('jobApi', () => {
         }),
       );
 
-      await jobApi.uploadOrderFile(uploadUrl, file, {
+      await jobApi.uploadJobFile(uploadUrl, file, {
         headers: {
           'X-Custom-Header': 'custom-value',
         },

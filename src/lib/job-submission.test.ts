@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { submitOrder } from './order-submission';
+import { submitJob } from './job-submission';
 
 // Mock external dependencies
 vi.mock('sonner', () => ({
@@ -16,7 +16,7 @@ vi.mock('@/api/client/endpoints', () => ({
   },
 }));
 
-describe('submitOrder', () => {
+describe('submitJob', () => {
   const mockRouter = {
     push: vi.fn(),
     refresh: vi.fn(),
@@ -32,13 +32,13 @@ describe('submitOrder', () => {
     mockFetch.mockResolvedValue({
       ok: true,
       json: vi.fn().mockResolvedValue({
-        data: { order: { id: 'test-order-123' } },
+        data: { job: { id: 'test-job-123' } },
       }),
     });
   });
 
-  it('should successfully submit an order', async () => {
-    const orderData = {
+  it('should successfully submit an job', async () => {
+    const jobData = {
       name: 'Test Order',
       description: 'Test Description',
       material: 'acrylic',
@@ -50,7 +50,7 @@ describe('submitOrder', () => {
       successRedirectPath: '/dashboard/print',
     };
 
-    await submitOrder(orderData, options, mockRouter);
+    await submitJob(jobData, options, mockRouter);
 
     // Check that fetch was called with the right URL and method
     expect(mockFetch).toHaveBeenCalledWith(
@@ -85,7 +85,7 @@ describe('submitOrder', () => {
       text: vi.fn().mockResolvedValue('Server error'),
     });
 
-    const orderData = {
+    const jobData = {
       name: 'Test Order',
       description: 'Test Description',
       material: 'aluminum',
@@ -93,14 +93,14 @@ describe('submitOrder', () => {
 
     const options = {
       category: 'cnc',
-      errorMessagePrefix: 'CNC order submit failed',
+      errorMessagePrefix: 'CNC job submit failed',
     };
 
-    await expect(submitOrder(orderData, options, mockRouter)).rejects.toThrow('Server error');
+    await expect(submitJob(jobData, options, mockRouter)).rejects.toThrow('Server error');
   });
 
   it('should work without a file', async () => {
-    const orderData = {
+    const jobData = {
       name: 'No File Order',
       description: 'Order without file',
       material: 'wood',
@@ -110,7 +110,7 @@ describe('submitOrder', () => {
       category: 'laser-cutting',
     };
 
-    await submitOrder(orderData, options, mockRouter);
+    await submitJob(jobData, options, mockRouter);
 
     expect(mockFetch).toHaveBeenCalledWith('/api/orders', {
       method: 'POST',
@@ -130,7 +130,7 @@ describe('submitOrder', () => {
   });
 
   it('should use default redirect path when not specified', async () => {
-    const orderData = {
+    const jobData = {
       name: 'Default Path Test',
       description: 'Testing default redirect',
       material: 'plastic',
@@ -140,7 +140,7 @@ describe('submitOrder', () => {
       category: 'cnc',
     };
 
-    await submitOrder(orderData, options, mockRouter);
+    await submitJob(jobData, options, mockRouter);
 
     expect(mockRouter.push).toHaveBeenCalledWith('/dashboard');
   });
