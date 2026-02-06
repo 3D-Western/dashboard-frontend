@@ -1,5 +1,6 @@
 import { http, HttpResponse } from 'msw';
 import { endpoints } from '../client/endpoints';
+import { JobCategory } from '@/types/jobs';
 import db from './database/db';
 import { createInvalidSessionResponse, generateSuccessResponse } from './utils';
 
@@ -78,7 +79,7 @@ export const jobHandlers = [
       jobName: string;
       description: string;
       formAnswerJson: string;
-      category: 'ThreeDPrint' | 'CNC' | 'Waterjet' | 'LaserCutting';
+      category: JobCategory;
     };
 
     // Parse formAnswerJson to extract fields

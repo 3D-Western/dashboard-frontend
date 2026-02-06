@@ -4,6 +4,7 @@ import { Printer, LayoutDashboard, Clock, AlertCircle } from 'lucide-react';
 import Link from 'next/link';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import PageTitle from '@/components/PageTitle';
+import { Routes } from '@/lib/routes';
 
 export const metadata: Metadata = {
   title: 'Dashboard',
@@ -69,7 +70,7 @@ export default async function DashboardPage({
         <h2 className="text-lg font-semibold">Quick Actions</h2>
         <div className="flex gap-4">
           <Button asChild>
-            <Link href="/dashboard/jobs">
+            <Link href={Routes.jobs.home}>
               <Printer className="mr-2 h-4 w-4" />
               View All Jobs
             </Link>

@@ -140,9 +140,9 @@ describe('PrintJobsTable Integration', () => {
       const sortButton = screen.getByLabelText(/Sort by print date/i);
       await user.click(sortButton);
 
-      // After sorting, check job of elements
+      // After sorting, check order of elements
       const rows = screen.getAllByRole('row');
-      // Verify sorting occurred (specific job would depend on implementation)
+      // Verify sorting occurred (specific order would depend on implementation)
       expect(rows.length).toBeGreaterThan(1);
     });
 

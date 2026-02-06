@@ -151,7 +151,7 @@ test.describe('Print Jobs E2E', () => {
       await expect(page.getByText(/create new print request/i)).toBeVisible();
 
       // Fill in required fields
-      await page.getByLabel(/print name/i).fill('E2E Test Print');
+      await page.getByLabel(/project title/i).fill('E2E Test Print');
       await page.getByLabel(/print description/i).fill('This is an E2E test print job');
 
       // Select material 1

@@ -189,7 +189,7 @@ describe('useColumns', () => {
         expect(sortingFn(createRow('Succeeded'), createRow('Error'), 'status')).toBeGreaterThan(0);
       });
 
-      it('maintains correct job for all statuses', () => {
+      it('maintains correct status sorting order for all statuses', () => {
         const { result } = renderHook(() => useColumns());
         const columns = result.current;
         const statusColumn = columns.find((col) => hasAccessorKey(col, 'status'));

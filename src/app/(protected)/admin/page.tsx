@@ -3,6 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Users, Printer } from 'lucide-react';
 import Link from 'next/link';
 import PageTitle from '@/components/PageTitle';
+import { Routes } from '@/lib/routes';
 
 export const metadata: Metadata = {
   title: 'Admin Dashboard',
@@ -32,7 +33,7 @@ export default async function AdminDashboardPage() {
           </Card>
         </Link>
 
-        <Link href="/admin/jobs">
+        <Link href={Routes.adminJobsManagement}>
           <Card className="cursor-pointer transition-colors hover:bg-accent">
             <CardHeader>
               <div className="flex items-center gap-2">

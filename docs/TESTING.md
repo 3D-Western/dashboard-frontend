@@ -70,7 +70,7 @@ Test complete workflows that users actually perform:
 test('user can create and submit print job', async ({ page }) => {
   await loginAsUser(page);
   await page.goto('/dashboard/jobs/print/new');
-  await page.getByLabel(/print name/i).fill('My Print');
+  await page.getByLabel(/project title/i).fill('My Print');
   // ... complete the workflow
   await expect(page).toHaveURL('/dashboard');
 });

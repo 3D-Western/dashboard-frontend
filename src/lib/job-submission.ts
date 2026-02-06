@@ -24,8 +24,11 @@ const toBackendCategory = (category: JobSubmissionOptions['category']): JobCateg
       return 'LaserCutting';
     case '3d-print':
       return 'ThreeDPrint';
-    default:
-      return 'ThreeDPrint';
+    default: {
+      // Exhaustive check - TypeScript will error if a new category is added
+      const _exhaustive: never = category;
+      throw new Error(`Unknown category: ${_exhaustive}`);
+    }
   }
 };
 
