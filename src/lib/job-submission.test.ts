@@ -39,7 +39,7 @@ describe('submitJob', () => {
 
   it('should successfully submit an job', async () => {
     const jobData = {
-      name: 'Test Order',
+      name: 'Test Job',
       description: 'Test Description',
       material: 'acrylic',
       file: new File(['test'], 'test.dxf', { type: 'application/dxf' }),
@@ -67,7 +67,7 @@ describe('submitJob', () => {
 
     expect(body).toEqual({
       category: 'LaserCutting',
-      jobName: 'Test Order',
+      jobName: 'Test Job',
       description: 'Test Description',
       formAnswerJson: expect.any(String),
     });
@@ -89,7 +89,7 @@ describe('submitJob', () => {
     });
 
     const jobData = {
-      name: 'Test Order',
+      name: 'Test Job',
       description: 'Test Description',
       material: 'aluminum',
     };
@@ -104,8 +104,8 @@ describe('submitJob', () => {
 
   it('should work without a file', async () => {
     const jobData = {
-      name: 'No File Order',
-      description: 'Order without file',
+      name: 'No File Job',
+      description: 'Job without file',
       material: 'wood',
     };
 
@@ -120,8 +120,8 @@ describe('submitJob', () => {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         category: 'LaserCutting',
-        jobName: 'No File Order',
-        description: 'Order without file',
+        jobName: 'No File Job',
+        description: 'Job without file',
         formAnswerJson: JSON.stringify({
           material: 'wood',
           fileId: '',

@@ -229,7 +229,7 @@ npm run format
 - **Tests**: Match source file with `.test.ts` or `.spec.ts`
 - **Styles**: Match component name (`Button.module.css`)
 
-### Import Order
+### Import Job
 
 1. External packages (React, Next.js, etc.)
 2. Internal packages (`@/components`, `@/lib`, etc.)

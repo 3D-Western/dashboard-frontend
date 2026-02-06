@@ -434,7 +434,7 @@ describe('fileApi', () => {
       await expect(fileApi.delete(fileId)).rejects.toThrow(ApiError);
     });
 
-    it('throws FILE_IN_USE error when file is associated with orders', async () => {
+    it('throws FILE_IN_USE error when file is associated with jobs', async () => {
       const fileId = 'in-use-file-id';
 
       mockServer.use(
@@ -443,9 +443,9 @@ describe('fileApi', () => {
             {
               error: {
                 code: 'FILE_IN_USE',
-                message: 'Cannot delete file associated with active orders',
+                message: 'Cannot delete file associated with active jobs',
                 details: {
-                  activeOrders: ['order-1', 'order-2'],
+                  activeJobs: ['job-1', 'job-2'],
                 },
               },
             },

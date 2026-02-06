@@ -1,9 +1,9 @@
 import type { ReactNode } from 'react';
 
-interface OrdersLayoutProps {
+interface JobsLayoutProps {
   children: ReactNode;
 }
 
-export default function OrdersLayout({ children }: OrdersLayoutProps) {
+export default function JobsLayout({ children }: JobsLayoutProps) {
   return <>{children}</>;
 }

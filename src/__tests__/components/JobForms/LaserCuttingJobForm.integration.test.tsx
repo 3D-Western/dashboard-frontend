@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import LaserCuttingOrderForm from '@/app/(protected)/dashboard/jobs/laser-cutting/new/components/LaserCuttingJobForm';
+import LaserCuttingJobForm from '@/app/(protected)/dashboard/jobs/laser-cutting/new/components/LaserCuttingJobForm';
 import { toast } from 'sonner';
 
 // Mock next/navigation
@@ -32,7 +32,7 @@ const selectComboboxOption = async (
   await user.click(option);
 };
 
-describe('LaserCuttingOrderForm Integration', () => {
+describe('LaserCuttingJobForm Integration', () => {
   beforeEach(() => {
     mockPush.mockClear();
     vi.mocked(toast.error).mockClear();
@@ -40,7 +40,7 @@ describe('LaserCuttingOrderForm Integration', () => {
 
   describe('form rendering', () => {
     it('renders all fields correctly', () => {
-      render(<LaserCuttingOrderForm />);
+      render(<LaserCuttingJobForm />);
 
       // Form fields
       expect(screen.getByLabelText(/Request Name/i)).toBeInTheDocument();
@@ -50,7 +50,7 @@ describe('LaserCuttingOrderForm Integration', () => {
     });
 
     it('has submit button', () => {
-      render(<LaserCuttingOrderForm />);
+      render(<LaserCuttingJobForm />);
 
       const submitButton = screen.getByRole('button', { name: /Submit/i });
       expect(submitButton).toBeInTheDocument();
@@ -60,7 +60,7 @@ describe('LaserCuttingOrderForm Integration', () => {
   describe('field validation', () => {
     it('shows error for empty request name', async () => {
       const user = setupUser();
-      render(<LaserCuttingOrderForm />);
+      render(<LaserCuttingJobForm />);
 
       const submitButton = screen.getByRole('button', { name: /Submit/i });
       await user.click(submitButton);
@@ -72,7 +72,7 @@ describe('LaserCuttingOrderForm Integration', () => {
 
     it('shows error for empty description', async () => {
       const user = setupUser();
-      render(<LaserCuttingOrderForm />);
+      render(<LaserCuttingJobForm />);
 
       const submitButton = screen.getByRole('button', { name: /Submit/i });
       await user.click(submitButton);
@@ -84,7 +84,7 @@ describe('LaserCuttingOrderForm Integration', () => {
 
     it('shows error for short description', async () => {
       const user = setupUser();
-      render(<LaserCuttingOrderForm />);
+      render(<LaserCuttingJobForm />);
 
       const descriptionField = screen.getByLabelText(/Description/i);
       await user.type(descriptionField, 'A');
@@ -99,7 +99,7 @@ describe('LaserCuttingOrderForm Integration', () => {
 
     it('shows error for missing design file upload', async () => {
       const user = setupUser();
-      render(<LaserCuttingOrderForm />);
+      render(<LaserCuttingJobForm />);
 
       const submitButton = screen.getByRole('button', { name: /Submit/i });
       await user.click(submitButton);
@@ -118,7 +118,7 @@ describe('LaserCuttingOrderForm Integration', () => {
 
     it('shows error when material is not selected', async () => {
       const user = setupUser();
-      render(<LaserCuttingOrderForm />);
+      render(<LaserCuttingJobForm />);
 
       const submitButton = screen.getByRole('button', { name: /Submit/i });
       await user.click(submitButton);
@@ -132,7 +132,7 @@ describe('LaserCuttingOrderForm Integration', () => {
   describe('form interactions', () => {
     it('accepts valid request name input', async () => {
       const user = setupUser();
-      render(<LaserCuttingOrderForm />);
+      render(<LaserCuttingJobForm />);
 
       const nameField = screen.getByLabelText(/Request Name/i);
       await user.type(nameField, 'My Test Laser Cut');
@@ -142,7 +142,7 @@ describe('LaserCuttingOrderForm Integration', () => {
 
     it('accepts valid description input', async () => {
       const user = setupUser();
-      render(<LaserCuttingOrderForm />);
+      render(<LaserCuttingJobForm />);
 
       const descriptionField = screen.getByLabelText(/Description/i);
       await user.type(descriptionField, 'This is a test description for my laser cutting job');
@@ -151,7 +151,7 @@ describe('LaserCuttingOrderForm Integration', () => {
     });
 
     it('material select is interactive', async () => {
-      render(<LaserCuttingOrderForm />);
+      render(<LaserCuttingJobForm />);
 
       // Find material select
       const materialSelect = screen.getByRole('combobox');
@@ -176,7 +176,7 @@ describe('LaserCuttingOrderForm Integration', () => {
 
     it('uploads design file and shows filename', async () => {
       const user = setupUser();
-      const { container } = render(<LaserCuttingOrderForm />);
+      const { container } = render(<LaserCuttingJobForm />);
 
       const fileInput = container.querySelector('input[type="file"]') as HTMLInputElement;
       expect(fileInput).toBeInTheDocument();
@@ -193,13 +193,13 @@ describe('LaserCuttingOrderForm Integration', () => {
 
       // Mock fetch to simulate successful submission
       const fetchSpy = vi.spyOn(global, 'fetch').mockResolvedValueOnce(
-        new Response(JSON.stringify({ success: true, data: { order: { id: 'test-order' } } }), {
+        new Response(JSON.stringify({ success: true, data: { job: { id: 'test-job' } } }), {
           status: 200,
           headers: { 'Content-Type': 'application/json' },
         }),
       );
 
-      render(<LaserCuttingOrderForm />);
+      render(<LaserCuttingJobForm />);
 
       await fillRequiredFields(user);
 
@@ -215,7 +215,7 @@ describe('LaserCuttingOrderForm Integration', () => {
 
     it('form submission with all valid data succeeds', async () => {
       const user = setupUser();
-      render(<LaserCuttingOrderForm />);
+      render(<LaserCuttingJobForm />);
 
       // Fill in required fields
       const nameField = screen.getByLabelText(/Request Name/i);
@@ -236,7 +236,7 @@ describe('LaserCuttingOrderForm Integration', () => {
 
     it('shows submitting state while form is submitting', async () => {
       const user = setupUser();
-      render(<LaserCuttingOrderForm />);
+      render(<LaserCuttingJobForm />);
 
       // Fill minimal valid data
       const nameField = screen.getByLabelText(/Request Name/i);
@@ -250,7 +250,7 @@ describe('LaserCuttingOrderForm Integration', () => {
     });
 
     it('disables submit button while submitting', () => {
-      render(<LaserCuttingOrderForm />);
+      render(<LaserCuttingJobForm />);
 
       const submitButton = screen.getByRole('button', { name: /Submit/i });
       // Initially not disabled (since form is not submitting)
@@ -264,7 +264,7 @@ describe('LaserCuttingOrderForm Integration', () => {
 
       fetchSpy.mockResolvedValueOnce(new Response('Submit failed', { status: 400 }));
 
-      render(<LaserCuttingOrderForm />);
+      render(<LaserCuttingJobForm />);
       await fillRequiredFields(user);
 
       const submitButton = screen.getByRole('button', { name: /Submit/i });
@@ -285,7 +285,7 @@ describe('LaserCuttingOrderForm Integration', () => {
 
       fetchSpy.mockResolvedValueOnce(new Response('', { status: 400 }));
 
-      render(<LaserCuttingOrderForm />);
+      render(<LaserCuttingJobForm />);
       await fillRequiredFields(user);
 
       const submitButton = screen.getByRole('button', { name: /Submit/i });
@@ -293,7 +293,7 @@ describe('LaserCuttingOrderForm Integration', () => {
 
       await waitFor(() => {
         expect(toast.error).toHaveBeenCalledWith(
-          expect.stringContaining('Laser cutting order submit failed'),
+          expect.stringContaining('Laser cutting job submit failed'),
         );
       });
 
@@ -307,7 +307,7 @@ describe('LaserCuttingOrderForm Integration', () => {
 
       fetchSpy.mockRejectedValueOnce('boom');
 
-      render(<LaserCuttingOrderForm />);
+      render(<LaserCuttingJobForm />);
       await fillRequiredFields(user);
 
       const submitButton = screen.getByRole('button', { name: /Submit/i });
@@ -324,7 +324,7 @@ describe('LaserCuttingOrderForm Integration', () => {
   describe('material selection logic', () => {
     it('can select different laser cutting materials', async () => {
       const user = setupUser();
-      render(<LaserCuttingOrderForm />);
+      render(<LaserCuttingJobForm />);
 
       // Select Acrylic
       await selectComboboxOption(user, 0, 'Acrylic');
@@ -335,7 +335,7 @@ describe('LaserCuttingOrderForm Integration', () => {
     });
 
     it('material select starts with placeholder text', async () => {
-      render(<LaserCuttingOrderForm />);
+      render(<LaserCuttingJobForm />);
 
       expect(screen.getByText('Select a material')).toBeInTheDocument();
     });
@@ -344,7 +344,7 @@ describe('LaserCuttingOrderForm Integration', () => {
   describe('unsaved changes guard', () => {
     it('activates when form is dirty', async () => {
       const user = setupUser();
-      render(<LaserCuttingOrderForm />);
+      render(<LaserCuttingJobForm />);
 
       const nameField = screen.getByLabelText(/Request Name/i);
       await user.type(nameField, 'Test');
@@ -357,7 +357,7 @@ describe('LaserCuttingOrderForm Integration', () => {
 
   describe('default values', () => {
     it('has empty default values for all fields', () => {
-      render(<LaserCuttingOrderForm />);
+      render(<LaserCuttingJobForm />);
 
       const nameField = screen.getByLabelText(/Request Name/i) as HTMLInputElement;
       const descriptionField = screen.getByLabelText(/Description/i) as HTMLTextAreaElement;

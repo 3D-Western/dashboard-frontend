@@ -55,7 +55,7 @@ const CNC_FILE_TYPES = {
   validation: 'Please upload an STL file',
 };
 
-export default function CNCOrderForm() {
+export default function CNCJobForm() {
   const router = useRouter();
 
   const formSchema = z.object({
@@ -80,8 +80,8 @@ export default function CNCOrderForm() {
   async function onSubmit(values: z.infer<typeof formSchema>) {
     try {
       // TODO: Enable actual submission when backend is ready
-      // For now, show success message and redirect to orders page
-      toast.success('CNC order submission will be available soon');
+      // For now, show success message and redirect to jobs page
+      toast.success('CNC job submission will be available soon');
       router.push(Routes.jobs.home);
       return;
 
@@ -96,7 +96,7 @@ export default function CNCOrderForm() {
         {
           category: 'cnc',
           successRedirectPath: Routes.jobs.home,
-          errorMessagePrefix: 'CNC order submit failed',
+          errorMessagePrefix: 'CNC job submit failed',
         },
         router,
       );

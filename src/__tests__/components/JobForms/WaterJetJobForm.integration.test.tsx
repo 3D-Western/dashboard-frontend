@@ -195,7 +195,7 @@ describe('WaterJetForm Integration', () => {
 
       // Mock fetch to simulate successful submission
       const fetchSpy = vi.spyOn(global, 'fetch').mockResolvedValueOnce(
-        new Response(JSON.stringify({ success: true, data: { order: { id: 'test-order' } } }), {
+        new Response(JSON.stringify({ success: true, data: { job: { id: 'test-job' } } }), {
           status: 200,
           headers: { 'Content-Type': 'application/json' },
         }),
@@ -295,7 +295,7 @@ describe('WaterJetForm Integration', () => {
 
       await waitFor(() => {
         expect(toast.error).toHaveBeenCalledWith(
-          expect.stringContaining('Water jet order submit failed'),
+          expect.stringContaining('Water jet job submit failed'),
         );
       });
 

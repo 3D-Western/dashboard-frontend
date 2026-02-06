@@ -73,7 +73,7 @@ export async function submitJob(
   }
 
   const result = await submitRes.json();
-  console.log(`MOCK: Created ${category} job`, result.data?.orderId);
+  console.log(`MOCK: Created ${category} job`, result.data?.jobId);
 
   router.push(successRedirectPath);
   if (typeof router.refresh === 'function') {

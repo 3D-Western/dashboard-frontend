@@ -42,19 +42,19 @@ describe('PrintJobsTable Integration', () => {
         id: '1',
         name: 'Test Print 1',
         status: 'InQueue',
-        orderPlaced: '2024-01-15T10:00:00Z',
+        jobPlaced: '2024-01-15T10:00:00Z',
       }),
       createMockPrintJob({
         id: '2',
         name: 'Test Print 2',
         status: 'Printing',
-        orderPlaced: '2024-01-16T11:00:00Z',
+        jobPlaced: '2024-01-16T11:00:00Z',
       }),
       createMockPrintJob({
         id: '3',
         name: 'Test Print 3',
         status: 'Ready',
-        orderPlaced: '2024-01-17T12:00:00Z',
+        jobPlaced: '2024-01-17T12:00:00Z',
       }),
     ];
   });
@@ -140,9 +140,9 @@ describe('PrintJobsTable Integration', () => {
       const sortButton = screen.getByLabelText(/Sort by print date/i);
       await user.click(sortButton);
 
-      // After sorting, check order of elements
+      // After sorting, check job of elements
       const rows = screen.getAllByRole('row');
-      // Verify sorting occurred (specific order would depend on implementation)
+      // Verify sorting occurred (specific job would depend on implementation)
       expect(rows.length).toBeGreaterThan(1);
     });
 

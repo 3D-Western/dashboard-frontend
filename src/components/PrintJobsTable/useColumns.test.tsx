@@ -23,7 +23,7 @@ describe('useColumns', () => {
       const columnIds = columns.map((col) => getColumnKey(col));
       expect(columnIds).toContain('name');
       expect(columnIds).toContain('status');
-      expect(columnIds).toContain('orderPlaced');
+      expect(columnIds).toContain('jobPlaced');
       expect(columnIds).toContain('actions');
       expect(columnIds).not.toContain('user');
     });
@@ -36,7 +36,7 @@ describe('useColumns', () => {
       expect(columnIds).toContain('name');
       expect(columnIds).toContain('user');
       expect(columnIds).toContain('status');
-      expect(columnIds).toContain('orderPlaced');
+      expect(columnIds).toContain('jobPlaced');
       expect(columnIds).toContain('actions');
     });
 
@@ -189,7 +189,7 @@ describe('useColumns', () => {
         expect(sortingFn(createRow('Succeeded'), createRow('Error'), 'status')).toBeGreaterThan(0);
       });
 
-      it('maintains correct order for all statuses', () => {
+      it('maintains correct job for all statuses', () => {
         const { result } = renderHook(() => useColumns());
         const columns = result.current;
         const statusColumn = columns.find((col) => hasAccessorKey(col, 'status'));

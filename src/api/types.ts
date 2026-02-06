@@ -65,7 +65,7 @@ export interface CreateJobRequest {
 }
 
 export interface CreateJobResponse {
-  orderId: string;
+  jobId: string;
   createdAt: string;
   fileId: string;
   uploadUrl: string;

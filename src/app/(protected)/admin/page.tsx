@@ -32,18 +32,18 @@ export default async function AdminDashboardPage() {
           </Card>
         </Link>
 
-        <Link href="/admin/orders">
+        <Link href="/admin/jobs">
           <Card className="cursor-pointer transition-colors hover:bg-accent">
             <CardHeader>
               <div className="flex items-center gap-2">
                 <Printer className="h-5 w-5 text-muted-foreground" />
-                <CardTitle>Order Management</CardTitle>
+                <CardTitle>Job Management</CardTitle>
               </div>
-              <CardDescription>Manage all orders and settings</CardDescription>
+              <CardDescription>Manage all jobs and settings</CardDescription>
             </CardHeader>
             <CardContent>
               <p className="text-sm text-muted-foreground">
-                Monitor, modify, and manage all orders across the system.
+                Monitor, modify, and manage all jobs across the system.
               </p>
             </CardContent>
           </Card>

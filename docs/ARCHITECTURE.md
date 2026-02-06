@@ -457,7 +457,7 @@ export interface PrintJob {
   name: string;
   description: string;
   status: PrintJobStatus;
-  orderPlaced: string;
+  jobPlaced: string;
   stlFile: {
     id: string;
     name: string;

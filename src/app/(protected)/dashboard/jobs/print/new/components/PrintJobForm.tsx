@@ -89,8 +89,8 @@ export default function NewPrintForm({ mockMode = false }: NewPrintFormProps = {
     try {
       const file = values.file as File;
 
-      // STEP 1: Create order with file metadata (not the file itself)
-      const createOrderPayload: CreateJobRequest = {
+      // STEP 1: Create job with file metadata (not the file itself)
+      const createJobPayload: CreateJobRequest = {
         jobName: values.jobName,
         description: values.description,
         category: 'ThreeDPrint',
@@ -101,21 +101,21 @@ export default function NewPrintForm({ mockMode = false }: NewPrintFormProps = {
         }),
       };
 
-      const createOrderResponse = await jobApi.createJob(createOrderPayload);
+      const createJobResponse = await jobApi.createJob(createJobPayload);
 
-      if (!createOrderResponse.orderId || !createOrderResponse.uploadUrl) {
-        throw new Error('Invalid response from server: missing orderId or uploadUrl');
+      if (!createJobResponse.jobId || !createJobResponse.uploadUrl) {
+        throw new Error('Invalid response from server: missing jobId or uploadUrl');
       }
 
       // STEP 2: Upload file to presigned URL (skip in mock mode to avoid CORS)
       if (!mockMode) {
-        await jobApi.uploadJobFile(createOrderResponse.uploadUrl, file);
+        await jobApi.uploadJobFile(createJobResponse.uploadUrl, file);
       }
 
       // STEP 3: Complete upload with file metadata
       const checksum = await calculateFileChecksum(file);
 
-      await jobApi.completeUpload(createOrderResponse.orderId, {
+      await jobApi.completeUpload(createJobResponse.jobId, {
         fileName: file.name,
         fileSize: file.size,
         contentType: file.type || 'application/sla',

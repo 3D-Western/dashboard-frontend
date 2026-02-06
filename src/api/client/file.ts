@@ -80,7 +80,7 @@ export const fileApi = {
 
   /**
    * Delete a file (Admin only)
-   * Cannot delete files that are associated with active orders
+   * Cannot delete files that are associated with active jobs
    */
   delete: async (fileId: string, options?: RequestInit) => {
     return apiRequest<FileDeleteResponse>(`${getBaseUrl()}${endpoints.files.delete(fileId)}`, {

@@ -69,7 +69,7 @@ Test complete workflows that users actually perform:
 ```typescript
 test('user can create and submit print job', async ({ page }) => {
   await loginAsUser(page);
-  await page.goto('/dashboard/orders/print/new');
+  await page.goto('/dashboard/jobs/print/new');
   await page.getByLabel(/print name/i).fill('My Print');
   // ... complete the workflow
   await expect(page).toHaveURL('/dashboard');
@@ -144,9 +144,9 @@ it('shows error message when login fails', async () => {
 ```typescript
 // ❌ BAD - Testing dropzone 4 times
 // NewPrintForm.dropzone.test.tsx
-// LaserCuttingOrderForm.dropzone.test.tsx
-// CNCOrderForm.dropzone.test.tsx
-// WaterJetOrderForm.dropzone.test.tsx
+// LaserCuttingJobForm.dropzone.test.tsx
+// CNCJobForm.dropzone.test.tsx
+// WaterJetJobForm.dropzone.test.tsx
 
 // ✅ GOOD - Test shared component once
 // Dropzone.test.tsx (tests the component)

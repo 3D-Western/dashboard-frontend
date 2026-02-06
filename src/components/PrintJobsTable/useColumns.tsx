@@ -146,7 +146,7 @@ export const useColumns = (opts: UseColumnsOptions = {}) => {
         },
       },
       {
-        accessorKey: 'orderPlaced',
+        accessorKey: 'jobPlaced',
         header: ({ column }) => {
           const sortDirection = column.getIsSorted();
           return (
@@ -167,7 +167,7 @@ export const useColumns = (opts: UseColumnsOptions = {}) => {
             </Button>
           );
         },
-        cell: ({ row }) => <DateCell date={row.getValue('orderPlaced') as string} />,
+        cell: ({ row }) => <DateCell date={row.getValue('jobPlaced') as string} />,
       },
       {
         id: 'actions',

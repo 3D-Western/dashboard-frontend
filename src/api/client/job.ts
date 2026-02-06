@@ -105,13 +105,10 @@ export const jobApi = {
   },
 
   retryUpload: async (jobId: string, options?: RequestInit) => {
-    return apiRequest<RetryUploadResponse>(
-      `${getBaseUrl()}${endpoints.jobs.retryUpload(jobId)}`,
-      {
-        method: 'POST',
-        credentials: 'include',
-        ...options,
-      },
-    );
+    return apiRequest<RetryUploadResponse>(`${getBaseUrl()}${endpoints.jobs.retryUpload(jobId)}`, {
+      method: 'POST',
+      credentials: 'include',
+      ...options,
+    });
   },
 };
