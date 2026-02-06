@@ -885,4 +885,230 @@ describe('userApi', () => {
       expect((capturedHeaders as Headers | null)?.get('X-Custom-Header')).toBe('test');
     });
   });
+
+  describe('changePassword', () => {
+    it('changes password successfully', async () => {
+      const mockResponse = { message: 'Password updated successfully' };
+      mockServer.use(
+        http.post('*' + endpoints.users.changePassword, () => {
+          return HttpResponse.json({
+            success: true,
+            data: mockResponse,
+          });
+        }),
+      );
+
+      const result = await userApi.changePassword(
+        'oldPassword123',
+        'newPassword456',
+        'newPassword456',
+      );
+
+      expect(result).toEqual(mockResponse);
+    });
+
+    it('sends correct request body', async () => {
+      let capturedBody: unknown = null;
+      mockServer.use(
+        http.post('*' + endpoints.users.changePassword, async ({ request }) => {
+          capturedBody = await request.json();
+          return HttpResponse.json({
+            success: true,
+            data: { message: 'Password updated successfully' },
+          });
+        }),
+      );
+
+      await userApi.changePassword('oldPassword123', 'newPassword456', 'newPassword456');
+
+      expect(capturedBody).toEqual({
+        currentPassword: 'oldPassword123',
+        newPassword: 'newPassword456',
+        confirmNewPassword: 'newPassword456',
+        invalidateAllSessions: false,
+      });
+    });
+
+    it('sends invalidateAllSessions when provided', async () => {
+      let capturedBody: unknown = null;
+      mockServer.use(
+        http.post('*' + endpoints.users.changePassword, async ({ request }) => {
+          capturedBody = await request.json();
+          return HttpResponse.json({
+            success: true,
+            data: { message: 'Password updated successfully' },
+          });
+        }),
+      );
+
+      await userApi.changePassword('oldPassword123', 'newPassword456', 'newPassword456', true);
+
+      expect(capturedBody).toEqual({
+        currentPassword: 'oldPassword123',
+        newPassword: 'newPassword456',
+        confirmNewPassword: 'newPassword456',
+        invalidateAllSessions: true,
+      });
+    });
+
+    it('uses POST method', async () => {
+      let capturedMethod: string | null = null;
+      mockServer.use(
+        http.post('*' + endpoints.users.changePassword, ({ request }) => {
+          capturedMethod = request.method;
+          return HttpResponse.json({
+            success: true,
+            data: { message: 'Password updated successfully' },
+          });
+        }),
+      );
+
+      await userApi.changePassword('oldPassword123', 'newPassword456', 'newPassword456');
+
+      expect(capturedMethod).toBe('POST');
+    });
+
+    it('includes credentials in request', async () => {
+      let capturedCredentials: RequestCredentials | undefined;
+      const originalFetch = global.fetch;
+      global.fetch = vi.fn((url, options) => {
+        capturedCredentials = options?.credentials;
+        return originalFetch(url, options);
+      });
+
+      mockServer.use(
+        http.post('*' + endpoints.users.changePassword, () => {
+          return HttpResponse.json({
+            success: true,
+            data: { message: 'Password updated successfully' },
+          });
+        }),
+      );
+
+      await userApi.changePassword('oldPassword123', 'newPassword456', 'newPassword456');
+
+      expect(capturedCredentials).toBe('include');
+
+      global.fetch = originalFetch;
+    });
+
+    it('throws INVALID_CREDENTIALS error when current password is incorrect', async () => {
+      mockServer.use(
+        http.post('*' + endpoints.users.changePassword, () => {
+          return HttpResponse.json({
+            success: false,
+            error: {
+              code: ErrorCodes.INVALID_CREDENTIALS,
+              message: 'Current password is incorrect',
+            },
+          });
+        }),
+      );
+
+      await expect(
+        userApi.changePassword('wrongPassword', 'newPassword456', 'newPassword456'),
+      ).rejects.toMatchObject({
+        code: ErrorCodes.INVALID_CREDENTIALS,
+      });
+    });
+
+    it('throws VALIDATION_FAILED error when passwords do not match', async () => {
+      mockServer.use(
+        http.post('*' + endpoints.users.changePassword, () => {
+          return HttpResponse.json({
+            success: false,
+            error: {
+              code: ErrorCodes.VALIDATION_FAILED,
+              message: 'Passwords do not match',
+            },
+          });
+        }),
+      );
+
+      await expect(
+        userApi.changePassword('oldPassword123', 'newPassword456', 'differentPassword789'),
+      ).rejects.toMatchObject({
+        code: ErrorCodes.VALIDATION_FAILED,
+      });
+    });
+
+    it('throws VALIDATION_FAILED error when password is too short', async () => {
+      mockServer.use(
+        http.post('*' + endpoints.users.changePassword, () => {
+          return HttpResponse.json({
+            success: false,
+            error: {
+              code: ErrorCodes.VALIDATION_FAILED,
+              message: 'Password must be at least 10 characters',
+            },
+          });
+        }),
+      );
+
+      await expect(
+        userApi.changePassword('oldPassword123', 'short', 'short'),
+      ).rejects.toMatchObject({
+        code: ErrorCodes.VALIDATION_FAILED,
+      });
+    });
+
+    it('throws VALIDATION_FAILED error when new password is same as current password', async () => {
+      mockServer.use(
+        http.post('*' + endpoints.users.changePassword, () => {
+          return HttpResponse.json({
+            success: false,
+            error: {
+              code: ErrorCodes.VALIDATION_FAILED,
+              message: 'New password must be different from current password',
+            },
+          });
+        }),
+      );
+
+      await expect(
+        userApi.changePassword('samePassword123', 'samePassword123', 'samePassword123'),
+      ).rejects.toMatchObject({
+        code: ErrorCodes.VALIDATION_FAILED,
+      });
+    });
+
+    it('handles network errors', async () => {
+      mockServer.use(
+        http.post('*' + endpoints.users.changePassword, () => {
+          return HttpResponse.json({
+            success: false,
+            error: {
+              code: ErrorCodes.REQUEST_FAILED,
+              message: 'Network error',
+            },
+          });
+        }),
+      );
+
+      await expect(
+        userApi.changePassword('oldPassword123', 'newPassword456', 'newPassword456'),
+      ).rejects.toMatchObject({
+        code: ErrorCodes.REQUEST_FAILED,
+      });
+    });
+
+    it('passes custom options to apiRequest', async () => {
+      let capturedHeaders: Headers | null = null;
+      mockServer.use(
+        http.post('*' + endpoints.users.changePassword, ({ request }) => {
+          capturedHeaders = request.headers;
+          return HttpResponse.json({
+            success: true,
+            data: { message: 'Password updated successfully' },
+          });
+        }),
+      );
+
+      await userApi.changePassword('oldPassword123', 'newPassword456', 'newPassword456', false, {
+        headers: { 'X-Custom-Header': 'test' },
+      });
+
+      expect((capturedHeaders as Headers | null)?.get('X-Custom-Header')).toBe('test');
+    });
+  });
 });

@@ -8,6 +8,7 @@ import { toast } from 'sonner';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Checkbox } from '@/components/ui/checkbox';
 import {
   Form,
   FormControl,
@@ -15,6 +16,7 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
+  FormDescription,
 } from '@/components/ui/form';
 import {
   Select,
@@ -25,6 +27,10 @@ import {
 } from '@/components/ui/select';
 import { EXPERIENCE_LEVEL_OPTIONS, EXPERIENCE_LEVELS } from '@/constants/experience-levels';
 import { useUser } from '@/providers/user-provider';
+import { userApi } from '@/api/client/user';
+import { ApiError } from '@/api/client/errors';
+import { useRouter } from 'next/navigation';
+import { Routes } from '@/lib/routes';
 
 // Password change form schema
 const passwordSchema = z
@@ -32,11 +38,12 @@ const passwordSchema = z
     currentPassword: z.string().min(1, 'Current password is required'),
     newPassword: z
       .string()
-      .min(8, 'Password must be at least 8 characters')
+      .min(10, 'Password must be at least 10 characters')
       .regex(/[A-Z]/, 'Password must contain at least one uppercase letter')
       .regex(/[a-z]/, 'Password must contain at least one lowercase letter')
       .regex(/[0-9]/, 'Password must contain at least one number'),
     confirmPassword: z.string().min(1, 'Please confirm your password'),
+    invalidateAllSessions: z.boolean(),
   })
   .refine((data) => data.newPassword === data.confirmPassword, {
     message: "Passwords don't match",
@@ -57,6 +64,7 @@ type ExperienceLevelFormData = z.infer<typeof experienceLevelSchema>;
 
 export function SettingsContent() {
   const user = useUser();
+  const router = useRouter();
   const [isPasswordLoading, setIsPasswordLoading] = useState(false);
   const [isExperienceLoading, setIsExperienceLoading] = useState(false);
 
@@ -66,6 +74,7 @@ export function SettingsContent() {
       currentPassword: '',
       newPassword: '',
       confirmPassword: '',
+      invalidateAllSessions: false,
     },
   });
 
@@ -80,28 +89,28 @@ export function SettingsContent() {
     try {
       setIsPasswordLoading(true);
 
-      const response = await fetch('/api/user/password', {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          currentPassword: values.currentPassword,
-          newPassword: values.newPassword,
-        }),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({ message: 'An error occurred' }));
-        toast.error(errorData.message || 'Failed to update password');
-        return;
-      }
+      await userApi.changePassword(
+        values.currentPassword,
+        values.newPassword,
+        values.confirmPassword,
+        values.invalidateAllSessions,
+      );
 
       toast.success('Password updated successfully');
       passwordForm.reset();
+
+      // If sign out all sessions was checked, redirect to login
+      if (values.invalidateAllSessions) {
+        router.push(Routes.login);
+      }
     } catch (error) {
       console.error('Password update error', error);
-      toast.error('Failed to connect to the server. Please try again.');
+
+      if (error instanceof ApiError) {
+        toast.error(error.message || 'Failed to update password');
+      } else {
+        toast.error('Failed to connect to the server. Please try again.');
+      }
     } finally {
       setIsPasswordLoading(false);
     }
@@ -186,6 +195,25 @@ export function SettingsContent() {
                         <Input type="password" placeholder="Confirm new password" {...field} />
                       </FormControl>
                       <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={passwordForm.control}
+                  name="invalidateAllSessions"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-start space-y-0 space-x-3 rounded-md border p-4">
+                      <FormControl>
+                        <Checkbox checked={field.value} onCheckedChange={field.onChange} />
+                      </FormControl>
+                      <div className="space-y-1 leading-none">
+                        <FormLabel>Sign out all active sessions</FormLabel>
+                        <FormDescription>
+                          After changing your password, you will be signed out from all devices and
+                          redirected to the login page.
+                        </FormDescription>
+                      </div>
                     </FormItem>
                   )}
                 />

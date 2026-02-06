@@ -89,4 +89,26 @@ export const userApi = {
       ...options,
     });
   },
+
+  changePassword: async (
+    currentPassword: string,
+    newPassword: string,
+    confirmNewPassword: string,
+    invalidateAllSessions?: boolean,
+    options?: RequestInit,
+  ) => {
+    const url = `${getBaseUrl()}${endpoints.users.changePassword}`;
+
+    return apiRequest<{ message: string }>(url, {
+      method: 'POST',
+      body: JSON.stringify({
+        currentPassword,
+        newPassword,
+        confirmNewPassword,
+        invalidateAllSessions: invalidateAllSessions ?? false,
+      }),
+      credentials: 'include',
+      ...options,
+    });
+  },
 };

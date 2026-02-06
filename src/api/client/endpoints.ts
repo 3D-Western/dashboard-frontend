@@ -17,6 +17,7 @@ export const endpoints = {
     list: '/api/v1/users',
     byId: (userId: number) => `/api/v1/users/${userId}`,
     orders: '/api/v1/users/me/print-jobs',
+    changePassword: '/api/v1/users/me/password',
   },
   orders: {
     list: '/api/v1/orders',
