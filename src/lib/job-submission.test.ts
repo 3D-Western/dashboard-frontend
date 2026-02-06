@@ -10,8 +10,8 @@ vi.mock('sonner', () => ({
 
 vi.mock('@/api/client/endpoints', () => ({
   endpoints: {
-    jobs: {
-      create: '/api/jobs',
+    orders: {
+      create: '/api/orders',
     },
   },
 }));
@@ -54,7 +54,7 @@ describe('submitJob', () => {
 
     // Check that fetch was called with the right URL and method
     expect(mockFetch).toHaveBeenCalledWith(
-      '/api/jobs',
+      '/api/orders',
       expect.objectContaining({
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -112,7 +112,7 @@ describe('submitJob', () => {
 
     await submitJob(jobData, options, mockRouter);
 
-    expect(mockFetch).toHaveBeenCalledWith('/api/jobs', {
+    expect(mockFetch).toHaveBeenCalledWith('/api/orders', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({

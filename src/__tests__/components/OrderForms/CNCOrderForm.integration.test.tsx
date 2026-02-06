@@ -184,7 +184,7 @@ describe('CNCOrderForm Integration', () => {
       // TODO: Update this test when backend is ready
       // For now, form shows "coming soon" message and redirects
       await waitFor(() => {
-        expect(mockPush).toHaveBeenCalledWith('/dashboard/orders');
+        expect(mockPush).toHaveBeenCalledWith('/dashboard/jobs');
       });
     });
   });

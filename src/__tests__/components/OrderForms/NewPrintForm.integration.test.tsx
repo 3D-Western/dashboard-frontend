@@ -213,7 +213,7 @@ describe('NewPrintForm Integration', () => {
       const submitButton = screen.getByRole('button', { name: /Submit/i });
       await user.click(submitButton);
       await waitFor(() => {
-        expect(mockPush).toHaveBeenCalledWith('/dashboard/orders');
+        expect(mockPush).toHaveBeenCalledWith('/dashboard/jobs');
       });
     });
 
@@ -261,7 +261,7 @@ describe('NewPrintForm Integration', () => {
         expect(jobApi.createJob).toHaveBeenCalledTimes(1);
         expect(jobApi.uploadJobFile).toHaveBeenCalledTimes(1);
         expect(jobApi.completeUpload).toHaveBeenCalledTimes(1);
-        expect(mockPush).toHaveBeenCalledWith('/dashboard/orders');
+        expect(mockPush).toHaveBeenCalledWith('/dashboard/jobs');
       });
     });
 
