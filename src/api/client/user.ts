@@ -81,7 +81,7 @@ export const userApi = {
     }
 
     const queryString = searchParams.toString();
-    const url = `${getBaseUrl()}${endpoints.users.orders}${queryString ? `?${queryString}` : ''}`;
+    const url = `${getBaseUrl()}${endpoints.users.jobs}${queryString ? `?${queryString}` : ''}`;
 
     return apiRequest<PrintJobListResponse>(url, {
       method: 'GET',

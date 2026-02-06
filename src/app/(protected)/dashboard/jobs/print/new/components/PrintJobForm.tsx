@@ -55,7 +55,7 @@ const DESIGN_INTENT_OPTIONS: readonly MaterialOption[] = [
 ] as const;
 
 const formSchema = z.object({
-  printName: z.string().min(1, { message: 'Must have a name for the print request' }).max(30),
+  jobName: z.string().min(1, { message: 'Must have a name for the print request' }).max(30),
   description: z
     .string()
     .min(2, { message: 'Must have a description for the print request' })
@@ -75,7 +75,7 @@ export default function NewPrintForm({ mockMode = false }: NewPrintFormProps = {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      printName: '',
+      jobName: '',
       description: '',
       purpose: '',
       design_intent: '',
@@ -91,8 +91,9 @@ export default function NewPrintForm({ mockMode = false }: NewPrintFormProps = {
 
       // STEP 1: Create order with file metadata (not the file itself)
       const createOrderPayload: CreateJobRequest = {
-        printName: values.printName,
+        jobName: values.jobName,
         description: values.description,
+        category: 'ThreeDPrint',
         formAnswerJson: JSON.stringify({
           purpose: values.purpose,
           design_intent: values.design_intent,
@@ -141,7 +142,7 @@ export default function NewPrintForm({ mockMode = false }: NewPrintFormProps = {
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
           <FormField
             control={form.control}
-            name="printName"
+            name="jobName"
             render={({ field }) => (
               <FormItem>
                 <FormLabel className="text-lg">Project Title</FormLabel>

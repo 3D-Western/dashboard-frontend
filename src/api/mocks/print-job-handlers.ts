@@ -6,8 +6,8 @@ import { createInvalidSessionResponse, generateSuccessResponse } from './utils';
 const apiUrl = process.env.API_URL;
 
 export const jobHandlers = [
-  // GET /orders with query params (status, userId, pagination)
-  http.get(`${apiUrl}${endpoints.orders.list}`, ({ cookies, request }) => {
+  // GET /jobs with query params (status, userId, pagination)
+  http.get(`${apiUrl}${endpoints.jobs.list}`, ({ cookies, request }) => {
     const sessionId = cookies['sessionToken'] || '';
     const user = db.validateSession(sessionId);
     if (!user) {
@@ -66,8 +66,8 @@ export const jobHandlers = [
     );
   }),
 
-  // POST /orders - Create new order (Step 1: Returns presigned URL)
-  http.post(`${apiUrl}${endpoints.orders.create}`, async ({ cookies, request }) => {
+  // POST /jobs - Create new job (Step 1: Returns presigned URL)
+  http.post(`${apiUrl}${endpoints.jobs.create}`, async ({ cookies, request }) => {
     const sessionId = cookies['sessionToken'] || '';
     const user = db.validateSession(sessionId);
     if (!user) {
@@ -75,9 +75,10 @@ export const jobHandlers = [
     }
 
     const body = (await request.json()) as {
-      printName: string;
+      jobName: string;
       description: string;
       formAnswerJson: string;
+      category: 'ThreeDPrint' | 'CNC' | 'Waterjet' | 'LaserCutting';
     };
 
     // Parse formAnswerJson to extract fields
@@ -104,14 +105,14 @@ export const jobHandlers = [
         lastName: user.lastName,
         email: user.email,
       },
-      name: body.printName,
+      name: body.jobName,
       description: body.description,
       purpose: formData.purpose as string | undefined,
       design_intent: formData.design_intent as string | undefined,
       orderPlaced: new Date().toISOString(),
       status: 'PendingFile' as const,
       reprint: null,
-      category: '3d-print',
+      category: body.category,
       // 3D Print specific fields from formAnswerJson
       goal: formData.goal as string | undefined,
       durability: formData.durability as string | undefined,
@@ -143,9 +144,9 @@ export const jobHandlers = [
     );
   }),
 
-  // POST /orders/:orderId/complete-upload (Step 3: Complete upload)
+  // POST /jobs/:jobId/complete-upload (Step 3: Complete upload)
   http.post(
-    `${apiUrl}/api/v1/orders/:orderId/complete-upload`,
+    `${apiUrl}/api/v1/jobs/:orderId/complete-upload`,
     async ({ cookies, params, request }) => {
       const sessionId = cookies['sessionToken'] || '';
       const user = db.validateSession(sessionId);
@@ -213,8 +214,8 @@ export const jobHandlers = [
     },
   ),
 
-  // POST /orders/:orderId/retry-upload (Retry presigned URL)
-  http.post(`${apiUrl}/api/v1/orders/:orderId/retry-upload`, ({ cookies, params }) => {
+  // POST /jobs/:jobId/retry-upload (Retry presigned URL)
+  http.post(`${apiUrl}/api/v1/jobs/:orderId/retry-upload`, ({ cookies, params }) => {
     const sessionId = cookies['sessionToken'] || '';
     const user = db.validateSession(sessionId);
     if (!user) {
@@ -260,8 +261,8 @@ export const jobHandlers = [
     );
   }),
 
-  // PATCH /orders/:orderId - Update order status
-  http.patch(`${apiUrl}/api/v1/orders/:orderId`, async ({ cookies, params, request }) => {
+  // PATCH /jobs/:jobId - Update job status
+  http.patch(`${apiUrl}/api/v1/jobs/:orderId`, async ({ cookies, params, request }) => {
     const sessionId = cookies['sessionToken'] || '';
     const user = db.validateSession(sessionId);
     if (!user) {
@@ -287,8 +288,8 @@ export const jobHandlers = [
     return HttpResponse.json(generateSuccessResponse({ order: updatedOrder }));
   }),
 
-  // DELETE /orders/:orderId
-  http.delete(`${apiUrl}/api/v1/orders/:orderId`, ({ cookies, params }) => {
+  // DELETE /jobs/:jobId
+  http.delete(`${apiUrl}/api/v1/jobs/:orderId`, ({ cookies, params }) => {
     const sessionId = cookies['sessionToken'] || '';
     const user = db.validateSession(sessionId);
     if (!user) {

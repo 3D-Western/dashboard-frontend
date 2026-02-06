@@ -72,6 +72,7 @@ export const createMockPrintJob = (overrides?: Partial<PrintJob>): PrintJob => {
     },
     name: faker.commerce.productName(),
     description: faker.commerce.productDescription(),
+    category: 'ThreeDPrint',
     status: 'InQueue' as PrintJobStatus,
     orderPlaced: faker.date.recent().toISOString(),
     ...overrides,

@@ -10,8 +10,8 @@ vi.mock('sonner', () => ({
 
 vi.mock('@/api/client/endpoints', () => ({
   endpoints: {
-    orders: {
-      create: '/api/orders',
+    jobs: {
+      create: '/api/v1/jobs',
     },
   },
 }));
@@ -48,13 +48,13 @@ describe('submitJob', () => {
     const options = {
       category: 'laser-cutting',
       successRedirectPath: '/dashboard/print',
-    };
+    } as const;
 
     await submitJob(jobData, options, mockRouter);
 
     // Check that fetch was called with the right URL and method
     expect(mockFetch).toHaveBeenCalledWith(
-      '/api/orders',
+      '/api/v1/jobs',
       expect.objectContaining({
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -66,9 +66,12 @@ describe('submitJob', () => {
     const body = JSON.parse(callArgs[1].body);
 
     expect(body).toEqual({
-      category: 'laser-cutting',
-      name: 'Test Order',
+      category: 'LaserCutting',
+      jobName: 'Test Order',
       description: 'Test Description',
+      formAnswerJson: expect.any(String),
+    });
+    expect(JSON.parse(body.formAnswerJson)).toEqual({
       material: 'acrylic',
       fileId: expect.stringMatching(/^mock-lasercutting-file-\d+$/),
       priority: 'standard',
@@ -94,7 +97,7 @@ describe('submitJob', () => {
     const options = {
       category: 'cnc',
       errorMessagePrefix: 'CNC job submit failed',
-    };
+    } as const;
 
     await expect(submitJob(jobData, options, mockRouter)).rejects.toThrow('Server error');
   });
@@ -108,21 +111,23 @@ describe('submitJob', () => {
 
     const options = {
       category: 'laser-cutting',
-    };
+    } as const;
 
     await submitJob(jobData, options, mockRouter);
 
-    expect(mockFetch).toHaveBeenCalledWith('/api/orders', {
+    expect(mockFetch).toHaveBeenCalledWith('/api/v1/jobs', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        category: 'laser-cutting',
-        name: 'No File Order',
+        category: 'LaserCutting',
+        jobName: 'No File Order',
         description: 'Order without file',
-        material: 'wood',
-        fileId: '',
-        priority: 'standard',
-        urgency: 'normal',
+        formAnswerJson: JSON.stringify({
+          material: 'wood',
+          fileId: '',
+          priority: 'standard',
+          urgency: 'normal',
+        }),
       }),
     });
 
@@ -138,7 +143,7 @@ describe('submitJob', () => {
 
     const options = {
       category: 'cnc',
-    };
+    } as const;
 
     await submitJob(jobData, options, mockRouter);
 
