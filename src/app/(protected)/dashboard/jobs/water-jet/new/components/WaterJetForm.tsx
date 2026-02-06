@@ -86,8 +86,8 @@ export default function WaterJetForm() {
   async function onSubmit(values: z.infer<typeof formSchema>) {
     try {
       // TODO: Enable actual submission when backend is ready
-      // For now, show success message and redirect to orders page
-      toast.success('Water jet order submission will be available soon');
+      // For now, show success message and redirect to jobs page
+      toast.success('Water jet job submission will be available soon');
       router.push(Routes.jobs.home);
       return;
 
@@ -102,7 +102,7 @@ export default function WaterJetForm() {
         {
           category: 'water-jet',
           successRedirectPath: Routes.jobs.home,
-          errorMessagePrefix: 'Water jet order submit failed',
+          errorMessagePrefix: 'Water jet job submit failed',
         },
         router,
       );

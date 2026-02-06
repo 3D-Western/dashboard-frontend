@@ -35,7 +35,7 @@ export const jobApi = {
     }
 
     const queryString = searchParams.toString();
-    const url = `${getBaseUrl()}${endpoints.orders.list}${queryString ? `?${queryString}` : ''}`;
+    const url = `${getBaseUrl()}${endpoints.jobs.list}${queryString ? `?${queryString}` : ''}`;
 
     return apiRequest<PrintJobListResponse>(url, {
       method: 'GET',
@@ -45,7 +45,7 @@ export const jobApi = {
   },
 
   updateJobStatus: async (jobId: string, status: PrintJobStatus, options?: RequestInit) => {
-    return apiRequest<{ job: PrintJob }>(`${getBaseUrl()}${endpoints.orders.byId(jobId)}`, {
+    return apiRequest<{ job: PrintJob }>(`${getBaseUrl()}${endpoints.jobs.byId(jobId)}`, {
       method: 'PATCH',
       credentials: 'include',
       headers: {
@@ -57,21 +57,21 @@ export const jobApi = {
   },
 
   deleteJob: async (jobId: string, options?: RequestInit) => {
-    return apiRequest<{ success: boolean }>(`${getBaseUrl()}${endpoints.orders.byId(jobId)}`, {
+    return apiRequest<{ success: boolean }>(`${getBaseUrl()}${endpoints.jobs.byId(jobId)}`, {
       method: 'DELETE',
       credentials: 'include',
       ...options,
     });
   },
   cancelJob: async (jobId: string, options?: RequestInit) => {
-    return apiRequest<{ job: PrintJob }>(`${getBaseUrl()}${endpoints.orders.cancel(jobId)}`, {
+    return apiRequest<{ job: PrintJob }>(`${getBaseUrl()}${endpoints.jobs.cancel(jobId)}`, {
       method: 'POST',
       credentials: 'include',
       ...options,
     });
   },
   createJob: async (payload: CreateJobRequest, options?: RequestInit) => {
-    return apiRequest<CreateJobResponse>(`${getBaseUrl()}${endpoints.orders.create}`, {
+    return apiRequest<CreateJobResponse>(`${getBaseUrl()}${endpoints.jobs.create}`, {
       method: 'POST',
       credentials: 'include',
       body: JSON.stringify(payload),
@@ -96,7 +96,7 @@ export const jobApi = {
     return response;
   },
   completeUpload: async (jobId: string, payload: CompleteUploadRequest, options?: RequestInit) => {
-    return apiRequest<null>(`${getBaseUrl()}${endpoints.orders.completeUpload(jobId)}`, {
+    return apiRequest<null>(`${getBaseUrl()}${endpoints.jobs.completeUpload(jobId)}`, {
       method: 'POST',
       credentials: 'include',
       body: JSON.stringify(payload),
@@ -105,13 +105,10 @@ export const jobApi = {
   },
 
   retryUpload: async (jobId: string, options?: RequestInit) => {
-    return apiRequest<RetryUploadResponse>(
-      `${getBaseUrl()}${endpoints.orders.retryUpload(jobId)}`,
-      {
-        method: 'POST',
-        credentials: 'include',
-        ...options,
-      },
-    );
+    return apiRequest<RetryUploadResponse>(`${getBaseUrl()}${endpoints.jobs.retryUpload(jobId)}`, {
+      method: 'POST',
+      credentials: 'include',
+      ...options,
+    });
   },
 };

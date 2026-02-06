@@ -55,7 +55,7 @@ const DESIGN_INTENT_OPTIONS: readonly MaterialOption[] = [
 ] as const;
 
 const formSchema = z.object({
-  printName: z.string().min(1, { message: 'Must have a name for the print request' }).max(30),
+  jobName: z.string().min(1, { message: 'Must have a name for the print request' }).max(30),
   description: z
     .string()
     .min(2, { message: 'Must have a description for the print request' })
@@ -75,7 +75,7 @@ export default function NewPrintForm({ mockMode = false }: NewPrintFormProps = {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      printName: '',
+      jobName: '',
       description: '',
       purpose: '',
       design_intent: '',
@@ -89,10 +89,11 @@ export default function NewPrintForm({ mockMode = false }: NewPrintFormProps = {
     try {
       const file = values.file as File;
 
-      // STEP 1: Create order with file metadata (not the file itself)
-      const createOrderPayload: CreateJobRequest = {
-        printName: values.printName,
+      // STEP 1: Create job with file metadata (not the file itself)
+      const createJobPayload: CreateJobRequest = {
+        jobName: values.jobName,
         description: values.description,
+        category: 'ThreeDPrint',
         formAnswerJson: JSON.stringify({
           purpose: values.purpose,
           design_intent: values.design_intent,
@@ -100,21 +101,21 @@ export default function NewPrintForm({ mockMode = false }: NewPrintFormProps = {
         }),
       };
 
-      const createOrderResponse = await jobApi.createJob(createOrderPayload);
+      const createJobResponse = await jobApi.createJob(createJobPayload);
 
-      if (!createOrderResponse.orderId || !createOrderResponse.uploadUrl) {
-        throw new Error('Invalid response from server: missing orderId or uploadUrl');
+      if (!createJobResponse.jobId || !createJobResponse.uploadUrl) {
+        throw new Error('Invalid response from server: missing jobId or uploadUrl');
       }
 
       // STEP 2: Upload file to presigned URL (skip in mock mode to avoid CORS)
       if (!mockMode) {
-        await jobApi.uploadJobFile(createOrderResponse.uploadUrl, file);
+        await jobApi.uploadJobFile(createJobResponse.uploadUrl, file);
       }
 
       // STEP 3: Complete upload with file metadata
       const checksum = await calculateFileChecksum(file);
 
-      await jobApi.completeUpload(createOrderResponse.orderId, {
+      await jobApi.completeUpload(createJobResponse.jobId, {
         fileName: file.name,
         fileSize: file.size,
         contentType: file.type || 'application/sla',
@@ -141,7 +142,7 @@ export default function NewPrintForm({ mockMode = false }: NewPrintFormProps = {
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
           <FormField
             control={form.control}
-            name="printName"
+            name="jobName"
             render={({ field }) => (
               <FormItem>
                 <FormLabel className="text-lg">Project Title</FormLabel>

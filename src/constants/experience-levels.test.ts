@@ -66,7 +66,7 @@ describe('experience-levels constants', () => {
       });
     });
 
-    it('options are in order: no_experience, beginner, advanced', () => {
+    it('options follow sequence: no_experience, beginner, advanced', () => {
       expect(EXPERIENCE_LEVEL_OPTIONS[0].value).toBe(EXPERIENCE_LEVELS.NO_EXPERIENCE);
       expect(EXPERIENCE_LEVEL_OPTIONS[1].value).toBe(EXPERIENCE_LEVELS.BEGINNER);
       expect(EXPERIENCE_LEVEL_OPTIONS[2].value).toBe(EXPERIENCE_LEVELS.ADVANCED);

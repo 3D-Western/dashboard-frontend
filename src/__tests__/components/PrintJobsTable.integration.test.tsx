@@ -42,19 +42,19 @@ describe('PrintJobsTable Integration', () => {
         id: '1',
         name: 'Test Print 1',
         status: 'InQueue',
-        orderPlaced: '2024-01-15T10:00:00Z',
+        jobPlaced: '2024-01-15T10:00:00Z',
       }),
       createMockPrintJob({
         id: '2',
         name: 'Test Print 2',
         status: 'Printing',
-        orderPlaced: '2024-01-16T11:00:00Z',
+        jobPlaced: '2024-01-16T11:00:00Z',
       }),
       createMockPrintJob({
         id: '3',
         name: 'Test Print 3',
         status: 'Ready',
-        orderPlaced: '2024-01-17T12:00:00Z',
+        jobPlaced: '2024-01-17T12:00:00Z',
       }),
     ];
   });

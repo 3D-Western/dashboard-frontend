@@ -166,7 +166,7 @@ export class Database {
 
     // Apply snapshot filter (only jobs created before the snapshot)
     if (filters?.snapshotCreatedBefore) {
-      jobs = jobs.filter((job) => job.orderPlaced <= filters.snapshotCreatedBefore!);
+      jobs = jobs.filter((job) => job.jobPlaced <= filters.snapshotCreatedBefore!);
     }
 
     // Filter by userId if provided

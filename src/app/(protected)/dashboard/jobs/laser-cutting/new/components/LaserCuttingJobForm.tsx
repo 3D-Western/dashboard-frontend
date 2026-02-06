@@ -58,7 +58,7 @@ const LASER_FILE_TYPES = {
   validation: 'Please upload a DXF, AI, SVG, or DWG file',
 };
 
-export default function LaserCuttingOrderForm() {
+export default function LaserCuttingJobForm() {
   const router = useRouter();
 
   const formSchema = z.object({
@@ -85,8 +85,8 @@ export default function LaserCuttingOrderForm() {
   async function onSubmit(values: z.infer<typeof formSchema>) {
     try {
       // TODO: Enable actual submission when backend is ready
-      // For now, show success message and redirect to orders page
-      toast.success('Laser cutting order submission will be available soon');
+      // For now, show success message and redirect to jobs page
+      toast.success('Laser cutting job submission will be available soon');
       router.push(Routes.jobs.home);
       return;
 
@@ -101,7 +101,7 @@ export default function LaserCuttingOrderForm() {
         {
           category: 'laser-cutting',
           successRedirectPath: Routes.jobs.home,
-          errorMessagePrefix: 'Laser cutting order submit failed',
+          errorMessagePrefix: 'Laser cutting job submit failed',
         },
         router,
       );

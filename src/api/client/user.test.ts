@@ -564,7 +564,7 @@ describe('userApi', () => {
       };
 
       mockServer.use(
-        http.get('*' + endpoints.users.orders, () => {
+        http.get('*' + endpoints.users.jobs, () => {
           return HttpResponse.json({
             success: true,
             data: mockResponse,
@@ -581,7 +581,7 @@ describe('userApi', () => {
     it('includes status query parameter when provided', async () => {
       let capturedUrl: string | null = null;
       mockServer.use(
-        http.get('*' + endpoints.users.orders, ({ request }) => {
+        http.get('*' + endpoints.users.jobs, ({ request }) => {
           capturedUrl = request.url;
           return HttpResponse.json({
             success: true,
@@ -609,7 +609,7 @@ describe('userApi', () => {
     it('includes search query parameter when provided', async () => {
       let capturedUrl: string | null = null;
       mockServer.use(
-        http.get('*' + endpoints.users.orders, ({ request }) => {
+        http.get('*' + endpoints.users.jobs, ({ request }) => {
           capturedUrl = request.url;
           return HttpResponse.json({
             success: true,
@@ -637,7 +637,7 @@ describe('userApi', () => {
     it('includes page query parameter when provided', async () => {
       let capturedUrl: string | null = null;
       mockServer.use(
-        http.get('*' + endpoints.users.orders, ({ request }) => {
+        http.get('*' + endpoints.users.jobs, ({ request }) => {
           capturedUrl = request.url;
           return HttpResponse.json({
             success: true,
@@ -665,7 +665,7 @@ describe('userApi', () => {
     it('includes pageSize query parameter when provided', async () => {
       let capturedUrl: string | null = null;
       mockServer.use(
-        http.get('*' + endpoints.users.orders, ({ request }) => {
+        http.get('*' + endpoints.users.jobs, ({ request }) => {
           capturedUrl = request.url;
           return HttpResponse.json({
             success: true,
@@ -693,7 +693,7 @@ describe('userApi', () => {
     it('includes snapshotCreatedBefore query parameter when provided', async () => {
       let capturedUrl: string | null = null;
       mockServer.use(
-        http.get('*' + endpoints.users.orders, ({ request }) => {
+        http.get('*' + endpoints.users.jobs, ({ request }) => {
           capturedUrl = request.url;
           return HttpResponse.json({
             success: true,
@@ -721,7 +721,7 @@ describe('userApi', () => {
     it('includes multiple query parameters when provided', async () => {
       let capturedUrl: string | null = null;
       mockServer.use(
-        http.get('*' + endpoints.users.orders, ({ request }) => {
+        http.get('*' + endpoints.users.jobs, ({ request }) => {
           capturedUrl = request.url;
           return HttpResponse.json({
             success: true,
@@ -757,7 +757,7 @@ describe('userApi', () => {
     it('omits undefined query parameters', async () => {
       let capturedUrl: string | null = null;
       mockServer.use(
-        http.get('*' + endpoints.users.orders, ({ request }) => {
+        http.get('*' + endpoints.users.jobs, ({ request }) => {
           capturedUrl = request.url;
           return HttpResponse.json({
             success: true,
@@ -793,7 +793,7 @@ describe('userApi', () => {
       });
 
       mockServer.use(
-        http.get('*' + endpoints.users.orders, () => {
+        http.get('*' + endpoints.users.jobs, () => {
           return HttpResponse.json({
             success: true,
             data: {
@@ -821,7 +821,7 @@ describe('userApi', () => {
 
     it('throws FORBIDDEN error when user is not authenticated', async () => {
       mockServer.use(
-        http.get('*' + endpoints.users.orders, () => {
+        http.get('*' + endpoints.users.jobs, () => {
           return HttpResponse.json({
             success: false,
             error: {
@@ -839,7 +839,7 @@ describe('userApi', () => {
 
     it('handles network errors', async () => {
       mockServer.use(
-        http.get('*' + endpoints.users.orders, () => {
+        http.get('*' + endpoints.users.jobs, () => {
           return HttpResponse.json({
             success: false,
             error: {
@@ -858,7 +858,7 @@ describe('userApi', () => {
     it('passes custom options to apiRequest', async () => {
       let capturedHeaders: Headers | null = null;
       mockServer.use(
-        http.get('*' + endpoints.users.orders, ({ request }) => {
+        http.get('*' + endpoints.users.jobs, ({ request }) => {
           capturedHeaders = request.headers;
           return HttpResponse.json({
             success: true,

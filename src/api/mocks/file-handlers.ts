@@ -251,7 +251,7 @@ export const fileHandlers = [
       );
     }
 
-    // Note: File association with orders has been removed
+    // Note: File association with jobs has been removed
     // Files are now managed separately from print jobs
 
     try {

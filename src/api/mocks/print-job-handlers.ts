@@ -1,13 +1,14 @@
 import { http, HttpResponse } from 'msw';
 import { endpoints } from '../client/endpoints';
+import { JobCategory } from '@/types/jobs';
 import db from './database/db';
 import { createInvalidSessionResponse, generateSuccessResponse } from './utils';
 
 const apiUrl = process.env.API_URL;
 
 export const jobHandlers = [
-  // GET /orders with query params (status, userId, pagination)
-  http.get(`${apiUrl}${endpoints.orders.list}`, ({ cookies, request }) => {
+  // GET /jobs with query params (status, userId, pagination)
+  http.get(`${apiUrl}${endpoints.jobs.list}`, ({ cookies, request }) => {
     const sessionId = cookies['sessionToken'] || '';
     const user = db.validateSession(sessionId);
     if (!user) {
@@ -29,30 +30,30 @@ export const jobHandlers = [
     if (userIdFilter) {
       userIdForFilter = parseInt(userIdFilter);
     } else if (user.role !== 'admin') {
-      // Non-admin users can only see their own orders
+      // Non-admin users can only see their own jobs
       userIdForFilter = user.studentId;
     }
 
     // Get print jobs using the shared function with filters
-    const orders = db.getPrintJobs({
+    const jobs = db.getPrintJobs({
       userId: userIdForFilter,
       status: statusFilter || undefined,
       search: searchFilter || undefined,
       snapshotCreatedBefore,
     });
 
-    // User info is now always populated in the order object
+    // User info is now always populated in the job object
 
     // Calculate pagination
-    const totalItems = orders.length;
+    const totalItems = jobs.length;
     const totalPages = Math.ceil(totalItems / pageSize);
     const startIndex = (page - 1) * pageSize;
     const endIndex = startIndex + pageSize;
-    const paginatedOrders = orders.slice(startIndex, endIndex);
+    const paginatedJobs = jobs.slice(startIndex, endIndex);
 
     return HttpResponse.json(
       generateSuccessResponse({
-        data: paginatedOrders,
+        data: paginatedJobs,
         pagination: {
           page,
           pageSize,
@@ -66,8 +67,8 @@ export const jobHandlers = [
     );
   }),
 
-  // POST /orders - Create new order (Step 1: Returns presigned URL)
-  http.post(`${apiUrl}${endpoints.orders.create}`, async ({ cookies, request }) => {
+  // POST /jobs - Create new job (Step 1: Returns presigned URL)
+  http.post(`${apiUrl}${endpoints.jobs.create}`, async ({ cookies, request }) => {
     const sessionId = cookies['sessionToken'] || '';
     const user = db.validateSession(sessionId);
     if (!user) {
@@ -75,9 +76,10 @@ export const jobHandlers = [
     }
 
     const body = (await request.json()) as {
-      printName: string;
+      jobName: string;
       description: string;
       formAnswerJson: string;
+      category: JobCategory;
     };
 
     // Parse formAnswerJson to extract fields
@@ -90,12 +92,12 @@ export const jobHandlers = [
     }
 
     // Generate IDs
-    const orderId = `order-${Date.now()}`;
+    const jobId = `job-${Date.now()}`;
     const fileId = `file-${Date.now()}`;
 
-    // Create order with PendingFile status
-    const newOrder = {
-      id: orderId,
+    // Create job with PendingFile status
+    const newJob = {
+      id: jobId,
       kind: 'active-print-job' as const,
       userId: user.studentId,
       user: {
@@ -104,14 +106,14 @@ export const jobHandlers = [
         lastName: user.lastName,
         email: user.email,
       },
-      name: body.printName,
+      name: body.jobName,
       description: body.description,
       purpose: formData.purpose as string | undefined,
       design_intent: formData.design_intent as string | undefined,
-      orderPlaced: new Date().toISOString(),
+      jobPlaced: new Date().toISOString(),
       status: 'PendingFile' as const,
       reprint: null,
-      category: '3d-print',
+      category: body.category,
       // 3D Print specific fields from formAnswerJson
       goal: formData.goal as string | undefined,
       durability: formData.durability as string | undefined,
@@ -126,15 +128,15 @@ export const jobHandlers = [
       priority: formData.priority as string | undefined,
       urgency: formData.urgency as string | undefined,
     };
-    db.addPrintJob(newOrder);
+    db.addPrintJob(newJob);
 
     // Return presigned URL response
     const mockPresignedUrl = `http://mock-storage.local/uploads/${fileId}?signature=mock`;
 
     return HttpResponse.json(
       generateSuccessResponse({
-        orderId,
-        createdAt: newOrder.orderPlaced,
+        jobId: jobId,
+        createdAt: newJob.jobPlaced,
         fileId,
         uploadUrl: mockPresignedUrl,
         uploadExpiresIn: 900, // 15 minutes
@@ -143,9 +145,9 @@ export const jobHandlers = [
     );
   }),
 
-  // POST /orders/:orderId/complete-upload (Step 3: Complete upload)
+  // POST /jobs/:jobId/complete-upload (Step 3: Complete upload)
   http.post(
-    `${apiUrl}/api/v1/orders/:orderId/complete-upload`,
+    `${apiUrl}/api/v1/jobs/:jobId/complete-upload`,
     async ({ cookies, params, request }) => {
       const sessionId = cookies['sessionToken'] || '';
       const user = db.validateSession(sessionId);
@@ -153,7 +155,7 @@ export const jobHandlers = [
         return createInvalidSessionResponse();
       }
 
-      const { orderId } = params;
+      const { jobId } = params;
       const body = (await request.json()) as {
         fileName?: string;
         fileSize?: number;
@@ -183,63 +185,63 @@ export const jobHandlers = [
           { status: 400 },
         );
       }
-      // Find the order
-      const order = db.getPrintJobs({ userId: user.studentId }).find((o) => o.id === orderId);
-      if (!order) {
+      // Find the job
+      const job = db.getPrintJobs({ userId: user.studentId }).find((o) => o.id === jobId);
+      if (!job) {
         return HttpResponse.json(
-          { success: false, error: { code: 'ORDER_NOT_FOUND', message: 'Order not found' } },
+          { success: false, error: { code: 'JOB_NOT_FOUND', message: 'Job not found' } },
           { status: 404 },
         );
       }
 
-      // Check if order is in PendingFile status
-      if (order.status !== 'PendingFile') {
+      // Check if job is in PendingFile status
+      if (job.status !== 'PendingFile') {
         return HttpResponse.json(
           {
             success: false,
             error: {
               code: 'INVALID_STATUS',
-              message: 'Only orders with PendingFile status can complete upload',
+              message: 'Only jobs with PendingFile status can complete upload',
             },
           },
           { status: 409 },
         );
       }
 
-      // Update order status to InQueue
-      db.updatePrintJobStatus(orderId as string, 'InQueue');
+      // Update job status to InQueue
+      db.updatePrintJobStatus(jobId as string, 'InQueue');
 
       return HttpResponse.json(generateSuccessResponse({ data: null }));
     },
   ),
 
-  // POST /orders/:orderId/retry-upload (Retry presigned URL)
-  http.post(`${apiUrl}/api/v1/orders/:orderId/retry-upload`, ({ cookies, params }) => {
+  // POST /jobs/:jobId/retry-upload (Retry presigned URL)
+  http.post(`${apiUrl}/api/v1/jobs/:jobId/retry-upload`, ({ cookies, params }) => {
     const sessionId = cookies['sessionToken'] || '';
     const user = db.validateSession(sessionId);
     if (!user) {
       return createInvalidSessionResponse();
     }
 
-    const { orderId } = params;
+    const { jobId } = params;
 
-    // Find the order
-    const order = db.getPrintJobs({ userId: user.studentId }).find((o) => o.id === orderId);
-    if (!order) {
+    // Find the job
+    const job = db.getPrintJobs({ userId: user.studentId }).find((o) => o.id === jobId);
+    if (!job) {
       return HttpResponse.json(
-        { success: false, error: { code: 'ORDER_NOT_FOUND', message: 'Order not found' } },
+        { success: false, error: { code: 'JOB_NOT_FOUND', message: 'Job not found' } },
         { status: 404 },
       );
     }
 
-    // Check if order is in PendingFile status
-    if (order.status !== 'PendingFile') {
+    // Check if job is in PendingFile status
+    if (job.status !== 'PendingFile') {
       return HttpResponse.json(
         {
           success: false,
           error: {
             code: 'INVALID_STATUS',
-            message: 'Only orders with PendingFile status can retry upload',
+            message: 'Only jobs with PendingFile status can retry upload',
           },
         },
         { status: 409 },
@@ -260,15 +262,15 @@ export const jobHandlers = [
     );
   }),
 
-  // PATCH /orders/:orderId - Update order status
-  http.patch(`${apiUrl}/api/v1/orders/:orderId`, async ({ cookies, params, request }) => {
+  // PATCH /jobs/:jobId - Update job status
+  http.patch(`${apiUrl}/api/v1/jobs/:jobId`, async ({ cookies, params, request }) => {
     const sessionId = cookies['sessionToken'] || '';
     const user = db.validateSession(sessionId);
     if (!user) {
       return createInvalidSessionResponse();
     }
 
-    // Only admins can update order status
+    // Only admins can update job status
     if (user.role !== 'admin') {
       return HttpResponse.json(
         { success: false, error: 'Unauthorized: Admin access required' },
@@ -276,26 +278,26 @@ export const jobHandlers = [
       );
     }
 
-    const { orderId } = params;
+    const { jobId } = params;
     const body = (await request.json()) as { status: string };
 
-    const updatedOrder = db.updatePrintJobStatus(orderId as string, body.status);
-    if (!updatedOrder) {
-      return HttpResponse.json({ success: false, error: 'Order not found' }, { status: 404 });
+    const updatedJob = db.updatePrintJobStatus(jobId as string, body.status);
+    if (!updatedJob) {
+      return HttpResponse.json({ success: false, error: 'Job not found' }, { status: 404 });
     }
 
-    return HttpResponse.json(generateSuccessResponse({ order: updatedOrder }));
+    return HttpResponse.json(generateSuccessResponse({ job: updatedJob }));
   }),
 
-  // DELETE /orders/:orderId
-  http.delete(`${apiUrl}/api/v1/orders/:orderId`, ({ cookies, params }) => {
+  // DELETE /jobs/:jobId
+  http.delete(`${apiUrl}/api/v1/jobs/:jobId`, ({ cookies, params }) => {
     const sessionId = cookies['sessionToken'] || '';
     const user = db.validateSession(sessionId);
     if (!user) {
       return createInvalidSessionResponse();
     }
 
-    // Only admins can delete orders
+    // Only admins can delete jobs
     if (user.role !== 'admin') {
       return HttpResponse.json(
         { success: false, error: 'Unauthorized: Admin access required' },
@@ -303,10 +305,10 @@ export const jobHandlers = [
       );
     }
 
-    const { orderId } = params;
-    const success = db.deletePrintJob(orderId as string);
+    const { jobId } = params;
+    const success = db.deletePrintJob(jobId as string);
     if (!success) {
-      return HttpResponse.json({ success: false, error: 'Order not found' }, { status: 404 });
+      return HttpResponse.json({ success: false, error: 'Job not found' }, { status: 404 });
     }
 
     return HttpResponse.json(generateSuccessResponse({ success: true }));

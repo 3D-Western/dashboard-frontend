@@ -1,4 +1,4 @@
-import { PrintJob } from '@/types/jobs';
+import { JobCategory, PrintJob } from '@/types/jobs';
 import { Invitation } from '@/types/invitation';
 import { FileUploadResult, FileMetadata, FileList } from '@/types/file';
 import { PaginatedResponse } from '@/types/common';
@@ -58,13 +58,14 @@ export interface VerifyEmailResponse {
 
 export interface CreateJobRequest {
   // Required fields
-  printName: string;
+  jobName: string;
   description: string;
   formAnswerJson: string;
+  category: JobCategory;
 }
 
 export interface CreateJobResponse {
-  orderId: string;
+  jobId: string;
   createdAt: string;
   fileId: string;
   uploadUrl: string;

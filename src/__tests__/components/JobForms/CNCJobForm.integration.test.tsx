@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import CNCOrderForm from '@/app/(protected)/dashboard/jobs/cnc/new/components/CNCJobForm';
+import CNCJobForm from '@/app/(protected)/dashboard/jobs/cnc/new/components/CNCJobForm';
 
 // Mock next/navigation
 const mockPush = vi.fn();
@@ -24,14 +24,14 @@ const selectComboboxOption = async (
   await user.click(option);
 };
 
-describe('CNCOrderForm Integration', () => {
+describe('CNCJobForm Integration', () => {
   beforeEach(() => {
     mockPush.mockClear();
   });
 
   describe('form rendering', () => {
     it('renders all fields correctly', () => {
-      render(<CNCOrderForm />);
+      render(<CNCJobForm />);
 
       // Form fields
       expect(screen.getByLabelText(/Request Name/i)).toBeInTheDocument();
@@ -41,7 +41,7 @@ describe('CNCOrderForm Integration', () => {
     });
 
     it('has submit button', () => {
-      render(<CNCOrderForm />);
+      render(<CNCJobForm />);
 
       const submitButton = screen.getByRole('button', { name: /Submit/i });
       expect(submitButton).toBeInTheDocument();
@@ -51,7 +51,7 @@ describe('CNCOrderForm Integration', () => {
   describe('field validation', () => {
     it('shows error for empty request name', async () => {
       const user = setupUser();
-      render(<CNCOrderForm />);
+      render(<CNCJobForm />);
 
       const submitButton = screen.getByRole('button', { name: /Submit/i });
       await user.click(submitButton);
@@ -63,7 +63,7 @@ describe('CNCOrderForm Integration', () => {
 
     it('shows error for empty description', async () => {
       const user = setupUser();
-      render(<CNCOrderForm />);
+      render(<CNCJobForm />);
 
       const submitButton = screen.getByRole('button', { name: /Submit/i });
       await user.click(submitButton);
@@ -75,7 +75,7 @@ describe('CNCOrderForm Integration', () => {
 
     it('shows error for short description', async () => {
       const user = setupUser();
-      render(<CNCOrderForm />);
+      render(<CNCJobForm />);
 
       const descriptionField = screen.getByLabelText(/Description/i);
       await user.type(descriptionField, 'A');
@@ -90,7 +90,7 @@ describe('CNCOrderForm Integration', () => {
 
     it('shows error for missing STL file upload', async () => {
       const user = setupUser();
-      render(<CNCOrderForm />);
+      render(<CNCJobForm />);
 
       const submitButton = screen.getByRole('button', { name: /Submit/i });
       await user.click(submitButton);
@@ -102,7 +102,7 @@ describe('CNCOrderForm Integration', () => {
 
     it('shows error when Material is not selected', async () => {
       const user = setupUser();
-      render(<CNCOrderForm />);
+      render(<CNCJobForm />);
 
       const submitButton = screen.getByRole('button', { name: /Submit/i });
       await user.click(submitButton);
@@ -116,7 +116,7 @@ describe('CNCOrderForm Integration', () => {
   describe('form interactions', () => {
     it('accepts valid request name input', async () => {
       const user = setupUser();
-      render(<CNCOrderForm />);
+      render(<CNCJobForm />);
 
       const nameField = screen.getByLabelText(/Request Name/i);
       await user.type(nameField, 'My Test CNC Request');
@@ -126,7 +126,7 @@ describe('CNCOrderForm Integration', () => {
 
     it('accepts valid description input', async () => {
       const user = setupUser();
-      render(<CNCOrderForm />);
+      render(<CNCJobForm />);
 
       const descriptionField = screen.getByLabelText(/Description/i);
       await user.type(descriptionField, 'This is a test description for my CNC machining job');
@@ -135,7 +135,7 @@ describe('CNCOrderForm Integration', () => {
     });
 
     it('material select is interactive', async () => {
-      render(<CNCOrderForm />);
+      render(<CNCJobForm />);
 
       // Verify we have the material select trigger
       const selectTrigger = screen.getByRole('combobox');
@@ -160,7 +160,7 @@ describe('CNCOrderForm Integration', () => {
 
     it('uploads STL file and shows filename', async () => {
       const user = setupUser();
-      const { container } = render(<CNCOrderForm />);
+      const { container } = render(<CNCJobForm />);
 
       const fileInput = container.querySelector('input[type="file"]') as HTMLInputElement;
       expect(fileInput).toBeInTheDocument();
@@ -174,7 +174,7 @@ describe('CNCOrderForm Integration', () => {
     it('submits valid data and redirects in mock mode', async () => {
       const user = setupUser();
 
-      render(<CNCOrderForm />);
+      render(<CNCJobForm />);
 
       await fillRequiredFields(user);
 

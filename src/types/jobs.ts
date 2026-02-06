@@ -11,10 +11,13 @@ export interface UserInfo {
   email?: string;
 }
 
+export type JobCategory = 'ThreeDPrint' | 'CNC' | 'Waterjet' | 'LaserCutting';
+
 export interface BasePrintJob {
   id: string;
   user: UserInfo;
-  orderPlaced: string; // ISO date string
+  jobPlaced: string; // ISO date string
+  category: JobCategory;
   description: string;
   name: string;
   reprint?: string | null; // link to another print job if this is a reprint
@@ -38,6 +41,6 @@ export interface PrintJob extends BasePrintJob {
 
 export interface CompletedPrintJob extends BasePrintJob {
   kind: 'completed-print-job'; // For type checking
-  orderFinished: string; // ISO date string
+  jobFinished: string; // ISO date string
   status: CompletePrintJobStatus;
 }

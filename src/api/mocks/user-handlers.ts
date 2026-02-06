@@ -175,7 +175,7 @@ export const userHandlers = [
     );
   }),
 
-  http.get(`${apiUrl}${endpoints.users.orders}`, ({ cookies, request }) => {
+  http.get(`${apiUrl}${endpoints.users.jobs}`, ({ cookies, request }) => {
     const sessionId = cookies['sessionToken'] || '';
     const user = db.validateSession(sessionId);
     if (!user) {

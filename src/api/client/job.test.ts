@@ -29,7 +29,7 @@ describe('jobApi', () => {
       ];
 
       mockServer.use(
-        http.get(`${baseUrl}${endpoints.orders.list}`, () => {
+        http.get(`${baseUrl}${endpoints.jobs.list}`, () => {
           return HttpResponse.json({
             success: true,
             data: {
@@ -49,7 +49,7 @@ describe('jobApi', () => {
       let requestUrl: string | undefined;
 
       mockServer.use(
-        http.get(`${baseUrl}${endpoints.orders.list}`, ({ request }) => {
+        http.get(`${baseUrl}${endpoints.jobs.list}`, ({ request }) => {
           requestUrl = request.url;
           return HttpResponse.json({
             success: true,
@@ -80,7 +80,7 @@ describe('jobApi', () => {
       let requestUrl: string | undefined;
 
       mockServer.use(
-        http.get(`${baseUrl}${endpoints.orders.list}`, ({ request }) => {
+        http.get(`${baseUrl}${endpoints.jobs.list}`, ({ request }) => {
           requestUrl = request.url;
           return HttpResponse.json({
             success: true,
@@ -103,7 +103,7 @@ describe('jobApi', () => {
       let requestCredentials: RequestCredentials | undefined;
 
       mockServer.use(
-        http.get(`${baseUrl}${endpoints.orders.list}`, ({ request }) => {
+        http.get(`${baseUrl}${endpoints.jobs.list}`, ({ request }) => {
           requestCredentials = request.credentials;
           return HttpResponse.json({
             success: true,
@@ -121,7 +121,7 @@ describe('jobApi', () => {
 
     it('handles network errors', async () => {
       mockServer.use(
-        http.get(`${baseUrl}${endpoints.orders.list}`, () => {
+        http.get(`${baseUrl}${endpoints.jobs.list}`, () => {
           return HttpResponse.error();
         }),
       );
@@ -136,7 +136,7 @@ describe('jobApi', () => {
       const newStatus: PrintJobStatus = 'Printing';
 
       mockServer.use(
-        http.patch(`${baseUrl}${endpoints.orders.byId(mockJob.id)}`, async ({ request }) => {
+        http.patch(`${baseUrl}${endpoints.jobs.byId(mockJob.id)}`, async ({ request }) => {
           const body = (await request.json()) as { status: PrintJobStatus };
           expect(body.status).toBe(newStatus);
           return HttpResponse.json({
@@ -156,7 +156,7 @@ describe('jobApi', () => {
       let requestBody: { status: PrintJobStatus } | null = null;
 
       mockServer.use(
-        http.patch(`${baseUrl}${endpoints.orders.byId(jobId)}`, async ({ request }) => {
+        http.patch(`${baseUrl}${endpoints.jobs.byId(jobId)}`, async ({ request }) => {
           requestBody = (await request.json()) as { status: PrintJobStatus };
           return HttpResponse.json({
             success: true,
@@ -174,7 +174,7 @@ describe('jobApi', () => {
       let requestCredentials: RequestCredentials | undefined;
 
       mockServer.use(
-        http.patch(`${baseUrl}${endpoints.orders.byId(jobId)}`, ({ request }) => {
+        http.patch(`${baseUrl}${endpoints.jobs.byId(jobId)}`, ({ request }) => {
           requestCredentials = request.credentials;
           return HttpResponse.json({
             success: true,
@@ -191,7 +191,7 @@ describe('jobApi', () => {
       const jobId = 'test-job-id';
 
       mockServer.use(
-        http.patch(`${baseUrl}${endpoints.orders.byId(jobId)}`, () => {
+        http.patch(`${baseUrl}${endpoints.jobs.byId(jobId)}`, () => {
           return HttpResponse.json(
             {
               error: {
@@ -213,7 +213,7 @@ describe('jobApi', () => {
       const jobId = 'test-job-id';
 
       mockServer.use(
-        http.delete(`${baseUrl}${endpoints.orders.byId(jobId)}`, () => {
+        http.delete(`${baseUrl}${endpoints.jobs.byId(jobId)}`, () => {
           return HttpResponse.json({
             success: true,
             data: { success: true },
@@ -230,7 +230,7 @@ describe('jobApi', () => {
       let requestCredentials: RequestCredentials | undefined;
 
       mockServer.use(
-        http.delete(`${baseUrl}${endpoints.orders.byId(jobId)}`, ({ request }) => {
+        http.delete(`${baseUrl}${endpoints.jobs.byId(jobId)}`, ({ request }) => {
           requestCredentials = request.credentials;
           return HttpResponse.json({
             success: true,
@@ -247,7 +247,7 @@ describe('jobApi', () => {
       const jobId = 'test-job-id';
 
       mockServer.use(
-        http.delete(`${baseUrl}${endpoints.orders.byId(jobId)}`, () => {
+        http.delete(`${baseUrl}${endpoints.jobs.byId(jobId)}`, () => {
           return HttpResponse.json(
             {
               error: {
@@ -269,7 +269,7 @@ describe('jobApi', () => {
       const mockJob = createMockPrintJob({ status: 'InQueue' });
 
       mockServer.use(
-        http.post(`${baseUrl}${endpoints.orders.cancel(mockJob.id)}`, () => {
+        http.post(`${baseUrl}${endpoints.jobs.cancel(mockJob.id)}`, () => {
           return HttpResponse.json({
             success: true,
             data: { job: { ...mockJob, status: 'Failed' as PrintJobStatus } },
@@ -286,7 +286,7 @@ describe('jobApi', () => {
       let requestCredentials: RequestCredentials | undefined;
 
       mockServer.use(
-        http.post(`${baseUrl}${endpoints.orders.cancel(jobId)}`, ({ request }) => {
+        http.post(`${baseUrl}${endpoints.jobs.cancel(jobId)}`, ({ request }) => {
           requestCredentials = request.credentials;
           return HttpResponse.json({
             success: true,
@@ -303,7 +303,7 @@ describe('jobApi', () => {
       const jobId = 'test-job-id';
 
       mockServer.use(
-        http.post(`${baseUrl}${endpoints.orders.cancel(jobId)}`, () => {
+        http.post(`${baseUrl}${endpoints.jobs.cancel(jobId)}`, () => {
           return HttpResponse.json(
             {
               error: {
@@ -323,7 +323,7 @@ describe('jobApi', () => {
       const jobId = 'test-job-id';
 
       mockServer.use(
-        http.post(`${baseUrl}${endpoints.orders.cancel(jobId)}`, () => {
+        http.post(`${baseUrl}${endpoints.jobs.cancel(jobId)}`, () => {
           return HttpResponse.error();
         }),
       );
@@ -332,10 +332,10 @@ describe('jobApi', () => {
     });
   });
 
-  describe('createOrder', () => {
-    it('creates order successfully with required fields', async () => {
+  describe('createJob', () => {
+    it('creates job successfully with required fields', async () => {
       const mockResponse = {
-        orderId: 'test-order-id',
+        jobId: 'test-job-id',
         createdAt: '2024-01-15T10:30:00Z',
         fileId: 'test-file-id',
         uploadUrl: 'https://storage.example.com/presigned-url',
@@ -343,7 +343,7 @@ describe('jobApi', () => {
       };
 
       mockServer.use(
-        http.post(`${baseUrl}${endpoints.orders.create}`, () => {
+        http.post(`${baseUrl}${endpoints.jobs.create}`, () => {
           return HttpResponse.json({
             success: true,
             data: mockResponse,
@@ -352,8 +352,9 @@ describe('jobApi', () => {
       );
 
       const result = await jobApi.createJob({
-        printName: 'Test Print',
+        jobName: 'Test Print',
         description: 'Test Description',
+        category: 'ThreeDPrint',
         formAnswerJson: JSON.stringify({
           material1: 'PLA',
           color1: 'red',
@@ -362,7 +363,7 @@ describe('jobApi', () => {
         }),
       });
 
-      expect(result.orderId).toBe('test-order-id');
+      expect(result.jobId).toBe('test-job-id');
       expect(result.uploadUrl).toBe('https://storage.example.com/presigned-url');
     });
 
@@ -370,12 +371,12 @@ describe('jobApi', () => {
       let requestBody: Record<string, unknown> | null = null;
 
       mockServer.use(
-        http.post(`${baseUrl}${endpoints.orders.create}`, async ({ request }) => {
+        http.post(`${baseUrl}${endpoints.jobs.create}`, async ({ request }) => {
           requestBody = (await request.json()) as Record<string, unknown>;
           return HttpResponse.json({
             success: true,
             data: {
-              orderId: 'test-order-id',
+              jobId: 'test-job-id',
               createdAt: '2024-01-15T10:30:00Z',
               fileId: 'test-file-id',
               uploadUrl: 'https://storage.example.com/presigned-url',
@@ -397,21 +398,23 @@ describe('jobApi', () => {
       };
 
       await jobApi.createJob({
-        printName: 'Test Print',
+        jobName: 'Test Print',
         description: 'Test Description',
+        category: 'ThreeDPrint',
         formAnswerJson: JSON.stringify(formData),
       });
 
       expect(requestBody).toEqual({
-        printName: 'Test Print',
+        jobName: 'Test Print',
         description: 'Test Description',
+        category: 'ThreeDPrint',
         formAnswerJson: JSON.stringify(formData),
       });
     });
 
     it('handles print job limit error', async () => {
       mockServer.use(
-        http.post(`${baseUrl}${endpoints.orders.create}`, () => {
+        http.post(`${baseUrl}${endpoints.jobs.create}`, () => {
           return HttpResponse.json(
             {
               error: {
@@ -426,8 +429,9 @@ describe('jobApi', () => {
 
       await expect(
         jobApi.createJob({
-          printName: 'Test Print',
+          jobName: 'Test Print',
           description: 'Test Description',
+          category: 'ThreeDPrint',
           formAnswerJson: JSON.stringify({
             material1: 'PLA',
             color1: 'red',
@@ -441,11 +445,11 @@ describe('jobApi', () => {
 
   describe('completeUpload', () => {
     it('completes upload with full payload', async () => {
-      const orderId = 'test-order-id';
+      const jobId = 'test-job-id';
       let requestBody: Record<string, unknown> | null = null;
 
       mockServer.use(
-        http.post(`${baseUrl}${endpoints.orders.completeUpload(orderId)}`, async ({ request }) => {
+        http.post(`${baseUrl}${endpoints.jobs.completeUpload(jobId)}`, async ({ request }) => {
           requestBody = (await request.json()) as Record<string, unknown>;
           return HttpResponse.json({
             success: true,
@@ -454,7 +458,7 @@ describe('jobApi', () => {
         }),
       );
 
-      await jobApi.completeUpload(orderId, {
+      await jobApi.completeUpload(jobId, {
         fileName: 'test-file.stl',
         fileSize: 2457600,
         contentType: 'model/stl',
@@ -470,10 +474,10 @@ describe('jobApi', () => {
     });
 
     it('handles file not found error', async () => {
-      const orderId = 'test-order-id';
+      const jobId = 'test-job-id';
 
       mockServer.use(
-        http.post(`${baseUrl}${endpoints.orders.completeUpload(orderId)}`, () => {
+        http.post(`${baseUrl}${endpoints.jobs.completeUpload(jobId)}`, () => {
           return HttpResponse.json(
             {
               error: {
@@ -487,7 +491,7 @@ describe('jobApi', () => {
       );
 
       await expect(
-        jobApi.completeUpload(orderId, {
+        jobApi.completeUpload(jobId, {
           fileName: 'test-file.stl',
           fileSize: 2457600,
           contentType: 'model/stl',
@@ -496,11 +500,11 @@ describe('jobApi', () => {
       ).rejects.toThrow(ApiError);
     });
 
-    it('handles invalid order status error', async () => {
-      const orderId = 'test-order-id';
+    it('handles invalid job status error', async () => {
+      const jobId = 'test-job-id';
 
       mockServer.use(
-        http.post(`${baseUrl}${endpoints.orders.completeUpload(orderId)}`, () => {
+        http.post(`${baseUrl}${endpoints.jobs.completeUpload(jobId)}`, () => {
           return HttpResponse.json(
             {
               error: {
@@ -514,7 +518,7 @@ describe('jobApi', () => {
       );
 
       await expect(
-        jobApi.completeUpload(orderId, {
+        jobApi.completeUpload(jobId, {
           fileName: 'test-file.stl',
           fileSize: 2457600,
           contentType: 'model/stl',
@@ -526,16 +530,16 @@ describe('jobApi', () => {
 
   describe('retryUpload', () => {
     it('returns new presigned URL on success', async () => {
-      const orderId = 'test-order-id';
+      const jobId = 'test-job-id';
       const mockResponse = {
         fileId: 'test-file-id',
         presignedUrl: 'https://storage.example.com/new-presigned-url',
         expiresIn: 900,
-        storageKey: 'prints/123456/orders/test-order-id/uuid-here',
+        storageKey: 'prints/123456/jobs/test-job-id/uuid-here',
       };
 
       mockServer.use(
-        http.post(`${baseUrl}${endpoints.orders.retryUpload(orderId)}`, () => {
+        http.post(`${baseUrl}${endpoints.jobs.retryUpload(jobId)}`, () => {
           return HttpResponse.json({
             success: true,
             data: mockResponse,
@@ -543,24 +547,24 @@ describe('jobApi', () => {
         }),
       );
 
-      const result = await jobApi.retryUpload(orderId);
+      const result = await jobApi.retryUpload(jobId);
 
       expect(result.fileId).toBe('test-file-id');
       expect(result.presignedUrl).toBe('https://storage.example.com/new-presigned-url');
       expect(result.expiresIn).toBe(900);
-      expect(result.storageKey).toBe('prints/123456/orders/test-order-id/uuid-here');
+      expect(result.storageKey).toBe('prints/123456/jobs/test-job-id/uuid-here');
     });
 
     it('handles rate limit error', async () => {
-      const orderId = 'test-order-id';
+      const jobId = 'test-job-id';
 
       mockServer.use(
-        http.post(`${baseUrl}${endpoints.orders.retryUpload(orderId)}`, () => {
+        http.post(`${baseUrl}${endpoints.jobs.retryUpload(jobId)}`, () => {
           return HttpResponse.json(
             {
               error: {
                 code: 'RATE_LIMIT_EXCEEDED',
-                message: 'Maximum upload retry limit reached for this order',
+                message: 'Maximum upload retry limit reached for this job',
               },
             },
             { status: 429 },
@@ -568,14 +572,14 @@ describe('jobApi', () => {
         }),
       );
 
-      await expect(jobApi.retryUpload(orderId)).rejects.toThrow(ApiError);
+      await expect(jobApi.retryUpload(jobId)).rejects.toThrow(ApiError);
     });
 
-    it('handles invalid order status error', async () => {
-      const orderId = 'test-order-id';
+    it('handles invalid job status error', async () => {
+      const jobId = 'test-job-id';
 
       mockServer.use(
-        http.post(`${baseUrl}${endpoints.orders.retryUpload(orderId)}`, () => {
+        http.post(`${baseUrl}${endpoints.jobs.retryUpload(jobId)}`, () => {
           return HttpResponse.json(
             {
               error: {
@@ -588,15 +592,15 @@ describe('jobApi', () => {
         }),
       );
 
-      await expect(jobApi.retryUpload(orderId)).rejects.toThrow(ApiError);
+      await expect(jobApi.retryUpload(jobId)).rejects.toThrow(ApiError);
     });
 
     it('includes credentials in request', async () => {
-      const orderId = 'test-order-id';
+      const jobId = 'test-job-id';
       let requestCredentials: RequestCredentials | undefined;
 
       mockServer.use(
-        http.post(`${baseUrl}${endpoints.orders.retryUpload(orderId)}`, ({ request }) => {
+        http.post(`${baseUrl}${endpoints.jobs.retryUpload(jobId)}`, ({ request }) => {
           requestCredentials = request.credentials;
           return HttpResponse.json({
             success: true,
@@ -604,18 +608,18 @@ describe('jobApi', () => {
               fileId: 'test-file-id',
               presignedUrl: 'https://storage.example.com/presigned-url',
               expiresIn: 900,
-              storageKey: 'prints/123456/orders/test-order-id/uuid-here',
+              storageKey: 'prints/123456/jobs/test-job-id/uuid-here',
             },
           });
         }),
       );
 
-      await jobApi.retryUpload(orderId);
+      await jobApi.retryUpload(jobId);
       expect(requestCredentials).toBe('include');
     });
   });
 
-  describe('uploadOrderFile', () => {
+  describe('uploadJobFile', () => {
     it('uploads file to presigned URL', async () => {
       const uploadUrl = 'https://storage.example.com/presigned-url';
       const file = new File(['test content'], 'test.stl', { type: 'model/stl' });

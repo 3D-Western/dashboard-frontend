@@ -1,4 +1,5 @@
 import { endpoints } from '@/api/client/endpoints';
+import { JobCategory } from '@/types/jobs';
 
 export interface JobSubmissionData {
   name: string;
@@ -8,10 +9,28 @@ export interface JobSubmissionData {
 }
 
 export interface JobSubmissionOptions {
-  category: string;
+  category: 'cnc' | 'water-jet' | 'laser-cutting' | '3d-print';
   successRedirectPath?: string;
   errorMessagePrefix?: string;
 }
+
+const toBackendCategory = (category: JobSubmissionOptions['category']): JobCategory => {
+  switch (category) {
+    case 'cnc':
+      return 'CNC';
+    case 'water-jet':
+      return 'Waterjet';
+    case 'laser-cutting':
+      return 'LaserCutting';
+    case '3d-print':
+      return 'ThreeDPrint';
+    default: {
+      // Exhaustive check - TypeScript will error if a new category is added
+      const _exhaustive: never = category;
+      throw new Error(`Unknown category: ${_exhaustive}`);
+    }
+  }
+};
 
 export async function submitJob(
   data: JobSubmissionData,
@@ -34,16 +53,18 @@ export async function submitJob(
   }
 
   const payload = {
-    category,
-    name: data.name,
+    category: toBackendCategory(category),
+    jobName: data.name,
     description: data.description,
-    material: data.material,
-    fileId: fileId || '',
-    priority: 'standard',
-    urgency: 'normal',
+    formAnswerJson: JSON.stringify({
+      material: data.material,
+      fileId: fileId || '',
+      priority: 'standard',
+      urgency: 'normal',
+    }),
   };
 
-  const submitRes = await fetch(endpoints.orders.create, {
+  const submitRes = await fetch(endpoints.jobs.create, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload),
@@ -55,7 +76,7 @@ export async function submitJob(
   }
 
   const result = await submitRes.json();
-  console.log(`MOCK: Created ${category} job`, result.data?.order?.id);
+  console.log(`MOCK: Created ${category} job`, result.data?.jobId);
 
   router.push(successRedirectPath);
   if (typeof router.refresh === 'function') {
