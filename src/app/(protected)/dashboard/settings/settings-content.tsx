@@ -30,6 +30,7 @@ import { useUser } from '@/providers/user-provider';
 import { userApi } from '@/api/client/user';
 import { ApiError } from '@/api/client/errors';
 import { useRouter } from 'next/navigation';
+import { Routes } from '@/lib/routes';
 
 // Password change form schema
 const passwordSchema = z
@@ -100,7 +101,7 @@ export function SettingsContent() {
 
       // If sign out all sessions was checked, redirect to login
       if (values.invalidateAllSessions) {
-        router.push('/login');
+        router.push(Routes.login);
       }
     } catch (error) {
       console.error('Password update error', error);
