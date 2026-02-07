@@ -264,7 +264,6 @@ describe('jobApi', () => {
     });
   });
 
-
   describe('createJob', () => {
     it('creates job successfully with required fields', async () => {
       const mockResponse = {
