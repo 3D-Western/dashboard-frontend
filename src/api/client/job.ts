@@ -63,13 +63,6 @@ export const jobApi = {
       ...options,
     });
   },
-  cancelJob: async (jobId: string, options?: RequestInit) => {
-    return apiRequest<{ job: PrintJob }>(`${getBaseUrl()}${endpoints.jobs.cancel(jobId)}`, {
-      method: 'POST',
-      credentials: 'include',
-      ...options,
-    });
-  },
   createJob: async (payload: CreateJobRequest, options?: RequestInit) => {
     return apiRequest<CreateJobResponse>(`${getBaseUrl()}${endpoints.jobs.create}`, {
       method: 'POST',
