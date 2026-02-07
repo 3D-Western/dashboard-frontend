@@ -99,7 +99,11 @@ export const userApi = {
   ) => {
     const url = `${getBaseUrl()}${endpoints.users.changePassword}`;
 
-    return apiRequest<{ message: string }>(url, {
+    return apiRequest<{
+      message: string;
+      sessionsInvalidated: boolean;
+      emailSent: boolean;
+    }>(url, {
       method: 'POST',
       body: JSON.stringify({
         currentPassword,

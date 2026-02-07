@@ -56,36 +56,24 @@ export function ActionsCell({ printJob, mode, onStatusChanged }: ActionsCellProp
               </DropdownMenuItem>
             </>
           )}
-          {/* TODO: Future improvement - Implement cancel print functionality */}
+          {/* TODO: Future improvement - Implement cancel/delete print functionality */}
           {/* {canCancel && setJobs && (
             <DropdownMenuItem
-              // Uncomment and replace below onclick handle once backend is ready to enable api call
+              // Use jobApi.deleteJob(printJob.id) to delete the job
+              // Note: Jobs can only be deleted before printing starts (status: PENDING_FILE, InQueue)
               // onClick={async () => {
               //   try {
-              //     console.log('Cancel Print: Attempting to cancel job', printJob.id);
-              //     const result = await jobApi.cancelJob(printJob.id);
-              //     console.log('Cancel Print: API result', result);
-              //     setJobs(prev => {
-              //       const updated = prev.map(j =>
-              //         j.id === printJob.id ? { ...j, status: 'Failed' as PrintJobStatus } : j
-              //       );
-              //       console.log('Cancel Print: Updated jobs state', updated);
-              //       return updated;
-              //     });
+              //     await jobApi.deleteJob(printJob.id);
+              //     // Update UI after successful deletion
               //   } catch (e) {
-              //     console.error('Cancel Print: API error', e);
+              //     console.error('Failed to delete job', e);
               //   }
               // }}
               onClick={() => {
-                setJobs((prev) => {
-                  const updated = prev.map((j) =>
-                    j.id === printJob.id ? { ...j, status: 'Failed' as PrintJobStatus } : j,
-                  );
-                  return updated;
-                });
+                setJobs((prev) => prev.filter((j) => j.id !== printJob.id));
               }}
             >
-              Cancel Print
+              Delete Job
             </DropdownMenuItem>
           )} */}
           {/* TODO: Future improvement - Implement download STL functionality */}

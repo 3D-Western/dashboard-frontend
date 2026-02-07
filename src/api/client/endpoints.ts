@@ -5,9 +5,6 @@ export const endpoints = {
     refresh: '/api/v1/auth/refresh',
     signup: '/api/v1/auth/signup',
   },
-  session: {
-    current: '/api/v1/session/current',
-  },
   resetPassword: {
     forgotPassword: '/api/v1/auth/forgot-password',
     resetPassword: '/api/v1/auth/reset-password',
@@ -23,12 +20,10 @@ export const endpoints = {
     list: '/api/v1/jobs',
     byId: (jobId: string) => `/api/v1/jobs/${jobId}`,
     create: '/api/v1/jobs',
-    cancel: (jobId: string) => `/api/v1/jobs/active/cancel/${jobId}`,
     completeUpload: (jobId: string) => `/api/v1/jobs/${jobId}/complete-upload`,
     retryUpload: (jobId: string) => `/api/v1/jobs/${jobId}/retry-upload`,
   },
   files: {
-    upload: '/api/v1/files/upload',
     list: '/api/v1/files',
     byId: (fileId: string) => `/api/v1/files/${fileId}`,
     delete: (fileId: string) => `/api/v1/files/${fileId}`,
