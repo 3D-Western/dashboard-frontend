@@ -1,9 +1,4 @@
-import {
-  FileUploadResponse,
-  FileMetadataResponse,
-  FileListResponse,
-  FileDeleteResponse,
-} from '../types';
+import { FileMetadataResponse, FileListResponse, FileDeleteResponse } from '../types';
 import { apiRequest } from './base';
 import { endpoints } from './endpoints';
 import { getBaseUrl } from './utils';
@@ -16,24 +11,6 @@ export interface FileListParams {
 }
 
 export const fileApi = {
-  /**
-   * Upload a file (multipart/form-data)
-   * Supported file types: .stl, .obj, .3mf
-   * Maximum file size: 50MB
-   */
-  upload: async (file: File, options?: RequestInit) => {
-    const formData = new FormData();
-    formData.append('file', file);
-
-    return apiRequest<FileUploadResponse>(`${getBaseUrl()}${endpoints.files.upload}`, {
-      method: 'POST',
-      credentials: 'include',
-      body: formData,
-      // Don't set Content-Type header - browser will set it automatically with boundary
-      ...options,
-    });
-  },
-
   /**
    * List all files (Admin only)
    * Returns a paginated list of files with optional filtering by userId
