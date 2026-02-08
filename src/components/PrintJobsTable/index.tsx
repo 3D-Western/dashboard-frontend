@@ -5,6 +5,7 @@ import { PaginationMetadata } from '@/types/common';
 import { DataTable } from './DataTable';
 import { useColumns } from './useColumns';
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 
 export interface PrintJobsTableProps {
   printJobs: PrintJob[];
@@ -17,6 +18,7 @@ export default function PrintJobsTable({
   pagination,
   mode = 'user',
 }: PrintJobsTableProps) {
+  const router = useRouter();
   // Keep jobs in state so we can update status locally (e.g., optimistic updates for cancel)
   const [jobs, setJobs] = useState<PrintJob[]>(printJobs);
 
@@ -25,6 +27,11 @@ export default function PrintJobsTable({
     setJobs(printJobs);
   }, [printJobs]);
 
-  const columns = useColumns({ mode, setJobs });
+  const handleJobUpdated = () => {
+    // Refresh the page to get the latest data from the server
+    router.refresh();
+  };
+
+  const columns = useColumns({ mode, setJobs, onJobUpdated: handleJobUpdated });
   return <DataTable columns={columns} data={jobs} pagination={pagination} />;
 }

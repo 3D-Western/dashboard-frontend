@@ -14,10 +14,11 @@ type TableMode = 'user' | 'admin';
 interface UseColumnsOptions {
   mode?: TableMode;
   setJobs?: (updater: (prev: PrintJob[]) => PrintJob[]) => void;
+  onJobUpdated?: () => void;
 }
 
 export const useColumns = (opts: UseColumnsOptions = {}) => {
-  const { mode = 'user', setJobs } = opts;
+  const { mode = 'user', setJobs, onJobUpdated } = opts;
 
   return useMemo<ColumnDef<PrintJob>[]>(
     () => [
@@ -183,11 +184,16 @@ export const useColumns = (opts: UseColumnsOptions = {}) => {
           };
 
           return (
-            <ActionsCell printJob={printJob} mode={mode} onStatusChanged={handleStatusChanged} />
+            <ActionsCell
+              printJob={printJob}
+              mode={mode}
+              onStatusChanged={handleStatusChanged}
+              onJobUpdated={onJobUpdated}
+            />
           );
         },
       },
     ],
-    [mode, setJobs],
+    [mode, setJobs, onJobUpdated],
   );
 };

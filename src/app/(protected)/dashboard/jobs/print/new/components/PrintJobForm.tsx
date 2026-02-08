@@ -1,5 +1,6 @@
 'use client';
 
+import React from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { z } from 'zod';
@@ -71,6 +72,10 @@ type NewPrintFormProps = {
 
 export default function NewPrintForm({ mockMode = false }: NewPrintFormProps = {}) {
   const router = useRouter();
+  const [retryMode, setRetryMode] = React.useState<{
+    jobId: string;
+    fileId: string;
+  } | null>(null);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -88,43 +93,69 @@ export default function NewPrintForm({ mockMode = false }: NewPrintFormProps = {
   async function onSubmit(values: z.infer<typeof formSchema>) {
     try {
       const file = values.file as File;
+      let jobId: string;
+      let fileId: string;
+      let uploadUrl: string;
 
-      // STEP 1: Create job with file metadata (not the file itself)
-      const createJobPayload: CreateJobRequest = {
-        jobName: values.jobName,
-        description: values.description,
-        category: 'ThreeDPrint',
-        formAnswerJson: JSON.stringify({
-          purpose: values.purpose,
-          design_intent: values.design_intent,
-          contentType: file.type || 'application/sla',
-        }),
-      };
+      // Check if we're in retry mode or creating a new job
+      if (retryMode) {
+        // RETRY MODE: Get new presigned URL for existing job
+        const retryResponse = await jobApi.retryUpload(retryMode.jobId);
+        jobId = retryMode.jobId;
+        fileId = retryResponse.fileId;
+        uploadUrl = retryResponse.presignedUrl;
+      } else {
+        // NEW JOB MODE: Create job with file metadata
+        const createJobPayload: CreateJobRequest = {
+          jobName: values.jobName,
+          description: values.description,
+          category: 'ThreeDPrint',
+          formAnswerJson: JSON.stringify({
+            purpose: values.purpose,
+            design_intent: values.design_intent,
+            contentType: file.type || 'application/sla',
+          }),
+        };
 
-      const createJobResponse = await jobApi.createJob(createJobPayload);
+        const createJobResponse = await jobApi.createJob(createJobPayload);
 
-      if (!createJobResponse.jobId || !createJobResponse.uploadUrl) {
-        throw new Error('Invalid response from server: missing jobId or uploadUrl');
+        if (!createJobResponse.jobId || !createJobResponse.uploadUrl) {
+          throw new Error('Invalid response from server: missing jobId or uploadUrl');
+        }
+
+        jobId = createJobResponse.jobId;
+        fileId = createJobResponse.fileId;
+        uploadUrl = createJobResponse.uploadUrl;
       }
 
       // STEP 2: Upload file to presigned URL (skip in mock mode to avoid CORS)
       if (!mockMode) {
-        await jobApi.uploadJobFile(createJobResponse.uploadUrl, file);
+        try {
+          await jobApi.uploadJobFile(uploadUrl, file);
+        } catch (uploadError) {
+          // Store jobId and fileId for retry
+          setRetryMode({ jobId, fileId });
+          throw new Error(
+            'File upload failed. Please try submitting again to retry the upload. ' +
+              (uploadError instanceof Error ? uploadError.message : 'Unknown error'),
+          );
+        }
       }
 
       // STEP 3: Complete upload with file metadata
       const checksum = await calculateFileChecksum(file);
 
-      await jobApi.completeUpload(createJobResponse.jobId, {
+      await jobApi.completeUpload(jobId, {
         fileName: file.name,
         fileSize: file.size,
         contentType: file.type || 'application/sla',
         checksum: checksum,
       });
 
-      // Reset form to prevent unsaved changes warning
+      // Reset form and retry mode on success
       form.reset();
-      toast.success('Print request submitted successfully');
+      setRetryMode(null);
+      toast.success(retryMode ? 'File uploaded successfully' : 'Print request submitted successfully');
 
       // Navigate to dashboard and force refresh to show new data
       router.push(Routes.jobs.home);
@@ -275,6 +306,11 @@ export default function NewPrintForm({ mockMode = false }: NewPrintFormProps = {
             )}
           />
           <div className="flex justify-end border-t pt-6">
+            {retryMode && (
+              <div className="mr-4 flex items-center text-sm text-amber-600 dark:text-amber-500">
+                <span>Job created. Click submit to retry file upload.</span>
+              </div>
+            )}
             <Button
               type="submit"
               size="default"
@@ -286,8 +322,10 @@ export default function NewPrintForm({ mockMode = false }: NewPrintFormProps = {
               {form.formState.isSubmitting ? (
                 <span className="inline-flex items-center">
                   <Loader2 className="mr-2 -ml-1 h-4 w-4 animate-spin" />
-                  Submitting...
+                  {retryMode ? 'Uploading...' : 'Submitting...'}
                 </span>
+              ) : retryMode ? (
+                'Retry Upload'
               ) : (
                 'Submit'
               )}

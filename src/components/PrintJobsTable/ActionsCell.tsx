@@ -12,15 +12,18 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { ChangeStatusDialog } from './ChangeStatusDialog';
+import { RetryUploadDialog } from './RetryUploadDialog';
 
 interface ActionsCellProps {
   printJob: PrintJob;
   mode: 'user' | 'admin';
   onStatusChanged?: (jobId: string, newStatus: PrintJobStatus) => void;
+  onJobUpdated?: () => void;
 }
 
-export function ActionsCell({ printJob, mode, onStatusChanged }: ActionsCellProps) {
+export function ActionsCell({ printJob, mode, onStatusChanged, onJobUpdated }: ActionsCellProps) {
   const [showChangeStatusDialog, setShowChangeStatusDialog] = useState(false);
+  const [showRetryUploadDialog, setShowRetryUploadDialog] = useState(false);
 
   return (
     <>
@@ -48,6 +51,14 @@ export function ActionsCell({ printJob, mode, onStatusChanged }: ActionsCellProp
           >
             Copy Job ID
           </DropdownMenuItem>
+          {printJob.status === 'PendingFile' && (
+            <>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onSelect={() => setShowRetryUploadDialog(true)}>
+                Retry Upload
+              </DropdownMenuItem>
+            </>
+          )}
           {mode === 'admin' && (
             <>
               <DropdownMenuSeparator />
@@ -90,6 +101,20 @@ export function ActionsCell({ printJob, mode, onStatusChanged }: ActionsCellProp
           open={showChangeStatusDialog}
           onOpenChange={setShowChangeStatusDialog}
           onStatusChanged={onStatusChanged}
+        />
+      )}
+
+      {printJob.status === 'PendingFile' && (
+        <RetryUploadDialog
+          open={showRetryUploadDialog}
+          onOpenChange={setShowRetryUploadDialog}
+          jobId={printJob.id}
+          jobName={printJob.name}
+          onSuccess={() => {
+            if (onJobUpdated) {
+              onJobUpdated();
+            }
+          }}
         />
       )}
     </>
