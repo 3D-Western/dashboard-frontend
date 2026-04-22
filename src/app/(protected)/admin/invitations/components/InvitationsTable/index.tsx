@@ -2,7 +2,7 @@
 
 import { Invitation } from '@/types/invitation';
 import { PaginationMetadata } from '@/types/common';
-import { useEffect, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { DataTable } from './DataTable';
 import { useColumns } from './useColumns';
 
@@ -19,16 +19,21 @@ export default function InvitationsTable({
   pagination,
   onRevokeSuccess,
 }: InvitationsTableProps) {
-  const [data, setData] = useState<Invitation[]>(invitations);
+  const [revokedInvitationIds, setRevokedInvitationIds] = useState<number[]>([]);
 
-  useEffect(() => {
-    setData(invitations);
-  }, [invitations]);
+  const data = useMemo(
+    () =>
+      invitations.map((invitation) =>
+        revokedInvitationIds.includes(invitation.id)
+          ? { ...invitation, status: 'REVOKED' as const }
+          : invitation,
+      ),
+    [invitations, revokedInvitationIds],
+  );
 
   const handleRevoke = (invitationId: number) => {
-    // Update local state to reflect the revoked invitation
-    setData((prev) =>
-      prev.map((inv) => (inv.id === invitationId ? { ...inv, status: 'REVOKED' as const } : inv)),
+    setRevokedInvitationIds((prev) =>
+      prev.includes(invitationId) ? prev : [...prev, invitationId],
     );
     onRevokeSuccess?.(invitationId);
   };
