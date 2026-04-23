@@ -19,12 +19,12 @@ export default function InvitationsTable({
   pagination,
   onRevokeSuccess,
 }: InvitationsTableProps) {
-  const [revokedInvitationIds, setRevokedInvitationIds] = useState<number[]>([]);
+  const [revokedInvitationIds, setRevokedInvitationIds] = useState<Set<number>>(new Set());
 
   const data = useMemo(
     () =>
       invitations.map((invitation) =>
-        revokedInvitationIds.includes(invitation.id)
+        revokedInvitationIds.has(invitation.id)
           ? { ...invitation, status: 'REVOKED' as const }
           : invitation,
       ),
@@ -33,7 +33,7 @@ export default function InvitationsTable({
 
   const handleRevoke = (invitationId: number) => {
     setRevokedInvitationIds((prev) =>
-      prev.includes(invitationId) ? prev : [...prev, invitationId],
+      prev.has(invitationId) ? prev : new Set(prev).add(invitationId),
     );
     onRevokeSuccess?.(invitationId);
   };

@@ -39,9 +39,10 @@ export default function PrintJobsTable({
         });
         const nextJobs = updater(currentJobs);
 
+        const baseJobById = new Map(printJobs.map((job) => [job.id, job]));
         const nextOverrides: Record<string, PrintJob['status']> = {};
         for (const nextJob of nextJobs) {
-          const baseJob = printJobs.find((job) => job.id === nextJob.id);
+          const baseJob = baseJobById.get(nextJob.id);
           if (baseJob && baseJob.status !== nextJob.status) {
             nextOverrides[nextJob.id] = nextJob.status;
           }
