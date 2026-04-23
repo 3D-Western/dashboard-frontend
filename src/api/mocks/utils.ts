@@ -3,7 +3,36 @@
 
 import { HttpResponse } from 'msw';
 import { ErrorCodes } from '../client/errors';
-import { ApiResponseError } from '../types';
+import { ApiResponseError, GroupResponse } from '../types';
+
+/**
+ * Returns mock GroupResponse objects for the given group keys.
+ */
+export function mockGroupsForKeys(groupKeys: string[]): GroupResponse[] {
+  const catalog: Record<string, GroupResponse> = {
+    members: {
+      id: 1,
+      groupKey: 'members',
+      name: 'Members',
+      description: 'Default member group',
+      isSystem: true,
+      isActive: true,
+      createdAt: '2024-01-01T00:00:00Z',
+      updatedAt: '2024-01-01T00:00:00Z',
+    },
+    super_admins: {
+      id: 2,
+      groupKey: 'super_admins',
+      name: 'Super Admins',
+      description: 'Full access group',
+      isSystem: true,
+      isActive: true,
+      createdAt: '2024-01-01T00:00:00Z',
+      updatedAt: '2024-01-01T00:00:00Z',
+    },
+  };
+  return groupKeys.map((key) => catalog[key]).filter(Boolean);
+}
 
 export const generateSuccessResponse = (data: unknown) => {
   return {

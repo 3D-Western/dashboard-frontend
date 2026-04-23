@@ -8,6 +8,7 @@ import {
   generateErrorResponse,
 } from './utils';
 import type { FileMetadata } from './database/types';
+import { isAdminUser } from './database/types';
 
 const apiUrl = process.env.API_URL;
 
@@ -94,7 +95,7 @@ export const fileHandlers = [
     }
 
     // Admin-only endpoint
-    if (user.role !== 'admin') {
+    if (!isAdminUser(user)) {
       return HttpResponse.json(
         generateErrorResponse({
           code: 'FORBIDDEN',
@@ -188,7 +189,7 @@ export const fileHandlers = [
     }
 
     // Access control: users see own files, admins see all
-    if (user.role !== 'admin' && file.uploadedBy !== user.studentId) {
+    if (!isAdminUser(user) && file.uploadedBy !== user.studentId) {
       return HttpResponse.json(
         generateErrorResponse({
           code: 'FORBIDDEN',
@@ -228,7 +229,7 @@ export const fileHandlers = [
     }
 
     // Admin-only endpoint
-    if (user.role !== 'admin') {
+    if (!isAdminUser(user)) {
       return HttpResponse.json(
         generateErrorResponse({
           code: 'FORBIDDEN',
@@ -293,7 +294,7 @@ export const fileHandlers = [
     }
 
     // Access control: users download own files, admins download all
-    if (user.role !== 'admin' && file.uploadedBy !== user.studentId) {
+    if (!isAdminUser(user) && file.uploadedBy !== user.studentId) {
       return HttpResponse.json(
         generateErrorResponse({
           code: 'FORBIDDEN',

@@ -170,7 +170,6 @@ describe('transformers', () => {
         email: 'test@uwo.ca',
         firstName: 'John',
         lastName: 'Doe',
-        status: 'User',
         experienceLevel: 'Beginner',
         faculty: 'Engineering',
       };
@@ -182,24 +181,48 @@ describe('transformers', () => {
         email: 'test@uwo.ca',
         firstName: 'John',
         lastName: 'Doe',
-        role: 'user',
+        groups: [],
         experienceLevel: 'beginner',
         faculty: 'engineering',
       });
     });
 
-    it('transforms admin status to lowercase', () => {
+    it('maps provided groups into the user', () => {
       const userResponse: UserResponse = {
         studentId: 251000001,
         email: 'admin@uwo.ca',
         firstName: 'Admin',
         lastName: 'User',
-        status: 'Admin',
+      };
+
+      const groupResponse = {
+        id: 2,
+        groupKey: 'super_admins',
+        name: 'Super Admins',
+        description: null,
+        isSystem: true,
+        isActive: true,
+        createdAt: '2024-01-01T00:00:00Z',
+        updatedAt: '2024-01-01T00:00:00Z',
+      };
+
+      const result = transformUserResponse(userResponse, [groupResponse]);
+
+      expect(result.groups).toHaveLength(1);
+      expect(result.groups[0].groupKey).toBe('super_admins');
+    });
+
+    it('defaults to empty groups when none provided', () => {
+      const userResponse: UserResponse = {
+        studentId: 251000001,
+        email: 'test@uwo.ca',
+        firstName: 'John',
+        lastName: 'Doe',
       };
 
       const result = transformUserResponse(userResponse);
 
-      expect(result.role).toBe('admin');
+      expect(result.groups).toEqual([]);
     });
 
     it('handles missing experienceLevel field', () => {
@@ -208,7 +231,6 @@ describe('transformers', () => {
         email: 'test@uwo.ca',
         firstName: 'John',
         lastName: 'Doe',
-        status: 'User',
       };
 
       const result = transformUserResponse(userResponse);
@@ -222,7 +244,6 @@ describe('transformers', () => {
         email: 'test@uwo.ca',
         firstName: 'John',
         lastName: 'Doe',
-        status: 'User',
       };
 
       const result = transformUserResponse(userResponse);
@@ -236,7 +257,6 @@ describe('transformers', () => {
         email: 'test@uwo.ca',
         firstName: 'John',
         lastName: 'Doe',
-        status: 'User',
         experienceLevel: 'Advanced',
       };
 
@@ -251,7 +271,6 @@ describe('transformers', () => {
         email: 'test@uwo.ca',
         firstName: 'John',
         lastName: 'Doe',
-        status: 'User',
         faculty: 'Science',
       };
 
@@ -266,7 +285,6 @@ describe('transformers', () => {
         email: 'specific@uwo.ca',
         firstName: 'Jane',
         lastName: 'Smith',
-        status: 'User',
         experienceLevel: 'NoExperience',
         faculty: 'ArtsAndHumanities',
       });
@@ -277,7 +295,7 @@ describe('transformers', () => {
       expect(result.email).toBe('specific@uwo.ca');
       expect(result.firstName).toBe('Jane');
       expect(result.lastName).toBe('Smith');
-      expect(result.role).toBe('user');
+      expect(result.groups).toEqual([]);
       expect(result.experienceLevel).toBe('no_experience');
       expect(result.faculty).toBe('arts_and_humanities');
     });
@@ -288,7 +306,6 @@ describe('transformers', () => {
         email: 'unknown@uwo.ca',
         firstName: 'Mystery',
         lastName: 'User',
-        status: 'User',
         experienceLevel: 'UnknownLevel',
         faculty: 'UnknownFaculty',
       };
@@ -325,7 +342,6 @@ describe('transformers', () => {
         email: 'test@uwo.ca',
         firstName: 'John',
         lastName: 'Doe',
-        status: 'User',
         experienceLevel: 'Beginner',
         faculty: 'Engineering',
       };
@@ -345,7 +361,7 @@ describe('transformers', () => {
         email: 'test@uwo.ca',
         firstName: 'John',
         lastName: 'Doe',
-        role: 'user',
+        groups: [],
         experienceLevel: 'beginner',
         faculty: 'engineering',
       });
@@ -361,7 +377,6 @@ describe('transformers', () => {
           email: 'user1@uwo.ca',
           firstName: 'User',
           lastName: 'One',
-          status: 'User',
           experienceLevel: 'Beginner',
           faculty: 'Engineering',
         },
@@ -370,7 +385,6 @@ describe('transformers', () => {
           email: 'admin@uwo.ca',
           firstName: 'Admin',
           lastName: 'User',
-          status: 'Admin',
           experienceLevel: 'Advanced',
           faculty: 'Science',
         },
@@ -379,7 +393,6 @@ describe('transformers', () => {
           email: 'user3@uwo.ca',
           firstName: 'User',
           lastName: 'Three',
-          status: 'User',
         },
       ];
 
@@ -393,8 +406,7 @@ describe('transformers', () => {
       const result = transformUserListResponse(response);
 
       expect(result.data).toHaveLength(3);
-      expect(result.data[0].role).toBe('user');
-      expect(result.data[1].role).toBe('admin');
+      expect(result.data[0].groups).toEqual([]);
       expect(result.data[1].experienceLevel).toBe('advanced');
       expect(result.data[2].experienceLevel).toBeUndefined();
       expect(result.totalCount).toBe(3);

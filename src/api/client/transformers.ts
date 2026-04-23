@@ -1,6 +1,6 @@
-import { User, UserExperienceLevel, UserFaculty } from '@/types/user';
+import { User, UserExperienceLevel, UserFaculty, Group } from '@/types/user';
 import { PaginatedResponse } from '@/types/common';
-import { UserResponse, UserListResponseRaw } from '../types';
+import { UserResponse, UserListResponseRaw, GroupResponse } from '../types';
 
 /**
  * Transforms frontend experience level to backend format.
@@ -85,19 +85,38 @@ export function transformFacultyFromBackend(faculty: string): UserFaculty {
 }
 
 /**
- * Transforms a UserResponse from the backend into a User object for the frontend.
- * Handles case conversion for role, experienceLevel, and faculty fields.
- *
- * Backend format: "Admin", "User", "Beginner", "Advanced", "NoExperience", "Engineering", etc.
- * Frontend format: "admin", "user", "beginner", "advanced", "no_experience", "engineering", etc.
+ * Transforms a GroupResponse from the backend into a Group object for the frontend.
  */
-export function transformUserResponse(userResponse: UserResponse): User {
+export function transformGroupResponse(groupResponse: GroupResponse): Group {
+  return {
+    id: groupResponse.id,
+    groupKey: groupResponse.groupKey,
+    name: groupResponse.name,
+    description: groupResponse.description,
+    isSystem: groupResponse.isSystem,
+    isActive: groupResponse.isActive,
+    createdAt: groupResponse.createdAt,
+    updatedAt: groupResponse.updatedAt,
+  };
+}
+
+/**
+ * Transforms a UserResponse from the backend into a User object for the frontend.
+ * Handles case conversion for experienceLevel and faculty fields.
+ *
+ * Backend format: "Beginner", "Advanced", "NoExperience", "Engineering", etc.
+ * Frontend format: "beginner", "advanced", "no_experience", "engineering", etc.
+ */
+export function transformUserResponse(
+  userResponse: UserResponse,
+  groups: GroupResponse[] = [],
+): User {
   return {
     studentId: userResponse.studentId,
     email: userResponse.email,
     firstName: userResponse.firstName,
     lastName: userResponse.lastName,
-    role: userResponse.status.toLowerCase() as User['role'],
+    groups: groups.map(transformGroupResponse),
     experienceLevel: userResponse.experienceLevel
       ? transformExperienceLevelFromBackend(userResponse.experienceLevel)
       : undefined,
@@ -111,6 +130,6 @@ export function transformUserResponse(userResponse: UserResponse): User {
 export function transformUserListResponse(response: UserListResponseRaw): PaginatedResponse<User> {
   return {
     ...response,
-    data: response.data.map(transformUserResponse),
+    data: response.data.map((user) => transformUserResponse(user)),
   };
 }

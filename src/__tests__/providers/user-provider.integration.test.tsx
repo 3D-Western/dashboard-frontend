@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import { useEffect } from 'react';
 import { UserProvider, useUser } from '@/providers/user-provider';
-import { createMockUser } from '@test/utils/mockFactories';
+import { createMockUser, createMockAdmin } from '@test/utils/mockFactories';
 import { User } from '@/types/user';
 
 // Test component that uses useUser hook
@@ -16,7 +16,7 @@ function TestComponent() {
             {user.firstName} {user.lastName}
           </p>
           <p data-testid="user-email">{user.email}</p>
-          <p data-testid="user-role">{user.role}</p>
+          <p data-testid="user-groups">{user.groups.map((g) => g.groupKey).join(',')}</p>
         </div>
       ) : (
         <p data-testid="no-user">No user</p>
@@ -61,7 +61,6 @@ describe('UserProvider Integration', () => {
       firstName: 'John',
       lastName: 'Doe',
       email: 'john.doe@example.com',
-      role: 'user',
     });
 
     render(
@@ -72,7 +71,7 @@ describe('UserProvider Integration', () => {
 
     expect(screen.getByTestId('user-name')).toHaveTextContent('John Doe');
     expect(screen.getByTestId('user-email')).toHaveTextContent('john.doe@example.com');
-    expect(screen.getByTestId('user-role')).toHaveTextContent('user');
+    expect(screen.getByTestId('user-groups')).toHaveTextContent('members');
   });
 
   it('provides consistent null value across re-renders when no user', () => {
@@ -145,10 +144,9 @@ describe('UserProvider Integration', () => {
   });
 
   it('handles admin user correctly', () => {
-    const adminUser = createMockUser({
+    const adminUser = createMockAdmin({
       firstName: 'Admin',
       lastName: 'User',
-      role: 'admin',
       experienceLevel: 'advanced',
     });
 
@@ -159,7 +157,7 @@ describe('UserProvider Integration', () => {
     );
 
     expect(screen.getByTestId('user-name')).toHaveTextContent('Admin User');
-    expect(screen.getByTestId('user-role')).toHaveTextContent('admin');
+    expect(screen.getByTestId('user-groups')).toHaveTextContent('super_admins');
   });
 
   it('handles user with different experience levels', () => {

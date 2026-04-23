@@ -14,14 +14,13 @@ describe('sessionApi', () => {
         email: 'test@example.com',
         firstName: 'Test',
         lastName: 'User',
-        status: 'User',
       });
 
       mockServer.use(
         http.get('*' + endpoints.users.me, () => {
           return HttpResponse.json({
             success: true,
-            data: { user: mockUserResponse },
+            data: { user: mockUserResponse, groups: [], activeJobCount: 0 },
           });
         }),
       );
@@ -34,7 +33,7 @@ describe('sessionApi', () => {
         email: 'test@example.com',
         firstName: 'Test',
         lastName: 'User',
-        role: 'user',
+        groups: [],
       });
     });
 
@@ -86,7 +85,7 @@ describe('sessionApi', () => {
           requestCredentials = request.credentials;
           return HttpResponse.json({
             success: true,
-            data: { user: createMockUserResponse() },
+            data: { user: createMockUserResponse(), groups: [], activeJobCount: 0 },
           });
         }),
       );
@@ -114,7 +113,7 @@ describe('sessionApi', () => {
         http.get('*' + endpoints.users.me, () => {
           return HttpResponse.json({
             success: true,
-            data: { user: createMockUserResponse() },
+            data: { user: createMockUserResponse(), groups: [], activeJobCount: 0 },
           });
         }),
       );

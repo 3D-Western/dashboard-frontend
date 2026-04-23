@@ -1,4 +1,5 @@
 import { validateSession } from '@/lib/auth';
+import { isAdmin } from '@/types/user';
 import { redirect } from 'next/navigation';
 
 // Force dynamic rendering for admin routes
@@ -12,8 +13,8 @@ export default async function AdminLayout({ children }: { children: React.ReactN
     redirect('/login?error=unauthenticated');
   }
 
-  // Check if user has admin role
-  if (currentUser.role !== 'admin') {
+  // Check if user is in the super_admins group
+  if (!isAdmin(currentUser)) {
     redirect('/dashboard?error=unauthorized');
   }
 

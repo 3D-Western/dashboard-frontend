@@ -4,11 +4,15 @@ export interface User {
   firstName: string;
   password: string;
   email: string;
-  role: 'admin' | 'user';
+  groups: string[]; // group keys, e.g. ['members'] or ['super_admins']
   experience: string;
   createdDate?: string;
   trainingLevel?: string;
   experienceLevel?: string;
+}
+
+export function isAdminUser(user: User): boolean {
+  return user.groups.includes('super_admins');
 }
 
 export interface File {

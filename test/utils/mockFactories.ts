@@ -1,16 +1,38 @@
 import { faker } from '@faker-js/faker';
-import { User, UserRole, UserExperienceLevel } from '@/types/user';
+import { User, UserExperienceLevel, Group } from '@/types/user';
 import { PrintJob, PrintJobStatus } from '@/types/jobs';
 import { FileMetadata, FileUploadResult } from '@/types/file';
 import { Invitation, InvitationStatus } from '@/types/invitation';
-import { UserResponse } from '@/api/types';
+import { UserResponse, GroupResponse } from '@/api/types';
+
+const MOCK_GROUP_MEMBERS: Group = {
+  id: 1,
+  groupKey: 'members',
+  name: 'Members',
+  description: 'Default member group',
+  isSystem: true,
+  isActive: true,
+  createdAt: '2024-01-01T00:00:00Z',
+  updatedAt: '2024-01-01T00:00:00Z',
+};
+
+const MOCK_GROUP_SUPER_ADMINS: Group = {
+  id: 2,
+  groupKey: 'super_admins',
+  name: 'Super Admins',
+  description: 'Full access group',
+  isSystem: true,
+  isActive: true,
+  createdAt: '2024-01-01T00:00:00Z',
+  updatedAt: '2024-01-01T00:00:00Z',
+};
 
 /**
  * Creates a mock User object with realistic data
  *
  * @example
  * ```ts
- * const user = createMockUser({ role: 'admin' });
+ * const user = createMockUser({ groups: [MOCK_GROUP_SUPER_ADMINS] });
  * ```
  */
 export const createMockUser = (overrides?: Partial<User>): User => ({
@@ -18,13 +40,13 @@ export const createMockUser = (overrides?: Partial<User>): User => ({
   email: faker.internet.email(),
   firstName: faker.person.firstName(),
   lastName: faker.person.lastName(),
-  role: 'user' as UserRole,
+  groups: [MOCK_GROUP_MEMBERS],
   experienceLevel: 'beginner' as UserExperienceLevel,
   ...overrides,
 });
 
 /**
- * Creates a mock admin User
+ * Creates a mock admin User (member of super_admins group)
  *
  * @example
  * ```ts
@@ -32,14 +54,14 @@ export const createMockUser = (overrides?: Partial<User>): User => ({
  * ```
  */
 export const createMockAdmin = (overrides?: Partial<User>): User =>
-  createMockUser({ role: 'admin', experienceLevel: 'advanced', ...overrides });
+  createMockUser({ groups: [MOCK_GROUP_SUPER_ADMINS], experienceLevel: 'advanced', ...overrides });
 
 /**
  * Creates a mock UserResponse object (backend format)
  *
  * @example
  * ```ts
- * const userResponse = createMockUserResponse({ status: 'Admin' });
+ * const userResponse = createMockUserResponse();
  * ```
  */
 export const createMockUserResponse = (overrides?: Partial<UserResponse>): UserResponse => ({
@@ -47,9 +69,23 @@ export const createMockUserResponse = (overrides?: Partial<UserResponse>): UserR
   email: faker.internet.email(),
   firstName: faker.person.firstName(),
   lastName: faker.person.lastName(),
-  status: 'User', // Backend format: "Admin" or "User"
   ...overrides,
 });
+
+/**
+ * Creates mock GroupResponse objects for the given groups
+ */
+export const createMockGroupResponses = (groups: Group[]): GroupResponse[] =>
+  groups.map((g) => ({
+    id: g.id,
+    groupKey: g.groupKey,
+    name: g.name,
+    description: g.description,
+    isSystem: g.isSystem,
+    isActive: g.isActive,
+    createdAt: g.createdAt,
+    updatedAt: g.updatedAt,
+  }));
 
 /**
  * Creates a mock PrintJob object

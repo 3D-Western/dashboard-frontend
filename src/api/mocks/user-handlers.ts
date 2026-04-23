@@ -1,6 +1,7 @@
 import { http, HttpResponse } from 'msw';
 import { endpoints } from '../client/endpoints';
 import db from './database/db';
+import { isAdminUser } from './database/types';
 import {
   createInvalidSessionResponse,
   generateSuccessResponse,
@@ -20,7 +21,7 @@ export const userHandlers = [
     }
 
     // Only admins can list all users
-    if (user.role !== 'admin') {
+    if (!isAdminUser(user)) {
       return HttpResponse.json(
         {
           success: false,
@@ -65,9 +66,9 @@ export const userHandlers = [
       );
     }
 
-    // Apply status filter
+    // Apply status filter (filter by group key)
     if (statusFilter) {
-      users = users.filter((u) => u.role === statusFilter);
+      users = users.filter((u) => u.groups.includes(statusFilter));
     }
 
     // Apply training level filter
@@ -87,7 +88,7 @@ export const userHandlers = [
       firstName: u.firstName,
       lastName: u.lastName,
       createdDate: u.createdDate || new Date().toISOString(),
-      status: u.role.charAt(0).toUpperCase() + u.role.slice(1), // "admin" -> "Admin", "user" -> "User"
+      groups: u.groups,
       trainingLevel: u.trainingLevel,
       experienceLevel:
         u.experienceLevel
@@ -128,7 +129,7 @@ export const userHandlers = [
     }
 
     // Only admins can view other users
-    if (user.role !== 'admin') {
+    if (!isAdminUser(user)) {
       return HttpResponse.json(
         {
           success: false,
@@ -164,7 +165,7 @@ export const userHandlers = [
         firstName: targetUser.firstName,
         lastName: targetUser.lastName,
         createdDate: targetUser.createdDate || new Date().toISOString(),
-        status: targetUser.role.charAt(0).toUpperCase() + targetUser.role.slice(1), // "admin" -> "Admin"
+        groups: targetUser.groups,
         trainingLevel: targetUser.trainingLevel,
         experienceLevel:
           targetUser.experienceLevel

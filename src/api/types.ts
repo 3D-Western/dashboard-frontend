@@ -15,19 +15,31 @@ export interface ApiResponseRaw<T> {
   error?: ApiResponseError;
 }
 
-// Backend Response Types (with capitalized values)
+// Backend Response Types
 export interface UserResponse {
   studentId: number;
   email: string;
   firstName: string;
   lastName: string;
-  status: string; // Backend sends "Admin" or "User"
   experienceLevel?: string;
   faculty?: string;
 }
 
+export interface GroupResponse {
+  id: number;
+  groupKey: string;
+  name: string;
+  description?: string | null;
+  isSystem: boolean;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface ApiGetCurrentSessionResponse {
   user: UserResponse | null;
+  groups: GroupResponse[];
+  activeJobCount: number;
 }
 
 export interface ApiLoginResponse {

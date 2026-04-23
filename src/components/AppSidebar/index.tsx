@@ -14,7 +14,7 @@ import {
   SidebarMenuItem,
 } from '@/components/ui/sidebar';
 import { SettingsPopover } from '@/components/SettingsPopover';
-import { User } from '@/types/user';
+import { User, isAdmin } from '@/types/user';
 import {
   LayoutDashboard,
   Printer,
@@ -108,7 +108,7 @@ export function AppSidebar({ user }: AppSidebarProps) {
           </SidebarGroupContent>
         </SidebarGroup>
 
-        {user.role === 'admin' && (
+        {isAdmin(user) && (
           <SidebarGroup>
             <SidebarGroupLabel>Admin</SidebarGroupLabel>
             <SidebarGroupContent>

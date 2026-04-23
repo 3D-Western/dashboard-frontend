@@ -6,7 +6,7 @@ import {
   generateSuccessResponse,
   generateErrorResponse,
 } from './utils';
-import { InvitationStatus } from './database/types';
+import { InvitationStatus, isAdminUser } from './database/types';
 
 const apiUrl = process.env.API_URL;
 
@@ -20,7 +20,7 @@ export const invitationHandlers = [
     }
 
     // Only admins can access invitations
-    if (user.role !== 'admin') {
+    if (!isAdminUser(user)) {
       return HttpResponse.json(
         generateErrorResponse({
           code: 'FORBIDDEN',
@@ -102,7 +102,7 @@ export const invitationHandlers = [
     }
 
     // Only admins can access invitations
-    if (user.role !== 'admin') {
+    if (!isAdminUser(user)) {
       return HttpResponse.json(
         generateErrorResponse({
           code: 'FORBIDDEN',
@@ -157,7 +157,7 @@ export const invitationHandlers = [
     }
 
     // Only admins can create invitations
-    if (user.role !== 'admin') {
+    if (!isAdminUser(user)) {
       return HttpResponse.json(
         generateErrorResponse({
           code: 'FORBIDDEN',
@@ -260,7 +260,7 @@ export const invitationHandlers = [
     }
 
     // Only admins can revoke invitations
-    if (user.role !== 'admin') {
+    if (!isAdminUser(user)) {
       return HttpResponse.json(
         generateErrorResponse({
           code: 'FORBIDDEN',
