@@ -30,25 +30,28 @@ export default function PrintJobsTable({
     [printJobs, jobStatusOverrides],
   );
 
-  const setJobs = useCallback((updater: (prev: PrintJob[]) => PrintJob[]) => {
-    setJobStatusOverrides((prevOverrides) => {
-      const currentJobs = printJobs.map((job) => {
-        const overriddenStatus = prevOverrides[job.id];
-        return overriddenStatus ? { ...job, status: overriddenStatus } : job;
-      });
-      const nextJobs = updater(currentJobs);
+  const setJobs = useCallback(
+    (updater: (prev: PrintJob[]) => PrintJob[]) => {
+      setJobStatusOverrides((prevOverrides) => {
+        const currentJobs = printJobs.map((job) => {
+          const overriddenStatus = prevOverrides[job.id];
+          return overriddenStatus ? { ...job, status: overriddenStatus } : job;
+        });
+        const nextJobs = updater(currentJobs);
 
-      const nextOverrides: Record<string, PrintJob['status']> = {};
-      for (const nextJob of nextJobs) {
-        const baseJob = printJobs.find((job) => job.id === nextJob.id);
-        if (baseJob && baseJob.status !== nextJob.status) {
-          nextOverrides[nextJob.id] = nextJob.status;
+        const nextOverrides: Record<string, PrintJob['status']> = {};
+        for (const nextJob of nextJobs) {
+          const baseJob = printJobs.find((job) => job.id === nextJob.id);
+          if (baseJob && baseJob.status !== nextJob.status) {
+            nextOverrides[nextJob.id] = nextJob.status;
+          }
         }
-      }
 
-      return nextOverrides;
-    });
-  }, [printJobs]);
+        return nextOverrides;
+      });
+    },
+    [printJobs],
+  );
 
   const columns = useColumns({ mode, setJobs });
   return <DataTable columns={columns} data={jobs} pagination={pagination} />;

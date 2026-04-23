@@ -71,11 +71,13 @@ export function ChangeStatusDialog({
   );
 }
 
+type ChangeStatusDialogContentProps = Omit<ChangeStatusDialogProps, 'open'>;
+
 function ChangeStatusDialogContent({
   printJob,
   onOpenChange,
   onStatusChanged,
-}: ChangeStatusDialogProps) {
+}: ChangeStatusDialogContentProps) {
   const [selectedStatus, setSelectedStatus] = useState<PrintJobStatus>(printJob.status);
   const [isUpdating, setIsUpdating] = useState(false);
 
