@@ -4,7 +4,7 @@ import { PrintJob } from '@/types/jobs';
 import { PaginationMetadata } from '@/types/common';
 import { DataTable } from './DataTable';
 import { useColumns } from './useColumns';
-import { useState, useEffect } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 
 export interface PrintJobsTableProps {
   printJobs: PrintJob[];
@@ -17,13 +17,42 @@ export default function PrintJobsTable({
   pagination,
   mode = 'user',
 }: PrintJobsTableProps) {
-  // Keep jobs in state so we can update status locally (e.g., optimistic updates for cancel)
-  const [jobs, setJobs] = useState<PrintJob[]>(printJobs);
+  const [jobStatusOverrides, setJobStatusOverrides] = useState<Record<string, PrintJob['status']>>(
+    {},
+  );
 
-  // Sync state with props when printJobs change (e.g., from filters or pagination)
-  useEffect(() => {
-    setJobs(printJobs);
-  }, [printJobs]);
+  const jobs = useMemo(
+    () =>
+      printJobs.map((job) => {
+        const overriddenStatus = jobStatusOverrides[job.id];
+        return overriddenStatus ? { ...job, status: overriddenStatus } : job;
+      }),
+    [printJobs, jobStatusOverrides],
+  );
+
+  const setJobs = useCallback(
+    (updater: (prev: PrintJob[]) => PrintJob[]) => {
+      setJobStatusOverrides((prevOverrides) => {
+        const currentJobs = printJobs.map((job) => {
+          const overriddenStatus = prevOverrides[job.id];
+          return overriddenStatus ? { ...job, status: overriddenStatus } : job;
+        });
+        const nextJobs = updater(currentJobs);
+
+        const baseJobById = new Map(printJobs.map((job) => [job.id, job]));
+        const nextOverrides: Record<string, PrintJob['status']> = {};
+        for (const nextJob of nextJobs) {
+          const baseJob = baseJobById.get(nextJob.id);
+          if (baseJob && baseJob.status !== nextJob.status) {
+            nextOverrides[nextJob.id] = nextJob.status;
+          }
+        }
+
+        return nextOverrides;
+      });
+    },
+    [printJobs],
+  );
 
   const columns = useColumns({ mode, setJobs });
   return <DataTable columns={columns} data={jobs} pagination={pagination} />;

@@ -21,7 +21,7 @@ import { passwordResetApi } from '@/api/client/password-reset';
 import { toast } from 'sonner';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Routes } from '@/lib/routes';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 
 const formSchema = z
   .object({
@@ -37,17 +37,8 @@ export function ResetPasswordForm({ className, ...props }: React.ComponentProps<
   const router = useRouter();
   const searchParams = useSearchParams();
   const [isLoading, setIsLoading] = useState(false);
-  const [token, setToken] = useState<string | null>(null);
-  const [tokenError, setTokenError] = useState<string | null>(null);
-
-  useEffect(() => {
-    const tokenParam = searchParams.get('token');
-    if (!tokenParam) {
-      setTokenError('No reset token found. Please use the link from your email.');
-    } else {
-      setToken(tokenParam);
-    }
-  }, [searchParams]);
+  const token = searchParams.get('token');
+  const tokenError = token ? null : 'No reset token found. Please use the link from your email.';
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),

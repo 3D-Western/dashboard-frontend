@@ -1,7 +1,7 @@
 // hooks/useLocalTime.ts
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useSyncExternalStore } from 'react';
 import { formatInTimeZone } from 'date-fns-tz';
 
 /**
@@ -10,11 +10,11 @@ import { formatInTimeZone } from 'date-fns-tz';
  * - Uses date-fns-tz for predictable formatting
  */
 export function useLocalTime(dateString: string, format = 'yyyy-MM-dd HH:mm') {
-  const [isMounted, setIsMounted] = useState(false);
-
-  useEffect(() => {
-    setIsMounted(true);
-  }, []);
+  const isMounted = useSyncExternalStore(
+    () => () => {},
+    () => true,
+    () => false,
+  );
 
   // Server-side or before hydration: use UTC
   if (!isMounted) {

@@ -2,6 +2,7 @@ declare global {
   // Persist these vars on the global object across HMR reloads in Node
   var __mswServerStarted: boolean | undefined;
   var __mswFetch: typeof fetch | undefined;
+  var __mswInitPromise: Promise<void> | null | undefined;
 }
 
 /**
@@ -15,10 +16,17 @@ export async function ensureMockServer(): Promise<void> {
   const currentFetch = globalThis.fetch;
 
   if (!globalThis.__mswServerStarted || globalThis.__mswFetch !== currentFetch) {
-    const { mockServer } = await import('@/api/mocks');
-    mockServer.listen();
-    globalThis.__mswServerStarted = true;
-    globalThis.__mswFetch = currentFetch;
+    if (!globalThis.__mswInitPromise) {
+      globalThis.__mswInitPromise = (async () => {
+        const { mockServer } = await import('@/api/mocks');
+        mockServer.listen();
+        globalThis.__mswServerStarted = true;
+        globalThis.__mswFetch = currentFetch;
+      })().finally(() => {
+        globalThis.__mswInitPromise = null;
+      });
+    }
+    await globalThis.__mswInitPromise;
   }
 }
 

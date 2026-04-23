@@ -11,6 +11,8 @@ describe('ensureMockServer', () => {
   beforeEach(async () => {
     mockServerListen = vi.fn();
 
+    vi.resetModules();
+
     vi.doMock('@/api/mocks', () => ({
       mockServer: {
         listen: mockServerListen,
@@ -20,6 +22,7 @@ describe('ensureMockServer', () => {
     delete (global as unknown as { window?: unknown }).window;
     globalThis.__mswServerStarted = undefined;
     globalThis.__mswFetch = undefined;
+    globalThis.__mswInitPromise = null;
 
     const importedModule = await import('./mock-server');
     ensureMockServer = importedModule.ensureMockServer;
@@ -36,6 +39,7 @@ describe('ensureMockServer', () => {
     globalThis.fetch = originalFetch;
     globalThis.__mswServerStarted = undefined;
     globalThis.__mswFetch = undefined;
+    globalThis.__mswInitPromise = null;
   });
 
   describe('early returns', () => {

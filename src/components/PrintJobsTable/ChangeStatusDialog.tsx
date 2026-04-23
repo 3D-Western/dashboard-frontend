@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { toast } from 'sonner';
 import { PrintJob, PrintJobStatus } from '@/types/jobs';
 import { jobApi } from '@/api/client/job';
@@ -58,15 +58,28 @@ export function ChangeStatusDialog({
   onOpenChange,
   onStatusChanged,
 }: ChangeStatusDialogProps) {
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      {open ? (
+        <ChangeStatusDialogContent
+          printJob={printJob}
+          onOpenChange={onOpenChange}
+          onStatusChanged={onStatusChanged}
+        />
+      ) : null}
+    </Dialog>
+  );
+}
+
+type ChangeStatusDialogContentProps = Omit<ChangeStatusDialogProps, 'open'>;
+
+function ChangeStatusDialogContent({
+  printJob,
+  onOpenChange,
+  onStatusChanged,
+}: ChangeStatusDialogContentProps) {
   const [selectedStatus, setSelectedStatus] = useState<PrintJobStatus>(printJob.status);
   const [isUpdating, setIsUpdating] = useState(false);
-
-  // Sync selectedStatus when dialog opens or printJob.status changes
-  useEffect(() => {
-    if (open) {
-      setSelectedStatus(printJob.status);
-    }
-  }, [open, printJob.status]);
 
   const handleConfirm = async () => {
     if (selectedStatus === printJob.status) {
@@ -102,58 +115,51 @@ export function ChangeStatusDialog({
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>Change Job Status</DialogTitle>
-          <DialogDescription>
-            Update the status for job &quot;{printJob.name}&quot;
-          </DialogDescription>
-        </DialogHeader>
+    <DialogContent>
+      <DialogHeader>
+        <DialogTitle>Change Job Status</DialogTitle>
+        <DialogDescription>Update the status for job &quot;{printJob.name}&quot;</DialogDescription>
+      </DialogHeader>
 
-        <div className="space-y-4 py-4">
-          <div className="space-y-2">
-            <label className="text-sm font-medium">Current Status</label>
-            <div>
-              <PrintJobStatusBadge status={printJob.status} />
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            <label htmlFor="status-select" className="text-sm font-medium">
-              New Status
-            </label>
-            <Select
-              value={selectedStatus}
-              onValueChange={(value) => setSelectedStatus(value as PrintJobStatus)}
-            >
-              <SelectTrigger id="status-select">
-                <SelectValue placeholder="Select a status" />
-              </SelectTrigger>
-              <SelectContent>
-                {BACKEND_STATUSES.map((status) => (
-                  <SelectItem key={status} value={status}>
-                    {STATUS_DISPLAY_LABELS[status]}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+      <div className="space-y-4 py-4">
+        <div className="space-y-2">
+          <label className="text-sm font-medium">Current Status</label>
+          <div>
+            <PrintJobStatusBadge status={printJob.status} />
           </div>
         </div>
 
-        <DialogFooter>
-          <Button variant="outline" onClick={handleCancel} disabled={isUpdating}>
-            Cancel
-          </Button>
-          <Button
-            onClick={handleConfirm}
-            disabled={isUpdating || selectedStatus === printJob.status}
+        <div className="space-y-2">
+          <label htmlFor="status-select" className="text-sm font-medium">
+            New Status
+          </label>
+          <Select
+            value={selectedStatus}
+            onValueChange={(value) => setSelectedStatus(value as PrintJobStatus)}
           >
-            {isUpdating && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            {isUpdating ? 'Updating...' : 'Confirm'}
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+            <SelectTrigger id="status-select">
+              <SelectValue placeholder="Select a status" />
+            </SelectTrigger>
+            <SelectContent>
+              {BACKEND_STATUSES.map((status) => (
+                <SelectItem key={status} value={status}>
+                  {STATUS_DISPLAY_LABELS[status]}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+
+      <DialogFooter>
+        <Button variant="outline" onClick={handleCancel} disabled={isUpdating}>
+          Cancel
+        </Button>
+        <Button onClick={handleConfirm} disabled={isUpdating || selectedStatus === printJob.status}>
+          {isUpdating && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+          {isUpdating ? 'Updating...' : 'Confirm'}
+        </Button>
+      </DialogFooter>
+    </DialogContent>
   );
 }
