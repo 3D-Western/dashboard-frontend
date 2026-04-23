@@ -9,7 +9,7 @@ export function useIsMobile() {
       mediaQuery.addEventListener('change', onStoreChange);
       return () => mediaQuery.removeEventListener('change', onStoreChange);
     },
-    () => window.matchMedia(`(max-width: ${MOBILE_BREAKPOINT - 1}px)`).matches,
+    () => window.innerWidth < MOBILE_BREAKPOINT,
     () => false,
   );
 }
