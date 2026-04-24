@@ -1,7 +1,12 @@
 import { http, HttpResponse } from 'msw';
 import { endpoints } from '../client/endpoints';
 import db from './database/db';
-import { createInvalidSessionResponse, generateSuccessResponse, generateErrorResponse, mockUserHasPermission } from './utils';
+import {
+  createInvalidSessionResponse,
+  generateSuccessResponse,
+  generateErrorResponse,
+  mockUserHasPermission,
+} from './utils';
 import { ErrorCodes } from '../client/errors';
 import {
   IamRole,
@@ -86,9 +91,25 @@ const groupRoles: Map<number, number[]> = new Map([
 ]);
 
 // roleId → role permissions
+const memberPermissionKeys = new Set<IamPermission['key']>([
+  PERMISSION_KEYS.JOBS_CREATE,
+  PERMISSION_KEYS.JOBS_READ,
+  PERMISSION_KEYS.JOBS_LIST,
+  PERMISSION_KEYS.JOBS_UPDATE_STATUS,
+  PERMISSION_KEYS.JOBS_DELETE,
+  PERMISSION_KEYS.JOBS_COMPLETE_UPLOAD,
+  PERMISSION_KEYS.JOBS_RETRY_UPLOAD,
+  PERMISSION_KEYS.JOBS_REORDER,
+  PERMISSION_KEYS.FILES_READ_METADATA,
+  PERMISSION_KEYS.FILES_DOWNLOAD,
+  PERMISSION_KEYS.FILES_LIST,
+  PERMISSION_KEYS.USERS_READ,
+  PERMISSION_KEYS.USERS_UPDATE_PROFILE,
+]);
+
 const rolePermissions: Map<number, IamPermission[]> = new Map([
   [1, [...PERMISSIONS]],
-  [2, PERMISSIONS.filter((p) => !p.isDangerous)],
+  [2, PERMISSIONS.filter((p) => memberPermissionKeys.has(p.key))],
 ]);
 
 // userId → direct roleIds
@@ -123,7 +144,6 @@ function applyActiveOnly(items: { isActive: boolean }[], activeOnly: boolean) {
 // ── Handlers ───────────────────────────────────────────────────────────────────
 
 export const iamHandlers = [
-
   // GET /permissions
   http.get(`${apiUrl}${endpoints.iam.permissions}`, ({ cookies }) => {
     const { error } = requireAdmin(cookies);
@@ -161,7 +181,10 @@ export const iamHandlers = [
     const data = (await request.json()) as CreateIamRoleRequest;
     if (!data.roleKey || !data.name) {
       return HttpResponse.json(
-        generateErrorResponse({ code: ErrorCodes.VALIDATION_FAILED, message: 'roleKey and name are required' }),
+        generateErrorResponse({
+          code: ErrorCodes.VALIDATION_FAILED,
+          message: 'roleKey and name are required',
+        }),
         { status: 400 },
       );
     }
@@ -249,29 +272,42 @@ export const iamHandlers = [
   }),
 
   // PUT /roles/:id/permissions
-  http.put(`${apiUrl}/api/v1/admin/iam/roles/:id/permissions`, async ({ cookies, params, request }) => {
-    const { error } = requireAdmin(cookies);
-    if (error) return error;
-    const id = parseInt(params.id as string, 10);
-    if (!mockRoles.find((r) => r.id === id)) {
-      return HttpResponse.json(
-        generateErrorResponse({ code: NOT_FOUND, message: 'Role not found' }),
-        { status: 404 },
-      );
-    }
-    const { permissions } = (await request.json()) as ReplaceRolePermissionsRequest;
-    const updated: IamPermission[] = permissions.map((entry) => {
-      const perm = PERMISSIONS.find((p) => p.key === entry.permissionKey);
-      return {
-        key: entry.permissionKey,
-        description: perm?.description ?? entry.permissionKey,
-        isDangerous: perm?.isDangerous ?? false,
-        isActive: perm?.isActive ?? true,
-      };
-    });
-    rolePermissions.set(id, updated);
-    return HttpResponse.json(generateSuccessResponse(updated));
-  }),
+  http.put(
+    `${apiUrl}/api/v1/admin/iam/roles/:id/permissions`,
+    async ({ cookies, params, request }) => {
+      const { error } = requireAdmin(cookies);
+      if (error) return error;
+      const id = parseInt(params.id as string, 10);
+      const role = mockRoles.find((r) => r.id === id);
+      if (!role) {
+        return HttpResponse.json(
+          generateErrorResponse({ code: NOT_FOUND, message: 'Role not found' }),
+          { status: 404 },
+        );
+      }
+      if (role.isSystem) {
+        return HttpResponse.json(
+          generateErrorResponse({
+            code: FORBIDDEN,
+            message: 'System role permissions cannot be modified',
+          }),
+          { status: 403 },
+        );
+      }
+      const { permissions } = (await request.json()) as ReplaceRolePermissionsRequest;
+      const updated: IamPermission[] = permissions.map((entry) => {
+        const perm = PERMISSIONS.find((p) => p.key === entry.permissionKey);
+        return {
+          key: entry.permissionKey,
+          description: perm?.description ?? entry.permissionKey,
+          isDangerous: perm?.isDangerous ?? false,
+          isActive: perm?.isActive ?? true,
+        };
+      });
+      rolePermissions.set(id, updated);
+      return HttpResponse.json(generateSuccessResponse(updated));
+    },
+  ),
 
   // GET /groups
   http.get(`${apiUrl}${endpoints.iam.groups.list}`, ({ cookies, request }) => {
@@ -303,13 +339,19 @@ export const iamHandlers = [
     const data = (await request.json()) as CreateIamGroupRequest;
     if (!data.groupKey || !data.name) {
       return HttpResponse.json(
-        generateErrorResponse({ code: ErrorCodes.VALIDATION_FAILED, message: 'groupKey and name are required' }),
+        generateErrorResponse({
+          code: ErrorCodes.VALIDATION_FAILED,
+          message: 'groupKey and name are required',
+        }),
         { status: 400 },
       );
     }
     if (mockGroups.some((g) => g.groupKey === data.groupKey)) {
       return HttpResponse.json(
-        generateErrorResponse({ code: CONFLICT, message: `Group '${data.groupKey}' already exists` }),
+        generateErrorResponse({
+          code: CONFLICT,
+          message: `Group '${data.groupKey}' already exists`,
+        }),
         { status: 409 },
       );
     }
@@ -388,7 +430,9 @@ export const iamHandlers = [
       );
     }
     const roleIds = groupRoles.get(id) ?? [];
-    const roles = roleIds.map((rid) => mockRoles.find((r) => r.id === rid)).filter(Boolean) as IamRole[];
+    const roles = roleIds
+      .map((rid) => mockRoles.find((r) => r.id === rid))
+      .filter(Boolean) as IamRole[];
     return HttpResponse.json(generateSuccessResponse(roles));
   }),
 
@@ -424,7 +468,10 @@ export const iamHandlers = [
     const id = parseInt(params.id as string, 10);
     const roleId = parseInt(params.roleId as string, 10);
     const current = groupRoles.get(id) ?? [];
-    groupRoles.set(id, current.filter((rid) => rid !== roleId));
+    groupRoles.set(
+      id,
+      current.filter((rid) => rid !== roleId),
+    );
     return HttpResponse.json(generateSuccessResponse(null));
   }),
 
@@ -445,28 +492,31 @@ export const iamHandlers = [
   }),
 
   // POST /users/:userId/groups
-  http.post(`${apiUrl}/api/v1/admin/iam/users/:userId/groups`, async ({ cookies, params, request }) => {
-    const { error } = requireAdmin(cookies);
-    if (error) return error;
-    const userId = parseInt(params.userId as string, 10);
-    const user = db.getUserById(userId);
-    if (!user) {
-      return HttpResponse.json(
-        generateErrorResponse({ code: NOT_FOUND, message: 'User not found' }),
-        { status: 404 },
-      );
-    }
-    const { groupId } = (await request.json()) as { groupId: number };
-    const group = mockGroups.find((g) => g.id === groupId);
-    if (!group) {
-      return HttpResponse.json(
-        generateErrorResponse({ code: NOT_FOUND, message: 'Group not found' }),
-        { status: 404 },
-      );
-    }
-    if (!user.groups.includes(group.groupKey)) user.groups.push(group.groupKey);
-    return HttpResponse.json(generateSuccessResponse(group), { status: 201 });
-  }),
+  http.post(
+    `${apiUrl}/api/v1/admin/iam/users/:userId/groups`,
+    async ({ cookies, params, request }) => {
+      const { error } = requireAdmin(cookies);
+      if (error) return error;
+      const userId = parseInt(params.userId as string, 10);
+      const user = db.getUserById(userId);
+      if (!user) {
+        return HttpResponse.json(
+          generateErrorResponse({ code: NOT_FOUND, message: 'User not found' }),
+          { status: 404 },
+        );
+      }
+      const { groupId } = (await request.json()) as { groupId: number };
+      const group = mockGroups.find((g) => g.id === groupId);
+      if (!group) {
+        return HttpResponse.json(
+          generateErrorResponse({ code: NOT_FOUND, message: 'Group not found' }),
+          { status: 404 },
+        );
+      }
+      if (!user.groups.includes(group.groupKey)) user.groups.push(group.groupKey);
+      return HttpResponse.json(generateSuccessResponse(group), { status: 201 });
+    },
+  ),
 
   // DELETE /users/:userId/groups/:groupId
   http.delete(`${apiUrl}/api/v1/admin/iam/users/:userId/groups/:groupId`, ({ cookies, params }) => {
@@ -500,34 +550,39 @@ export const iamHandlers = [
       );
     }
     const roleIds = userDirectRoles.get(userId) ?? [];
-    const roles = roleIds.map((rid) => mockRoles.find((r) => r.id === rid)).filter(Boolean) as IamRole[];
+    const roles = roleIds
+      .map((rid) => mockRoles.find((r) => r.id === rid))
+      .filter(Boolean) as IamRole[];
     return HttpResponse.json(generateSuccessResponse(roles));
   }),
 
   // POST /users/:userId/roles
-  http.post(`${apiUrl}/api/v1/admin/iam/users/:userId/roles`, async ({ cookies, params, request }) => {
-    const { error } = requireAdmin(cookies);
-    if (error) return error;
-    const userId = parseInt(params.userId as string, 10);
-    if (!db.getUserById(userId)) {
-      return HttpResponse.json(
-        generateErrorResponse({ code: NOT_FOUND, message: 'User not found' }),
-        { status: 404 },
-      );
-    }
-    const { roleId } = (await request.json()) as { roleId: number };
-    const role = mockRoles.find((r) => r.id === roleId);
-    if (!role) {
-      return HttpResponse.json(
-        generateErrorResponse({ code: NOT_FOUND, message: 'Role not found' }),
-        { status: 404 },
-      );
-    }
-    const current = userDirectRoles.get(userId) ?? [];
-    if (!current.includes(roleId)) current.push(roleId);
-    userDirectRoles.set(userId, current);
-    return HttpResponse.json(generateSuccessResponse(role), { status: 201 });
-  }),
+  http.post(
+    `${apiUrl}/api/v1/admin/iam/users/:userId/roles`,
+    async ({ cookies, params, request }) => {
+      const { error } = requireAdmin(cookies);
+      if (error) return error;
+      const userId = parseInt(params.userId as string, 10);
+      if (!db.getUserById(userId)) {
+        return HttpResponse.json(
+          generateErrorResponse({ code: NOT_FOUND, message: 'User not found' }),
+          { status: 404 },
+        );
+      }
+      const { roleId } = (await request.json()) as { roleId: number };
+      const role = mockRoles.find((r) => r.id === roleId);
+      if (!role) {
+        return HttpResponse.json(
+          generateErrorResponse({ code: NOT_FOUND, message: 'Role not found' }),
+          { status: 404 },
+        );
+      }
+      const current = userDirectRoles.get(userId) ?? [];
+      if (!current.includes(roleId)) current.push(roleId);
+      userDirectRoles.set(userId, current);
+      return HttpResponse.json(generateSuccessResponse(role), { status: 201 });
+    },
+  ),
 
   // DELETE /users/:userId/roles/:roleId
   http.delete(`${apiUrl}/api/v1/admin/iam/users/:userId/roles/:roleId`, ({ cookies, params }) => {
@@ -536,7 +591,10 @@ export const iamHandlers = [
     const userId = parseInt(params.userId as string, 10);
     const roleId = parseInt(params.roleId as string, 10);
     const current = userDirectRoles.get(userId) ?? [];
-    userDirectRoles.set(userId, current.filter((rid) => rid !== roleId));
+    userDirectRoles.set(
+      userId,
+      current.filter((rid) => rid !== roleId),
+    );
     return HttpResponse.json(generateSuccessResponse(null));
   }),
 

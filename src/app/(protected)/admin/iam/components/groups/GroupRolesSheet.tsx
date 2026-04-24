@@ -114,7 +114,7 @@ export function GroupRolesSheet({ group, allRoles, open, onOpenChange }: GroupRo
 
   return (
     <Sheet open={open} onOpenChange={handleOpenChange}>
-      <SheetContent className="flex w-full flex-col sm:max-w-lg">
+      <SheetContent className="w-full sm:max-w-lg">
         <SheetHeader>
           <SheetTitle>Roles — {group.name}</SheetTitle>
           <SheetDescription>
@@ -125,7 +125,7 @@ export function GroupRolesSheet({ group, allRoles, open, onOpenChange }: GroupRo
           </SheetDescription>
         </SheetHeader>
 
-        <div className="flex-1 overflow-y-auto py-4">
+        <div className="flex-1 overflow-y-auto px-4">
           {isLoading ? (
             <div className="space-y-3">
               {[...Array(4)].map((_, i) => (
@@ -140,40 +140,18 @@ export function GroupRolesSheet({ group, allRoles, open, onOpenChange }: GroupRo
                 const isChecked = activeIds.has(role.id);
                 return (
                   <div key={role.id} className="flex items-start gap-3 rounded-md border p-3">
-                    {isEditing ? (
-                      <Checkbox
-                        id={`role-${role.id}`}
-                        checked={isChecked}
-                        onCheckedChange={(checked) => handleToggle(role.id, !!checked)}
-                        className="mt-0.5"
-                      />
-                    ) : (
-                      <div
-                        className={`mt-0.5 h-4 w-4 shrink-0 rounded-sm border ${isChecked ? 'bg-primary border-primary' : 'border-muted-foreground/40'} flex items-center justify-center`}
-                        aria-hidden="true"
-                      >
-                        {isChecked && (
-                          <svg
-                            className="h-3 w-3 text-primary-foreground"
-                            viewBox="0 0 12 12"
-                            fill="none"
-                          >
-                            <path
-                              d="M2 6l3 3 5-5"
-                              stroke="currentColor"
-                              strokeWidth="1.5"
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                            />
-                          </svg>
-                        )}
-                      </div>
-                    )}
+                    <Checkbox
+                      id={`role-${role.id}`}
+                      checked={isChecked}
+                      disabled={!isEditing}
+                      onCheckedChange={isEditing ? (checked) => handleToggle(role.id, !!checked) : undefined}
+                      className="mt-0.5"
+                    />
                     <label
-                      htmlFor={isEditing ? `role-${role.id}` : undefined}
-                      className={`flex flex-col gap-0.5 ${isEditing ? 'cursor-pointer' : ''}`}
+                      htmlFor={`role-${role.id}`}
+                      className={`flex flex-col gap-0.5 text-sm ${isEditing ? 'cursor-pointer' : 'cursor-default'}`}
                     >
-                      <span className="text-sm font-medium">{role.name}</span>
+                      <span className="font-medium">{role.name}</span>
                       <code className="text-xs text-muted-foreground">{role.roleKey}</code>
                       {role.description && (
                         <span className="text-xs text-muted-foreground">{role.description}</span>
@@ -186,7 +164,7 @@ export function GroupRolesSheet({ group, allRoles, open, onOpenChange }: GroupRo
           )}
         </div>
 
-        <SheetFooter className="gap-2">
+        <SheetFooter>
           {isEditing ? (
             <>
               <Button variant="outline" onClick={handleCancel} disabled={isSaving}>

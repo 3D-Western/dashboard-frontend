@@ -188,6 +188,12 @@ export const PERMISSION_CATALOG: PermissionDefinition[] = [
 
 export const PERMISSION_KEYS = PERMISSION_CATALOG.map((permission) => permission.key);
 
+// Role keys that are system contracts — permissions are view-only, no UI editing
+export const LOCKED_ROLE_KEYS = ['super_admin_role', 'member_role'] as const;
+
+// Group keys hidden from the groups table — surfaced separately in the UI
+export const HIDDEN_GROUP_KEYS = ['members'] as const;
+
 // Permissions that grant access to the admin section (at least one required)
 export const ADMIN_SECTION_PERMISSIONS: PermissionKey[] = [
   PERMISSIONS.USERS_LIST,

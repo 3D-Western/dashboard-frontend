@@ -12,7 +12,7 @@ import {
   SheetTitle,
 } from '@/components/ui/sheet';
 import { Skeleton } from '@/components/ui/skeleton';
-import { PERMISSION_CATALOG, PERMISSIONS } from '@/constants/permissions';
+import { LOCKED_ROLE_KEYS, PERMISSION_CATALOG, PERMISSIONS } from '@/constants/permissions';
 import { useUser } from '@/providers/user-provider';
 import type { IamPermission, IamRole } from '@/types/iam';
 import { hasPermission } from '@/types/user';
@@ -38,7 +38,8 @@ const RESOURCE_LABELS: Record<string, string> = {
 
 export function RolePermissionsSheet({ role, open, onOpenChange }: RolePermissionsSheetProps) {
   const user = useUser();
-  const canEdit = hasPermission(user, PERMISSIONS.IAM_ASSIGN_PERMISSIONS);
+  const isLocked = (LOCKED_ROLE_KEYS as readonly string[]).includes(role.roleKey);
+  const canEdit = hasPermission(user, PERMISSIONS.IAM_ASSIGN_PERMISSIONS) && !isLocked;
 
   const [isLoading, setIsLoading] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
@@ -132,7 +133,7 @@ export function RolePermissionsSheet({ role, open, onOpenChange }: RolePermissio
 
   return (
     <Sheet open={open} onOpenChange={handleOpenChange}>
-      <SheetContent className="flex w-full flex-col sm:max-w-lg">
+      <SheetContent className="w-full sm:max-w-lg">
         <SheetHeader>
           <SheetTitle>Permissions — {role.name}</SheetTitle>
           <SheetDescription>
@@ -143,7 +144,7 @@ export function RolePermissionsSheet({ role, open, onOpenChange }: RolePermissio
           </SheetDescription>
         </SheetHeader>
 
-        <div className="flex-1 overflow-y-auto py-4">
+        <div className="flex-1 overflow-y-auto px-4">
           {isLoading ? (
             <div className="space-y-4">
               {[...Array(5)].map((_, i) => (
@@ -162,41 +163,19 @@ export function RolePermissionsSheet({ role, open, onOpenChange }: RolePermissio
                       const isChecked = activeKeys.has(perm.key);
                       return (
                         <div key={perm.key} className="flex items-start gap-3">
-                          {isEditing ? (
-                            <Checkbox
-                              id={perm.key}
-                              checked={isChecked}
-                              onCheckedChange={(checked) => handleToggle(perm.key, !!checked)}
-                              className="mt-0.5"
-                            />
-                          ) : (
-                            <div
-                              className={`mt-0.5 h-4 w-4 rounded-sm border ${isChecked ? 'bg-primary border-primary' : 'border-muted-foreground/40'} flex items-center justify-center`}
-                              aria-hidden="true"
-                            >
-                              {isChecked && (
-                                <svg
-                                  className="h-3 w-3 text-primary-foreground"
-                                  viewBox="0 0 12 12"
-                                  fill="none"
-                                >
-                                  <path
-                                    d="M2 6l3 3 5-5"
-                                    stroke="currentColor"
-                                    strokeWidth="1.5"
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                  />
-                                </svg>
-                              )}
-                            </div>
-                          )}
+                          <Checkbox
+                            id={perm.key}
+                            checked={isChecked}
+                            disabled={!isEditing}
+                            onCheckedChange={isEditing ? (checked) => handleToggle(perm.key, !!checked) : undefined}
+                            className="mt-0.5"
+                          />
                           <label
-                            htmlFor={isEditing ? perm.key : undefined}
-                            className={`flex flex-col gap-0.5 ${isEditing ? 'cursor-pointer' : ''}`}
+                            htmlFor={perm.key}
+                            className={`flex flex-col gap-0.5 text-sm ${isEditing ? 'cursor-pointer' : 'cursor-default'}`}
                           >
                             <div className="flex items-center gap-1.5">
-                              <span className="text-sm">{perm.description}</span>
+                              <span>{perm.description}</span>
                               {perm.isDangerous && (
                                 <AlertTriangle
                                   className="h-3.5 w-3.5 text-amber-500"
@@ -216,7 +195,7 @@ export function RolePermissionsSheet({ role, open, onOpenChange }: RolePermissio
           )}
         </div>
 
-        <SheetFooter className="gap-2">
+        <SheetFooter>
           {isEditing ? (
             <>
               <Button variant="outline" onClick={handleCancel} disabled={isSaving}>
@@ -226,6 +205,10 @@ export function RolePermissionsSheet({ role, open, onOpenChange }: RolePermissio
                 {isSaving ? 'Saving...' : 'Save Changes'}
               </Button>
             </>
+          ) : isLocked ? (
+            <p className="text-xs text-muted-foreground">
+              This is a system role. Permissions can only be changed at the database level.
+            </p>
           ) : (
             canEdit && (
               <Button onClick={handleEdit} disabled={isLoading}>

@@ -1,14 +1,16 @@
 'use client';
 
 import { Button } from '@/components/ui/button';
-import { PERMISSIONS } from '@/constants/permissions';
+import { HIDDEN_GROUP_KEYS, LOCKED_ROLE_KEYS, PERMISSIONS } from '@/constants/permissions';
 import type { IamGroup, IamRole } from '@/types/iam';
 import type { User } from '@/types/user';
 import { hasPermission } from '@/types/user';
 import { Plus } from 'lucide-react';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
+import { DefaultPermissionsCard } from './groups/DefaultPermissionsCard';
 import { CreateGroupDialog } from './groups/CreateGroupDialog';
 import GroupsTable from './groups/GroupsTable';
+import { IamHelpDialog } from './IamHelpDialog';
 import { CreateRoleDialog } from './roles/CreateRoleDialog';
 import RolesTable from './roles/RolesTable';
 
@@ -21,7 +23,7 @@ interface IamTabsProps {
 }
 
 export function IamTabs({ initialRoles, initialGroups, currentUser }: IamTabsProps) {
-  const [activeTab, setActiveTab] = useState<Tab>('roles');
+  const [activeTab, setActiveTab] = useState<Tab>('groups');
   const [roles, setRoles] = useState<IamRole[]>(initialRoles);
   const [groups, setGroups] = useState<IamGroup[]>(initialGroups);
   const [showCreateRole, setShowCreateRole] = useState(false);
@@ -29,6 +31,16 @@ export function IamTabs({ initialRoles, initialGroups, currentUser }: IamTabsPro
 
   const canCreateRoles = hasPermission(currentUser, PERMISSIONS.IAM_ASSIGN_ROLES);
   const canCreateGroups = hasPermission(currentUser, PERMISSIONS.IAM_MANAGE_GROUPS);
+
+  const visibleGroups = useMemo(
+    () => groups.filter((g) => !(HIDDEN_GROUP_KEYS as readonly string[]).includes(g.groupKey)),
+    [groups],
+  );
+
+  const memberRole = useMemo(
+    () => roles.find((r) => r.roleKey === LOCKED_ROLE_KEYS[1]),
+    [roles],
+  );
 
   const handleRoleCreated = (role: IamRole) => {
     setRoles((prev) => [role, ...prev]);
@@ -39,8 +51,8 @@ export function IamTabs({ initialRoles, initialGroups, currentUser }: IamTabsPro
   };
 
   const tabs: { id: Tab; label: string }[] = [
-    { id: 'roles', label: 'Roles' },
     { id: 'groups', label: 'Groups' },
+    { id: 'roles', label: 'Roles' },
   ];
 
   return (
@@ -61,6 +73,9 @@ export function IamTabs({ initialRoles, initialGroups, currentUser }: IamTabsPro
             {tab.label}
           </button>
         ))}
+        <div className="ml-auto pb-1">
+          <IamHelpDialog />
+        </div>
       </div>
 
       {activeTab === 'roles' && (
@@ -69,7 +84,7 @@ export function IamTabs({ initialRoles, initialGroups, currentUser }: IamTabsPro
           toolbar={
             canCreateRoles && (
               <Button size="sm" onClick={() => setShowCreateRole(true)}>
-                <Plus  />
+                <Plus />
                 Create Role
               </Button>
             )
@@ -78,18 +93,21 @@ export function IamTabs({ initialRoles, initialGroups, currentUser }: IamTabsPro
       )}
 
       {activeTab === 'groups' && (
-        <GroupsTable
-          groups={groups}
-          allRoles={roles.filter((r) => r.isActive)}
-          toolbar={
-            canCreateGroups && (
-              <Button size="sm" onClick={() => setShowCreateGroup(true)}>
-                <Plus />
-                Create Group
-              </Button>
-            )
-          }
-        />
+        <div className="space-y-4">
+          <DefaultPermissionsCard memberRole={memberRole} />
+          <GroupsTable
+            groups={visibleGroups}
+            allRoles={roles.filter((r) => r.isActive)}
+            toolbar={
+              canCreateGroups && (
+                <Button size="sm" onClick={() => setShowCreateGroup(true)}>
+                  <Plus />
+                  Create Group
+                </Button>
+              )
+            }
+          />
+        </div>
       )}
 
       <CreateRoleDialog

@@ -9,6 +9,7 @@ import {
   Sheet,
   SheetContent,
   SheetDescription,
+  SheetFooter,
   SheetHeader,
   SheetTitle,
 } from '@/components/ui/sheet';
@@ -19,7 +20,7 @@ import type { IamGroup, IamGroupMember } from '@/types/iam';
 import type { PaginationMetadata } from '@/types/common';
 import type { User } from '@/types/user';
 import { hasPermission } from '@/types/user';
-import { ArrowLeft, ChevronLeft, ChevronRight, Loader2, Plus, UserMinus } from 'lucide-react';
+import { ArrowLeft, ChevronLeft, ChevronRight, Loader2, Plus, UserMinus, Users } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 
@@ -36,7 +37,7 @@ const ADD_PAGE_SIZE = 8;
 
 export function GroupMembersSheet({ group, open, onOpenChange }: GroupMembersSheetProps) {
   const user = useUser();
-  const canManage = hasPermission(user, PERMISSIONS.IAM_MANAGE_GROUPS) && !group.isSystem;
+  const canManage = hasPermission(user, PERMISSIONS.IAM_MANAGE_GROUPS);
   const canSearch = hasPermission(user, PERMISSIONS.USERS_LIST);
 
   // ── List mode state ──────────────────────────────────────────────────────
@@ -108,6 +109,13 @@ export function GroupMembersSheet({ group, open, onOpenChange }: GroupMembersShe
     onOpenChange(next);
   };
 
+  const handleBackToList = () => {
+    setMode('list');
+    setAddSearchInput('');
+    setAddResults([]);
+    snapshotCreatedBeforeRef.current = undefined;
+  };
+
   // ── Remove member ─────────────────────────────────────────────────────────
   const handleRemove = async (member: IamGroupMember) => {
     setRemovingIds((prev) => new Set(prev).add(member.studentId));
@@ -132,9 +140,7 @@ export function GroupMembersSheet({ group, open, onOpenChange }: GroupMembersShe
   // ── Add mode: search users ────────────────────────────────────────────────
   useEffect(() => {
     if (mode !== 'add') return;
-    if (!addSearchInput.trim()) {
-      return;
-    }
+    if (!addSearchInput.trim()) return;
 
     let cancelled = false;
     const timer = setTimeout(async () => {
@@ -177,29 +183,15 @@ export function GroupMembersSheet({ group, open, onOpenChange }: GroupMembersShe
 
   return (
     <Sheet open={open} onOpenChange={handleOpenChange}>
-      <SheetContent className="flex w-full flex-col sm:max-w-lg">
+      <SheetContent className="w-full sm:max-w-lg">
         <SheetHeader>
-          <SheetTitle className="flex items-center gap-2">
-            {mode === 'add' && (
-              <button
-                onClick={() => {
-                  setMode('list');
-                  setAddSearchInput('');
-                  setAddResults([]);
-                  snapshotCreatedBeforeRef.current = undefined;
-                }}
-                className="rounded p-0.5 hover:bg-muted"
-                aria-label="Back to members list"
-              >
-                <ArrowLeft className="h-4 w-4" />
-              </button>
-            )}
+          <SheetTitle>
             {mode === 'list' ? `Members — ${group.name}` : `Add Member — ${group.name}`}
           </SheetTitle>
           <SheetDescription>
             <code className="rounded bg-muted px-1 py-0.5 text-xs">{group.groupKey}</code>
             {pagination && mode === 'list' && (
-              <span className="ml-2 text-xs text-muted-foreground">
+              <span className="ml-2 text-xs">
                 {pagination.totalItems} {pagination.totalItems === 1 ? 'member' : 'members'}
               </span>
             )}
@@ -208,8 +200,8 @@ export function GroupMembersSheet({ group, open, onOpenChange }: GroupMembersShe
 
         {/* ── List mode ──────────────────────────────────────────────────── */}
         {mode === 'list' && (
-          <div className="flex flex-1 flex-col gap-4 overflow-hidden py-4">
-            <div className="flex items-center gap-2">
+          <>
+            <div className="flex items-center gap-2 px-4">
               <Input
                 placeholder="Search members..."
                 value={searchInput}
@@ -219,13 +211,13 @@ export function GroupMembersSheet({ group, open, onOpenChange }: GroupMembersShe
               />
               {canManage && canSearch && (
                 <Button size="sm" onClick={() => setMode('add')}>
-                  <Plus className="mr-1.5 h-4 w-4" />
-                  Add
+                  <Plus className="h-4 w-4" />
+                  Add Member
                 </Button>
               )}
             </div>
 
-            <div className="flex-1 overflow-y-auto">
+            <div className="flex-1 overflow-y-auto px-4">
               {isLoadingMembers ? (
                 <div className="space-y-2">
                   {[...Array(5)].map((_, i) => (
@@ -233,15 +225,24 @@ export function GroupMembersSheet({ group, open, onOpenChange }: GroupMembersShe
                   ))}
                 </div>
               ) : members.length === 0 ? (
-                <div className="flex h-32 items-center justify-center text-sm text-muted-foreground">
-                  {debouncedSearch ? 'No members match your search.' : 'No members in this group.'}
+                <div className="flex flex-col items-center justify-center gap-2 py-12 text-center">
+                  <Users className="h-8 w-8 text-muted-foreground/40" />
+                  <p className="text-sm text-muted-foreground">
+                    {debouncedSearch ? 'No members match your search.' : 'No members in this group yet.'}
+                  </p>
+                  {!debouncedSearch && canManage && canSearch && (
+                    <Button size="sm" variant="outline" onClick={() => setMode('add')}>
+                      <Plus className="h-4 w-4" />
+                      Add the first member
+                    </Button>
+                  )}
                 </div>
               ) : (
                 <div className="space-y-1">
                   {members.map((member) => (
                     <div
                       key={member.studentId}
-                      className="flex items-center justify-between rounded-md border px-3 py-2"
+                      className="flex items-center gap-3 rounded-md border px-3 py-2.5"
                     >
                       <div className="min-w-0 flex-1">
                         <p className="truncate text-sm font-medium">
@@ -254,7 +255,7 @@ export function GroupMembersSheet({ group, open, onOpenChange }: GroupMembersShe
                         <Button
                           variant="ghost"
                           size="sm"
-                          className="ml-2 shrink-0 text-destructive hover:text-destructive"
+                          className="shrink-0 text-destructive hover:bg-destructive/10 hover:text-destructive"
                           onClick={() => handleRemove(member)}
                           disabled={removingIds.has(member.studentId)}
                           aria-label={`Remove ${member.firstName} ${member.lastName} from group`}
@@ -273,7 +274,7 @@ export function GroupMembersSheet({ group, open, onOpenChange }: GroupMembersShe
             </div>
 
             {pagination && pagination.totalPages > 1 && (
-              <div className="flex items-center justify-between border-t pt-3">
+              <div className="flex items-center justify-between border-t px-4 pt-3">
                 <span className="text-xs text-muted-foreground">
                   Page {page} of {pagination.totalPages}
                 </span>
@@ -299,25 +300,27 @@ export function GroupMembersSheet({ group, open, onOpenChange }: GroupMembersShe
                 </div>
               </div>
             )}
-          </div>
+          </>
         )}
 
         {/* ── Add mode ───────────────────────────────────────────────────── */}
         {mode === 'add' && (
-          <div className="flex flex-1 flex-col gap-4 overflow-hidden py-4">
-            <Input
-              placeholder="Search by name, email, or student ID..."
-              value={addSearchInput}
-              onChange={(e) => {
-                const next = e.target.value;
-                setAddSearchInput(next);
-                if (!next.trim()) setAddResults([]);
-              }}
-              autoFocus
-              aria-label="Search users to add"
-            />
+          <>
+            <div className="px-4">
+              <Input
+                placeholder="Search by name, email, or student ID..."
+                value={addSearchInput}
+                onChange={(e) => {
+                  const next = e.target.value;
+                  setAddSearchInput(next);
+                  if (!next.trim()) setAddResults([]);
+                }}
+                autoFocus
+                aria-label="Search users to add"
+              />
+            </div>
 
-            <div className="flex-1 overflow-y-auto">
+            <div className="flex-1 overflow-y-auto px-4">
               {isSearchingUsers ? (
                 <div className="space-y-2">
                   {[...Array(3)].map((_, i) => (
@@ -325,11 +328,14 @@ export function GroupMembersSheet({ group, open, onOpenChange }: GroupMembersShe
                   ))}
                 </div>
               ) : !addSearchInput.trim() ? (
-                <p className="py-8 text-center text-sm text-muted-foreground">
-                  Type to search for users.
-                </p>
+                <div className="flex flex-col items-center justify-center gap-2 py-12 text-center">
+                  <Users className="h-8 w-8 text-muted-foreground/40" />
+                  <p className="text-sm text-muted-foreground">
+                    Search by name, email, or student ID.
+                  </p>
+                </div>
               ) : addResults.length === 0 ? (
-                <p className="py-8 text-center text-sm text-muted-foreground">No users found.</p>
+                <p className="py-12 text-center text-sm text-muted-foreground">No users found.</p>
               ) : (
                 <div className="space-y-1">
                   {addResults.map((candidate) => {
@@ -341,21 +347,23 @@ export function GroupMembersSheet({ group, open, onOpenChange }: GroupMembersShe
                     return (
                       <div
                         key={candidate.studentId}
-                        className="flex items-center justify-between rounded-md border px-3 py-2"
+                        className="flex items-center gap-3 rounded-md border px-3 py-2.5"
                       >
                         <div className="min-w-0 flex-1">
                           <p className="truncate text-sm font-medium">
                             {candidate.firstName} {candidate.lastName}
                           </p>
-                          <p className="truncate text-xs text-muted-foreground">{candidate.email}</p>
+                          <p className="truncate text-xs text-muted-foreground">
+                            {candidate.email}
+                          </p>
                           <p className="text-xs text-muted-foreground">
                             ID: {candidate.studentId}
                           </p>
                         </div>
                         <Button
                           size="sm"
-                          variant={alreadyMember ? 'outline' : 'default'}
-                          className="ml-2 shrink-0"
+                          variant={alreadyMember ? 'secondary' : 'default'}
+                          className="shrink-0"
                           onClick={() => !alreadyMember && !isAdding && handleAdd(candidate)}
                           disabled={alreadyMember || isAdding}
                           aria-label={
@@ -378,7 +386,16 @@ export function GroupMembersSheet({ group, open, onOpenChange }: GroupMembersShe
                 </div>
               )}
             </div>
-          </div>
+          </>
+        )}
+
+        {mode === 'add' && (
+          <SheetFooter>
+            <Button variant="outline" onClick={handleBackToList}>
+              <ArrowLeft className="h-4 w-4" />
+              Back to Members
+            </Button>
+          </SheetFooter>
         )}
       </SheetContent>
     </Sheet>
