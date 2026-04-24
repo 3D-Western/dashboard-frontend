@@ -24,6 +24,8 @@ import {
   Shield,
   FilePlus,
   TicketPlus,
+  Lock,
+  ClipboardList,
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -71,6 +73,18 @@ const adminNavigationItems = [
     url: Routes.adminInvitationManagement,
     icon: TicketPlus,
     permission: PERMISSIONS.INVITATIONS_LIST,
+  },
+  {
+    title: 'IAM Management',
+    url: Routes.adminIamManagement,
+    icon: Lock,
+    permission: PERMISSIONS.IAM_READ,
+  },
+  {
+    title: 'Audit Log',
+    url: Routes.adminAuditLog,
+    icon: ClipboardList,
+    permission: PERMISSIONS.AUDIT_READ,
   },
 ];
 

@@ -21,7 +21,7 @@ export async function ensureMockServer(): Promise<void> {
         const { mockServer } = await import('@/api/mocks');
         mockServer.listen();
         globalThis.__mswServerStarted = true;
-        globalThis.__mswFetch = currentFetch;
+        globalThis.__mswFetch = globalThis.fetch; // save the post-patch fetch, not the original
       })().finally(() => {
         globalThis.__mswInitPromise = null;
       });
