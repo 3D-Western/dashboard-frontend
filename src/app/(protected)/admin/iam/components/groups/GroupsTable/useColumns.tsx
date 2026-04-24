@@ -17,6 +17,7 @@ import { ArrowUpDown, MoreHorizontal } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { RoleStatusBadge } from '../../RoleStatusBadge';
 import { DeactivateGroupDialog } from '../DeactivateGroupDialog';
+import { GroupMembersSheet } from '../GroupMembersSheet';
 import { GroupRolesSheet } from '../GroupRolesSheet';
 
 interface UseColumnsOptions {
@@ -27,6 +28,7 @@ interface UseColumnsOptions {
 export function useColumns({ allRoles, onStatusChange }: UseColumnsOptions) {
   const user = useUser();
   const canManageGroups = hasPermission(user, PERMISSIONS.IAM_MANAGE_GROUPS);
+  const canListUsers = hasPermission(user, PERMISSIONS.USERS_LIST);
 
   return useMemo<ColumnDef<IamGroup>[]>(
     () => [
@@ -99,7 +101,8 @@ export function useColumns({ allRoles, onStatusChange }: UseColumnsOptions) {
         id: 'actions',
         cell: function ActionsCell({ row }: { row: Row<IamGroup> }) {
           const group = row.original;
-          const [showSheet, setShowSheet] = useState(false);
+          const [showRolesSheet, setShowRolesSheet] = useState(false);
+          const [showMembersSheet, setShowMembersSheet] = useState(false);
           const [showDeactivateDialog, setShowDeactivateDialog] = useState(false);
           const canToggleStatus = canManageGroups && !group.isSystem;
 
@@ -118,7 +121,14 @@ export function useColumns({ allRoles, onStatusChange }: UseColumnsOptions) {
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
-                  <DropdownMenuItem onSelect={() => setShowSheet(true)}>View Roles</DropdownMenuItem>
+                  <DropdownMenuItem onSelect={() => setShowRolesSheet(true)}>
+                    View Roles
+                  </DropdownMenuItem>
+                  {canListUsers && (
+                    <DropdownMenuItem onSelect={() => setShowMembersSheet(true)}>
+                      Manage Members
+                    </DropdownMenuItem>
+                  )}
                   <DropdownMenuSeparator />
                   <DropdownMenuItem
                     onSelect={() => canToggleStatus && setShowDeactivateDialog(true)}
@@ -137,8 +147,14 @@ export function useColumns({ allRoles, onStatusChange }: UseColumnsOptions) {
               <GroupRolesSheet
                 group={group}
                 allRoles={allRoles}
-                open={showSheet}
-                onOpenChange={setShowSheet}
+                open={showRolesSheet}
+                onOpenChange={setShowRolesSheet}
+              />
+
+              <GroupMembersSheet
+                group={group}
+                open={showMembersSheet}
+                onOpenChange={setShowMembersSheet}
               />
 
               <DeactivateGroupDialog
@@ -152,6 +168,6 @@ export function useColumns({ allRoles, onStatusChange }: UseColumnsOptions) {
         },
       },
     ],
-    [canManageGroups, allRoles, onStatusChange],
+    [canManageGroups, canListUsers, allRoles, onStatusChange],
   );
 }

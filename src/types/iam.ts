@@ -70,3 +70,18 @@ export interface UpdateIamGroupRequest {
 export interface ReplaceRolePermissionsRequest {
   permissions: Array<{ permissionKey: PermissionKey; scopeKey: string }>;
 }
+
+export interface IamGroupMember {
+  studentId: number;
+  email: string;
+  firstName: string;
+  lastName: string;
+  assignedAt: string;
+}
+
+export interface GroupMembersParams {
+  page?: number;
+  pageSize?: number;
+  search?: string;
+  snapshotCreatedBefore?: string;
+}

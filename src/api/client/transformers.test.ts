@@ -348,18 +348,22 @@ describe('transformers', () => {
     it('transforms an empty user list', () => {
       const response: UserListResponseRaw = {
         data: [],
-        totalCount: 0,
-        page: 1,
-        pageSize: 10,
+        pagination: {
+          page: 1,
+          pageSize: 10,
+          totalItems: 0,
+          totalPages: 0,
+          hasNext: false,
+          hasPrevious: false,
+          snapshotCreatedBefore: '2024-01-01T00:00:00Z',
+        },
       };
 
       const result = transformUserListResponse(response);
 
       expect(result).toEqual({
         data: [],
-        totalCount: 0,
-        page: 1,
-        pageSize: 10,
+        pagination: response.pagination,
       });
     });
 
@@ -375,9 +379,15 @@ describe('transformers', () => {
 
       const response: UserListResponseRaw = {
         data: [userResponse],
-        totalCount: 1,
-        page: 1,
-        pageSize: 10,
+        pagination: {
+          page: 1,
+          pageSize: 10,
+          totalItems: 1,
+          totalPages: 1,
+          hasNext: false,
+          hasPrevious: false,
+          snapshotCreatedBefore: '2024-01-01T00:00:00Z',
+        },
       };
 
       const result = transformUserListResponse(response);
@@ -393,9 +403,9 @@ describe('transformers', () => {
         experienceLevel: 'beginner',
         faculty: 'engineering',
       });
-      expect(result.totalCount).toBe(1);
-      expect(result.page).toBe(1);
-      expect(result.pageSize).toBe(10);
+      expect(result.pagination.totalItems).toBe(1);
+      expect(result.pagination.page).toBe(1);
+      expect(result.pagination.pageSize).toBe(10);
     });
 
     it('transforms a user list with multiple users', () => {
@@ -426,9 +436,15 @@ describe('transformers', () => {
 
       const response: UserListResponseRaw = {
         data: users,
-        totalCount: 3,
-        page: 1,
-        pageSize: 10,
+        pagination: {
+          page: 1,
+          pageSize: 10,
+          totalItems: 3,
+          totalPages: 1,
+          hasNext: false,
+          hasPrevious: false,
+          snapshotCreatedBefore: '2024-01-01T00:00:00Z',
+        },
       };
 
       const result = transformUserListResponse(response);
@@ -437,22 +453,28 @@ describe('transformers', () => {
       expect(result.data[0].groups).toEqual([]);
       expect(result.data[1].experienceLevel).toBe('advanced');
       expect(result.data[2].experienceLevel).toBeUndefined();
-      expect(result.totalCount).toBe(3);
+      expect(result.pagination.totalItems).toBe(3);
     });
 
     it('preserves pagination metadata', () => {
       const response: UserListResponseRaw = {
         data: [],
-        totalCount: 100,
-        page: 5,
-        pageSize: 20,
+        pagination: {
+          page: 5,
+          pageSize: 20,
+          totalItems: 100,
+          totalPages: 5,
+          hasNext: false,
+          hasPrevious: true,
+          snapshotCreatedBefore: '2024-01-01T00:00:00Z',
+        },
       };
 
       const result = transformUserListResponse(response);
 
-      expect(result.page).toBe(5);
-      expect(result.pageSize).toBe(20);
-      expect(result.totalCount).toBe(100);
+      expect(result.pagination.page).toBe(5);
+      expect(result.pagination.pageSize).toBe(20);
+      expect(result.pagination.totalItems).toBe(100);
     });
   });
 });

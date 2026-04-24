@@ -2,12 +2,15 @@ import {
   IamRole,
   IamGroup,
   IamPermission,
+  IamGroupMember,
+  GroupMembersParams,
   CreateIamRoleRequest,
   UpdateIamRoleRequest,
   CreateIamGroupRequest,
   UpdateIamGroupRequest,
   ReplaceRolePermissionsRequest,
 } from '@/types/iam';
+import { PaginatedResponse } from '@/types/common';
 import { IamAuditLogPageResponse } from '../types';
 import { apiRequest } from './base';
 import { endpoints } from './endpoints';
@@ -148,6 +151,25 @@ export const iamApi = {
   deactivateGroup: async (id: number, options?: RequestInit) => {
     return apiRequest<null>(`${getBaseUrl()}${endpoints.iam.groups.deactivate(id)}`, {
       method: 'DELETE',
+      credentials: 'include',
+      ...options,
+    });
+  },
+
+  // ── Group Members ─────────────────────────────────────────────────────────
+
+  listGroupUsers: async (groupId: number, params?: GroupMembersParams, options?: RequestInit) => {
+    const searchParams = new URLSearchParams();
+    if (params?.page !== undefined) searchParams.append('page', params.page.toString());
+    if (params?.pageSize !== undefined) searchParams.append('pageSize', params.pageSize.toString());
+    if (params?.search) searchParams.append('search', params.search);
+    if (params?.snapshotCreatedBefore) {
+      searchParams.append('snapshotCreatedBefore', params.snapshotCreatedBefore);
+    }
+    const queryString = searchParams.toString();
+    const url = `${getBaseUrl()}${endpoints.iam.groups.users(groupId)}${queryString ? `?${queryString}` : ''}`;
+    return apiRequest<PaginatedResponse<IamGroupMember>>(url, {
+      method: 'GET',
       credentials: 'include',
       ...options,
     });

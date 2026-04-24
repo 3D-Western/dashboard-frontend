@@ -88,7 +88,7 @@ describe('passwordResetApi', () => {
         headers: { 'X-Custom-Header': 'test' },
       });
 
-      expect(capturedHeaders?.get('X-Custom-Header')).toBe('test');
+      expect((capturedHeaders as Headers | null)?.get('X-Custom-Header')).toBe('test');
     });
   });
 
@@ -184,7 +184,7 @@ describe('passwordResetApi', () => {
         headers: { 'X-Custom-Header': 'test' },
       });
 
-      expect(capturedHeaders?.get('X-Custom-Header')).toBe('test');
+      expect((capturedHeaders as Headers | null)?.get('X-Custom-Header')).toBe('test');
     });
   });
 });

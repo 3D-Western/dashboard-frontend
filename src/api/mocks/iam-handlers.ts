@@ -540,6 +540,65 @@ export const iamHandlers = [
     return HttpResponse.json(generateSuccessResponse(null));
   }),
 
+  // GET /groups/:id/users
+  http.get(`${apiUrl}/api/v1/admin/iam/groups/:id/users`, ({ cookies, params, request }) => {
+    const { error } = requireAdmin(cookies);
+    if (error) return error;
+
+    const groupId = parseInt(params.id as string, 10);
+    const group = mockGroups.find((g) => g.id === groupId);
+    if (!group) {
+      return HttpResponse.json(
+        generateErrorResponse({ code: NOT_FOUND, message: 'Group not found' }),
+        { status: 404 },
+      );
+    }
+
+    const url = new URL(request.url);
+    const page = Math.max(1, parseInt(url.searchParams.get('page') || '1', 10));
+    const pageSize = Math.min(100, parseInt(url.searchParams.get('pageSize') || '20', 10));
+    const search = url.searchParams.get('search')?.toLowerCase() ?? '';
+    const snapshotCreatedBefore =
+      url.searchParams.get('snapshotCreatedBefore') || new Date().toISOString();
+
+    let members = db.getAllUsers().filter((u) => u.groups.includes(group.groupKey));
+
+    if (search) {
+      members = members.filter(
+        (u) =>
+          u.firstName.toLowerCase().includes(search) ||
+          u.lastName.toLowerCase().includes(search) ||
+          u.email.toLowerCase().includes(search) ||
+          u.studentId.toString().includes(search),
+      );
+    }
+
+    const totalItems = members.length;
+    const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
+    const data = members.slice((page - 1) * pageSize, page * pageSize).map((u) => ({
+      studentId: u.studentId,
+      email: u.email,
+      firstName: u.firstName,
+      lastName: u.lastName,
+      assignedAt: u.createdDate ?? group.createdAt,
+    }));
+
+    return HttpResponse.json(
+      generateSuccessResponse({
+        data,
+        pagination: {
+          page,
+          pageSize,
+          totalItems,
+          totalPages,
+          hasNext: page < totalPages,
+          hasPrevious: page > 1,
+          snapshotCreatedBefore,
+        },
+      }),
+    );
+  }),
+
   // GET /audit-logs
   http.get(`${apiUrl}${endpoints.iam.auditLogs}`, ({ cookies, request }) => {
     const { error } = requireAdmin(cookies);

@@ -61,6 +61,7 @@ export const endpoints = {
       deactivate: (id: number) => `/api/v1/admin/iam/groups/${id}`,
       roles: (id: number) => `/api/v1/admin/iam/groups/${id}/roles`,
       revokeRole: (id: number, roleId: number) => `/api/v1/admin/iam/groups/${id}/roles/${roleId}`,
+      users: (id: number) => `/api/v1/admin/iam/groups/${id}/users`,
     },
     users: {
       groups: (userId: number) => `/api/v1/admin/iam/users/${userId}/groups`,

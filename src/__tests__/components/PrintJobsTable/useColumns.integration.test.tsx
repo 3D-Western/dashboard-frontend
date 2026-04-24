@@ -77,7 +77,11 @@ describe('useColumns', () => {
       status: 'InQueue',
     });
 
-    const cell = actionsColumn?.cell?.({
+    const cellRenderer = actionsColumn?.cell;
+    if (typeof cellRenderer !== 'function') {
+      throw new Error('Expected actions column to render a cell function');
+    }
+    const cell = cellRenderer({
       row: { original: printJob },
     } as never);
 
