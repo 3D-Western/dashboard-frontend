@@ -117,9 +117,9 @@ const rolePermissions: Map<number, IamRolePermission[]> = new Map([
   [1, PERMISSIONS.map((p) => ({ ...p, scopeKey: 'any' }))],
   [
     2,
-    PERMISSIONS.filter((p) => !p.key.startsWith('iam:') && p.key !== PERMISSION_KEYS.AUDIT_READ).map(
-      (p) => ({ ...p, scopeKey: 'any' }),
-    ),
+    PERMISSIONS.filter(
+      (p) => !p.key.startsWith('iam:') && p.key !== PERMISSION_KEYS.AUDIT_READ,
+    ).map((p) => ({ ...p, scopeKey: 'any' })),
   ],
   [
     3,

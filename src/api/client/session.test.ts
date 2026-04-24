@@ -127,7 +127,17 @@ describe('sessionApi', () => {
             success: true,
             data: {
               user: createMockUserResponse(),
-              groups: [{ id: 1, groupKey: 'members', name: 'Members', isSystem: true, isActive: true, createdAt: '', updatedAt: '' }],
+              groups: [
+                {
+                  id: 1,
+                  groupKey: 'members',
+                  name: 'Members',
+                  isSystem: true,
+                  isActive: true,
+                  createdAt: '',
+                  updatedAt: '',
+                },
+              ],
               permissions: [{ key: 'jobs:read', scopeKey: 'own' }],
               activeJobCount: 0,
             },
@@ -148,7 +158,10 @@ describe('sessionApi', () => {
             data: {
               user: createMockUserResponse(),
               groups: [],
-              permissions: [{ key: 'users:list', scopeKey: 'any' }, { key: 'iam:read', scopeKey: 'any' }],
+              permissions: [
+                { key: 'users:list', scopeKey: 'any' },
+                { key: 'iam:read', scopeKey: 'any' },
+              ],
               activeJobCount: 0,
             },
           }),

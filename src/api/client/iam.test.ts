@@ -9,8 +9,20 @@ describe('iamApi', () => {
   describe('listRolePermissions', () => {
     it('returns IamRolePermission objects each with a scopeKey', async () => {
       const mockPerms: IamRolePermission[] = [
-        { key: 'users:list', scopeKey: 'any', description: 'List all users', isDangerous: false, isActive: true },
-        { key: 'jobs:read', scopeKey: 'own', description: 'Read job details', isDangerous: false, isActive: true },
+        {
+          key: 'users:list',
+          scopeKey: 'any',
+          description: 'List all users',
+          isDangerous: false,
+          isActive: true,
+        },
+        {
+          key: 'jobs:read',
+          scopeKey: 'own',
+          description: 'Read job details',
+          isDangerous: false,
+          isActive: true,
+        },
       ];
 
       mockServer.use(
@@ -51,7 +63,13 @@ describe('iamApi', () => {
 
     it('returns IamRolePermission objects with the saved scopeKey', async () => {
       const savedPerms: IamRolePermission[] = [
-        { key: 'users:list', scopeKey: 'own', description: 'List all users', isDangerous: false, isActive: true },
+        {
+          key: 'users:list',
+          scopeKey: 'own',
+          description: 'List all users',
+          isDangerous: false,
+          isActive: true,
+        },
       ];
 
       mockServer.use(
