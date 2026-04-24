@@ -144,7 +144,9 @@ export function GroupRolesSheet({ group, allRoles, open, onOpenChange }: GroupRo
                       id={`role-${role.id}`}
                       checked={isChecked}
                       disabled={!isEditing}
-                      onCheckedChange={isEditing ? (checked) => handleToggle(role.id, !!checked) : undefined}
+                      onCheckedChange={
+                        isEditing ? (checked) => handleToggle(role.id, !!checked) : undefined
+                      }
                       className="mt-0.5"
                     />
                     <label

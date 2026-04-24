@@ -39,11 +39,7 @@ export function DefaultPermissionsCard({ memberRole }: DefaultPermissionsCardPro
       </div>
 
       {memberRole && (
-        <RolePermissionsSheet
-          role={memberRole}
-          open={showSheet}
-          onOpenChange={setShowSheet}
-        />
+        <RolePermissionsSheet role={memberRole} open={showSheet} onOpenChange={setShowSheet} />
       )}
     </>
   );

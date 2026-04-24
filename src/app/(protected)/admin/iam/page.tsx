@@ -15,7 +15,8 @@ export const metadata: Metadata = {
 
 export default async function IamManagementPage() {
   const user = await validateSession();
-  if (!user || !hasPermission(user, PERMISSIONS.IAM_READ)) return <UnauthorizedPage title="IAM Management" />;
+  if (!user || !hasPermission(user, PERMISSIONS.IAM_READ))
+    return <UnauthorizedPage title="IAM Management" />;
 
   const [roles, groups] = await withSessionErrorHandling(() =>
     Promise.all([iamApi.listRoles(false), iamApi.listGroups(false)]),

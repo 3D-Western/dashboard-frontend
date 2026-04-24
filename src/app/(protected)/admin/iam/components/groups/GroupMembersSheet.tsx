@@ -20,7 +20,15 @@ import type { IamGroup, IamGroupMember } from '@/types/iam';
 import type { PaginationMetadata } from '@/types/common';
 import type { User } from '@/types/user';
 import { hasPermission } from '@/types/user';
-import { ArrowLeft, ChevronLeft, ChevronRight, Loader2, Plus, UserMinus, Users } from 'lucide-react';
+import {
+  ArrowLeft,
+  ChevronLeft,
+  ChevronRight,
+  Loader2,
+  Plus,
+  UserMinus,
+  Users,
+} from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 
@@ -228,7 +236,9 @@ export function GroupMembersSheet({ group, open, onOpenChange }: GroupMembersShe
                 <div className="flex flex-col items-center justify-center gap-2 py-12 text-center">
                   <Users className="h-8 w-8 text-muted-foreground/40" />
                   <p className="text-sm text-muted-foreground">
-                    {debouncedSearch ? 'No members match your search.' : 'No members in this group yet.'}
+                    {debouncedSearch
+                      ? 'No members match your search.'
+                      : 'No members in this group yet.'}
                   </p>
                   {!debouncedSearch && canManage && canSearch && (
                     <Button size="sm" variant="outline" onClick={() => setMode('add')}>
@@ -356,9 +366,7 @@ export function GroupMembersSheet({ group, open, onOpenChange }: GroupMembersShe
                           <p className="truncate text-xs text-muted-foreground">
                             {candidate.email}
                           </p>
-                          <p className="text-xs text-muted-foreground">
-                            ID: {candidate.studentId}
-                          </p>
+                          <p className="text-xs text-muted-foreground">ID: {candidate.studentId}</p>
                         </div>
                         <Button
                           size="sm"

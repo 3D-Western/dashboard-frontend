@@ -41,9 +41,9 @@ All permission keys are defined in [`src/constants/permissions.ts`](../src/const
 ```ts
 import { PERMISSIONS } from '@/constants/permissions';
 
-PERMISSIONS.USERS_LIST        // 'users:list'
-PERMISSIONS.JOBS_UPDATE_STATUS // 'jobs:update_status'
-PERMISSIONS.IAM_READ          // 'iam:read'
+PERMISSIONS.USERS_LIST; // 'users:list'
+PERMISSIONS.JOBS_UPDATE_STATUS; // 'jobs:update_status'
+PERMISSIONS.IAM_READ; // 'iam:read'
 // etc.
 ```
 
@@ -129,15 +129,19 @@ The admin section is shown only when the user holds at least one non-null permis
 
 ```tsx
 // Section visibility — requires at least one real admin permission
-{adminNavigationItems.some(
-  (item) => item.permission !== null && hasPermission(user, item.permission)
-) && (
-  <SidebarGroup>
-    {adminNavigationItems
-      .filter((item) => item.permission === null || hasPermission(user, item.permission))
-      .map(/* render item */)}
-  </SidebarGroup>
-)}
+{
+  adminNavigationItems.some(
+    (item) => item.permission !== null && hasPermission(user, item.permission),
+  ) && (
+    <SidebarGroup>
+      {
+        adminNavigationItems
+          .filter((item) => item.permission === null || hasPermission(user, item.permission))
+          .map(/* render item */)
+      }
+    </SidebarGroup>
+  );
+}
 ```
 
 Items with `permission: null` (e.g. Admin Dashboard) are always shown **within** the section, but do not count toward section visibility on their own.
@@ -145,9 +149,11 @@ Items with `permission: null` (e.g. Admin Dashboard) are always shown **within**
 ### General pattern
 
 ```tsx
-{hasPermission(user, PERMISSIONS.USERS_DELETE) && (
-  <Button variant="destructive">Delete User</Button>
-)}
+{
+  hasPermission(user, PERMISSIONS.USERS_DELETE) && (
+    <Button variant="destructive">Delete User</Button>
+  );
+}
 ```
 
 ---
@@ -160,10 +166,10 @@ The MSW mock server simulates the backend permission system. The key file is [`s
 
 Maps mock group keys to a permission set:
 
-| Group | Permissions |
-|---|---|
-| `super_admins` | All permissions |
-| `members` | `jobs:create`, `jobs:read`, `jobs:complete_upload`, `jobs:retry_upload`, `files:read_metadata`, `files:download` |
+| Group          | Permissions                                                                                                      |
+| -------------- | ---------------------------------------------------------------------------------------------------------------- |
+| `super_admins` | All permissions                                                                                                  |
+| `members`      | `jobs:create`, `jobs:read`, `jobs:complete_upload`, `jobs:retry_upload`, `files:read_metadata`, `files:download` |
 
 This is used by the session handler to populate the `permissions` field in `/users/me` responses.
 

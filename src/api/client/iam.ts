@@ -196,10 +196,11 @@ export const iamApi = {
   },
 
   revokeGroupRole: async (groupId: number, roleId: number, options?: RequestInit) => {
-    return apiRequest<null>(
-      `${getBaseUrl()}${endpoints.iam.groups.revokeRole(groupId, roleId)}`,
-      { method: 'DELETE', credentials: 'include', ...options },
-    );
+    return apiRequest<null>(`${getBaseUrl()}${endpoints.iam.groups.revokeRole(groupId, roleId)}`, {
+      method: 'DELETE',
+      credentials: 'include',
+      ...options,
+    });
   },
 
   // ── User Groups ───────────────────────────────────────────────────────────
@@ -223,10 +224,11 @@ export const iamApi = {
   },
 
   revokeUserGroup: async (userId: number, groupId: number, options?: RequestInit) => {
-    return apiRequest<null>(
-      `${getBaseUrl()}${endpoints.iam.users.revokeGroup(userId, groupId)}`,
-      { method: 'DELETE', credentials: 'include', ...options },
-    );
+    return apiRequest<null>(`${getBaseUrl()}${endpoints.iam.users.revokeGroup(userId, groupId)}`, {
+      method: 'DELETE',
+      credentials: 'include',
+      ...options,
+    });
   },
 
   // ── User Roles (direct) ───────────────────────────────────────────────────
@@ -250,17 +252,19 @@ export const iamApi = {
   },
 
   revokeUserRole: async (userId: number, roleId: number, options?: RequestInit) => {
-    return apiRequest<null>(
-      `${getBaseUrl()}${endpoints.iam.users.revokeRole(userId, roleId)}`,
-      { method: 'DELETE', credentials: 'include', ...options },
-    );
+    return apiRequest<null>(`${getBaseUrl()}${endpoints.iam.users.revokeRole(userId, roleId)}`, {
+      method: 'DELETE',
+      credentials: 'include',
+      ...options,
+    });
   },
 
   // ── Audit Logs ────────────────────────────────────────────────────────────
 
   listAuditLogs: async (params?: IamAuditLogParams, options?: RequestInit) => {
     const searchParams = new URLSearchParams();
-    if (params?.actorUserId !== undefined) searchParams.append('actorUserId', params.actorUserId.toString());
+    if (params?.actorUserId !== undefined)
+      searchParams.append('actorUserId', params.actorUserId.toString());
     if (params?.targetType !== undefined) searchParams.append('targetType', params.targetType);
     if (params?.targetId !== undefined) searchParams.append('targetId', params.targetId);
     if (params?.since !== undefined) searchParams.append('since', params.since);

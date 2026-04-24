@@ -29,7 +29,6 @@ export interface IamPermission {
   isActive: boolean;
 }
 
-
 export interface IamAuditLog {
   id: number;
   actorUserId?: number | null;

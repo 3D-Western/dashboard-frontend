@@ -4,14 +4,10 @@ import { formatApiErrorMessage } from './error-messages';
 
 describe('formatApiErrorMessage', () => {
   it('formats missing permission details for forbidden API errors', () => {
-    const error = new ApiError(
-      ErrorCodes.FORBIDDEN,
-      'Missing permission: users:list',
-      {
-        missingPermission: 'users:list',
-        requiredScope: 'any',
-      },
-    );
+    const error = new ApiError(ErrorCodes.FORBIDDEN, 'Missing permission: users:list', {
+      missingPermission: 'users:list',
+      requiredScope: 'any',
+    });
 
     expect(formatApiErrorMessage(error, 'Fallback')).toBe(
       'Missing permission: users:list (scope: any).',

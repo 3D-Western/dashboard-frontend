@@ -2,7 +2,11 @@ import { http, HttpResponse } from 'msw';
 import { endpoints } from '../client/endpoints';
 import { JobCategory } from '@/types/jobs';
 import db from './database/db';
-import { createInvalidSessionResponse, generateSuccessResponse, mockUserHasPermission } from './utils';
+import {
+  createInvalidSessionResponse,
+  generateSuccessResponse,
+  mockUserHasPermission,
+} from './utils';
 import { PERMISSIONS } from '@/constants/permissions';
 
 const apiUrl = process.env.API_URL;

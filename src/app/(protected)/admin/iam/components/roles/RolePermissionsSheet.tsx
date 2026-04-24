@@ -155,7 +155,7 @@ export function RolePermissionsSheet({ role, open, onOpenChange }: RolePermissio
             <div className="space-y-6">
               {Object.entries(groupedPermissions).map(([resource, perms]) => (
                 <div key={resource}>
-                  <h3 className="mb-2 text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+                  <h3 className="mb-2 text-sm font-semibold tracking-wide text-muted-foreground uppercase">
                     {RESOURCE_LABELS[resource] ?? resource}
                   </h3>
                   <div className="space-y-2">
@@ -167,7 +167,9 @@ export function RolePermissionsSheet({ role, open, onOpenChange }: RolePermissio
                             id={perm.key}
                             checked={isChecked}
                             disabled={!isEditing}
-                            onCheckedChange={isEditing ? (checked) => handleToggle(perm.key, !!checked) : undefined}
+                            onCheckedChange={
+                              isEditing ? (checked) => handleToggle(perm.key, !!checked) : undefined
+                            }
                             className="mt-0.5"
                           />
                           <label

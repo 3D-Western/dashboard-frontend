@@ -21,7 +21,8 @@ interface JobManagementPageProps {
 
 export default async function JobManagementPage({ searchParams }: JobManagementPageProps) {
   const user = await validateSession();
-  if (!user || !hasPermission(user, PERMISSIONS.JOBS_LIST)) return <UnauthorizedPage title="Job Management" />;
+  if (!user || !hasPermission(user, PERMISSIONS.JOBS_LIST))
+    return <UnauthorizedPage title="Job Management" />;
 
   const params = await searchParams;
   const page = Number(params.page) || 1;

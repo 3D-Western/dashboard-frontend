@@ -13,7 +13,8 @@ export const metadata: Metadata = {
 
 export default async function AuditLogPage() {
   const user = await validateSession();
-  if (!user || !hasPermission(user, PERMISSIONS.AUDIT_READ)) return <UnauthorizedPage title="Audit Log" />;
+  if (!user || !hasPermission(user, PERMISSIONS.AUDIT_READ))
+    return <UnauthorizedPage title="Audit Log" />;
 
   return (
     <div className="container space-y-6 p-6">

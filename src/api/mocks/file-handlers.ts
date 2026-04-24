@@ -189,7 +189,10 @@ export const fileHandlers = [
     }
 
     // Access control: users see own files, users with files:read_metadata see all
-    if (!mockUserHasPermission(user, PERMISSIONS.FILES_READ_METADATA) && file.uploadedBy !== user.studentId) {
+    if (
+      !mockUserHasPermission(user, PERMISSIONS.FILES_READ_METADATA) &&
+      file.uploadedBy !== user.studentId
+    ) {
       return HttpResponse.json(
         generateErrorResponse({
           code: 'FORBIDDEN',
@@ -293,7 +296,10 @@ export const fileHandlers = [
     }
 
     // Access control: users download own files, users with files:download permission download all
-    if (!mockUserHasPermission(user, PERMISSIONS.FILES_DOWNLOAD) && file.uploadedBy !== user.studentId) {
+    if (
+      !mockUserHasPermission(user, PERMISSIONS.FILES_DOWNLOAD) &&
+      file.uploadedBy !== user.studentId
+    ) {
       return HttpResponse.json(
         generateErrorResponse({
           code: 'FORBIDDEN',

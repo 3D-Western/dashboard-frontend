@@ -100,8 +100,8 @@ export function IamHelpDialog() {
                     the permissions you want to grant.
                   </Step>
                   <Step number={3}>
-                    Click <strong className="text-foreground">Save Changes</strong>. Changes apply to
-                    all groups using this role immediately.
+                    Click <strong className="text-foreground">Save Changes</strong>. Changes apply
+                    to all groups using this role immediately.
                   </Step>
                 </div>
 
@@ -134,8 +134,8 @@ export function IamHelpDialog() {
                     In the Groups table, open the actions menu (⋯) and select View Roles.
                   </Step>
                   <Step number={2}>
-                    Click <strong className="text-foreground">Edit Roles</strong>, check the roles to
-                    assign, then click <strong className="text-foreground">Save Changes</strong>.
+                    Click <strong className="text-foreground">Edit Roles</strong>, check the roles
+                    to assign, then click <strong className="text-foreground">Save Changes</strong>.
                   </Step>
                 </div>
 

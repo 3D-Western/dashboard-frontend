@@ -32,7 +32,10 @@ const formSchema = z.object({
   roleKey: z
     .string()
     .min(1, 'Key is required')
-    .regex(/^[a-z][a-z0-9_]*$/, 'Use lowercase letters, numbers, and underscores (must start with a letter)'),
+    .regex(
+      /^[a-z][a-z0-9_]*$/,
+      'Use lowercase letters, numbers, and underscores (must start with a letter)',
+    ),
   name: z.string().min(1, 'Name is required').max(100, 'Name must be 100 characters or fewer'),
   description: z.string().max(500, 'Description must be 500 characters or fewer').optional(),
 });
@@ -87,7 +90,9 @@ export function CreateRoleDialog({ open, onOpenChange, onSuccess }: CreateRoleDi
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle>Create Role</DialogTitle>
-          <DialogDescription>Define a new IAM role to group permissions together.</DialogDescription>
+          <DialogDescription>
+            Define a new IAM role to group permissions together.
+          </DialogDescription>
         </DialogHeader>
 
         <Form {...form}>
@@ -107,7 +112,9 @@ export function CreateRoleDialog({ open, onOpenChange, onSuccess }: CreateRoleDi
                   <FormControl>
                     <Input placeholder="print_operator" {...field} />
                   </FormControl>
-                  <FormDescription>Unique identifier — lowercase, underscores allowed</FormDescription>
+                  <FormDescription>
+                    Unique identifier — lowercase, underscores allowed
+                  </FormDescription>
                   <FormMessage />
                 </FormItem>
               )}

@@ -14,7 +14,8 @@ export const metadata: Metadata = {
 
 export default async function UserManagementPage() {
   const user = await validateSession();
-  if (!user || !hasPermission(user, PERMISSIONS.USERS_LIST)) return <UnauthorizedPage title="User Management" />;
+  if (!user || !hasPermission(user, PERMISSIONS.USERS_LIST))
+    return <UnauthorizedPage title="User Management" />;
 
   return (
     <div className="container space-y-6 p-6">

@@ -127,13 +127,17 @@ export function AppSidebar({ user }: AppSidebarProps) {
           </SidebarGroupContent>
         </SidebarGroup>
 
-        {adminNavigationItems.some((item) => item.permission !== null && hasPermission(user, item.permission)) && (
+        {adminNavigationItems.some(
+          (item) => item.permission !== null && hasPermission(user, item.permission),
+        ) && (
           <SidebarGroup>
             <SidebarGroupLabel>Admin</SidebarGroupLabel>
             <SidebarGroupContent>
               <SidebarMenu>
                 {adminNavigationItems
-                  .filter((item) => item.permission === null || hasPermission(user, item.permission))
+                  .filter(
+                    (item) => item.permission === null || hasPermission(user, item.permission),
+                  )
                   .map((item) => (
                     <SidebarMenuItem key={item.title}>
                       <SidebarMenuButton asChild isActive={pathname === item.url}>

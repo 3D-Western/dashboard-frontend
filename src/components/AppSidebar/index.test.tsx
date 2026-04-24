@@ -38,11 +38,7 @@ describe('AppSidebar', () => {
 
     it('shows admin section for super_admins with all permissions', () => {
       const admin = createMockAdmin({
-        permissions: [
-          PERMISSIONS.USERS_LIST,
-          PERMISSIONS.JOBS_LIST,
-          PERMISSIONS.INVITATIONS_LIST,
-        ],
+        permissions: [PERMISSIONS.USERS_LIST, PERMISSIONS.JOBS_LIST, PERMISSIONS.INVITATIONS_LIST],
       });
       renderSidebar(admin);
 

@@ -58,9 +58,7 @@ export function DeactivateRoleDialog({
     <AlertDialog open={open} onOpenChange={onOpenChange}>
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>
-            {isDeactivating ? 'Deactivate' : 'Reactivate'} Role
-          </AlertDialogTitle>
+          <AlertDialogTitle>{isDeactivating ? 'Deactivate' : 'Reactivate'} Role</AlertDialogTitle>
           <AlertDialogDescription>
             {isDeactivating ? (
               <>

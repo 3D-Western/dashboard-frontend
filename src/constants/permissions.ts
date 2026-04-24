@@ -44,9 +44,19 @@ export interface PermissionDefinition {
 }
 
 export const PERMISSION_CATALOG: PermissionDefinition[] = [
-  { key: PERMISSIONS.USERS_READ, resource: 'users', action: 'read', description: 'Read user profile' },
+  {
+    key: PERMISSIONS.USERS_READ,
+    resource: 'users',
+    action: 'read',
+    description: 'Read user profile',
+  },
   { key: PERMISSIONS.USERS_LIST, resource: 'users', action: 'list', description: 'List all users' },
-  { key: PERMISSIONS.USERS_CREATE, resource: 'users', action: 'create', description: 'Create a new user' },
+  {
+    key: PERMISSIONS.USERS_CREATE,
+    resource: 'users',
+    action: 'create',
+    description: 'Create a new user',
+  },
   {
     key: PERMISSIONS.USERS_UPDATE_PROFILE,
     resource: 'users',
@@ -86,7 +96,12 @@ export const PERMISSION_CATALOG: PermissionDefinition[] = [
     description: 'Impersonate another user',
     isDangerous: true,
   },
-  { key: PERMISSIONS.JOBS_CREATE, resource: 'jobs', action: 'create', description: 'Create a new job' },
+  {
+    key: PERMISSIONS.JOBS_CREATE,
+    resource: 'jobs',
+    action: 'create',
+    description: 'Create a new job',
+  },
   { key: PERMISSIONS.JOBS_READ, resource: 'jobs', action: 'read', description: 'Read job details' },
   { key: PERMISSIONS.JOBS_LIST, resource: 'jobs', action: 'list', description: 'List jobs' },
   {
@@ -120,7 +135,12 @@ export const PERMISSION_CATALOG: PermissionDefinition[] = [
     action: 'read_metadata',
     description: 'Read file metadata',
   },
-  { key: PERMISSIONS.FILES_DOWNLOAD, resource: 'files', action: 'download', description: 'Download a file' },
+  {
+    key: PERMISSIONS.FILES_DOWNLOAD,
+    resource: 'files',
+    action: 'download',
+    description: 'Download a file',
+  },
   { key: PERMISSIONS.FILES_LIST, resource: 'files', action: 'list', description: 'List files' },
   {
     key: PERMISSIONS.FILES_DELETE,
@@ -153,7 +173,12 @@ export const PERMISSION_CATALOG: PermissionDefinition[] = [
     action: 'revoke',
     description: 'Revoke an invitation',
   },
-  { key: PERMISSIONS.SESSIONS_LIST, resource: 'sessions', action: 'list', description: 'List active sessions' },
+  {
+    key: PERMISSIONS.SESSIONS_LIST,
+    resource: 'sessions',
+    action: 'list',
+    description: 'List active sessions',
+  },
   {
     key: PERMISSIONS.SESSIONS_REVOKE,
     resource: 'sessions',
@@ -161,7 +186,12 @@ export const PERMISSION_CATALOG: PermissionDefinition[] = [
     description: 'Revoke an active session',
     isDangerous: true,
   },
-  { key: PERMISSIONS.IAM_READ, resource: 'iam', action: 'read', description: 'Read IAM configuration' },
+  {
+    key: PERMISSIONS.IAM_READ,
+    resource: 'iam',
+    action: 'read',
+    description: 'Read IAM configuration',
+  },
   {
     key: PERMISSIONS.IAM_ASSIGN_PERMISSIONS,
     resource: 'iam',
@@ -183,7 +213,12 @@ export const PERMISSION_CATALOG: PermissionDefinition[] = [
     description: 'Create, update, or delete groups',
     isDangerous: true,
   },
-  { key: PERMISSIONS.AUDIT_READ, resource: 'audit', action: 'read', description: 'Read the audit log' },
+  {
+    key: PERMISSIONS.AUDIT_READ,
+    resource: 'audit',
+    action: 'read',
+    description: 'Read the audit log',
+  },
 ];
 
 export const PERMISSION_KEYS = PERMISSION_CATALOG.map((permission) => permission.key);

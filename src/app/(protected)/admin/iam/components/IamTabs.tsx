@@ -37,10 +37,7 @@ export function IamTabs({ initialRoles, initialGroups, currentUser }: IamTabsPro
     [groups],
   );
 
-  const memberRole = useMemo(
-    () => roles.find((r) => r.roleKey === LOCKED_ROLE_KEYS[1]),
-    [roles],
-  );
+  const memberRole = useMemo(() => roles.find((r) => r.roleKey === LOCKED_ROLE_KEYS[1]), [roles]);
 
   const handleRoleCreated = (role: IamRole) => {
     setRoles((prev) => [role, ...prev]);

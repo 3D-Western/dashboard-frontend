@@ -6,7 +6,12 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { IamPermission } from '@/types/iam';
 import { sortPermissionsByGroup } from './utils';
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from '@/components/ui/accordion';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -73,7 +78,9 @@ export function IamPermissionForm({
 
   function toggleGroup(groupKeys: string[], checked: boolean) {
     const current = form.getValues('permissions');
-    const activeGroupKeys = groupKeys.filter((k) => allPermissions.find((p) => p.key === k)?.isActive);
+    const activeGroupKeys = groupKeys.filter(
+      (k) => allPermissions.find((p) => p.key === k)?.isActive,
+    );
     const updated = checked
       ? Array.from(new Set([...current, ...activeGroupKeys]))
       : current.filter((k) => !groupKeys.includes(k));
@@ -108,7 +115,7 @@ export function IamPermissionForm({
                       aria-label={`Select all ${group.label} permissions`}
                     />
                     <span className="font-medium">{group.label}</span>
-                    <Badge variant="secondary" className="ml-auto mr-2">
+                    <Badge variant="secondary" className="mr-2 ml-auto">
                       {selectedCount} / {group.permissions.length}
                     </Badge>
                   </div>
@@ -150,7 +157,9 @@ export function IamPermissionForm({
                                   </Badge>
                                 )}
                               </FormLabel>
-                              <p className="text-xs text-muted-foreground">{permission.description}</p>
+                              <p className="text-xs text-muted-foreground">
+                                {permission.description}
+                              </p>
                             </div>
                           </FormItem>
                         )}

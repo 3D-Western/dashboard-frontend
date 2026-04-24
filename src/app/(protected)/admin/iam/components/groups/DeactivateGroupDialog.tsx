@@ -58,9 +58,7 @@ export function DeactivateGroupDialog({
     <AlertDialog open={open} onOpenChange={onOpenChange}>
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>
-            {isDeactivating ? 'Deactivate' : 'Reactivate'} Group
-          </AlertDialogTitle>
+          <AlertDialogTitle>{isDeactivating ? 'Deactivate' : 'Reactivate'} Group</AlertDialogTitle>
           <AlertDialogDescription>
             {isDeactivating ? (
               <>

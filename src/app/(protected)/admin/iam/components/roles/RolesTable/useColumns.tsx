@@ -135,11 +135,7 @@ export function useColumns({ onStatusChange }: UseColumnsOptions) {
                 </DropdownMenuContent>
               </DropdownMenu>
 
-              <RolePermissionsSheet
-                role={role}
-                open={showSheet}
-                onOpenChange={setShowSheet}
-              />
+              <RolePermissionsSheet role={role} open={showSheet} onOpenChange={setShowSheet} />
 
               <DeactivateRoleDialog
                 role={role}
