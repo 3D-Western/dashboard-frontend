@@ -182,9 +182,36 @@ describe('transformers', () => {
         firstName: 'John',
         lastName: 'Doe',
         groups: [],
+        permissions: [],
         experienceLevel: 'beginner',
         faculty: 'engineering',
       });
+    });
+
+    it('maps provided permissions into the user', () => {
+      const userResponse: UserResponse = {
+        studentId: 251000001,
+        email: 'admin@uwo.ca',
+        firstName: 'Admin',
+        lastName: 'User',
+      };
+
+      const result = transformUserResponse(userResponse, [], ['users:list', 'jobs:list']);
+
+      expect(result.permissions).toEqual(['users:list', 'jobs:list']);
+    });
+
+    it('defaults to empty permissions when none provided', () => {
+      const userResponse: UserResponse = {
+        studentId: 251000001,
+        email: 'test@uwo.ca',
+        firstName: 'John',
+        lastName: 'Doe',
+      };
+
+      const result = transformUserResponse(userResponse);
+
+      expect(result.permissions).toEqual([]);
     });
 
     it('maps provided groups into the user', () => {
@@ -362,6 +389,7 @@ describe('transformers', () => {
         firstName: 'John',
         lastName: 'Doe',
         groups: [],
+        permissions: [],
         experienceLevel: 'beginner',
         faculty: 'engineering',
       });

@@ -110,6 +110,7 @@ export function transformGroupResponse(groupResponse: GroupResponse): Group {
 export function transformUserResponse(
   userResponse: UserResponse,
   groups: GroupResponse[] = [],
+  permissions: string[] = [],
 ): User {
   return {
     studentId: userResponse.studentId,
@@ -117,6 +118,7 @@ export function transformUserResponse(
     firstName: userResponse.firstName,
     lastName: userResponse.lastName,
     groups: groups.map(transformGroupResponse),
+    permissions,
     experienceLevel: userResponse.experienceLevel
       ? transformExperienceLevelFromBackend(userResponse.experienceLevel)
       : undefined,

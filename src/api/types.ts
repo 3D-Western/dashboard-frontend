@@ -40,6 +40,7 @@ export interface GroupResponse {
 export interface ApiGetCurrentSessionResponse {
   user: UserResponse | null;
   groups: GroupResponse[];
+  permissions: string[];
   activeJobCount: number;
 }
 

@@ -41,6 +41,7 @@ export const createMockUser = (overrides?: Partial<User>): User => ({
   firstName: faker.person.firstName(),
   lastName: faker.person.lastName(),
   groups: [MOCK_GROUP_MEMBERS],
+  permissions: [],
   experienceLevel: 'beginner' as UserExperienceLevel,
   ...overrides,
 });

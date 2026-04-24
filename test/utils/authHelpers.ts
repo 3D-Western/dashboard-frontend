@@ -33,7 +33,7 @@ export function mockAuthenticatedSession(user: User = createMockUser()): User {
     http.get(`*${endpoints.users.me}`, () => {
       return HttpResponse.json({
         success: true,
-        data: { user: userResponse, groups: groupResponses, activeJobCount: 0 },
+        data: { user: userResponse, groups: groupResponses, permissions: user.permissions, activeJobCount: 0 },
       });
     }),
   );

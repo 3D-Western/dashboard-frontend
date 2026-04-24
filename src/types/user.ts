@@ -21,10 +21,15 @@ export interface User {
   firstName: string;
   lastName: string;
   groups: Group[];
+  permissions: string[];
   experienceLevel?: UserExperienceLevel;
   faculty?: UserFaculty;
 }
 
 export function isAdmin(user: User): boolean {
   return user.groups.some((g) => g.groupKey === 'super_admins');
+}
+
+export function hasPermission(user: User, permission: string): boolean {
+  return user.permissions.includes(permission);
 }

@@ -14,7 +14,8 @@ import {
   SidebarMenuItem,
 } from '@/components/ui/sidebar';
 import { SettingsPopover } from '@/components/SettingsPopover';
-import { User, isAdmin } from '@/types/user';
+import { User, isAdmin, hasPermission } from '@/types/user';
+import { PERMISSIONS } from '@/constants/permissions';
 import {
   LayoutDashboard,
   Printer,
@@ -51,21 +52,25 @@ const adminNavigationItems = [
     title: 'Admin Dashboard',
     url: '/admin',
     icon: Shield,
+    permission: null, // visible to all admins
   },
   {
     title: 'User Management',
     url: Routes.adminUsersManagement,
     icon: Users,
+    permission: PERMISSIONS.USERS_LIST,
   },
   {
     title: 'Job Management',
     url: Routes.adminJobsManagement,
     icon: Settings,
+    permission: PERMISSIONS.JOBS_LIST,
   },
   {
     title: 'Invitation Management',
     url: Routes.adminInvitationManagement,
     icon: TicketPlus,
+    permission: PERMISSIONS.INVITATIONS_LIST,
   },
 ];
 
@@ -113,16 +118,18 @@ export function AppSidebar({ user }: AppSidebarProps) {
             <SidebarGroupLabel>Admin</SidebarGroupLabel>
             <SidebarGroupContent>
               <SidebarMenu>
-                {adminNavigationItems.map((item) => (
-                  <SidebarMenuItem key={item.title}>
-                    <SidebarMenuButton asChild isActive={pathname === item.url}>
-                      <Link href={item.url}>
-                        <item.icon className="h-4 w-4" />
-                        <span>{item.title}</span>
-                      </Link>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                ))}
+                {adminNavigationItems
+                  .filter((item) => item.permission === null || hasPermission(user, item.permission))
+                  .map((item) => (
+                    <SidebarMenuItem key={item.title}>
+                      <SidebarMenuButton asChild isActive={pathname === item.url}>
+                        <Link href={item.url}>
+                          <item.icon className="h-4 w-4" />
+                          <span>{item.title}</span>
+                        </Link>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  ))}
               </SidebarMenu>
             </SidebarGroupContent>
           </SidebarGroup>

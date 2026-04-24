@@ -5,6 +5,7 @@ import {
   generateSuccessResponse,
   createInvalidSessionResponse,
   mockGroupsForKeys,
+  mockPermissionsForGroups,
 } from './utils';
 import { endpoints } from '../client/endpoints';
 import { ErrorCodes } from '../client/errors';
@@ -99,6 +100,7 @@ export const sessionHandlers = [
       generateSuccessResponse({
         user: userResponse,
         groups: mockGroupsForKeys(user.groups),
+        permissions: mockPermissionsForGroups(user.groups),
         activeJobCount: 0,
       }),
     );
