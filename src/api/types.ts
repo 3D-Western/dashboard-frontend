@@ -2,6 +2,7 @@ import { JobCategory, PrintJob } from '@/types/jobs';
 import { Invitation } from '@/types/invitation';
 import { FileUploadResult, FileMetadata, FileList } from '@/types/file';
 import { PaginatedResponse } from '@/types/common';
+import { IamRole, IamGroup, IamPermission, IamAuditLog } from '@/types/iam';
 
 export interface ApiResponseError {
   code: string;
@@ -116,3 +117,22 @@ export type UserListResponseRaw = PaginatedResponse<UserResponse>;
 // Invitations API Response Types
 export type InvitationListResponse = PaginatedResponse<Invitation>;
 export type InvitationResponse = Invitation;
+
+// IAM API Response Types
+export type IamRoleResponse = IamRole;
+export type IamRoleListResponse = IamRole[];
+export type IamGroupResponse = IamGroup;
+export type IamGroupListResponse = IamGroup[];
+export type IamPermissionListResponse = IamPermission[];
+export type IamAuditLogResponse = IamAuditLog;
+
+export interface IamAuditLogPageResponse {
+  content: IamAuditLog[];
+  totalElements: number;
+  totalPages: number;
+  number: number;
+  size: number;
+  first: boolean;
+  last: boolean;
+  numberOfElements: number;
+}
