@@ -187,3 +187,12 @@ export const PERMISSION_CATALOG: PermissionDefinition[] = [
 ];
 
 export const PERMISSION_KEYS = PERMISSION_CATALOG.map((permission) => permission.key);
+
+// Permissions that grant access to the admin section (at least one required)
+export const ADMIN_SECTION_PERMISSIONS: PermissionKey[] = [
+  PERMISSIONS.USERS_LIST,
+  PERMISSIONS.JOBS_LIST,
+  PERMISSIONS.INVITATIONS_LIST,
+  PERMISSIONS.IAM_READ,
+  PERMISSIONS.AUDIT_READ,
+];

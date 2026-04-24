@@ -14,7 +14,7 @@ import {
   SidebarMenuItem,
 } from '@/components/ui/sidebar';
 import { SettingsPopover } from '@/components/SettingsPopover';
-import { User, isAdmin, hasPermission } from '@/types/user';
+import { User, hasPermission } from '@/types/user';
 import { PERMISSIONS } from '@/constants/permissions';
 import {
   LayoutDashboard,
@@ -127,7 +127,7 @@ export function AppSidebar({ user }: AppSidebarProps) {
           </SidebarGroupContent>
         </SidebarGroup>
 
-        {isAdmin(user) && (
+        {adminNavigationItems.some((item) => item.permission !== null && hasPermission(user, item.permission)) && (
           <SidebarGroup>
             <SidebarGroupLabel>Admin</SidebarGroupLabel>
             <SidebarGroupContent>

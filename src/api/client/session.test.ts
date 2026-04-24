@@ -27,13 +27,13 @@ describe('sessionApi', () => {
 
       const result = await sessionApi.current();
 
-      // Result should be transformed to frontend format
-      expect(result.user).toEqual({
+      expect(result.user).toMatchObject({
         studentId: 251000001,
         email: 'test@example.com',
         firstName: 'Test',
         lastName: 'User',
         groups: [],
+        permissions: [],
       });
     });
 

@@ -1,13 +1,14 @@
 import { http, HttpResponse } from 'msw';
 import { endpoints } from '../client/endpoints';
 import db from './database/db';
-import { isAdminUser } from './database/types';
 import {
   createInvalidSessionResponse,
   generateSuccessResponse,
   generateErrorResponse,
+  mockUserHasPermission,
 } from './utils';
 import { ErrorCodes } from '../client/errors';
+import { PERMISSIONS } from '@/constants/permissions';
 
 const apiUrl = process.env.API_URL;
 
@@ -20,14 +21,13 @@ export const userHandlers = [
       return createInvalidSessionResponse();
     }
 
-    // Only admins can list all users
-    if (!isAdminUser(user)) {
+    if (!mockUserHasPermission(user, PERMISSIONS.USERS_LIST)) {
       return HttpResponse.json(
         {
           success: false,
           error: {
             code: 'FORBIDDEN',
-            message: 'Admin role required to access this resource',
+            message: 'Insufficient permissions',
           },
         },
         { status: 403 },
@@ -128,14 +128,13 @@ export const userHandlers = [
       return createInvalidSessionResponse();
     }
 
-    // Only admins can view other users
-    if (!isAdminUser(user)) {
+    if (!mockUserHasPermission(user, PERMISSIONS.USERS_READ)) {
       return HttpResponse.json(
         {
           success: false,
           error: {
             code: 'FORBIDDEN',
-            message: 'Admin role required to access this resource',
+            message: 'Insufficient permissions',
           },
         },
         { status: 403 },

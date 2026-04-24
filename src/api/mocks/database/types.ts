@@ -11,10 +11,6 @@ export interface User {
   experienceLevel?: string;
 }
 
-export function isAdminUser(user: User): boolean {
-  return user.groups.includes('super_admins');
-}
-
 export interface File {
   id: string;
   name: string;

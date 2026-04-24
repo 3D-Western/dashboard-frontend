@@ -4,7 +4,8 @@
 import { HttpResponse } from 'msw';
 import { ErrorCodes } from '../client/errors';
 import { ApiResponseError, GroupResponse } from '../types';
-import { PERMISSION_CATALOG } from '@/constants/permissions';
+import { PERMISSION_CATALOG, PERMISSIONS } from '@/constants/permissions';
+import type { User } from './database/types';
 
 /**
  * Returns mock GroupResponse objects for the given group keys.
@@ -36,12 +37,23 @@ export function mockGroupsForKeys(groupKeys: string[]): GroupResponse[] {
 }
 
 const ALL_PERMISSIONS = PERMISSION_CATALOG.map((p) => p.key);
-const MEMBER_PERMISSIONS = PERMISSION_CATALOG.filter((p) => !p.isDangerous).map((p) => p.key);
+const MEMBER_PERMISSIONS = [
+  PERMISSIONS.JOBS_CREATE,
+  PERMISSIONS.JOBS_READ,
+  PERMISSIONS.JOBS_COMPLETE_UPLOAD,
+  PERMISSIONS.JOBS_RETRY_UPLOAD,
+  PERMISSIONS.FILES_READ_METADATA,
+  PERMISSIONS.FILES_DOWNLOAD,
+];
 
 export function mockPermissionsForGroups(groupKeys: string[]): string[] {
   if (groupKeys.includes('super_admins')) return ALL_PERMISSIONS;
   if (groupKeys.includes('members')) return MEMBER_PERMISSIONS;
   return [];
+}
+
+export function mockUserHasPermission(user: User, permission: string): boolean {
+  return mockPermissionsForGroups(user.groups).includes(permission);
 }
 
 export const generateSuccessResponse = (data: unknown) => {

@@ -1,5 +1,6 @@
 import type { ExperienceLevel } from '@/constants/experience-levels';
 import type { Faculty } from '@/constants/faculties';
+import { ADMIN_SECTION_PERMISSIONS } from '@/constants/permissions';
 
 export type UserExperienceLevel = ExperienceLevel;
 export type UserFaculty = Faculty;
@@ -26,10 +27,10 @@ export interface User {
   faculty?: UserFaculty;
 }
 
-export function isAdmin(user: User): boolean {
-  return user.groups.some((g) => g.groupKey === 'super_admins');
-}
-
 export function hasPermission(user: User, permission: string): boolean {
   return user.permissions.includes(permission);
+}
+
+export function hasAnyAdminPermission(user: User): boolean {
+  return ADMIN_SECTION_PERMISSIONS.some((p) => hasPermission(user, p));
 }

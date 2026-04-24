@@ -93,11 +93,18 @@ describe('AppSidebar', () => {
       expect(screen.getByRole('link', { name: /invitation management/i })).toBeInTheDocument();
     });
 
-    it('always shows Admin Dashboard to admins regardless of permissions', () => {
-      const admin = createMockAdmin({ permissions: [] });
+    it('shows Admin Dashboard when user has any admin permission', () => {
+      const admin = createMockAdmin({ permissions: [PERMISSIONS.USERS_LIST] });
       renderSidebar(admin);
 
       expect(screen.getByRole('link', { name: /admin dashboard/i })).toBeInTheDocument();
+    });
+
+    it('hides admin section when user has no admin permissions', () => {
+      const admin = createMockAdmin({ permissions: [] });
+      renderSidebar(admin);
+
+      expect(screen.queryByText('Admin')).not.toBeInTheDocument();
     });
   });
 

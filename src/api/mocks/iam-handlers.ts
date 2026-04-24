@@ -1,8 +1,7 @@
 import { http, HttpResponse } from 'msw';
 import { endpoints } from '../client/endpoints';
 import db from './database/db';
-import { isAdminUser } from './database/types';
-import { createInvalidSessionResponse, generateSuccessResponse, generateErrorResponse } from './utils';
+import { createInvalidSessionResponse, generateSuccessResponse, generateErrorResponse, mockUserHasPermission } from './utils';
 import { ErrorCodes } from '../client/errors';
 import {
   IamRole,
@@ -15,7 +14,7 @@ import {
   UpdateIamGroupRequest,
   ReplaceRolePermissionsRequest,
 } from '@/types/iam';
-import { PERMISSION_CATALOG } from '@/constants/permissions';
+import { PERMISSION_CATALOG, PERMISSIONS as PERMISSION_KEYS } from '@/constants/permissions';
 
 const apiUrl = process.env.API_URL;
 
@@ -106,10 +105,10 @@ function requireAdmin(cookies: Record<string, string>) {
   const sessionId = cookies['sessionToken'] || '';
   const user = db.validateSession(sessionId);
   if (!user) return { error: createInvalidSessionResponse() };
-  if (!isAdminUser(user)) {
+  if (!mockUserHasPermission(user, PERMISSION_KEYS.IAM_READ)) {
     return {
       error: HttpResponse.json(
-        generateErrorResponse({ code: FORBIDDEN, message: 'Admin role required' }),
+        generateErrorResponse({ code: FORBIDDEN, message: 'Insufficient permissions' }),
         { status: 403 },
       ),
     };
