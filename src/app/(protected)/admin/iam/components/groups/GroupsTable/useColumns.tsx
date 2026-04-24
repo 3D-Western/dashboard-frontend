@@ -13,7 +13,7 @@ import { useUser } from '@/providers/user-provider';
 import type { IamGroup, IamRole } from '@/types/iam';
 import { hasPermission } from '@/types/user';
 import type { Column, ColumnDef, Row } from '@tanstack/react-table';
-import { ArrowUpDown, MoreHorizontal } from 'lucide-react';
+import { ArrowUpDown, MoreHorizontal, LockKeyhole } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { RoleStatusBadge } from '../../RoleStatusBadge';
 import { DeactivateGroupDialog } from '../DeactivateGroupDialog';
@@ -46,7 +46,12 @@ export function useColumns({ allRoles, onStatusChange }: UseColumnsOptions) {
           </Button>
         ),
         cell: ({ row }: { row: Row<IamGroup> }) => (
-          <div className="font-medium">{row.getValue('name')}</div>
+          <div className="flex flex-row items-center font-medium">
+            <div>{row.getValue('name')}</div>
+            {row.original.isSystem && (
+              <LockKeyhole className="ml-2 h-4 w-4 text-muted-foreground" />
+            )}
+          </div>
         ),
       },
       {
@@ -61,7 +66,7 @@ export function useColumns({ allRoles, onStatusChange }: UseColumnsOptions) {
         header: () => <div className="w-full text-center">Status</div>,
         cell: ({ row }: { row: Row<IamGroup> }) => (
           <div className="flex justify-center">
-            <RoleStatusBadge isActive={row.getValue('isActive')} isSystem={row.original.isSystem} />
+            <RoleStatusBadge isActive={row.getValue('isActive')} />
           </div>
         ),
         filterFn: (row, _columnId, filterValue) => row.getValue('isActive') === filterValue,

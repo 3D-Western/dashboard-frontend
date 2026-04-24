@@ -42,7 +42,7 @@ const PERMISSIONS: IamPermission[] = PERMISSION_CATALOG.map((permission) => ({
 const mockRoles: IamRole[] = [
   {
     id: 1,
-    roleKey: 'super_admin_role',
+    roleKey: 'super_admin',
     name: 'Super Admin',
     description: 'Full system access',
     isSystem: true,
@@ -52,7 +52,7 @@ const mockRoles: IamRole[] = [
   },
   {
     id: 2,
-    roleKey: 'regular_admin_role',
+    roleKey: 'regular_admin',
     name: 'Regular Admin',
     description: 'Admin access for day-to-day operations. No IAM or audit access.',
     isSystem: false,
@@ -62,7 +62,7 @@ const mockRoles: IamRole[] = [
   },
   {
     id: 3,
-    roleKey: 'member_role',
+    roleKey: 'member',
     name: 'Member',
     description: 'Standard member access',
     isSystem: true,

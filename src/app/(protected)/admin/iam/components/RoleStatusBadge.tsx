@@ -3,10 +3,9 @@ import { cn } from '@/lib/utils';
 
 interface RoleStatusBadgeProps {
   isActive: boolean;
-  isSystem?: boolean;
 }
 
-export function RoleStatusBadge({ isActive, isSystem }: RoleStatusBadgeProps) {
+export function RoleStatusBadge({ isActive }: RoleStatusBadgeProps) {
   return (
     <div className="flex flex-wrap gap-1.5">
       <Badge
@@ -21,11 +20,6 @@ export function RoleStatusBadge({ isActive, isSystem }: RoleStatusBadgeProps) {
       >
         {isActive ? 'Active' : 'Inactive'}
       </Badge>
-      {isSystem && (
-        <Badge variant="outline" className="border-muted-foreground/50 text-muted-foreground">
-          System
-        </Badge>
-      )}
     </div>
   );
 }

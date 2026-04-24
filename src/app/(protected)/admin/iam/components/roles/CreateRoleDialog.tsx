@@ -87,7 +87,7 @@ export function CreateRoleDialog({ open, onOpenChange, onSuccess }: CreateRoleDi
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent>
         <DialogHeader>
           <DialogTitle>Create Role</DialogTitle>
           <DialogDescription>
