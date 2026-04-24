@@ -175,6 +175,15 @@ export function GroupMembersSheet({ group, open, onOpenChange }: GroupMembersShe
     try {
       await iamApi.assignUserGroup(candidate.studentId, group.id);
       setAddedIds((prev) => new Set(prev).add(candidate.studentId));
+      const newMember: IamGroupMember = {
+        studentId: candidate.studentId,
+        email: candidate.email,
+        firstName: candidate.firstName,
+        lastName: candidate.lastName,
+        assignedAt: new Date().toISOString(),
+      };
+      setMembers((prev) => [newMember, ...prev]);
+      setPagination((prev) => prev && { ...prev, totalItems: prev.totalItems + 1 });
       toast.success(`${candidate.firstName} ${candidate.lastName} added to group.`);
     } catch (error) {
       toast.error(formatApiErrorMessage(error, 'Failed to add user. Please try again.'));

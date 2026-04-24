@@ -2,7 +2,13 @@
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { HelpCircle, KeyRound, Shield, Users } from 'lucide-react';
 import { useState } from 'react';
 
@@ -48,6 +54,9 @@ export function IamHelpDialog() {
         <DialogContent className="flex max-h-[85vh] flex-col gap-0 p-0 sm:max-w-lg">
           <DialogHeader className="border-b px-6 py-4">
             <DialogTitle>IAM Management Guide</DialogTitle>
+            <DialogDescription>
+              Learn how to manage roles, groups, permissions, and group members in your IAM system.
+            </DialogDescription>
           </DialogHeader>
 
           <div className="overflow-y-auto px-6 py-5">
