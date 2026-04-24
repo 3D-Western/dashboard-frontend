@@ -29,8 +29,10 @@ export default async function InvitationManagementPage({
   searchParams,
 }: InvitationManagementPageProps) {
   const user = await validateSession();
-  if (!user || !hasPermission(user, PERMISSIONS.INVITATIONS_LIST)) return <UnauthorizedPage title="Invitation Management" />;
+  if (!user || !hasPermission(user, PERMISSIONS.INVITATIONS_LIST))
+    return <UnauthorizedPage title="Invitation Management" />;
 
+  const userCanCreateInvitation = hasPermission(user, PERMISSIONS.INVITATIONS_CREATE);
   const params = await searchParams;
   const page = Number(params.page) || 1;
   const pageSize = Number(params.pageSize) || 10;
@@ -51,7 +53,7 @@ export default async function InvitationManagementPage({
             description="Manage user registration invitations"
           />
         </div>
-        <CreateInvitationButton />
+        {userCanCreateInvitation && <CreateInvitationButton />}
       </div>
 
       <AdminInvitationFilters />

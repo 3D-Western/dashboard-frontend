@@ -1,5 +1,6 @@
 'use client';
 
+import { invitationApi } from '@/api/client/invitation';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -8,19 +9,21 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { InvitationStatus } from '@/types/invitation';
-import type { ColumnDef, Row, Column } from '@tanstack/react-table';
+import { PERMISSIONS } from '@/constants/permissions';
+import { useUser } from '@/providers/user-provider';
 import type { Invitation } from '@/types/invitation';
+import { InvitationStatus } from '@/types/invitation';
+import { hasPermission } from '@/types/user';
+import type { Column, ColumnDef, Row } from '@tanstack/react-table';
 import { ArrowUpDown, MoreHorizontal } from 'lucide-react';
 import { useMemo, useState } from 'react';
+import { toast } from 'sonner';
 import { DateCell } from './DateCell';
 import { EmailCell } from './EmailCell';
 import { InvitationCodeCell } from './InvitationCodeCell';
 import { InvitationInfoDialog } from './InvitationInfoDialog';
 import { InvitationStatusBadge } from './InvitationStatusBadge';
 import { RevokeInvitationDialog } from './RevokeInvitationDialog';
-import { invitationApi } from '@/api/client/invitation';
-import { toast } from 'sonner';
 
 interface UseColumnsOptions {
   onRevoke?: (invitationId: number) => void;
@@ -28,6 +31,9 @@ interface UseColumnsOptions {
 
 export const useColumns = (opts: UseColumnsOptions = {}) => {
   const { onRevoke } = opts;
+  const user = useUser();
+  const canUserRevoke = hasPermission(user, PERMISSIONS.INVITATIONS_REVOKE);
+  const canUserViewInfo = hasPermission(user, PERMISSIONS.INVITATIONS_READ);
 
   return useMemo<ColumnDef<Invitation>[]>(
     () => [
@@ -123,7 +129,7 @@ export const useColumns = (opts: UseColumnsOptions = {}) => {
         id: 'actions',
         cell: function ActionsCell({ row }: { row: Row<Invitation> }) {
           const invitation = row.original;
-          const canRevoke = invitation.status === 'PENDING';
+          const canRevoke = canUserRevoke && invitation.status === 'PENDING';
           const [showRevokeDialog, setShowRevokeDialog] = useState(false);
           const [showInfoDialog, setShowInfoDialog] = useState(false);
           const [isRevoking, setIsRevoking] = useState(false);
@@ -158,7 +164,10 @@ export const useColumns = (opts: UseColumnsOptions = {}) => {
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
-                  <DropdownMenuItem onSelect={() => setShowInfoDialog(true)}>
+                  <DropdownMenuItem
+                    onSelect={() => canUserViewInfo && setShowInfoDialog(true)}
+                    disabled={!canUserViewInfo}
+                  >
                     More Info
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
@@ -190,6 +199,6 @@ export const useColumns = (opts: UseColumnsOptions = {}) => {
         },
       },
     ],
-    [onRevoke],
+    [canUserRevoke, canUserViewInfo, onRevoke],
   );
 };

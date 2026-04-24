@@ -27,10 +27,10 @@ export interface User {
   faculty?: UserFaculty;
 }
 
-export function hasPermission(user: User, permission: string): boolean {
-  return user.permissions.includes(permission);
+export function hasPermission(user: User | null | undefined, permission: string): boolean {
+  return user?.permissions?.includes(permission) ?? false;
 }
 
-export function hasAnyAdminPermission(user: User): boolean {
+export function hasAnyAdminPermission(user: User | null | undefined): boolean {
   return ADMIN_SECTION_PERMISSIONS.some((p) => hasPermission(user, p));
 }

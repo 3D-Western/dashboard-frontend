@@ -78,12 +78,32 @@ describe('AppSidebar', () => {
       expect(screen.queryByRole('link', { name: /user management/i })).not.toBeInTheDocument();
     });
 
+    it('shows IAM Management only when user has iam:read', () => {
+      const admin = createMockAdmin({ permissions: [PERMISSIONS.IAM_READ] });
+      renderSidebar(admin);
+
+      expect(screen.getByRole('link', { name: /iam management/i })).toBeInTheDocument();
+      expect(screen.queryByRole('link', { name: /user management/i })).not.toBeInTheDocument();
+      expect(screen.queryByRole('link', { name: /audit log/i })).not.toBeInTheDocument();
+    });
+
+    it('shows Audit Log only when user has audit:read', () => {
+      const admin = createMockAdmin({ permissions: [PERMISSIONS.AUDIT_READ] });
+      renderSidebar(admin);
+
+      expect(screen.getByRole('link', { name: /audit log/i })).toBeInTheDocument();
+      expect(screen.queryByRole('link', { name: /user management/i })).not.toBeInTheDocument();
+      expect(screen.queryByRole('link', { name: /iam management/i })).not.toBeInTheDocument();
+    });
+
     it('shows all admin items when user has all relevant permissions', () => {
       const admin = createMockAdmin({
         permissions: [
           PERMISSIONS.USERS_LIST,
           PERMISSIONS.JOBS_LIST,
           PERMISSIONS.INVITATIONS_LIST,
+          PERMISSIONS.IAM_READ,
+          PERMISSIONS.AUDIT_READ,
         ],
       });
       renderSidebar(admin);
@@ -91,6 +111,8 @@ describe('AppSidebar', () => {
       expect(screen.getByRole('link', { name: /user management/i })).toBeInTheDocument();
       expect(screen.getByRole('link', { name: /job management/i })).toBeInTheDocument();
       expect(screen.getByRole('link', { name: /invitation management/i })).toBeInTheDocument();
+      expect(screen.getByRole('link', { name: /iam management/i })).toBeInTheDocument();
+      expect(screen.getByRole('link', { name: /audit log/i })).toBeInTheDocument();
     });
 
     it('shows Admin Dashboard when user has any admin permission', () => {

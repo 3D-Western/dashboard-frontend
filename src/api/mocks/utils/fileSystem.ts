@@ -31,14 +31,9 @@ export class FileSystemUtils {
    * Initialize tmp directory - called when MSW server starts
    */
   static initTmpDirectory(): void {
-    // Best-effort cleanup to avoid flaky parallel test runs on Windows.
-    if (fs.existsSync(TMP_DIR)) {
-      try {
-        fs.rmSync(TMP_DIR, { recursive: true, force: true });
-      } catch (error) {
-        console.warn('Warning: unable to remove tmp directory', error);
-      }
-    }
+    // Files are saved with UUIDs so old files don't interfere between runs.
+    // Skipping rmSync avoids Windows EPERM/ENOENT races when parallel workers
+    // all try to delete and recreate the same directory simultaneously.
     try {
       fs.mkdirSync(TMP_DIR, { recursive: true });
     } catch (error) {
