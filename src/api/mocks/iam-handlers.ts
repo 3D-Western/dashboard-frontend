@@ -51,6 +51,16 @@ const mockRoles: IamRole[] = [
   },
   {
     id: 2,
+    roleKey: 'regular_admin_role',
+    name: 'Regular Admin',
+    description: 'Admin access for day-to-day operations. No IAM or audit access.',
+    isSystem: false,
+    isActive: true,
+    createdAt: new Date('2024-01-01').toISOString(),
+    updatedAt: new Date('2024-01-01').toISOString(),
+  },
+  {
+    id: 3,
     roleKey: 'member_role',
     name: 'Member',
     description: 'Standard member access',
@@ -74,6 +84,16 @@ const mockGroups: IamGroup[] = [
   },
   {
     id: 2,
+    groupKey: 'regular_admins',
+    name: 'Regular Admins',
+    description: 'Admin group for day-to-day operations. No IAM or audit access.',
+    isSystem: true,
+    isActive: true,
+    createdAt: new Date('2024-01-01').toISOString(),
+    updatedAt: new Date('2024-01-01').toISOString(),
+  },
+  {
+    id: 3,
     groupKey: 'members',
     name: 'Members',
     description: 'Standard registered members',
@@ -88,9 +108,13 @@ const mockGroups: IamGroup[] = [
 const groupRoles: Map<number, number[]> = new Map([
   [1, [1]],
   [2, [2]],
+  [3, [3]],
 ]);
 
 // roleId → role permissions
+const regularAdminPermissions = PERMISSIONS.filter(
+  (p) => !p.key.startsWith('iam:') && p.key !== PERMISSION_KEYS.AUDIT_READ,
+);
 const memberPermissionKeys = new Set<IamPermission['key']>([
   PERMISSION_KEYS.JOBS_CREATE,
   PERMISSION_KEYS.JOBS_READ,
@@ -109,7 +133,8 @@ const memberPermissionKeys = new Set<IamPermission['key']>([
 
 const rolePermissions: Map<number, IamPermission[]> = new Map([
   [1, [...PERMISSIONS]],
-  [2, PERMISSIONS.filter((p) => memberPermissionKeys.has(p.key))],
+  [2, regularAdminPermissions],
+  [3, PERMISSIONS.filter((p) => memberPermissionKeys.has(p.key))],
 ]);
 
 // userId → direct roleIds
@@ -117,8 +142,8 @@ const userDirectRoles: Map<number, number[]> = new Map();
 
 const mockAuditLogs: IamAuditLog[] = [];
 
-let nextRoleId = 3;
-let nextGroupId = 3;
+let nextRoleId = 4;
+let nextGroupId = 4;
 
 // ── Helper ─────────────────────────────────────────────────────────────────────
 

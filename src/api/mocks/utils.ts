@@ -22,6 +22,16 @@ export function mockGroupsForKeys(groupKeys: string[]): GroupResponse[] {
       createdAt: '2024-01-01T00:00:00Z',
       updatedAt: '2024-01-01T00:00:00Z',
     },
+    regular_admins: {
+      id: 3,
+      groupKey: 'regular_admins',
+      name: 'Regular Admins',
+      description: 'Admin group for day-to-day operations. No IAM or audit access.',
+      isSystem: true,
+      isActive: true,
+      createdAt: '2024-01-01T00:00:00Z',
+      updatedAt: '2024-01-01T00:00:00Z',
+    },
     super_admins: {
       id: 2,
       groupKey: 'super_admins',
@@ -37,6 +47,9 @@ export function mockGroupsForKeys(groupKeys: string[]): GroupResponse[] {
 }
 
 const ALL_PERMISSIONS = PERMISSION_CATALOG.map((p) => p.key);
+const REGULAR_ADMIN_PERMISSIONS = PERMISSION_CATALOG.filter(
+  (p) => p.resource !== 'iam' && p.resource !== 'audit',
+).map((p) => p.key);
 const MEMBER_PERMISSIONS = [
   PERMISSIONS.JOBS_CREATE,
   PERMISSIONS.JOBS_READ,
@@ -48,6 +61,7 @@ const MEMBER_PERMISSIONS = [
 
 export function mockPermissionsForGroups(groupKeys: string[]): string[] {
   if (groupKeys.includes('super_admins')) return ALL_PERMISSIONS;
+  if (groupKeys.includes('regular_admins')) return REGULAR_ADMIN_PERMISSIONS;
   if (groupKeys.includes('members')) return MEMBER_PERMISSIONS;
   return [];
 }
