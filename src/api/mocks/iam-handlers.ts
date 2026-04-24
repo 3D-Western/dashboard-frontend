@@ -12,6 +12,7 @@ import {
   IamRole,
   IamGroup,
   IamPermission,
+  IamRolePermission,
   IamAuditLog,
   CreateIamRoleRequest,
   UpdateIamRoleRequest,
@@ -112,25 +113,32 @@ const groupRoles: Map<number, number[]> = new Map([
 ]);
 
 // roleId → role permissions
-const regularAdminPermissions = PERMISSIONS.filter(
-  (p) => !p.key.startsWith('iam:') && p.key !== PERMISSION_KEYS.AUDIT_READ,
-);
-const memberPermissionKeys = new Set<IamPermission['key']>([
-  PERMISSION_KEYS.JOBS_CREATE,
-  PERMISSION_KEYS.JOBS_READ,
-  PERMISSION_KEYS.JOBS_DELETE,
-  PERMISSION_KEYS.JOBS_COMPLETE_UPLOAD,
-  PERMISSION_KEYS.JOBS_RETRY_UPLOAD,
-  PERMISSION_KEYS.JOBS_REORDER,
-  PERMISSION_KEYS.FILES_READ_METADATA,
-  PERMISSION_KEYS.FILES_DOWNLOAD,
-  PERMISSION_KEYS.USERS_UPDATE_PROFILE,
-]);
-
-const rolePermissions: Map<number, IamPermission[]> = new Map([
-  [1, [...PERMISSIONS]],
-  [2, regularAdminPermissions],
-  [3, PERMISSIONS.filter((p) => memberPermissionKeys.has(p.key))],
+const rolePermissions: Map<number, IamRolePermission[]> = new Map([
+  [1, PERMISSIONS.map((p) => ({ ...p, scopeKey: 'any' }))],
+  [
+    2,
+    PERMISSIONS.filter((p) => !p.key.startsWith('iam:') && p.key !== PERMISSION_KEYS.AUDIT_READ).map(
+      (p) => ({ ...p, scopeKey: 'any' }),
+    ),
+  ],
+  [
+    3,
+    [
+      PERMISSION_KEYS.JOBS_CREATE,
+      PERMISSION_KEYS.JOBS_LIST,
+      PERMISSION_KEYS.JOBS_READ,
+      PERMISSION_KEYS.JOBS_DELETE,
+      PERMISSION_KEYS.JOBS_COMPLETE_UPLOAD,
+      PERMISSION_KEYS.JOBS_RETRY_UPLOAD,
+      PERMISSION_KEYS.JOBS_REORDER,
+      PERMISSION_KEYS.FILES_READ_METADATA,
+      PERMISSION_KEYS.FILES_DOWNLOAD,
+      PERMISSION_KEYS.USERS_UPDATE_PROFILE,
+    ].map((key) => {
+      const p = PERMISSIONS.find((p) => p.key === key)!;
+      return { ...p, scopeKey: 'own' };
+    }),
+  ],
 ]);
 
 // userId → direct roleIds
@@ -320,10 +328,11 @@ export const iamHandlers = [
         );
       }
       const { permissions } = (await request.json()) as ReplaceRolePermissionsRequest;
-      const updated: IamPermission[] = permissions.map((entry) => {
+      const updated: IamRolePermission[] = permissions.map((entry) => {
         const perm = PERMISSIONS.find((p) => p.key === entry.permissionKey);
         return {
           key: entry.permissionKey,
+          scopeKey: entry.scopeKey,
           description: perm?.description ?? entry.permissionKey,
           isDangerous: perm?.isDangerous ?? false,
           isActive: perm?.isActive ?? true,

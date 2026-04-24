@@ -47,29 +47,33 @@ export function mockGroupsForKeys(groupKeys: string[]): GroupResponse[] {
   return groupKeys.map((key) => catalog[key]).filter(Boolean);
 }
 
-const ALL_PERMISSIONS = PERMISSION_CATALOG.map((p) => p.key);
-const REGULAR_ADMIN_PERMISSIONS = PERMISSION_CATALOG.filter(
+const SUPER_ADMIN_PERMISSIONS: UserPermission[] = PERMISSION_CATALOG.map((p) => ({
+  key: p.key,
+  scopeKey: 'any',
+}));
+
+const REGULAR_ADMIN_PERMISSIONS: UserPermission[] = PERMISSION_CATALOG.filter(
   (p) => p.resource !== 'iam' && p.resource !== 'audit',
-).map((p) => p.key);
-const MEMBER_PERMISSIONS = [
-  PERMISSIONS.JOBS_CREATE,
-  PERMISSIONS.JOBS_READ,
-  PERMISSIONS.JOBS_DELETE,
-  PERMISSIONS.JOBS_COMPLETE_UPLOAD,
-  PERMISSIONS.JOBS_RETRY_UPLOAD,
-  PERMISSIONS.JOBS_REORDER,
-  PERMISSIONS.FILES_READ_METADATA,
-  PERMISSIONS.FILES_DOWNLOAD,
-  PERMISSIONS.USERS_UPDATE_PROFILE,
+).map((p) => ({ key: p.key, scopeKey: 'any' }));
+
+const MEMBER_PERMISSIONS: UserPermission[] = [
+  { key: PERMISSIONS.JOBS_CREATE, scopeKey: 'own' },
+  { key: PERMISSIONS.JOBS_LIST, scopeKey: 'own' },
+  { key: PERMISSIONS.JOBS_READ, scopeKey: 'own' },
+  { key: PERMISSIONS.JOBS_DELETE, scopeKey: 'own' },
+  { key: PERMISSIONS.JOBS_COMPLETE_UPLOAD, scopeKey: 'own' },
+  { key: PERMISSIONS.JOBS_RETRY_UPLOAD, scopeKey: 'own' },
+  { key: PERMISSIONS.JOBS_REORDER, scopeKey: 'own' },
+  { key: PERMISSIONS.FILES_READ_METADATA, scopeKey: 'own' },
+  { key: PERMISSIONS.FILES_DOWNLOAD, scopeKey: 'own' },
+  { key: PERMISSIONS.USERS_UPDATE_PROFILE, scopeKey: 'own' },
 ];
 
 export function mockPermissionsForGroups(groupKeys: string[]): UserPermission[] {
-  let keys: string[];
-  if (groupKeys.includes('super_admins')) keys = ALL_PERMISSIONS;
-  else if (groupKeys.includes('regular_admins')) keys = REGULAR_ADMIN_PERMISSIONS;
-  else if (groupKeys.includes('members')) keys = MEMBER_PERMISSIONS;
-  else keys = [];
-  return keys.map((key) => ({ key, scopeKey: 'any' }));
+  if (groupKeys.includes('super_admins')) return SUPER_ADMIN_PERMISSIONS;
+  if (groupKeys.includes('regular_admins')) return REGULAR_ADMIN_PERMISSIONS;
+  if (groupKeys.includes('members')) return MEMBER_PERMISSIONS;
+  return [];
 }
 
 export function mockUserHasPermission(user: User, permission: string): boolean {

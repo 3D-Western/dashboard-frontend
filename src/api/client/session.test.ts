@@ -5,6 +5,7 @@ import { http, HttpResponse } from 'msw';
 import { endpoints } from './endpoints';
 import { ErrorCodes } from './errors';
 import { createMockUserResponse } from '@test/utils/mockFactories';
+import { hasPermission } from '@/types/user';
 
 describe('sessionApi', () => {
   describe('current', () => {
@@ -93,6 +94,70 @@ describe('sessionApi', () => {
       await sessionApi.current();
 
       expect(requestCredentials).toBe('include');
+    });
+
+    it('returns permissions as UserPermission objects so hasPermission works', async () => {
+      const permissions = [
+        { key: 'users:list', scopeKey: 'any' },
+        { key: 'jobs:read', scopeKey: 'own' },
+      ];
+
+      mockServer.use(
+        http.get('*' + endpoints.users.me, () =>
+          HttpResponse.json({
+            success: true,
+            data: { user: createMockUserResponse(), groups: [], permissions, activeJobCount: 0 },
+          }),
+        ),
+      );
+
+      const { user } = await sessionApi.current();
+
+      expect(user?.permissions).toEqual(permissions);
+      // These would both be false if permissions were plain strings instead of {key, scopeKey} objects
+      expect(hasPermission(user, 'users:list')).toBe(true);
+      expect(hasPermission(user, 'jobs:read')).toBe(true);
+      expect(hasPermission(user, 'users:create')).toBe(false);
+    });
+
+    it('gives members own-scoped permissions only', async () => {
+      mockServer.use(
+        http.get('*' + endpoints.users.me, () =>
+          HttpResponse.json({
+            success: true,
+            data: {
+              user: createMockUserResponse(),
+              groups: [{ id: 1, groupKey: 'members', name: 'Members', isSystem: true, isActive: true, createdAt: '', updatedAt: '' }],
+              permissions: [{ key: 'jobs:read', scopeKey: 'own' }],
+              activeJobCount: 0,
+            },
+          }),
+        ),
+      );
+
+      const { user } = await sessionApi.current();
+
+      expect(user?.permissions.every((p) => p.scopeKey === 'own')).toBe(true);
+    });
+
+    it('gives super admins any-scoped permissions', async () => {
+      mockServer.use(
+        http.get('*' + endpoints.users.me, () =>
+          HttpResponse.json({
+            success: true,
+            data: {
+              user: createMockUserResponse(),
+              groups: [],
+              permissions: [{ key: 'users:list', scopeKey: 'any' }, { key: 'iam:read', scopeKey: 'any' }],
+              activeJobCount: 0,
+            },
+          }),
+        ),
+      );
+
+      const { user } = await sessionApi.current();
+
+      expect(user?.permissions.every((p) => p.scopeKey === 'any')).toBe(true);
     });
 
     it('handles network errors gracefully', async () => {

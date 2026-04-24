@@ -3,8 +3,71 @@ import { http, HttpResponse } from 'msw';
 import { iamApi } from './iam';
 import { endpoints } from './endpoints';
 import { mockServer } from '@/api/mocks';
+import type { IamRolePermission } from '@/types/iam';
 
 describe('iamApi', () => {
+  describe('listRolePermissions', () => {
+    it('returns IamRolePermission objects each with a scopeKey', async () => {
+      const mockPerms: IamRolePermission[] = [
+        { key: 'users:list', scopeKey: 'any', description: 'List all users', isDangerous: false, isActive: true },
+        { key: 'jobs:read', scopeKey: 'own', description: 'Read job details', isDangerous: false, isActive: true },
+      ];
+
+      mockServer.use(
+        http.get('*' + endpoints.iam.roles.permissions(1), () =>
+          HttpResponse.json({ success: true, data: mockPerms }),
+        ),
+      );
+
+      const result = await iamApi.listRolePermissions(1);
+
+      expect(result).toHaveLength(2);
+      expect(result[0]).toHaveProperty('key', 'users:list');
+      expect(result[0]).toHaveProperty('scopeKey', 'any');
+      expect(result[1]).toHaveProperty('key', 'jobs:read');
+      expect(result[1]).toHaveProperty('scopeKey', 'own');
+    });
+  });
+
+  describe('replaceRolePermissions', () => {
+    it('sends scopeKey in the request body', async () => {
+      let capturedBody: unknown;
+
+      mockServer.use(
+        http.put('*' + endpoints.iam.roles.permissions(2), async ({ request }) => {
+          capturedBody = await request.json();
+          return HttpResponse.json({ success: true, data: [] });
+        }),
+      );
+
+      await iamApi.replaceRolePermissions(2, {
+        permissions: [{ permissionKey: 'users:list', scopeKey: 'own' }],
+      });
+
+      expect(capturedBody).toEqual({
+        permissions: [{ permissionKey: 'users:list', scopeKey: 'own' }],
+      });
+    });
+
+    it('returns IamRolePermission objects with the saved scopeKey', async () => {
+      const savedPerms: IamRolePermission[] = [
+        { key: 'users:list', scopeKey: 'own', description: 'List all users', isDangerous: false, isActive: true },
+      ];
+
+      mockServer.use(
+        http.put('*' + endpoints.iam.roles.permissions(2), () =>
+          HttpResponse.json({ success: true, data: savedPerms }),
+        ),
+      );
+
+      const result = await iamApi.replaceRolePermissions(2, {
+        permissions: [{ permissionKey: 'users:list', scopeKey: 'own' }],
+      });
+
+      expect(result[0]).toHaveProperty('scopeKey', 'own');
+    });
+  });
+
   describe('listGroupUsers', () => {
     const response = {
       data: [
