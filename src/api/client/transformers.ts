@@ -1,4 +1,4 @@
-import { User, UserExperienceLevel, UserFaculty, Group } from '@/types/user';
+import { User, UserExperienceLevel, UserFaculty, UserPermission, Group } from '@/types/user';
 import { PaginatedResponse } from '@/types/common';
 import { UserResponse, UserListResponseRaw, GroupResponse } from '../types';
 
@@ -110,7 +110,7 @@ export function transformGroupResponse(groupResponse: GroupResponse): Group {
 export function transformUserResponse(
   userResponse: UserResponse,
   groups: GroupResponse[] = [],
-  permissions: string[] = [],
+  permissions: UserPermission[] = [],
 ): User {
   return {
     studentId: userResponse.studentId,

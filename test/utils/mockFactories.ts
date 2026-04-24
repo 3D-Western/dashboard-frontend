@@ -1,9 +1,11 @@
 import { faker } from '@faker-js/faker';
-import { User, UserExperienceLevel, Group } from '@/types/user';
+import { User, UserExperienceLevel, UserPermission, Group } from '@/types/user';
 import { PrintJob, PrintJobStatus } from '@/types/jobs';
 import { FileMetadata, FileUploadResult } from '@/types/file';
 import { Invitation, InvitationStatus } from '@/types/invitation';
 import { UserResponse, GroupResponse } from '@/api/types';
+
+export const perm = (key: string, scopeKey = 'any'): UserPermission => ({ key, scopeKey });
 
 const MOCK_GROUP_MEMBERS: Group = {
   id: 1,

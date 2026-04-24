@@ -2,6 +2,8 @@ import {
   IamRole,
   IamGroup,
   IamPermission,
+  IamRolePermission,
+  IamScope,
   IamGroupMember,
   GroupMembersParams,
   CreateIamRoleRequest,
@@ -30,6 +32,14 @@ export const iamApi = {
 
   listPermissions: async (options?: RequestInit) => {
     return apiRequest<IamPermission[]>(`${getBaseUrl()}${endpoints.iam.permissions}`, {
+      method: 'GET',
+      credentials: 'include',
+      ...options,
+    });
+  },
+
+  listScopes: async (options?: RequestInit) => {
+    return apiRequest<IamScope[]>(`${getBaseUrl()}${endpoints.iam.scopes}`, {
       method: 'GET',
       credentials: 'include',
       ...options,
@@ -86,7 +96,7 @@ export const iamApi = {
   // ── Role Permissions ──────────────────────────────────────────────────────
 
   listRolePermissions: async (roleId: number, options?: RequestInit) => {
-    return apiRequest<IamPermission[]>(
+    return apiRequest<IamRolePermission[]>(
       `${getBaseUrl()}${endpoints.iam.roles.permissions(roleId)}`,
       { method: 'GET', credentials: 'include', ...options },
     );
@@ -97,7 +107,7 @@ export const iamApi = {
     data: ReplaceRolePermissionsRequest,
     options?: RequestInit,
   ) => {
-    return apiRequest<IamPermission[]>(
+    return apiRequest<IamRolePermission[]>(
       `${getBaseUrl()}${endpoints.iam.roles.permissions(roleId)}`,
       {
         method: 'PUT',

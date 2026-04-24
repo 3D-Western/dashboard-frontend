@@ -118,16 +118,12 @@ const regularAdminPermissions = PERMISSIONS.filter(
 const memberPermissionKeys = new Set<IamPermission['key']>([
   PERMISSION_KEYS.JOBS_CREATE,
   PERMISSION_KEYS.JOBS_READ,
-  PERMISSION_KEYS.JOBS_LIST,
-  PERMISSION_KEYS.JOBS_UPDATE_STATUS,
   PERMISSION_KEYS.JOBS_DELETE,
   PERMISSION_KEYS.JOBS_COMPLETE_UPLOAD,
   PERMISSION_KEYS.JOBS_RETRY_UPLOAD,
   PERMISSION_KEYS.JOBS_REORDER,
   PERMISSION_KEYS.FILES_READ_METADATA,
   PERMISSION_KEYS.FILES_DOWNLOAD,
-  PERMISSION_KEYS.FILES_LIST,
-  PERMISSION_KEYS.USERS_READ,
   PERMISSION_KEYS.USERS_UPDATE_PROFILE,
 ]);
 
@@ -147,11 +143,11 @@ let nextGroupId = 4;
 
 // ── Helper ─────────────────────────────────────────────────────────────────────
 
-function requireAdmin(cookies: Record<string, string>) {
+function requirePermission(cookies: Record<string, string>, permission: string) {
   const sessionId = cookies['sessionToken'] || '';
   const user = db.validateSession(sessionId);
   if (!user) return { error: createInvalidSessionResponse() };
-  if (!mockUserHasPermission(user, PERMISSION_KEYS.IAM_READ)) {
+  if (!mockUserHasPermission(user, permission)) {
     return {
       error: HttpResponse.json(
         generateErrorResponse({ code: FORBIDDEN, message: 'Insufficient permissions' }),
@@ -160,6 +156,10 @@ function requireAdmin(cookies: Record<string, string>) {
     };
   }
   return { user };
+}
+
+function requireIamRead(cookies: Record<string, string>) {
+  return requirePermission(cookies, PERMISSION_KEYS.IAM_READ);
 }
 
 function applyActiveOnly(items: { isActive: boolean }[], activeOnly: boolean) {
@@ -171,14 +171,14 @@ function applyActiveOnly(items: { isActive: boolean }[], activeOnly: boolean) {
 export const iamHandlers = [
   // GET /permissions
   http.get(`${apiUrl}${endpoints.iam.permissions}`, ({ cookies }) => {
-    const { error } = requireAdmin(cookies);
+    const { error } = requireIamRead(cookies);
     if (error) return error;
     return HttpResponse.json(generateSuccessResponse(PERMISSIONS));
   }),
 
   // GET /roles
   http.get(`${apiUrl}${endpoints.iam.roles.list}`, ({ cookies, request }) => {
-    const { error } = requireAdmin(cookies);
+    const { error } = requireIamRead(cookies);
     if (error) return error;
     const url = new URL(request.url);
     const activeOnly = url.searchParams.get('activeOnly') !== 'false';
@@ -187,7 +187,7 @@ export const iamHandlers = [
 
   // GET /roles/:id
   http.get(`${apiUrl}/api/v1/admin/iam/roles/:id`, ({ cookies, params }) => {
-    const { error } = requireAdmin(cookies);
+    const { error } = requireIamRead(cookies);
     if (error) return error;
     const role = mockRoles.find((r) => r.id === parseInt(params.id as string, 10));
     if (!role) {
@@ -201,7 +201,7 @@ export const iamHandlers = [
 
   // POST /roles
   http.post(`${apiUrl}${endpoints.iam.roles.create}`, async ({ cookies, request }) => {
-    const { error } = requireAdmin(cookies);
+    const { error } = requirePermission(cookies, PERMISSION_KEYS.IAM_ASSIGN_ROLES);
     if (error) return error;
     const data = (await request.json()) as CreateIamRoleRequest;
     if (!data.roleKey || !data.name) {
@@ -237,7 +237,7 @@ export const iamHandlers = [
 
   // PATCH /roles/:id
   http.patch(`${apiUrl}/api/v1/admin/iam/roles/:id`, async ({ cookies, params, request }) => {
-    const { error } = requireAdmin(cookies);
+    const { error } = requirePermission(cookies, PERMISSION_KEYS.IAM_ASSIGN_ROLES);
     if (error) return error;
     const role = mockRoles.find((r) => r.id === parseInt(params.id as string, 10));
     if (!role) {
@@ -262,7 +262,7 @@ export const iamHandlers = [
 
   // DELETE /roles/:id (deactivate)
   http.delete(`${apiUrl}/api/v1/admin/iam/roles/:id`, ({ cookies, params }) => {
-    const { error } = requireAdmin(cookies);
+    const { error } = requirePermission(cookies, PERMISSION_KEYS.IAM_ASSIGN_ROLES);
     if (error) return error;
     const role = mockRoles.find((r) => r.id === parseInt(params.id as string, 10));
     if (!role) {
@@ -284,7 +284,7 @@ export const iamHandlers = [
 
   // GET /roles/:id/permissions
   http.get(`${apiUrl}/api/v1/admin/iam/roles/:id/permissions`, ({ cookies, params }) => {
-    const { error } = requireAdmin(cookies);
+    const { error } = requireIamRead(cookies);
     if (error) return error;
     const id = parseInt(params.id as string, 10);
     if (!mockRoles.find((r) => r.id === id)) {
@@ -300,7 +300,7 @@ export const iamHandlers = [
   http.put(
     `${apiUrl}/api/v1/admin/iam/roles/:id/permissions`,
     async ({ cookies, params, request }) => {
-      const { error } = requireAdmin(cookies);
+      const { error } = requirePermission(cookies, PERMISSION_KEYS.IAM_ASSIGN_PERMISSIONS);
       if (error) return error;
       const id = parseInt(params.id as string, 10);
       const role = mockRoles.find((r) => r.id === id);
@@ -336,7 +336,7 @@ export const iamHandlers = [
 
   // GET /groups
   http.get(`${apiUrl}${endpoints.iam.groups.list}`, ({ cookies, request }) => {
-    const { error } = requireAdmin(cookies);
+    const { error } = requireIamRead(cookies);
     if (error) return error;
     const url = new URL(request.url);
     const activeOnly = url.searchParams.get('activeOnly') !== 'false';
@@ -345,7 +345,7 @@ export const iamHandlers = [
 
   // GET /groups/:id
   http.get(`${apiUrl}/api/v1/admin/iam/groups/:id`, ({ cookies, params }) => {
-    const { error } = requireAdmin(cookies);
+    const { error } = requireIamRead(cookies);
     if (error) return error;
     const group = mockGroups.find((g) => g.id === parseInt(params.id as string, 10));
     if (!group) {
@@ -359,7 +359,7 @@ export const iamHandlers = [
 
   // POST /groups
   http.post(`${apiUrl}${endpoints.iam.groups.create}`, async ({ cookies, request }) => {
-    const { error } = requireAdmin(cookies);
+    const { error } = requirePermission(cookies, PERMISSION_KEYS.IAM_MANAGE_GROUPS);
     if (error) return error;
     const data = (await request.json()) as CreateIamGroupRequest;
     if (!data.groupKey || !data.name) {
@@ -398,7 +398,7 @@ export const iamHandlers = [
 
   // PATCH /groups/:id
   http.patch(`${apiUrl}/api/v1/admin/iam/groups/:id`, async ({ cookies, params, request }) => {
-    const { error } = requireAdmin(cookies);
+    const { error } = requirePermission(cookies, PERMISSION_KEYS.IAM_MANAGE_GROUPS);
     if (error) return error;
     const group = mockGroups.find((g) => g.id === parseInt(params.id as string, 10));
     if (!group) {
@@ -423,7 +423,7 @@ export const iamHandlers = [
 
   // DELETE /groups/:id (deactivate)
   http.delete(`${apiUrl}/api/v1/admin/iam/groups/:id`, ({ cookies, params }) => {
-    const { error } = requireAdmin(cookies);
+    const { error } = requirePermission(cookies, PERMISSION_KEYS.IAM_MANAGE_GROUPS);
     if (error) return error;
     const group = mockGroups.find((g) => g.id === parseInt(params.id as string, 10));
     if (!group) {
@@ -445,7 +445,7 @@ export const iamHandlers = [
 
   // GET /groups/:id/roles
   http.get(`${apiUrl}/api/v1/admin/iam/groups/:id/roles`, ({ cookies, params }) => {
-    const { error } = requireAdmin(cookies);
+    const { error } = requireIamRead(cookies);
     if (error) return error;
     const id = parseInt(params.id as string, 10);
     if (!mockGroups.find((g) => g.id === id)) {
@@ -463,7 +463,7 @@ export const iamHandlers = [
 
   // POST /groups/:id/roles
   http.post(`${apiUrl}/api/v1/admin/iam/groups/:id/roles`, async ({ cookies, params, request }) => {
-    const { error } = requireAdmin(cookies);
+    const { error } = requirePermission(cookies, PERMISSION_KEYS.IAM_MANAGE_GROUPS);
     if (error) return error;
     const id = parseInt(params.id as string, 10);
     if (!mockGroups.find((g) => g.id === id)) {
@@ -488,7 +488,7 @@ export const iamHandlers = [
 
   // DELETE /groups/:id/roles/:roleId
   http.delete(`${apiUrl}/api/v1/admin/iam/groups/:id/roles/:roleId`, ({ cookies, params }) => {
-    const { error } = requireAdmin(cookies);
+    const { error } = requirePermission(cookies, PERMISSION_KEYS.IAM_MANAGE_GROUPS);
     if (error) return error;
     const id = parseInt(params.id as string, 10);
     const roleId = parseInt(params.roleId as string, 10);
@@ -502,7 +502,7 @@ export const iamHandlers = [
 
   // GET /users/:userId/groups
   http.get(`${apiUrl}/api/v1/admin/iam/users/:userId/groups`, ({ cookies, params }) => {
-    const { error } = requireAdmin(cookies);
+    const { error } = requireIamRead(cookies);
     if (error) return error;
     const userId = parseInt(params.userId as string, 10);
     const user = db.getUserById(userId);
@@ -520,7 +520,7 @@ export const iamHandlers = [
   http.post(
     `${apiUrl}/api/v1/admin/iam/users/:userId/groups`,
     async ({ cookies, params, request }) => {
-      const { error } = requireAdmin(cookies);
+      const { error } = requirePermission(cookies, PERMISSION_KEYS.IAM_MANAGE_GROUPS);
       if (error) return error;
       const userId = parseInt(params.userId as string, 10);
       const user = db.getUserById(userId);
@@ -545,7 +545,7 @@ export const iamHandlers = [
 
   // DELETE /users/:userId/groups/:groupId
   http.delete(`${apiUrl}/api/v1/admin/iam/users/:userId/groups/:groupId`, ({ cookies, params }) => {
-    const { error } = requireAdmin(cookies);
+    const { error } = requirePermission(cookies, PERMISSION_KEYS.IAM_MANAGE_GROUPS);
     if (error) return error;
     const userId = parseInt(params.userId as string, 10);
     const groupId = parseInt(params.groupId as string, 10);
@@ -565,7 +565,7 @@ export const iamHandlers = [
 
   // GET /users/:userId/roles
   http.get(`${apiUrl}/api/v1/admin/iam/users/:userId/roles`, ({ cookies, params }) => {
-    const { error } = requireAdmin(cookies);
+    const { error } = requireIamRead(cookies);
     if (error) return error;
     const userId = parseInt(params.userId as string, 10);
     if (!db.getUserById(userId)) {
@@ -585,7 +585,7 @@ export const iamHandlers = [
   http.post(
     `${apiUrl}/api/v1/admin/iam/users/:userId/roles`,
     async ({ cookies, params, request }) => {
-      const { error } = requireAdmin(cookies);
+      const { error } = requirePermission(cookies, PERMISSION_KEYS.IAM_ASSIGN_ROLES);
       if (error) return error;
       const userId = parseInt(params.userId as string, 10);
       if (!db.getUserById(userId)) {
@@ -611,7 +611,7 @@ export const iamHandlers = [
 
   // DELETE /users/:userId/roles/:roleId
   http.delete(`${apiUrl}/api/v1/admin/iam/users/:userId/roles/:roleId`, ({ cookies, params }) => {
-    const { error } = requireAdmin(cookies);
+    const { error } = requirePermission(cookies, PERMISSION_KEYS.IAM_ASSIGN_ROLES);
     if (error) return error;
     const userId = parseInt(params.userId as string, 10);
     const roleId = parseInt(params.roleId as string, 10);
@@ -625,7 +625,7 @@ export const iamHandlers = [
 
   // GET /groups/:id/users
   http.get(`${apiUrl}/api/v1/admin/iam/groups/:id/users`, ({ cookies, params, request }) => {
-    const { error } = requireAdmin(cookies);
+    const { error } = requireIamRead(cookies);
     if (error) return error;
 
     const groupId = parseInt(params.id as string, 10);
@@ -684,7 +684,7 @@ export const iamHandlers = [
 
   // GET /audit-logs
   http.get(`${apiUrl}${endpoints.iam.auditLogs}`, ({ cookies, request }) => {
-    const { error } = requireAdmin(cookies);
+    const { error } = requirePermission(cookies, PERMISSION_KEYS.AUDIT_READ);
     if (error) return error;
     const url = new URL(request.url);
     const page = Math.max(0, parseInt(url.searchParams.get('page') || '1', 10) - 1);

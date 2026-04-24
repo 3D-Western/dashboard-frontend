@@ -2,7 +2,8 @@ import { JobCategory, PrintJob } from '@/types/jobs';
 import { Invitation } from '@/types/invitation';
 import { FileUploadResult, FileMetadata, FileList } from '@/types/file';
 import { PaginatedResponse } from '@/types/common';
-import { IamRole, IamGroup, IamPermission, IamAuditLog } from '@/types/iam';
+import { IamRole, IamGroup, IamPermission, IamScope, IamAuditLog } from '@/types/iam';
+import { UserPermission } from '@/types/user';
 
 export interface ApiResponseError {
   code: string;
@@ -41,7 +42,7 @@ export interface GroupResponse {
 export interface ApiGetCurrentSessionResponse {
   user: UserResponse | null;
   groups: GroupResponse[];
-  permissions: string[];
+  permissions: UserPermission[];
   activeJobCount: number;
 }
 
@@ -126,6 +127,7 @@ export type IamRoleListResponse = IamRole[];
 export type IamGroupResponse = IamGroup;
 export type IamGroupListResponse = IamGroup[];
 export type IamPermissionListResponse = IamPermission[];
+export type IamScopeListResponse = IamScope[];
 export type IamAuditLogResponse = IamAuditLog;
 
 export interface IamAuditLogPageResponse {

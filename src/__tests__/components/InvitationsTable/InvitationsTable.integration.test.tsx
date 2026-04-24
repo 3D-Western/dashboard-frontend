@@ -9,6 +9,7 @@ import {
   createMockRevokedInvitation,
   createMockInvitations,
   createMockUser,
+  perm,
 } from '@test/utils/mockFactories';
 import { http, HttpResponse } from 'msw';
 import { mockServer } from '@/api/mocks';
@@ -16,7 +17,7 @@ import { endpoints } from '@/api/client/endpoints';
 import { PERMISSIONS } from '@/constants/permissions';
 
 const mockAdminUser = createMockUser({
-  permissions: [PERMISSIONS.INVITATIONS_READ, PERMISSIONS.INVITATIONS_REVOKE],
+  permissions: [perm(PERMISSIONS.INVITATIONS_READ), perm(PERMISSIONS.INVITATIONS_REVOKE)],
 });
 
 vi.mock('sonner', () => ({
@@ -552,7 +553,7 @@ describe('InvitationsTable Integration', () => {
         const invitations = [createMockPendingInvitation()];
         const pagination = { currentPage: 1, pageSize: 10, totalItems: 1, totalPages: 1 };
         const userWithoutRevokePermission = createMockUser({
-          permissions: [PERMISSIONS.INVITATIONS_READ],
+          permissions: [perm(PERMISSIONS.INVITATIONS_READ)],
         });
 
         render(
@@ -576,7 +577,7 @@ describe('InvitationsTable Integration', () => {
         const invitations = [createMockPendingInvitation()];
         const pagination = { currentPage: 1, pageSize: 10, totalItems: 1, totalPages: 1 };
         const userWithoutRevokePermission = createMockUser({
-          permissions: [PERMISSIONS.INVITATIONS_READ],
+          permissions: [perm(PERMISSIONS.INVITATIONS_READ)],
         });
 
         render(
@@ -601,7 +602,7 @@ describe('InvitationsTable Integration', () => {
         const invitations = [createMockPendingInvitation()];
         const pagination = { currentPage: 1, pageSize: 10, totalItems: 1, totalPages: 1 };
         const userWithoutReadPermission = createMockUser({
-          permissions: [PERMISSIONS.INVITATIONS_REVOKE],
+          permissions: [perm(PERMISSIONS.INVITATIONS_REVOKE)],
         });
 
         render(
@@ -625,7 +626,7 @@ describe('InvitationsTable Integration', () => {
         const invitations = [createMockPendingInvitation()];
         const pagination = { currentPage: 1, pageSize: 10, totalItems: 1, totalPages: 1 };
         const userWithoutReadPermission = createMockUser({
-          permissions: [PERMISSIONS.INVITATIONS_REVOKE],
+          permissions: [perm(PERMISSIONS.INVITATIONS_REVOKE)],
         });
 
         render(

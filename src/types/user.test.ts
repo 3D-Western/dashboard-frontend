@@ -1,6 +1,8 @@
 import { describe, it, expect } from 'vitest';
 import { hasAnyAdminPermission, hasPermission, User } from './user';
 
+const p = (key: string) => ({ key, scopeKey: 'any' });
+
 const makeUser = (overrides: Partial<User> = {}): User => ({
   studentId: 251000001,
   email: 'test@uwo.ca',
@@ -13,12 +15,12 @@ const makeUser = (overrides: Partial<User> = {}): User => ({
 
 describe('hasAnyAdminPermission', () => {
   it('returns true when user has an admin section permission', () => {
-    const user = makeUser({ permissions: ['users:list'] });
+    const user = makeUser({ permissions: [p('users:list')] });
     expect(hasAnyAdminPermission(user)).toBe(true);
   });
 
   it('returns false when user has only non-admin permissions', () => {
-    const user = makeUser({ permissions: ['jobs:create', 'files:download'] });
+    const user = makeUser({ permissions: [p('jobs:create'), p('files:download')] });
     expect(hasAnyAdminPermission(user)).toBe(false);
   });
 
@@ -30,12 +32,12 @@ describe('hasAnyAdminPermission', () => {
 
 describe('hasPermission', () => {
   it('returns true when user has the permission', () => {
-    const user = makeUser({ permissions: ['users:list', 'jobs:list'] });
+    const user = makeUser({ permissions: [p('users:list'), p('jobs:list')] });
     expect(hasPermission(user, 'users:list')).toBe(true);
   });
 
   it('returns false when user does not have the permission', () => {
-    const user = makeUser({ permissions: ['jobs:list'] });
+    const user = makeUser({ permissions: [p('jobs:list')] });
     expect(hasPermission(user, 'users:list')).toBe(false);
   });
 
@@ -45,7 +47,7 @@ describe('hasPermission', () => {
   });
 
   it('is case-sensitive', () => {
-    const user = makeUser({ permissions: ['users:list'] });
+    const user = makeUser({ permissions: [p('users:list')] });
     expect(hasPermission(user, 'Users:List')).toBe(false);
   });
 });

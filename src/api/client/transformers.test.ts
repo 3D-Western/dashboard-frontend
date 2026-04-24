@@ -196,9 +196,13 @@ describe('transformers', () => {
         lastName: 'User',
       };
 
-      const result = transformUserResponse(userResponse, [], ['users:list', 'jobs:list']);
+      const permissions = [
+        { key: 'users:list', scopeKey: 'any' },
+        { key: 'jobs:list', scopeKey: 'any' },
+      ];
+      const result = transformUserResponse(userResponse, [], permissions);
 
-      expect(result.permissions).toEqual(['users:list', 'jobs:list']);
+      expect(result.permissions).toEqual(permissions);
     });
 
     it('defaults to empty permissions when none provided', () => {

@@ -29,6 +29,15 @@ export interface IamPermission {
   isActive: boolean;
 }
 
+export interface IamRolePermission extends IamPermission {
+  scopeKey: string;
+}
+
+export interface IamScope {
+  scopeKey: string;
+  description: string;
+}
+
 export interface IamAuditLog {
   id: number;
   actorUserId?: number | null;

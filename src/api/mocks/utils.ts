@@ -5,6 +5,7 @@ import { HttpResponse } from 'msw';
 import { ErrorCodes } from '../client/errors';
 import { ApiResponseError, GroupResponse } from '../types';
 import { PERMISSION_CATALOG, PERMISSIONS } from '@/constants/permissions';
+import type { UserPermission } from '@/types/user';
 import type { User } from './database/types';
 
 /**
@@ -53,21 +54,26 @@ const REGULAR_ADMIN_PERMISSIONS = PERMISSION_CATALOG.filter(
 const MEMBER_PERMISSIONS = [
   PERMISSIONS.JOBS_CREATE,
   PERMISSIONS.JOBS_READ,
+  PERMISSIONS.JOBS_DELETE,
   PERMISSIONS.JOBS_COMPLETE_UPLOAD,
   PERMISSIONS.JOBS_RETRY_UPLOAD,
+  PERMISSIONS.JOBS_REORDER,
   PERMISSIONS.FILES_READ_METADATA,
   PERMISSIONS.FILES_DOWNLOAD,
+  PERMISSIONS.USERS_UPDATE_PROFILE,
 ];
 
-export function mockPermissionsForGroups(groupKeys: string[]): string[] {
-  if (groupKeys.includes('super_admins')) return ALL_PERMISSIONS;
-  if (groupKeys.includes('regular_admins')) return REGULAR_ADMIN_PERMISSIONS;
-  if (groupKeys.includes('members')) return MEMBER_PERMISSIONS;
-  return [];
+export function mockPermissionsForGroups(groupKeys: string[]): UserPermission[] {
+  let keys: string[];
+  if (groupKeys.includes('super_admins')) keys = ALL_PERMISSIONS;
+  else if (groupKeys.includes('regular_admins')) keys = REGULAR_ADMIN_PERMISSIONS;
+  else if (groupKeys.includes('members')) keys = MEMBER_PERMISSIONS;
+  else keys = [];
+  return keys.map((key) => ({ key, scopeKey: 'any' }));
 }
 
 export function mockUserHasPermission(user: User, permission: string): boolean {
-  return mockPermissionsForGroups(user.groups).includes(permission);
+  return mockPermissionsForGroups(user.groups).some((p) => p.key === permission);
 }
 
 export const generateSuccessResponse = (data: unknown) => {

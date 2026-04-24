@@ -3,7 +3,7 @@ import { screen } from '@testing-library/react';
 import { render } from '@test/utils/render';
 import { SidebarProvider } from '@/components/ui/sidebar';
 import { AppSidebar } from './index';
-import { createMockUser, createMockAdmin } from '@test/utils/mockFactories';
+import { createMockUser, createMockAdmin, perm } from '@test/utils/mockFactories';
 import { PERMISSIONS } from '@/constants/permissions';
 import { User } from '@/types/user';
 
@@ -38,7 +38,7 @@ describe('AppSidebar', () => {
 
     it('shows admin section for super_admins with all permissions', () => {
       const admin = createMockAdmin({
-        permissions: [PERMISSIONS.USERS_LIST, PERMISSIONS.JOBS_LIST, PERMISSIONS.INVITATIONS_LIST],
+        permissions: [perm(PERMISSIONS.USERS_LIST), perm(PERMISSIONS.JOBS_LIST), perm(PERMISSIONS.INVITATIONS_LIST)],
       });
       renderSidebar(admin);
 
@@ -48,7 +48,7 @@ describe('AppSidebar', () => {
 
   describe('admin item permission-based filtering', () => {
     it('shows User Management only when user has users:list', () => {
-      const admin = createMockAdmin({ permissions: [PERMISSIONS.USERS_LIST] });
+      const admin = createMockAdmin({ permissions: [perm(PERMISSIONS.USERS_LIST)] });
       renderSidebar(admin);
 
       expect(screen.getByRole('link', { name: /user management/i })).toBeInTheDocument();
@@ -59,7 +59,7 @@ describe('AppSidebar', () => {
     });
 
     it('shows Job Management only when user has jobs:list', () => {
-      const admin = createMockAdmin({ permissions: [PERMISSIONS.JOBS_LIST] });
+      const admin = createMockAdmin({ permissions: [perm(PERMISSIONS.JOBS_LIST)] });
       renderSidebar(admin);
 
       expect(screen.getByRole('link', { name: /job management/i })).toBeInTheDocument();
@@ -67,7 +67,7 @@ describe('AppSidebar', () => {
     });
 
     it('shows Invitation Management only when user has invitations:list', () => {
-      const admin = createMockAdmin({ permissions: [PERMISSIONS.INVITATIONS_LIST] });
+      const admin = createMockAdmin({ permissions: [perm(PERMISSIONS.INVITATIONS_LIST)] });
       renderSidebar(admin);
 
       expect(screen.getByRole('link', { name: /invitation management/i })).toBeInTheDocument();
@@ -75,7 +75,7 @@ describe('AppSidebar', () => {
     });
 
     it('shows IAM Management only when user has iam:read', () => {
-      const admin = createMockAdmin({ permissions: [PERMISSIONS.IAM_READ] });
+      const admin = createMockAdmin({ permissions: [perm(PERMISSIONS.IAM_READ)] });
       renderSidebar(admin);
 
       expect(screen.getByRole('link', { name: /iam management/i })).toBeInTheDocument();
@@ -84,7 +84,7 @@ describe('AppSidebar', () => {
     });
 
     it('shows Audit Log only when user has audit:read', () => {
-      const admin = createMockAdmin({ permissions: [PERMISSIONS.AUDIT_READ] });
+      const admin = createMockAdmin({ permissions: [perm(PERMISSIONS.AUDIT_READ)] });
       renderSidebar(admin);
 
       expect(screen.getByRole('link', { name: /audit log/i })).toBeInTheDocument();
@@ -95,11 +95,11 @@ describe('AppSidebar', () => {
     it('shows all admin items when user has all relevant permissions', () => {
       const admin = createMockAdmin({
         permissions: [
-          PERMISSIONS.USERS_LIST,
-          PERMISSIONS.JOBS_LIST,
-          PERMISSIONS.INVITATIONS_LIST,
-          PERMISSIONS.IAM_READ,
-          PERMISSIONS.AUDIT_READ,
+          perm(PERMISSIONS.USERS_LIST),
+          perm(PERMISSIONS.JOBS_LIST),
+          perm(PERMISSIONS.INVITATIONS_LIST),
+          perm(PERMISSIONS.IAM_READ),
+          perm(PERMISSIONS.AUDIT_READ),
         ],
       });
       renderSidebar(admin);
@@ -112,7 +112,7 @@ describe('AppSidebar', () => {
     });
 
     it('shows Admin Dashboard when user has any admin permission', () => {
-      const admin = createMockAdmin({ permissions: [PERMISSIONS.USERS_LIST] });
+      const admin = createMockAdmin({ permissions: [perm(PERMISSIONS.USERS_LIST)] });
       renderSidebar(admin);
 
       expect(screen.getByRole('link', { name: /admin dashboard/i })).toBeInTheDocument();

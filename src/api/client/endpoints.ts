@@ -45,6 +45,7 @@ export const endpoints = {
   },
   iam: {
     permissions: '/api/v1/admin/iam/permissions',
+    scopes: '/api/v1/admin/iam/scopes',
     roles: {
       list: '/api/v1/admin/iam/roles',
       byId: (id: number) => `/api/v1/admin/iam/roles/${id}`,

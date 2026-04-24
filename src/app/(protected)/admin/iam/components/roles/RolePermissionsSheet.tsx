@@ -14,7 +14,7 @@ import {
 import { Skeleton } from '@/components/ui/skeleton';
 import { LOCKED_ROLE_KEYS, PERMISSION_CATALOG, PERMISSIONS } from '@/constants/permissions';
 import { useUser } from '@/providers/user-provider';
-import type { IamPermission, IamRole } from '@/types/iam';
+import type { IamRole } from '@/types/iam';
 import { hasPermission } from '@/types/user';
 import { AlertTriangle } from 'lucide-react';
 import { useEffect, useState } from 'react';
@@ -36,6 +36,8 @@ const RESOURCE_LABELS: Record<string, string> = {
   audit: 'Audit',
 };
 
+type ScopeKey = 'own' | 'any';
+
 export function RolePermissionsSheet({ role, open, onOpenChange }: RolePermissionsSheetProps) {
   const user = useUser();
   const isLocked = (LOCKED_ROLE_KEYS as readonly string[]).includes(role.roleKey);
@@ -44,8 +46,10 @@ export function RolePermissionsSheet({ role, open, onOpenChange }: RolePermissio
   const [isLoading, setIsLoading] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
-  const [assignedKeys, setAssignedKeys] = useState<Set<string>>(new Set());
-  const [editingKeys, setEditingKeys] = useState<Set<string>>(new Set());
+  // Map of permissionKey → scopeKey for currently saved permissions
+  const [assignedPerms, setAssignedPerms] = useState<Map<string, ScopeKey>>(new Map());
+  // Map of permissionKey → scopeKey being edited
+  const [editingPerms, setEditingPerms] = useState<Map<string, ScopeKey>>(new Map());
 
   useEffect(() => {
     if (!open) return;
@@ -57,9 +61,9 @@ export function RolePermissionsSheet({ role, open, onOpenChange }: RolePermissio
       try {
         const perms = await iamApi.listRolePermissions(role.id);
         if (cancelled) return;
-        const keys = new Set(perms.map((p) => p.key));
-        setAssignedKeys(keys);
-        setEditingKeys(new Set(keys));
+        const map = new Map(perms.map((p) => [p.key, p.scopeKey as ScopeKey]));
+        setAssignedPerms(map);
+        setEditingPerms(new Map(map));
       } catch {
         if (!cancelled) toast.error('Failed to load permissions.');
       } finally {
@@ -74,23 +78,31 @@ export function RolePermissionsSheet({ role, open, onOpenChange }: RolePermissio
   }, [open, role.id]);
 
   const handleEdit = () => {
-    setEditingKeys(new Set(assignedKeys));
+    setEditingPerms(new Map(assignedPerms));
     setIsEditing(true);
   };
 
   const handleCancel = () => {
-    setEditingKeys(new Set(assignedKeys));
+    setEditingPerms(new Map(assignedPerms));
     setIsEditing(false);
   };
 
   const handleToggle = (key: string, checked: boolean) => {
-    setEditingKeys((prev) => {
-      const next = new Set(prev);
+    setEditingPerms((prev) => {
+      const next = new Map(prev);
       if (checked) {
-        next.add(key);
+        next.set(key, 'any');
       } else {
         next.delete(key);
       }
+      return next;
+    });
+  };
+
+  const handleScopeChange = (key: string, scope: ScopeKey) => {
+    setEditingPerms((prev) => {
+      const next = new Map(prev);
+      next.set(key, scope);
       return next;
     });
   };
@@ -99,12 +111,12 @@ export function RolePermissionsSheet({ role, open, onOpenChange }: RolePermissio
     setIsSaving(true);
     try {
       await iamApi.replaceRolePermissions(role.id, {
-        permissions: Array.from(editingKeys).map((key) => ({
-          permissionKey: key as IamPermission['key'],
-          scopeKey: 'global',
+        permissions: Array.from(editingPerms.entries()).map(([permissionKey, scopeKey]) => ({
+          permissionKey: permissionKey as (typeof PERMISSION_CATALOG)[number]['key'],
+          scopeKey,
         })),
       });
-      setAssignedKeys(new Set(editingKeys));
+      setAssignedPerms(new Map(editingPerms));
       setIsEditing(false);
       toast.success('Permissions updated.');
     } catch {
@@ -124,7 +136,7 @@ export function RolePermissionsSheet({ role, open, onOpenChange }: RolePermissio
     {},
   );
 
-  const activeKeys = isEditing ? editingKeys : assignedKeys;
+  const activePerms = isEditing ? editingPerms : assignedPerms;
 
   const handleOpenChange = (next: boolean) => {
     if (!next) setIsEditing(false);
@@ -160,7 +172,8 @@ export function RolePermissionsSheet({ role, open, onOpenChange }: RolePermissio
                   </h3>
                   <div className="space-y-2">
                     {perms.map((perm) => {
-                      const isChecked = activeKeys.has(perm.key);
+                      const scopeKey = activePerms.get(perm.key);
+                      const isChecked = scopeKey !== undefined;
                       return (
                         <div key={perm.key} className="flex items-start gap-3">
                           <Checkbox
@@ -172,11 +185,11 @@ export function RolePermissionsSheet({ role, open, onOpenChange }: RolePermissio
                             }
                             className="mt-0.5"
                           />
-                          <label
-                            htmlFor={perm.key}
-                            className={`flex flex-col gap-0.5 text-sm ${isEditing ? 'cursor-pointer' : 'cursor-default'}`}
-                          >
-                            <div className="flex items-center gap-1.5">
+                          <div className="flex flex-1 flex-col gap-0.5">
+                            <label
+                              htmlFor={perm.key}
+                              className={`flex items-center gap-1.5 text-sm ${isEditing ? 'cursor-pointer' : 'cursor-default'}`}
+                            >
                               <span>{perm.description}</span>
                               {perm.isDangerous && (
                                 <AlertTriangle
@@ -184,9 +197,44 @@ export function RolePermissionsSheet({ role, open, onOpenChange }: RolePermissio
                                   aria-label="Dangerous permission"
                                 />
                               )}
+                            </label>
+                            <div className="flex items-center gap-2">
+                              <code className="text-xs text-muted-foreground">{perm.key}</code>
+                              {isChecked && (
+                                <span className="flex items-center gap-1 rounded border bg-muted px-1.5 py-0.5 text-xs">
+                                  {isEditing ? (
+                                    <>
+                                      <button
+                                        type="button"
+                                        onClick={() => handleScopeChange(perm.key, 'own')}
+                                        className={`rounded px-1 transition-colors ${
+                                          scopeKey === 'own'
+                                            ? 'bg-primary text-primary-foreground'
+                                            : 'text-muted-foreground hover:text-foreground'
+                                        }`}
+                                      >
+                                        own
+                                      </button>
+                                      <span className="text-muted-foreground">/</span>
+                                      <button
+                                        type="button"
+                                        onClick={() => handleScopeChange(perm.key, 'any')}
+                                        className={`rounded px-1 transition-colors ${
+                                          scopeKey === 'any'
+                                            ? 'bg-primary text-primary-foreground'
+                                            : 'text-muted-foreground hover:text-foreground'
+                                        }`}
+                                      >
+                                        any
+                                      </button>
+                                    </>
+                                  ) : (
+                                    <span className="text-muted-foreground">{scopeKey}</span>
+                                  )}
+                                </span>
+                              )}
                             </div>
-                            <code className="text-xs text-muted-foreground">{perm.key}</code>
-                          </label>
+                          </div>
                         </div>
                       );
                     })}
