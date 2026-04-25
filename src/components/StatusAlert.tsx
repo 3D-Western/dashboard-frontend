@@ -68,7 +68,7 @@ export function StatusAlert({
   }, [icon, variant]);
 
   // Map variant to Alert's supported variants
-  const alertVariant = variant === 'success' || variant === 'warning' ? 'default' : variant;
+  const alertVariant = variant === 'success' ? 'default' : variant;
 
   return (
     <Alert variant={alertVariant} className={cn(variantStyles[variant], className)}>
