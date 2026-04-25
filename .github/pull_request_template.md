@@ -1,10 +1,12 @@
-## Summary
+<!-- Write your PR title in the title field above, not here -->
 
-<!-- Brief description of what this PR does -->
+## Description
+
+<!-- Brief description of what this PR does and why -->
+
+Closes #
 
 ## Type of Change
-
-<!-- Mark the relevant option with an "x" -->
 
 - [ ] `feat` - New feature
 - [ ] `fix` - Bug fix
@@ -19,23 +21,32 @@
 
 -
 
-## Testing
+## How to Test
 
-<!-- Describe how this was tested -->
+<!-- Steps a reviewer can follow to verify this works -->
+
+1.
+
+<!-- Add screenshots here if there are UI changes -->
+
+## Breaking Changes
+
+<!-- Does this change any existing behaviour, APIs, or data structures? -->
+
+- [ ] No breaking changes
+- [ ] Yes — describe below:
+
+## Risk Level
+
+- [ ] Low — isolated change, well tested
+- [ ] Medium — touches shared code or multiple areas
+- [ ] High — significant behaviour change or limited test coverage
+
+## Checklist
 
 - [ ] Unit tests pass (`npm run test:run`)
 - [ ] E2E tests pass (`npm run test:e2e`)
 - [ ] Lint passes (`npm run lint:ci`)
-- [ ] Formats code (`npm run format`)
-- [ ] Manually tested in browser
-
-## Screenshots
-
-<!-- If applicable, add screenshots to demonstrate UI changes -->
-
-## Checklist
-
-- [ ] Code follows the project's style guidelines
 - [ ] Self-reviewed the code
-- [ ] No console.log or debugging code left in
-- [ ] Types are properly defined (no `any` unless necessary)
+- [ ] No `console.log` or debugging code left in
+- [ ] No `any` types unless necessary
