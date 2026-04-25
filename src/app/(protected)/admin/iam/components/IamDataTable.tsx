@@ -104,8 +104,11 @@ export function IamDataTable<TData, TValue>({
       </div>
 
       <div className="overflow-hidden rounded-md border">
-        <Table aria-label={tableLabel} aria-describedby={`${tableLabel}-caption`}>
-          <caption id={`${tableLabel}-caption`} className="sr-only">
+        <Table
+          aria-label={tableLabel}
+          aria-describedby={`${tableLabel.toLowerCase().replace(/\s+/g, '-')}-caption`}
+        >
+          <caption id={`${tableLabel.toLowerCase().replace(/\s+/g, '-')}-caption`} className="sr-only">
             {tableCaption}
           </caption>
           <TableHeader>

@@ -1,5 +1,6 @@
 import { faker } from '@faker-js/faker';
-import { User, UserExperienceLevel, UserPermission, Group } from '@/types/user';
+import { User, UserExperienceLevel, UserPermission } from '@/types/user';
+import type { IamGroup } from '@/types/iam';
 import { PrintJob, PrintJobStatus } from '@/types/jobs';
 import { FileMetadata, FileUploadResult } from '@/types/file';
 import { Invitation, InvitationStatus } from '@/types/invitation';
@@ -7,7 +8,7 @@ import { UserResponse, GroupResponse } from '@/api/types';
 
 export const perm = (key: string, scopeKey = 'any'): UserPermission => ({ key, scopeKey });
 
-const MOCK_GROUP_MEMBERS: Group = {
+const MOCK_GROUP_MEMBERS: IamGroup = {
   id: 1,
   groupKey: 'members',
   name: 'Members',
@@ -18,7 +19,7 @@ const MOCK_GROUP_MEMBERS: Group = {
   updatedAt: '2024-01-01T00:00:00Z',
 };
 
-const MOCK_GROUP_SUPER_ADMINS: Group = {
+const MOCK_GROUP_SUPER_ADMINS: IamGroup = {
   id: 2,
   groupKey: 'super_admins',
   name: 'Super Admins',
@@ -78,7 +79,7 @@ export const createMockUserResponse = (overrides?: Partial<UserResponse>): UserR
 /**
  * Creates mock GroupResponse objects for the given groups
  */
-export const createMockGroupResponses = (groups: Group[]): GroupResponse[] =>
+export const createMockGroupResponses = (groups: IamGroup[]): GroupResponse[] =>
   groups.map((g) => ({
     id: g.id,
     groupKey: g.groupKey,

@@ -23,7 +23,7 @@ When a user authenticates, the `/api/v1/users/me` endpoint returns their session
 {
   user: UserResponse;
   groups: GroupResponse[];   // informational only — do not use for access checks
-  permissions: string[];     // the source of truth for what this user can do
+  permissions: UserPermission[];  // { key: string; scopeKey: string }[] — source of truth for access
   activeJobCount: number;
 }
 ```

@@ -76,8 +76,11 @@ export function mockPermissionsForGroups(groupKeys: string[]): UserPermission[] 
   return [];
 }
 
-export function mockUserHasPermission(user: User, permission: string): boolean {
-  return mockPermissionsForGroups(user.groups).some((p) => p.key === permission);
+export function mockUserHasPermission(user: User, permission: string, scopeKey?: string): boolean {
+  return mockPermissionsForGroups(user.groups).some(
+    (p) =>
+      p.key === permission && (scopeKey === undefined || p.scopeKey === 'any' || p.scopeKey === scopeKey),
+  );
 }
 
 export const generateSuccessResponse = (data: unknown) => {

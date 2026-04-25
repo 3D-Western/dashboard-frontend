@@ -176,12 +176,24 @@ function applyActiveOnly(items: { isActive: boolean }[], activeOnly: boolean) {
 
 // ── Handlers ───────────────────────────────────────────────────────────────────
 
+const MOCK_SCOPES = [
+  { scopeKey: 'any', description: 'Applies to all resources' },
+  { scopeKey: 'own', description: "Applies only to the user's own resources" },
+];
+
 export const iamHandlers = [
   // GET /permissions
   http.get(`${apiUrl}${endpoints.iam.permissions}`, ({ cookies }) => {
     const { error } = requireIamRead(cookies);
     if (error) return error;
     return HttpResponse.json(generateSuccessResponse(PERMISSIONS));
+  }),
+
+  // GET /scopes
+  http.get(`${apiUrl}${endpoints.iam.scopes}`, ({ cookies }) => {
+    const { error } = requireIamRead(cookies);
+    if (error) return error;
+    return HttpResponse.json(generateSuccessResponse(MOCK_SCOPES));
   }),
 
   // GET /roles

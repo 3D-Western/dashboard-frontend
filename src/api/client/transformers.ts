@@ -1,4 +1,5 @@
-import { User, UserExperienceLevel, UserFaculty, UserPermission, Group } from '@/types/user';
+import { User, UserExperienceLevel, UserFaculty, UserPermission } from '@/types/user';
+import type { IamGroup } from '@/types/iam';
 import { PaginatedResponse } from '@/types/common';
 import { UserResponse, UserListResponseRaw, GroupResponse } from '../types';
 
@@ -85,9 +86,9 @@ export function transformFacultyFromBackend(faculty: string): UserFaculty {
 }
 
 /**
- * Transforms a GroupResponse from the backend into a Group object for the frontend.
+ * Transforms a GroupResponse from the backend into an IamGroup object for the frontend.
  */
-export function transformGroupResponse(groupResponse: GroupResponse): Group {
+export function transformGroupResponse(groupResponse: GroupResponse): IamGroup {
   return {
     id: groupResponse.id,
     groupKey: groupResponse.groupKey,

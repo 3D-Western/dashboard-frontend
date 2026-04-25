@@ -1,20 +1,10 @@
 import type { ExperienceLevel } from '@/constants/experience-levels';
 import type { Faculty } from '@/constants/faculties';
 import { ADMIN_SECTION_PERMISSIONS } from '@/constants/permissions';
+import type { IamGroup } from '@/types/iam';
 
 export type UserExperienceLevel = ExperienceLevel;
 export type UserFaculty = Faculty;
-
-export interface Group {
-  id: number;
-  groupKey: string;
-  name: string;
-  description?: string | null;
-  isSystem: boolean;
-  isActive: boolean;
-  createdAt: string;
-  updatedAt: string;
-}
 
 export interface UserPermission {
   key: string;
@@ -26,7 +16,7 @@ export interface User {
   email: string;
   firstName: string;
   lastName: string;
-  groups: Group[];
+  groups: IamGroup[];
   permissions: UserPermission[];
   experienceLevel?: UserExperienceLevel;
   faculty?: UserFaculty;
