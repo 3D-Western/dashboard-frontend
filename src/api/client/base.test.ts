@@ -92,10 +92,13 @@ describe('apiRequest', () => {
     it('includes credentials with the request', async () => {
       let capturedCredentials: RequestCredentials | undefined;
       const originalFetch = global.fetch;
-      vi.stubGlobal('fetch', vi.fn((url: Parameters<typeof fetch>[0], options: Parameters<typeof fetch>[1]) => {
-        capturedCredentials = options?.credentials;
-        return originalFetch(url, options);
-      }));
+      vi.stubGlobal(
+        'fetch',
+        vi.fn((url: Parameters<typeof fetch>[0], options: Parameters<typeof fetch>[1]) => {
+          capturedCredentials = options?.credentials;
+          return originalFetch(url, options);
+        }),
+      );
 
       mockServer.use(
         http.get(testUrl, () => {
@@ -143,11 +146,14 @@ describe('apiRequest', () => {
         }),
       );
 
-      vi.stubGlobal('fetch', vi.fn((url: Parameters<typeof fetch>[0], options: Parameters<typeof fetch>[1]) => {
-        const headers = new Headers(options?.headers);
-        capturedCookie = headers.get('Cookie');
-        return originalFetch(url, options);
-      }));
+      vi.stubGlobal(
+        'fetch',
+        vi.fn((url: Parameters<typeof fetch>[0], options: Parameters<typeof fetch>[1]) => {
+          const headers = new Headers(options?.headers);
+          capturedCookie = headers.get('Cookie');
+          return originalFetch(url, options);
+        }),
+      );
 
       await apiRequest(testUrl, { method: 'GET' });
 
@@ -170,11 +176,14 @@ describe('apiRequest', () => {
         }),
       );
 
-      vi.stubGlobal('fetch', vi.fn((url: Parameters<typeof fetch>[0], options: Parameters<typeof fetch>[1]) => {
-        const headers = new Headers(options?.headers);
-        capturedCookie = headers.get('Cookie');
-        return originalFetch(url, options);
-      }));
+      vi.stubGlobal(
+        'fetch',
+        vi.fn((url: Parameters<typeof fetch>[0], options: Parameters<typeof fetch>[1]) => {
+          const headers = new Headers(options?.headers);
+          capturedCookie = headers.get('Cookie');
+          return originalFetch(url, options);
+        }),
+      );
 
       await apiRequest(testUrl, { method: 'GET' });
 
@@ -197,11 +206,14 @@ describe('apiRequest', () => {
         }),
       );
 
-      vi.stubGlobal('fetch', vi.fn((url: Parameters<typeof fetch>[0], options: Parameters<typeof fetch>[1]) => {
-        const headers = new Headers(options?.headers);
-        capturedCookie = headers.get('Cookie');
-        return originalFetch(url, options);
-      }));
+      vi.stubGlobal(
+        'fetch',
+        vi.fn((url: Parameters<typeof fetch>[0], options: Parameters<typeof fetch>[1]) => {
+          const headers = new Headers(options?.headers);
+          capturedCookie = headers.get('Cookie');
+          return originalFetch(url, options);
+        }),
+      );
 
       await apiRequest(testUrl, {
         method: 'GET',

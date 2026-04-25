@@ -147,10 +147,13 @@ describe('iamApi', () => {
     it('includes credentials in request', async () => {
       let capturedCredentials: RequestCredentials | undefined;
       const originalFetch = global.fetch;
-      vi.stubGlobal('fetch', vi.fn((url: Parameters<typeof fetch>[0], options: Parameters<typeof fetch>[1]) => {
-        capturedCredentials = options?.credentials;
-        return originalFetch(url, options);
-      }));
+      vi.stubGlobal(
+        'fetch',
+        vi.fn((url: Parameters<typeof fetch>[0], options: Parameters<typeof fetch>[1]) => {
+          capturedCredentials = options?.credentials;
+          return originalFetch(url, options);
+        }),
+      );
 
       mockServer.use(
         http.get('*' + endpoints.iam.groups.users(7), () => {

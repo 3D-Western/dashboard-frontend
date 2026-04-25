@@ -287,10 +287,13 @@ describe('invitationApi', () => {
     it('includes credentials in request', async () => {
       let capturedCredentials: RequestCredentials | undefined;
       const originalFetch = global.fetch;
-      vi.stubGlobal('fetch', vi.fn((url: Parameters<typeof fetch>[0], options: Parameters<typeof fetch>[1]) => {
-        capturedCredentials = options?.credentials;
-        return originalFetch(url, options);
-      }));
+      vi.stubGlobal(
+        'fetch',
+        vi.fn((url: Parameters<typeof fetch>[0], options: Parameters<typeof fetch>[1]) => {
+          capturedCredentials = options?.credentials;
+          return originalFetch(url, options);
+        }),
+      );
 
       mockServer.use(
         http.get('*' + endpoints.invitations.list, () => {
@@ -431,10 +434,13 @@ describe('invitationApi', () => {
     it('includes credentials in request', async () => {
       let capturedCredentials: RequestCredentials | undefined;
       const originalFetch = global.fetch;
-      vi.stubGlobal('fetch', vi.fn((url: Parameters<typeof fetch>[0], options: Parameters<typeof fetch>[1]) => {
-        capturedCredentials = options?.credentials;
-        return originalFetch(url, options);
-      }));
+      vi.stubGlobal(
+        'fetch',
+        vi.fn((url: Parameters<typeof fetch>[0], options: Parameters<typeof fetch>[1]) => {
+          capturedCredentials = options?.credentials;
+          return originalFetch(url, options);
+        }),
+      );
 
       mockServer.use(
         http.get('*' + endpoints.invitations.byId(1), () => {
@@ -582,10 +588,13 @@ describe('invitationApi', () => {
     it('includes credentials in request', async () => {
       let capturedCredentials: RequestCredentials | undefined;
       const originalFetch = global.fetch;
-      vi.stubGlobal('fetch', vi.fn((url: Parameters<typeof fetch>[0], options: Parameters<typeof fetch>[1]) => {
-        capturedCredentials = options?.credentials;
-        return originalFetch(url, options);
-      }));
+      vi.stubGlobal(
+        'fetch',
+        vi.fn((url: Parameters<typeof fetch>[0], options: Parameters<typeof fetch>[1]) => {
+          capturedCredentials = options?.credentials;
+          return originalFetch(url, options);
+        }),
+      );
 
       mockServer.use(
         http.post('*' + endpoints.invitations.create, () => {
@@ -744,10 +753,13 @@ describe('invitationApi', () => {
     it('includes credentials in request', async () => {
       let capturedCredentials: RequestCredentials | undefined;
       const originalFetch = global.fetch;
-      vi.stubGlobal('fetch', vi.fn((url: Parameters<typeof fetch>[0], options: Parameters<typeof fetch>[1]) => {
-        capturedCredentials = options?.credentials;
-        return originalFetch(url, options);
-      }));
+      vi.stubGlobal(
+        'fetch',
+        vi.fn((url: Parameters<typeof fetch>[0], options: Parameters<typeof fetch>[1]) => {
+          capturedCredentials = options?.credentials;
+          return originalFetch(url, options);
+        }),
+      );
 
       mockServer.use(
         http.patch('*' + endpoints.invitations.revoke(1), () => {

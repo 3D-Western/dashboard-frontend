@@ -196,11 +196,14 @@ describe('sessionApi', () => {
         }),
       );
 
-      vi.stubGlobal('fetch', vi.fn((url: RequestInfo | URL, options?: RequestInit) => {
-        const headers = new Headers(options?.headers);
-        capturedCookie = headers.get('Cookie');
-        return originalFetch(url, options);
-      }) as typeof fetch);
+      vi.stubGlobal(
+        'fetch',
+        vi.fn((url: RequestInfo | URL, options?: RequestInit) => {
+          const headers = new Headers(options?.headers);
+          capturedCookie = headers.get('Cookie');
+          return originalFetch(url, options);
+        }) as typeof fetch,
+      );
 
       await sessionApi.current({ cookieHeader: 'sessionToken=server-token' });
 
