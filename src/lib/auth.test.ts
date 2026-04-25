@@ -23,7 +23,7 @@ describe('auth', () => {
         email: mockUser.email,
         firstName: mockUser.firstName,
         lastName: mockUser.lastName,
-        role: mockUser.role,
+        groups: mockUser.groups,
       });
     });
 

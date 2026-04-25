@@ -8,6 +8,8 @@ import {
   generateErrorResponse,
 } from './utils';
 import type { FileMetadata } from './database/types';
+import { PERMISSIONS } from '@/constants/permissions';
+import { mockUserHasPermission } from './utils';
 
 const apiUrl = process.env.API_URL;
 
@@ -93,12 +95,11 @@ export const fileHandlers = [
       return createInvalidSessionResponse();
     }
 
-    // Admin-only endpoint
-    if (user.role !== 'admin') {
+    if (!mockUserHasPermission(user, PERMISSIONS.FILES_LIST)) {
       return HttpResponse.json(
         generateErrorResponse({
           code: 'FORBIDDEN',
-          message: 'Admin role required to access this resource',
+          message: 'Insufficient permissions',
         }),
         { status: 403 },
       );
@@ -187,8 +188,11 @@ export const fileHandlers = [
       );
     }
 
-    // Access control: users see own files, admins see all
-    if (user.role !== 'admin' && file.uploadedBy !== user.studentId) {
+    // Access control: users see own files, users with files:read_metadata see all
+    if (
+      !mockUserHasPermission(user, PERMISSIONS.FILES_READ_METADATA) &&
+      file.uploadedBy !== user.studentId
+    ) {
       return HttpResponse.json(
         generateErrorResponse({
           code: 'FORBIDDEN',
@@ -227,12 +231,11 @@ export const fileHandlers = [
       return createInvalidSessionResponse();
     }
 
-    // Admin-only endpoint
-    if (user.role !== 'admin') {
+    if (!mockUserHasPermission(user, PERMISSIONS.FILES_DELETE)) {
       return HttpResponse.json(
         generateErrorResponse({
           code: 'FORBIDDEN',
-          message: 'Admin role required to delete files',
+          message: 'Insufficient permissions',
         }),
         { status: 403 },
       );
@@ -292,8 +295,11 @@ export const fileHandlers = [
       );
     }
 
-    // Access control: users download own files, admins download all
-    if (user.role !== 'admin' && file.uploadedBy !== user.studentId) {
+    // Access control: users download own files, users with files:download permission download all
+    if (
+      !mockUserHasPermission(user, PERMISSIONS.FILES_DOWNLOAD) &&
+      file.uploadedBy !== user.studentId
+    ) {
       return HttpResponse.json(
         generateErrorResponse({
           code: 'FORBIDDEN',

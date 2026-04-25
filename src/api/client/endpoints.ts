@@ -43,4 +43,35 @@ export const endpoints = {
     byId: (invitationId: number) => `/api/v1/admin/invitations/${invitationId}`,
     revoke: (invitationId: number) => `/api/v1/admin/invitations/${invitationId}/revoke`,
   },
+  iam: {
+    permissions: '/api/v1/admin/iam/permissions',
+    scopes: '/api/v1/admin/iam/scopes',
+    roles: {
+      list: '/api/v1/admin/iam/roles',
+      byId: (id: number) => `/api/v1/admin/iam/roles/${id}`,
+      create: '/api/v1/admin/iam/roles',
+      update: (id: number) => `/api/v1/admin/iam/roles/${id}`,
+      deactivate: (id: number) => `/api/v1/admin/iam/roles/${id}`,
+      permissions: (id: number) => `/api/v1/admin/iam/roles/${id}/permissions`,
+    },
+    groups: {
+      list: '/api/v1/admin/iam/groups',
+      byId: (id: number) => `/api/v1/admin/iam/groups/${id}`,
+      create: '/api/v1/admin/iam/groups',
+      update: (id: number) => `/api/v1/admin/iam/groups/${id}`,
+      deactivate: (id: number) => `/api/v1/admin/iam/groups/${id}`,
+      roles: (id: number) => `/api/v1/admin/iam/groups/${id}/roles`,
+      revokeRole: (id: number, roleId: number) => `/api/v1/admin/iam/groups/${id}/roles/${roleId}`,
+      users: (id: number) => `/api/v1/admin/iam/groups/${id}/users`,
+    },
+    users: {
+      groups: (userId: number) => `/api/v1/admin/iam/users/${userId}/groups`,
+      revokeGroup: (userId: number, groupId: number) =>
+        `/api/v1/admin/iam/users/${userId}/groups/${groupId}`,
+      roles: (userId: number) => `/api/v1/admin/iam/users/${userId}/roles`,
+      revokeRole: (userId: number, roleId: number) =>
+        `/api/v1/admin/iam/users/${userId}/roles/${roleId}`,
+    },
+    auditLogs: '/api/v1/admin/iam/audit-logs',
+  },
 };

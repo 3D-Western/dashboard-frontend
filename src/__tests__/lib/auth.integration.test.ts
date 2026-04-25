@@ -31,7 +31,7 @@ describe('Auth Integration Tests', () => {
         email: mockUser.email,
         firstName: mockUser.firstName,
         lastName: mockUser.lastName,
-        role: mockUser.role,
+        groups: mockUser.groups,
       });
     });
 
@@ -64,7 +64,7 @@ describe('Auth Integration Tests', () => {
         email: mockUser.email,
         firstName: mockUser.firstName,
         lastName: mockUser.lastName,
-        role: mockUser.role,
+        groups: mockUser.groups,
       });
 
       // Step 1: User logs out
@@ -93,21 +93,21 @@ describe('Auth Integration Tests', () => {
         email: mockUser.email,
         firstName: mockUser.firstName,
         lastName: mockUser.lastName,
-        role: mockUser.role,
+        groups: mockUser.groups,
       });
       expect(session2).toMatchObject({
         studentId: mockUser.studentId,
         email: mockUser.email,
         firstName: mockUser.firstName,
         lastName: mockUser.lastName,
-        role: mockUser.role,
+        groups: mockUser.groups,
       });
       expect(session3).toMatchObject({
         studentId: mockUser.studentId,
         email: mockUser.email,
         firstName: mockUser.firstName,
         lastName: mockUser.lastName,
-        role: mockUser.role,
+        groups: mockUser.groups,
       });
     });
   });
@@ -129,21 +129,21 @@ describe('Auth Integration Tests', () => {
         email: mockUser.email,
         firstName: mockUser.firstName,
         lastName: mockUser.lastName,
-        role: mockUser.role,
+        groups: mockUser.groups,
       });
       expect(session2).toMatchObject({
         studentId: mockUser.studentId,
         email: mockUser.email,
         firstName: mockUser.firstName,
         lastName: mockUser.lastName,
-        role: mockUser.role,
+        groups: mockUser.groups,
       });
       expect(session3).toMatchObject({
         studentId: mockUser.studentId,
         email: mockUser.email,
         firstName: mockUser.firstName,
         lastName: mockUser.lastName,
-        role: mockUser.role,
+        groups: mockUser.groups,
       });
     });
 
@@ -174,7 +174,7 @@ describe('Auth Integration Tests', () => {
         email: mockUser.email,
         firstName: mockUser.firstName,
         lastName: mockUser.lastName,
-        role: mockUser.role,
+        groups: mockUser.groups,
       });
 
       // Session expires (server returns SESSION_INVALID)

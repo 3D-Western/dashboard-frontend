@@ -2,7 +2,7 @@ import { http, HttpResponse } from 'msw';
 import { mockServer } from '@/api/mocks';
 import { endpoints } from '@/api/client/endpoints';
 import { User } from '@/types/user';
-import { createMockUser, createMockUserResponse } from './mockFactories';
+import { createMockUser, createMockUserResponse, createMockGroupResponses } from './mockFactories';
 import { ErrorCodes } from '@/api/client/errors';
 
 /**
@@ -25,14 +25,20 @@ export function mockAuthenticatedSession(user: User = createMockUser()): User {
     email: user.email,
     firstName: user.firstName,
     lastName: user.lastName,
-    status: user.role === 'admin' ? 'Admin' : 'User',
   });
+
+  const groupResponses = createMockGroupResponses(user.groups);
 
   mockServer.use(
     http.get(`*${endpoints.users.me}`, () => {
       return HttpResponse.json({
         success: true,
-        data: { user: userResponse },
+        data: {
+          user: userResponse,
+          groups: groupResponses,
+          permissions: user.permissions,
+          activeJobCount: 0,
+        },
       });
     }),
   );

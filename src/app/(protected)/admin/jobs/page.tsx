@@ -5,6 +5,10 @@ import { withSessionErrorHandling } from '@/lib/server-utils';
 import { AdminJobFilters } from './components/AdminJobFilters';
 import { PrintJobStatus } from '@/types/jobs';
 import PageTitle from '@/components/PageTitle';
+import { validateSession } from '@/lib/auth';
+import { hasPermission } from '@/types/user';
+import { PERMISSIONS } from '@/constants/permissions';
+import UnauthorizedPage from '@/components/UnauthorizedPage';
 
 export const metadata: Metadata = {
   title: 'Job Management',
@@ -16,6 +20,10 @@ interface JobManagementPageProps {
 }
 
 export default async function JobManagementPage({ searchParams }: JobManagementPageProps) {
+  const user = await validateSession();
+  if (!user || !hasPermission(user, PERMISSIONS.JOBS_LIST))
+    return <UnauthorizedPage title="Job Management" />;
+
   const params = await searchParams;
   const page = Number(params.page) || 1;
   const pageSize = Number(params.pageSize) || 10;

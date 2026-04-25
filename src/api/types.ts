@@ -2,6 +2,8 @@ import { JobCategory, PrintJob } from '@/types/jobs';
 import { Invitation } from '@/types/invitation';
 import { FileUploadResult, FileMetadata, FileList } from '@/types/file';
 import { PaginatedResponse } from '@/types/common';
+import { IamRole, IamGroup, IamPermission, IamScope, IamAuditLog } from '@/types/iam';
+import { UserPermission } from '@/types/user';
 
 export interface ApiResponseError {
   code: string;
@@ -15,19 +17,33 @@ export interface ApiResponseRaw<T> {
   error?: ApiResponseError;
 }
 
-// Backend Response Types (with capitalized values)
+// Backend Response Types
 export interface UserResponse {
   studentId: number;
   email: string;
   firstName: string;
   lastName: string;
-  status: string; // Backend sends "Admin" or "User"
+  status?: string;
   experienceLevel?: string;
   faculty?: string;
 }
 
+export interface GroupResponse {
+  id: number;
+  groupKey: string;
+  name: string;
+  description?: string | null;
+  isSystem: boolean;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface ApiGetCurrentSessionResponse {
   user: UserResponse | null;
+  groups: GroupResponse[];
+  permissions: UserPermission[];
+  activeJobCount: number;
 }
 
 export interface ApiLoginResponse {
@@ -104,3 +120,23 @@ export type UserListResponseRaw = PaginatedResponse<UserResponse>;
 // Invitations API Response Types
 export type InvitationListResponse = PaginatedResponse<Invitation>;
 export type InvitationResponse = Invitation;
+
+// IAM API Response Types
+export type IamRoleResponse = IamRole;
+export type IamRoleListResponse = IamRole[];
+export type IamGroupResponse = IamGroup;
+export type IamGroupListResponse = IamGroup[];
+export type IamPermissionListResponse = IamPermission[];
+export type IamScopeListResponse = IamScope[];
+export type IamAuditLogResponse = IamAuditLog;
+
+export interface IamAuditLogPageResponse {
+  content: IamAuditLog[];
+  totalElements: number;
+  totalPages: number;
+  number: number;
+  size: number;
+  first: boolean;
+  last: boolean;
+  numberOfElements: number;
+}

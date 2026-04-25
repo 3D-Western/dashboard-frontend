@@ -3,7 +3,86 @@
 
 import { HttpResponse } from 'msw';
 import { ErrorCodes } from '../client/errors';
-import { ApiResponseError } from '../types';
+import { ApiResponseError, GroupResponse } from '../types';
+import { PERMISSION_CATALOG, PERMISSIONS } from '@/constants/permissions';
+import type { UserPermission } from '@/types/user';
+import type { User } from './database/types';
+
+/**
+ * Returns mock GroupResponse objects for the given group keys.
+ */
+export function mockGroupsForKeys(groupKeys: string[]): GroupResponse[] {
+  const catalog: Record<string, GroupResponse> = {
+    members: {
+      id: 1,
+      groupKey: 'members',
+      name: 'Members',
+      description: 'Default member group',
+      isSystem: true,
+      isActive: true,
+      createdAt: '2024-01-01T00:00:00Z',
+      updatedAt: '2024-01-01T00:00:00Z',
+    },
+    regular_admins: {
+      id: 3,
+      groupKey: 'regular_admins',
+      name: 'Regular Admins',
+      description: 'Admin group for day-to-day operations. No IAM or audit access.',
+      isSystem: true,
+      isActive: true,
+      createdAt: '2024-01-01T00:00:00Z',
+      updatedAt: '2024-01-01T00:00:00Z',
+    },
+    super_admins: {
+      id: 2,
+      groupKey: 'super_admins',
+      name: 'Super Admins',
+      description: 'Full access group',
+      isSystem: true,
+      isActive: true,
+      createdAt: '2024-01-01T00:00:00Z',
+      updatedAt: '2024-01-01T00:00:00Z',
+    },
+  };
+  return groupKeys.map((key) => catalog[key]).filter(Boolean);
+}
+
+const SUPER_ADMIN_PERMISSIONS: UserPermission[] = PERMISSION_CATALOG.map((p) => ({
+  key: p.key,
+  scopeKey: 'any',
+}));
+
+const REGULAR_ADMIN_PERMISSIONS: UserPermission[] = PERMISSION_CATALOG.filter(
+  (p) => p.resource !== 'iam' && p.resource !== 'audit',
+).map((p) => ({ key: p.key, scopeKey: 'any' }));
+
+const MEMBER_PERMISSIONS: UserPermission[] = [
+  { key: PERMISSIONS.JOBS_CREATE, scopeKey: 'own' },
+  { key: PERMISSIONS.JOBS_LIST, scopeKey: 'own' },
+  { key: PERMISSIONS.JOBS_READ, scopeKey: 'own' },
+  { key: PERMISSIONS.JOBS_DELETE, scopeKey: 'own' },
+  { key: PERMISSIONS.JOBS_COMPLETE_UPLOAD, scopeKey: 'own' },
+  { key: PERMISSIONS.JOBS_RETRY_UPLOAD, scopeKey: 'own' },
+  { key: PERMISSIONS.JOBS_REORDER, scopeKey: 'own' },
+  { key: PERMISSIONS.FILES_READ_METADATA, scopeKey: 'own' },
+  { key: PERMISSIONS.FILES_DOWNLOAD, scopeKey: 'own' },
+  { key: PERMISSIONS.USERS_UPDATE_PROFILE, scopeKey: 'own' },
+];
+
+export function mockPermissionsForGroups(groupKeys: string[]): UserPermission[] {
+  if (groupKeys.includes('super_admins')) return SUPER_ADMIN_PERMISSIONS;
+  if (groupKeys.includes('regular_admins')) return REGULAR_ADMIN_PERMISSIONS;
+  if (groupKeys.includes('members')) return MEMBER_PERMISSIONS;
+  return [];
+}
+
+export function mockUserHasPermission(user: User, permission: string, scopeKey?: string): boolean {
+  return mockPermissionsForGroups(user.groups).some(
+    (p) =>
+      p.key === permission &&
+      (scopeKey === undefined || p.scopeKey === 'any' || p.scopeKey === scopeKey),
+  );
+}
 
 export const generateSuccessResponse = (data: unknown) => {
   return {

@@ -6,6 +6,10 @@ import { CreateInvitationButton } from './components/CreateInvitationButton';
 import InvitationsTable from './components/InvitationsTable';
 import { InvitationStatus } from '@/types/invitation';
 import PageTitle from '@/components/PageTitle';
+import { validateSession } from '@/lib/auth';
+import { hasPermission } from '@/types/user';
+import { PERMISSIONS } from '@/constants/permissions';
+import UnauthorizedPage from '@/components/UnauthorizedPage';
 
 export const metadata: Metadata = {
   title: 'Invitation Management',
@@ -24,6 +28,11 @@ interface InvitationManagementPageProps {
 export default async function InvitationManagementPage({
   searchParams,
 }: InvitationManagementPageProps) {
+  const user = await validateSession();
+  if (!user || !hasPermission(user, PERMISSIONS.INVITATIONS_LIST))
+    return <UnauthorizedPage title="Invitation Management" />;
+
+  const userCanCreateInvitation = hasPermission(user, PERMISSIONS.INVITATIONS_CREATE);
   const params = await searchParams;
   const page = Number(params.page) || 1;
   const pageSize = Number(params.pageSize) || 10;
@@ -44,7 +53,7 @@ export default async function InvitationManagementPage({
             description="Manage user registration invitations"
           />
         </div>
-        <CreateInvitationButton />
+        {userCanCreateInvitation && <CreateInvitationButton />}
       </div>
 
       <AdminInvitationFilters />

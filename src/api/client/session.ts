@@ -46,7 +46,9 @@ export const sessionApi = {
 
       // Transform the user response from backend format to frontend format
       return {
-        user: response.user ? transformUserResponse(response.user) : null,
+        user: response.user
+          ? transformUserResponse(response.user, response.groups ?? [], response.permissions ?? [])
+          : null,
       };
     } catch (error) {
       // If it's a SESSION_INVALID error, suppress it and return null-like response

@@ -14,13 +14,11 @@ describe('userApi', () => {
           studentId: 251000001,
           firstName: 'John',
           lastName: 'Doe',
-          status: 'User',
         }),
         createMockUserResponse({
           studentId: 251000002,
           firstName: 'Jane',
           lastName: 'Smith',
-          status: 'Admin',
         }),
       ];
       const mockResponse = {
@@ -49,8 +47,8 @@ describe('userApi', () => {
 
       // Result should be transformed to frontend format
       expect(result.data).toHaveLength(2);
-      expect(result.data[0].role).toBe('user');
-      expect(result.data[1].role).toBe('admin');
+      expect(result.data[0].groups).toEqual([]);
+      expect(result.data[1].groups).toEqual([]);
       expect(result.pagination).toEqual(mockResponse.pagination);
     });
 
@@ -444,7 +442,7 @@ describe('userApi', () => {
       expect(result.firstName).toBe('John');
       expect(result.lastName).toBe('Doe');
       expect(result.email).toBe('john@example.com');
-      expect(result.role).toBe('user');
+      expect(result.groups).toEqual([]);
     });
 
     it('uses correct endpoint with user ID', async () => {

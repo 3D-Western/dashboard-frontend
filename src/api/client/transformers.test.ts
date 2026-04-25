@@ -170,7 +170,6 @@ describe('transformers', () => {
         email: 'test@uwo.ca',
         firstName: 'John',
         lastName: 'Doe',
-        status: 'User',
         experienceLevel: 'Beginner',
         faculty: 'Engineering',
       };
@@ -182,24 +181,79 @@ describe('transformers', () => {
         email: 'test@uwo.ca',
         firstName: 'John',
         lastName: 'Doe',
-        role: 'user',
+        groups: [],
+        permissions: [],
         experienceLevel: 'beginner',
         faculty: 'engineering',
       });
     });
 
-    it('transforms admin status to lowercase', () => {
+    it('maps provided permissions into the user', () => {
       const userResponse: UserResponse = {
         studentId: 251000001,
         email: 'admin@uwo.ca',
         firstName: 'Admin',
         lastName: 'User',
-        status: 'Admin',
+      };
+
+      const permissions = [
+        { key: 'users:list', scopeKey: 'any' },
+        { key: 'jobs:list', scopeKey: 'any' },
+      ];
+      const result = transformUserResponse(userResponse, [], permissions);
+
+      expect(result.permissions).toEqual(permissions);
+    });
+
+    it('defaults to empty permissions when none provided', () => {
+      const userResponse: UserResponse = {
+        studentId: 251000001,
+        email: 'test@uwo.ca',
+        firstName: 'John',
+        lastName: 'Doe',
       };
 
       const result = transformUserResponse(userResponse);
 
-      expect(result.role).toBe('admin');
+      expect(result.permissions).toEqual([]);
+    });
+
+    it('maps provided groups into the user', () => {
+      const userResponse: UserResponse = {
+        studentId: 251000001,
+        email: 'admin@uwo.ca',
+        firstName: 'Admin',
+        lastName: 'User',
+      };
+
+      const groupResponse = {
+        id: 2,
+        groupKey: 'super_admins',
+        name: 'Super Admins',
+        description: null,
+        isSystem: true,
+        isActive: true,
+        createdAt: '2024-01-01T00:00:00Z',
+        updatedAt: '2024-01-01T00:00:00Z',
+      };
+
+      const result = transformUserResponse(userResponse, [groupResponse]);
+
+      expect(result.groups).toHaveLength(1);
+      expect(result.groups[0].groupKey).toBe('super_admins');
+    });
+
+    it('defaults to empty groups when none provided', () => {
+      const userResponse: UserResponse = {
+        studentId: 251000001,
+        email: 'test@uwo.ca',
+        firstName: 'John',
+        lastName: 'Doe',
+      };
+
+      const result = transformUserResponse(userResponse);
+
+      expect(result.groups).toEqual([]);
     });
 
     it('handles missing experienceLevel field', () => {
@@ -208,7 +262,6 @@ describe('transformers', () => {
         email: 'test@uwo.ca',
         firstName: 'John',
         lastName: 'Doe',
-        status: 'User',
       };
 
       const result = transformUserResponse(userResponse);
@@ -222,7 +275,6 @@ describe('transformers', () => {
         email: 'test@uwo.ca',
         firstName: 'John',
         lastName: 'Doe',
-        status: 'User',
       };
 
       const result = transformUserResponse(userResponse);
@@ -236,7 +288,6 @@ describe('transformers', () => {
         email: 'test@uwo.ca',
         firstName: 'John',
         lastName: 'Doe',
-        status: 'User',
         experienceLevel: 'Advanced',
       };
 
@@ -251,7 +302,6 @@ describe('transformers', () => {
         email: 'test@uwo.ca',
         firstName: 'John',
         lastName: 'Doe',
-        status: 'User',
         faculty: 'Science',
       };
 
@@ -266,7 +316,6 @@ describe('transformers', () => {
         email: 'specific@uwo.ca',
         firstName: 'Jane',
         lastName: 'Smith',
-        status: 'User',
         experienceLevel: 'NoExperience',
         faculty: 'ArtsAndHumanities',
       });
@@ -277,7 +326,7 @@ describe('transformers', () => {
       expect(result.email).toBe('specific@uwo.ca');
       expect(result.firstName).toBe('Jane');
       expect(result.lastName).toBe('Smith');
-      expect(result.role).toBe('user');
+      expect(result.groups).toEqual([]);
       expect(result.experienceLevel).toBe('no_experience');
       expect(result.faculty).toBe('arts_and_humanities');
     });
@@ -288,7 +337,6 @@ describe('transformers', () => {
         email: 'unknown@uwo.ca',
         firstName: 'Mystery',
         lastName: 'User',
-        status: 'User',
         experienceLevel: 'UnknownLevel',
         faculty: 'UnknownFaculty',
       };
@@ -304,18 +352,22 @@ describe('transformers', () => {
     it('transforms an empty user list', () => {
       const response: UserListResponseRaw = {
         data: [],
-        totalCount: 0,
-        page: 1,
-        pageSize: 10,
+        pagination: {
+          page: 1,
+          pageSize: 10,
+          totalItems: 0,
+          totalPages: 0,
+          hasNext: false,
+          hasPrevious: false,
+          snapshotCreatedBefore: '2024-01-01T00:00:00Z',
+        },
       };
 
       const result = transformUserListResponse(response);
 
       expect(result).toEqual({
         data: [],
-        totalCount: 0,
-        page: 1,
-        pageSize: 10,
+        pagination: response.pagination,
       });
     });
 
@@ -325,16 +377,21 @@ describe('transformers', () => {
         email: 'test@uwo.ca',
         firstName: 'John',
         lastName: 'Doe',
-        status: 'User',
         experienceLevel: 'Beginner',
         faculty: 'Engineering',
       };
 
       const response: UserListResponseRaw = {
         data: [userResponse],
-        totalCount: 1,
-        page: 1,
-        pageSize: 10,
+        pagination: {
+          page: 1,
+          pageSize: 10,
+          totalItems: 1,
+          totalPages: 1,
+          hasNext: false,
+          hasPrevious: false,
+          snapshotCreatedBefore: '2024-01-01T00:00:00Z',
+        },
       };
 
       const result = transformUserListResponse(response);
@@ -345,13 +402,14 @@ describe('transformers', () => {
         email: 'test@uwo.ca',
         firstName: 'John',
         lastName: 'Doe',
-        role: 'user',
+        groups: [],
+        permissions: [],
         experienceLevel: 'beginner',
         faculty: 'engineering',
       });
-      expect(result.totalCount).toBe(1);
-      expect(result.page).toBe(1);
-      expect(result.pageSize).toBe(10);
+      expect(result.pagination.totalItems).toBe(1);
+      expect(result.pagination.page).toBe(1);
+      expect(result.pagination.pageSize).toBe(10);
     });
 
     it('transforms a user list with multiple users', () => {
@@ -361,7 +419,6 @@ describe('transformers', () => {
           email: 'user1@uwo.ca',
           firstName: 'User',
           lastName: 'One',
-          status: 'User',
           experienceLevel: 'Beginner',
           faculty: 'Engineering',
         },
@@ -370,7 +427,6 @@ describe('transformers', () => {
           email: 'admin@uwo.ca',
           firstName: 'Admin',
           lastName: 'User',
-          status: 'Admin',
           experienceLevel: 'Advanced',
           faculty: 'Science',
         },
@@ -379,40 +435,50 @@ describe('transformers', () => {
           email: 'user3@uwo.ca',
           firstName: 'User',
           lastName: 'Three',
-          status: 'User',
         },
       ];
 
       const response: UserListResponseRaw = {
         data: users,
-        totalCount: 3,
-        page: 1,
-        pageSize: 10,
+        pagination: {
+          page: 1,
+          pageSize: 10,
+          totalItems: 3,
+          totalPages: 1,
+          hasNext: false,
+          hasPrevious: false,
+          snapshotCreatedBefore: '2024-01-01T00:00:00Z',
+        },
       };
 
       const result = transformUserListResponse(response);
 
       expect(result.data).toHaveLength(3);
-      expect(result.data[0].role).toBe('user');
-      expect(result.data[1].role).toBe('admin');
+      expect(result.data[0].groups).toEqual([]);
       expect(result.data[1].experienceLevel).toBe('advanced');
       expect(result.data[2].experienceLevel).toBeUndefined();
-      expect(result.totalCount).toBe(3);
+      expect(result.pagination.totalItems).toBe(3);
     });
 
     it('preserves pagination metadata', () => {
       const response: UserListResponseRaw = {
         data: [],
-        totalCount: 100,
-        page: 5,
-        pageSize: 20,
+        pagination: {
+          page: 5,
+          pageSize: 20,
+          totalItems: 100,
+          totalPages: 5,
+          hasNext: false,
+          hasPrevious: true,
+          snapshotCreatedBefore: '2024-01-01T00:00:00Z',
+        },
       };
 
       const result = transformUserListResponse(response);
 
-      expect(result.page).toBe(5);
-      expect(result.pageSize).toBe(20);
-      expect(result.totalCount).toBe(100);
+      expect(result.pagination.page).toBe(5);
+      expect(result.pagination.pageSize).toBe(20);
+      expect(result.pagination.totalItems).toBe(100);
     });
   });
 });

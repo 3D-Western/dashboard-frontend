@@ -1,3 +1,4 @@
+import { cache } from 'react';
 import { User } from '@/types/user';
 import { sessionApi } from '@/api/client/session';
 
@@ -31,7 +32,7 @@ export const logout = async (): Promise<void> => {
  *
  * @returns {Promise<User | null>} Resolves to the user object if authenticated, or null if not.
  */
-export const validateSession = async (): Promise<User | null> => {
+export const validateSession = cache(async (): Promise<User | null> => {
   // For server-side requests, we need to manually forward cookies
   let cookieHeader: string | undefined;
   if (typeof window === 'undefined') {
@@ -55,4 +56,4 @@ export const validateSession = async (): Promise<User | null> => {
   } catch {
     return null;
   }
-};
+});

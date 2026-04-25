@@ -14,7 +14,8 @@ import {
   SidebarMenuItem,
 } from '@/components/ui/sidebar';
 import { SettingsPopover } from '@/components/SettingsPopover';
-import { User } from '@/types/user';
+import { User, hasPermission } from '@/types/user';
+import { PERMISSIONS } from '@/constants/permissions';
 import {
   LayoutDashboard,
   Printer,
@@ -23,6 +24,8 @@ import {
   Shield,
   FilePlus,
   TicketPlus,
+  Lock,
+  ClipboardList,
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -51,21 +54,37 @@ const adminNavigationItems = [
     title: 'Admin Dashboard',
     url: '/admin',
     icon: Shield,
+    permission: null, // visible to all admins
   },
   {
     title: 'User Management',
     url: Routes.adminUsersManagement,
     icon: Users,
+    permission: PERMISSIONS.USERS_LIST,
   },
   {
     title: 'Job Management',
     url: Routes.adminJobsManagement,
     icon: Settings,
+    permission: PERMISSIONS.JOBS_LIST,
   },
   {
     title: 'Invitation Management',
     url: Routes.adminInvitationManagement,
     icon: TicketPlus,
+    permission: PERMISSIONS.INVITATIONS_LIST,
+  },
+  {
+    title: 'IAM Management',
+    url: Routes.adminIamManagement,
+    icon: Lock,
+    permission: PERMISSIONS.IAM_READ,
+  },
+  {
+    title: 'Audit Log',
+    url: Routes.adminAuditLog,
+    icon: ClipboardList,
+    permission: PERMISSIONS.AUDIT_READ,
   },
 ];
 
@@ -108,21 +127,27 @@ export function AppSidebar({ user }: AppSidebarProps) {
           </SidebarGroupContent>
         </SidebarGroup>
 
-        {user.role === 'admin' && (
+        {adminNavigationItems.some(
+          (item) => item.permission !== null && hasPermission(user, item.permission),
+        ) && (
           <SidebarGroup>
             <SidebarGroupLabel>Admin</SidebarGroupLabel>
             <SidebarGroupContent>
               <SidebarMenu>
-                {adminNavigationItems.map((item) => (
-                  <SidebarMenuItem key={item.title}>
-                    <SidebarMenuButton asChild isActive={pathname === item.url}>
-                      <Link href={item.url}>
-                        <item.icon className="h-4 w-4" />
-                        <span>{item.title}</span>
-                      </Link>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                ))}
+                {adminNavigationItems
+                  .filter(
+                    (item) => item.permission === null || hasPermission(user, item.permission),
+                  )
+                  .map((item) => (
+                    <SidebarMenuItem key={item.title}>
+                      <SidebarMenuButton asChild isActive={pathname === item.url}>
+                        <Link href={item.url}>
+                          <item.icon className="h-4 w-4" />
+                          <span>{item.title}</span>
+                        </Link>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  ))}
               </SidebarMenu>
             </SidebarGroupContent>
           </SidebarGroup>

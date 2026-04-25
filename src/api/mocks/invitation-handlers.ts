@@ -7,6 +7,8 @@ import {
   generateErrorResponse,
 } from './utils';
 import { InvitationStatus } from './database/types';
+import { mockUserHasPermission } from './utils';
+import { PERMISSIONS } from '@/constants/permissions';
 
 const apiUrl = process.env.API_URL;
 
@@ -19,12 +21,11 @@ export const invitationHandlers = [
       return createInvalidSessionResponse();
     }
 
-    // Only admins can access invitations
-    if (user.role !== 'admin') {
+    if (!mockUserHasPermission(user, PERMISSIONS.INVITATIONS_LIST)) {
       return HttpResponse.json(
         generateErrorResponse({
           code: 'FORBIDDEN',
-          message: 'Admin role required to access this resource',
+          message: 'Insufficient permissions',
         }),
         { status: 403 },
       );
@@ -101,12 +102,11 @@ export const invitationHandlers = [
       return createInvalidSessionResponse();
     }
 
-    // Only admins can access invitations
-    if (user.role !== 'admin') {
+    if (!mockUserHasPermission(user, PERMISSIONS.INVITATIONS_READ)) {
       return HttpResponse.json(
         generateErrorResponse({
           code: 'FORBIDDEN',
-          message: 'Admin role required to access this resource',
+          message: 'Insufficient permissions',
         }),
         { status: 403 },
       );
@@ -156,12 +156,11 @@ export const invitationHandlers = [
       return createInvalidSessionResponse();
     }
 
-    // Only admins can create invitations
-    if (user.role !== 'admin') {
+    if (!mockUserHasPermission(user, PERMISSIONS.INVITATIONS_CREATE)) {
       return HttpResponse.json(
         generateErrorResponse({
           code: 'FORBIDDEN',
-          message: 'Admin role required to access this resource',
+          message: 'Insufficient permissions',
         }),
         { status: 403 },
       );
@@ -259,12 +258,11 @@ export const invitationHandlers = [
       return createInvalidSessionResponse();
     }
 
-    // Only admins can revoke invitations
-    if (user.role !== 'admin') {
+    if (!mockUserHasPermission(user, PERMISSIONS.INVITATIONS_REVOKE)) {
       return HttpResponse.json(
         generateErrorResponse({
           code: 'FORBIDDEN',
-          message: 'Admin role required to access this resource',
+          message: 'Insufficient permissions',
         }),
         { status: 403 },
       );

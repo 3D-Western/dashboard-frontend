@@ -4,6 +4,8 @@ import {
   generateErrorResponse,
   generateSuccessResponse,
   createInvalidSessionResponse,
+  mockGroupsForKeys,
+  mockPermissionsForGroups,
 } from './utils';
 import { endpoints } from '../client/endpoints';
 import { ErrorCodes } from '../client/errors';
@@ -87,7 +89,6 @@ export const sessionHandlers = [
       email: user.email,
       firstName: user.firstName,
       lastName: user.lastName,
-      status: user.role.charAt(0).toUpperCase() + user.role.slice(1), // "admin" -> "Admin", "user" -> "User"
       experienceLevel:
         user.experienceLevel
           ?.split('_')
@@ -95,6 +96,13 @@ export const sessionHandlers = [
           .join('_') || 'Beginner', // "no_experience" -> "No_experience", "beginner" -> "Beginner"
     };
 
-    return HttpResponse.json(generateSuccessResponse({ user: userResponse }));
+    return HttpResponse.json(
+      generateSuccessResponse({
+        user: userResponse,
+        groups: mockGroupsForKeys(user.groups),
+        permissions: mockPermissionsForGroups(user.groups),
+        activeJobCount: 0,
+      }),
+    );
   }),
 ];

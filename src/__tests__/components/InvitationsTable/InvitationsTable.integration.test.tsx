@@ -8,10 +8,17 @@ import {
   createMockExpiredInvitation,
   createMockRevokedInvitation,
   createMockInvitations,
+  createMockUser,
+  perm,
 } from '@test/utils/mockFactories';
 import { http, HttpResponse } from 'msw';
 import { mockServer } from '@/api/mocks';
 import { endpoints } from '@/api/client/endpoints';
+import { PERMISSIONS } from '@/constants/permissions';
+
+const mockAdminUser = createMockUser({
+  permissions: [perm(PERMISSIONS.INVITATIONS_READ), perm(PERMISSIONS.INVITATIONS_REVOKE)],
+});
 
 vi.mock('sonner', () => ({
   toast: {
@@ -256,6 +263,7 @@ describe('InvitationsTable Integration', () => {
           pagination={pagination}
           onRevokeSuccess={mockOnRevokeSuccess}
         />,
+        { user: mockAdminUser },
       );
 
       // Open dropdown menu
@@ -301,7 +309,9 @@ describe('InvitationsTable Integration', () => {
         }),
       );
 
-      render(<InvitationsTable invitations={invitations} pagination={pagination} />);
+      render(<InvitationsTable invitations={invitations} pagination={pagination} />, {
+        user: mockAdminUser,
+      });
 
       const moreButton = screen.getByRole('button', {
         name: `Actions for invitation to ${pendingInvitation.email}`,
@@ -346,6 +356,7 @@ describe('InvitationsTable Integration', () => {
           pagination={pagination}
           onRevokeSuccess={mockOnRevokeSuccess}
         />,
+        { user: mockAdminUser },
       );
 
       const moreButton = screen.getByRole('button', { name: /Actions for invitation/i });
@@ -396,6 +407,7 @@ describe('InvitationsTable Integration', () => {
           pagination={pagination}
           onRevokeSuccess={mockOnRevokeSuccess}
         />,
+        { user: mockAdminUser },
       );
 
       const moreButton = screen.getByRole('button', { name: /Actions for invitation/i });
@@ -498,6 +510,7 @@ describe('InvitationsTable Integration', () => {
           pagination={pagination}
           onRevokeSuccess={mockOnRevokeSuccess}
         />,
+        { user: mockAdminUser },
       );
 
       const moreButton = screen.getByRole('button', { name: /Actions for invitation/i });
@@ -532,6 +545,105 @@ describe('InvitationsTable Integration', () => {
 
       const revokeButton = screen.getByRole('menuitem', { name: /revoke invitation/i });
       expect(revokeButton).toHaveAttribute('aria-disabled', 'true');
+    });
+
+    describe('Permission Checks', () => {
+      it('disables revoke action when user lacks INVITATIONS_REVOKE permission', async () => {
+        const user = userEvent.setup();
+        const invitations = [createMockPendingInvitation()];
+        const pagination = { currentPage: 1, pageSize: 10, totalItems: 1, totalPages: 1 };
+        const userWithoutRevokePermission = createMockUser({
+          permissions: [perm(PERMISSIONS.INVITATIONS_READ)],
+        });
+
+        render(
+          <InvitationsTable
+            invitations={invitations}
+            pagination={pagination}
+            onRevokeSuccess={mockOnRevokeSuccess}
+          />,
+          { user: userWithoutRevokePermission },
+        );
+
+        const moreButton = screen.getByRole('button', { name: /Actions for invitation/i });
+        await user.click(moreButton);
+
+        const revokeButton = screen.getByRole('menuitem', { name: /revoke invitation/i });
+        expect(revokeButton).toHaveAttribute('aria-disabled', 'true');
+      });
+
+      it('does not open revoke dialog when user lacks INVITATIONS_REVOKE permission', async () => {
+        const user = userEvent.setup();
+        const invitations = [createMockPendingInvitation()];
+        const pagination = { currentPage: 1, pageSize: 10, totalItems: 1, totalPages: 1 };
+        const userWithoutRevokePermission = createMockUser({
+          permissions: [perm(PERMISSIONS.INVITATIONS_READ)],
+        });
+
+        render(
+          <InvitationsTable
+            invitations={invitations}
+            pagination={pagination}
+            onRevokeSuccess={mockOnRevokeSuccess}
+          />,
+          { user: userWithoutRevokePermission },
+        );
+
+        const moreButton = screen.getByRole('button', { name: /Actions for invitation/i });
+        await user.click(moreButton);
+        await user.click(screen.getByRole('menuitem', { name: /revoke invitation/i }));
+
+        expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument();
+        expect(mockOnRevokeSuccess).not.toHaveBeenCalled();
+      });
+
+      it('disables more info action when user lacks INVITATIONS_READ permission', async () => {
+        const user = userEvent.setup();
+        const invitations = [createMockPendingInvitation()];
+        const pagination = { currentPage: 1, pageSize: 10, totalItems: 1, totalPages: 1 };
+        const userWithoutReadPermission = createMockUser({
+          permissions: [perm(PERMISSIONS.INVITATIONS_REVOKE)],
+        });
+
+        render(
+          <InvitationsTable
+            invitations={invitations}
+            pagination={pagination}
+            onRevokeSuccess={mockOnRevokeSuccess}
+          />,
+          { user: userWithoutReadPermission },
+        );
+
+        const moreButton = screen.getByRole('button', { name: /Actions for invitation/i });
+        await user.click(moreButton);
+
+        const infoButton = screen.getByRole('menuitem', { name: /more info/i });
+        expect(infoButton).toHaveAttribute('aria-disabled', 'true');
+      });
+
+      it('does not open info dialog when user lacks INVITATIONS_READ permission', async () => {
+        const user = userEvent.setup();
+        const invitations = [createMockPendingInvitation()];
+        const pagination = { currentPage: 1, pageSize: 10, totalItems: 1, totalPages: 1 };
+        const userWithoutReadPermission = createMockUser({
+          permissions: [perm(PERMISSIONS.INVITATIONS_REVOKE)],
+        });
+
+        render(
+          <InvitationsTable
+            invitations={invitations}
+            pagination={pagination}
+            onRevokeSuccess={mockOnRevokeSuccess}
+          />,
+          { user: userWithoutReadPermission },
+        );
+
+        const moreButton = screen.getByRole('button', { name: /Actions for invitation/i });
+        await user.click(moreButton);
+        await user.click(screen.getByRole('menuitem', { name: /more info/i }));
+
+        expect(screen.queryByText('Invitation Details')).not.toBeInTheDocument();
+      });
     });
   });
 });

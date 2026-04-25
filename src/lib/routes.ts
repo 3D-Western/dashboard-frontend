@@ -13,6 +13,8 @@ export const Routes = {
   adminUsersManagement: '/admin/users',
   adminJobsManagement: '/admin/jobs',
   adminInvitationManagement: '/admin/invitations',
+  adminIamManagement: '/admin/iam',
+  adminAuditLog: '/admin/audit',
 
   jobs: {
     home: '/dashboard/jobs',

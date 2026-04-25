@@ -5,8 +5,10 @@ import {
   createInvalidSessionResponse,
   generateSuccessResponse,
   generateErrorResponse,
+  mockUserHasPermission,
 } from './utils';
 import { ErrorCodes } from '../client/errors';
+import { PERMISSIONS } from '@/constants/permissions';
 
 const apiUrl = process.env.API_URL;
 
@@ -19,14 +21,13 @@ export const userHandlers = [
       return createInvalidSessionResponse();
     }
 
-    // Only admins can list all users
-    if (user.role !== 'admin') {
+    if (!mockUserHasPermission(user, PERMISSIONS.USERS_LIST)) {
       return HttpResponse.json(
         {
           success: false,
           error: {
             code: 'FORBIDDEN',
-            message: 'Admin role required to access this resource',
+            message: 'Insufficient permissions',
           },
         },
         { status: 403 },
@@ -65,9 +66,9 @@ export const userHandlers = [
       );
     }
 
-    // Apply status filter
+    // Apply status filter (filter by group key)
     if (statusFilter) {
-      users = users.filter((u) => u.role === statusFilter);
+      users = users.filter((u) => u.groups.includes(statusFilter));
     }
 
     // Apply training level filter
@@ -87,7 +88,7 @@ export const userHandlers = [
       firstName: u.firstName,
       lastName: u.lastName,
       createdDate: u.createdDate || new Date().toISOString(),
-      status: u.role.charAt(0).toUpperCase() + u.role.slice(1), // "admin" -> "Admin", "user" -> "User"
+      groups: u.groups,
       trainingLevel: u.trainingLevel,
       experienceLevel:
         u.experienceLevel
@@ -127,14 +128,13 @@ export const userHandlers = [
       return createInvalidSessionResponse();
     }
 
-    // Only admins can view other users
-    if (user.role !== 'admin') {
+    if (!mockUserHasPermission(user, PERMISSIONS.USERS_READ)) {
       return HttpResponse.json(
         {
           success: false,
           error: {
             code: 'FORBIDDEN',
-            message: 'Admin role required to access this resource',
+            message: 'Insufficient permissions',
           },
         },
         { status: 403 },
@@ -164,7 +164,7 @@ export const userHandlers = [
         firstName: targetUser.firstName,
         lastName: targetUser.lastName,
         createdDate: targetUser.createdDate || new Date().toISOString(),
-        status: targetUser.role.charAt(0).toUpperCase() + targetUser.role.slice(1), // "admin" -> "Admin"
+        groups: targetUser.groups,
         trainingLevel: targetUser.trainingLevel,
         experienceLevel:
           targetUser.experienceLevel

@@ -31,7 +31,9 @@ vi.mock('@/components/ui/select', () => {
     let options: React.ReactNode[] = [];
     React.Children.forEach(children, (child) => {
       if (React.isValidElement(child) && child.type === SelectContent) {
-        options = React.Children.toArray(child.props.children);
+        options = React.Children.toArray(
+          (child as React.ReactElement<{ children?: React.ReactNode }>).props.children,
+        );
       }
     });
     return (

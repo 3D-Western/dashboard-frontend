@@ -2,7 +2,12 @@ import { http, HttpResponse } from 'msw';
 import { endpoints } from '../client/endpoints';
 import { JobCategory } from '@/types/jobs';
 import db from './database/db';
-import { createInvalidSessionResponse, generateSuccessResponse } from './utils';
+import {
+  createInvalidSessionResponse,
+  generateSuccessResponse,
+  mockUserHasPermission,
+} from './utils';
+import { PERMISSIONS } from '@/constants/permissions';
 
 const apiUrl = process.env.API_URL;
 
@@ -29,7 +34,7 @@ export const jobHandlers = [
     let userIdForFilter: number | undefined;
     if (userIdFilter) {
       userIdForFilter = parseInt(userIdFilter);
-    } else if (user.role !== 'admin') {
+    } else if (!mockUserHasPermission(user, PERMISSIONS.JOBS_LIST)) {
       // Non-admin users can only see their own jobs
       userIdForFilter = user.studentId;
     }
@@ -270,10 +275,9 @@ export const jobHandlers = [
       return createInvalidSessionResponse();
     }
 
-    // Only admins can update job status
-    if (user.role !== 'admin') {
+    if (!mockUserHasPermission(user, PERMISSIONS.JOBS_UPDATE_STATUS)) {
       return HttpResponse.json(
-        { success: false, error: 'Unauthorized: Admin access required' },
+        { success: false, error: 'Insufficient permissions' },
         { status: 403 },
       );
     }
@@ -297,10 +301,9 @@ export const jobHandlers = [
       return createInvalidSessionResponse();
     }
 
-    // Only admins can delete jobs
-    if (user.role !== 'admin') {
+    if (!mockUserHasPermission(user, PERMISSIONS.JOBS_DELETE)) {
       return HttpResponse.json(
-        { success: false, error: 'Unauthorized: Admin access required' },
+        { success: false, error: 'Insufficient permissions' },
         { status: 403 },
       );
     }

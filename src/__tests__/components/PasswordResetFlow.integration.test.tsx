@@ -252,14 +252,14 @@ describe('Password Reset Flow Integration', () => {
 
     mockServer.use(
       http.post(`*${endpoints.resetPassword.forgotPassword}`, async ({ request }) => {
-        requestPayloads.push(await request.json());
+        requestPayloads.push((await request.json()) as { studentId: number });
         return HttpResponse.json({
           success: true,
           data: null,
         });
       }),
       http.post(`*${endpoints.resetPassword.resetPassword}`, async ({ request }) => {
-        resetPayloads.push(await request.json());
+        resetPayloads.push((await request.json()) as { token: string; newPassword: string });
         return HttpResponse.json({
           success: true,
           data: null,
