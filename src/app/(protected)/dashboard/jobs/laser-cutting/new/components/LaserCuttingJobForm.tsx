@@ -26,7 +26,7 @@ import {
 } from '@/components/ui/select';
 import { UnsavedChangesDialog } from '@/components/UnsavedChangesDialog';
 import { toast } from 'sonner';
-import { FileDropZone } from '@/components/manufacturing/FileDropZone';
+import { FileUploadDropzone } from '@/components/FileUploadDropzone';
 import { submitJob } from '@/lib/job-submission';
 import { Routes } from '@/lib/routes';
 
@@ -207,7 +207,7 @@ export default function LaserCuttingJobForm() {
                   {LASER_FILE_TYPES.description} - {LASER_FILE_TYPES.validation}
                 </FormDescription>
                 <FormControl>
-                  <FileDropZone
+                  <FileUploadDropzone
                     accept={LASER_FILE_TYPES.accept}
                     onFileAccepted={(f) => {
                       field.onChange(f ?? undefined);

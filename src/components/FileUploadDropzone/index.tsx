@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import Dropzone, { DropzoneContent, DropzoneEmptyState } from '@/components/ui/dropzone';
+import { Dropzone, DropzoneContent, DropzoneEmptyState } from '@/components/Dropzone';
 
 type FileUploadDropzoneProps = {
   onFileAccepted: (file: File | null) => void;

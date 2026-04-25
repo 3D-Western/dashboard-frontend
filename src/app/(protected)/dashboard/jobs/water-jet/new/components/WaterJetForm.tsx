@@ -2,7 +2,7 @@
 
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
-import { FileDropZone } from '@/components/manufacturing/FileDropZone';
+import { FileUploadDropzone } from '@/components/FileUploadDropzone';
 import { Loader2 } from 'lucide-react';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -210,7 +210,7 @@ export default function WaterJetForm() {
                   {WATERJET_FILE_TYPES.description} - {WATERJET_FILE_TYPES.validation}
                 </FormDescription>
                 <FormControl>
-                  <FileDropZone
+                  <FileUploadDropzone
                     accept={WATERJET_FILE_TYPES.accept}
                     onFileAccepted={(f) => {
                       field.onChange(f ?? undefined);

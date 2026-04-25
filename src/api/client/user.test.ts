@@ -317,10 +317,10 @@ describe('userApi', () => {
     it('includes credentials in request', async () => {
       let capturedCredentials: RequestCredentials | undefined;
       const originalFetch = global.fetch;
-      global.fetch = vi.fn((url, options) => {
+      vi.stubGlobal('fetch', vi.fn((url: Parameters<typeof fetch>[0], options: Parameters<typeof fetch>[1]) => {
         capturedCredentials = options?.credentials;
         return originalFetch(url, options);
-      });
+      }));
 
       mockServer.use(
         http.get('*' + endpoints.users.list, () => {
@@ -346,7 +346,7 @@ describe('userApi', () => {
 
       expect(capturedCredentials).toBe('include');
 
-      global.fetch = originalFetch;
+      vi.unstubAllGlobals();
     });
 
     it('throws FORBIDDEN error for non-admin users', async () => {
@@ -465,10 +465,10 @@ describe('userApi', () => {
     it('includes credentials in request', async () => {
       let capturedCredentials: RequestCredentials | undefined;
       const originalFetch = global.fetch;
-      global.fetch = vi.fn((url, options) => {
+      vi.stubGlobal('fetch', vi.fn((url: Parameters<typeof fetch>[0], options: Parameters<typeof fetch>[1]) => {
         capturedCredentials = options?.credentials;
         return originalFetch(url, options);
-      });
+      }));
 
       mockServer.use(
         http.get('*' + endpoints.users.byId(251000001), () => {
@@ -483,7 +483,7 @@ describe('userApi', () => {
 
       expect(capturedCredentials).toBe('include');
 
-      global.fetch = originalFetch;
+      vi.unstubAllGlobals();
     });
 
     it('throws USER_NOT_FOUND error for non-existent user', async () => {
@@ -785,10 +785,10 @@ describe('userApi', () => {
     it('includes credentials in request', async () => {
       let capturedCredentials: RequestCredentials | undefined;
       const originalFetch = global.fetch;
-      global.fetch = vi.fn((url, options) => {
+      vi.stubGlobal('fetch', vi.fn((url: Parameters<typeof fetch>[0], options: Parameters<typeof fetch>[1]) => {
         capturedCredentials = options?.credentials;
         return originalFetch(url, options);
-      });
+      }));
 
       mockServer.use(
         http.get('*' + endpoints.users.jobs, () => {
@@ -814,7 +814,7 @@ describe('userApi', () => {
 
       expect(capturedCredentials).toBe('include');
 
-      global.fetch = originalFetch;
+      vi.unstubAllGlobals();
     });
 
     it('throws FORBIDDEN error when user is not authenticated', async () => {
@@ -969,10 +969,10 @@ describe('userApi', () => {
     it('includes credentials in request', async () => {
       let capturedCredentials: RequestCredentials | undefined;
       const originalFetch = global.fetch;
-      global.fetch = vi.fn((url, options) => {
+      vi.stubGlobal('fetch', vi.fn((url: Parameters<typeof fetch>[0], options: Parameters<typeof fetch>[1]) => {
         capturedCredentials = options?.credentials;
         return originalFetch(url, options);
-      });
+      }));
 
       mockServer.use(
         http.post('*' + endpoints.users.changePassword, () => {
@@ -987,7 +987,7 @@ describe('userApi', () => {
 
       expect(capturedCredentials).toBe('include');
 
-      global.fetch = originalFetch;
+      vi.unstubAllGlobals();
     });
 
     it('throws INVALID_CREDENTIALS error when current password is incorrect', async () => {
