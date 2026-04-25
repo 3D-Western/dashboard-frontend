@@ -349,7 +349,7 @@ describe('LaserCuttingJobForm Integration', () => {
       const nameField = screen.getByLabelText(/Request Name/i);
       await user.type(nameField, 'Test');
 
-      // The UnsavedChangesGuard component is rendered when isDirty is true
+      // The UnsavedChangesDialog component is rendered when isDirty is true
       // Actual navigation blocking would be tested in E2E
       expect(nameField).toHaveValue('Test');
     });

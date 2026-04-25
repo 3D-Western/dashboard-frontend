@@ -14,12 +14,11 @@ import {
   AlertDialogAction,
 } from '@/components/ui/alert-dialog';
 
-export function UnsavedChangesGuard({ isDirty }: { isDirty: boolean }) {
+export function UnsavedChangesDialog({ isDirty }: { isDirty: boolean }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const nextUrl = useRef<string | null>(null);
 
-  // ✔ 1) Correct browser unload/back protection
   useEffect(() => {
     if (!isDirty) return;
 
@@ -32,7 +31,6 @@ export function UnsavedChangesGuard({ isDirty }: { isDirty: boolean }) {
     return () => window.removeEventListener('beforeunload', handler);
   }, [isDirty]);
 
-  // 2) Intercept <Link> clicks BEFORE navigation
   useEffect(() => {
     if (!isDirty) return;
 
@@ -44,7 +42,6 @@ export function UnsavedChangesGuard({ isDirty }: { isDirty: boolean }) {
       if (!href || href.startsWith('#')) return;
 
       e.preventDefault();
-      e.stopPropagation();
 
       nextUrl.current = href;
       setOpen(true);
@@ -54,22 +51,14 @@ export function UnsavedChangesGuard({ isDirty }: { isDirty: boolean }) {
     return () => document.removeEventListener('click', handleClick, true);
   }, [isDirty]);
 
-  const confirmLeave = () => {
-    if (nextUrl.current) {
-      const go = nextUrl.current;
-      nextUrl.current = null;
-      router.push(go);
-    }
-    setOpen(false);
-  };
-
-  const cancelLeave = () => {
+  const closeDialog = (url: string | null = null) => {
     nextUrl.current = null;
     setOpen(false);
+    if (url) router.push(url);
   };
 
   return (
-    <AlertDialog open={open} onOpenChange={(o) => !o && cancelLeave()}>
+    <AlertDialog open={open} onOpenChange={(o) => !o && closeDialog()}>
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>Leave this page?</AlertDialogTitle>
@@ -79,8 +68,8 @@ export function UnsavedChangesGuard({ isDirty }: { isDirty: boolean }) {
         </AlertDialogHeader>
 
         <AlertDialogFooter>
-          <AlertDialogCancel onClick={cancelLeave}>Stay</AlertDialogCancel>
-          <AlertDialogAction onClick={confirmLeave}>Leave</AlertDialogAction>
+          <AlertDialogCancel>Stay</AlertDialogCancel>
+          <AlertDialogAction onClick={() => closeDialog(nextUrl.current)}>Leave</AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>

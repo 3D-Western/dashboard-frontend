@@ -24,7 +24,7 @@ import {
   SelectContent,
   SelectItem,
 } from '@/components/ui/select';
-import { UnsavedChangesGuard } from '@/components/ui/unsaved-changes-guard';
+import { UnsavedChangesDialog } from '@/components/UnsavedChangesDialog';
 import { toast } from 'sonner';
 import { FileDropZone } from '@/components/manufacturing/FileDropZone';
 import { submitJob } from '@/lib/job-submission';
@@ -248,7 +248,7 @@ export default function LaserCuttingJobForm() {
         </form>
       </Form>
 
-      <UnsavedChangesGuard isDirty={isDirty && !isSubmitting} />
+      <UnsavedChangesDialog isDirty={isDirty && !isSubmitting} />
     </div>
   );
 }
