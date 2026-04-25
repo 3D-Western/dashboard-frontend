@@ -79,7 +79,8 @@ export function mockPermissionsForGroups(groupKeys: string[]): UserPermission[] 
 export function mockUserHasPermission(user: User, permission: string, scopeKey?: string): boolean {
   return mockPermissionsForGroups(user.groups).some(
     (p) =>
-      p.key === permission && (scopeKey === undefined || p.scopeKey === 'any' || p.scopeKey === scopeKey),
+      p.key === permission &&
+      (scopeKey === undefined || p.scopeKey === 'any' || p.scopeKey === scopeKey),
   );
 }
 

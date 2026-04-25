@@ -108,7 +108,10 @@ export function IamDataTable<TData, TValue>({
           aria-label={tableLabel}
           aria-describedby={`${tableLabel.toLowerCase().replace(/\s+/g, '-')}-caption`}
         >
-          <caption id={`${tableLabel.toLowerCase().replace(/\s+/g, '-')}-caption`} className="sr-only">
+          <caption
+            id={`${tableLabel.toLowerCase().replace(/\s+/g, '-')}-caption`}
+            className="sr-only"
+          >
             {tableCaption}
           </caption>
           <TableHeader>
