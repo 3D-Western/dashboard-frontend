@@ -24,9 +24,9 @@ import {
   SelectContent,
   SelectItem,
 } from '@/components/ui/select';
-import { UnsavedChangesGuard } from '@/components/ui/unsaved-changes-guard';
+import { UnsavedChangesDialog } from '@/components/UnsavedChangesDialog';
 import { toast } from 'sonner';
-import { FileDropZone } from '@/components/manufacturing/FileDropZone';
+import { FileUploadDropzone } from '@/components/FileUploadDropzone';
 import { submitJob } from '@/lib/job-submission';
 import { Routes } from '@/lib/routes';
 
@@ -200,7 +200,7 @@ export default function CNCJobForm() {
                   {CNC_FILE_TYPES.description} - {CNC_FILE_TYPES.validation}
                 </FormDescription>
                 <FormControl>
-                  <FileDropZone
+                  <FileUploadDropzone
                     accept={CNC_FILE_TYPES.accept}
                     onFileAccepted={(f) => {
                       field.onChange(f ?? undefined);
@@ -241,7 +241,7 @@ export default function CNCJobForm() {
         </form>
       </Form>
 
-      <UnsavedChangesGuard isDirty={isDirty && !isSubmitting} />
+      <UnsavedChangesDialog isDirty={isDirty && !isSubmitting} />
     </div>
   );
 }

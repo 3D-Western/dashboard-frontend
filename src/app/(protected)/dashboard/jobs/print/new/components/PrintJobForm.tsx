@@ -26,7 +26,7 @@ import {
   SelectContent,
   SelectItem,
 } from '@/components/ui/select';
-import { UnsavedChangesGuard } from '@/components/ui/unsaved-changes-guard';
+import { UnsavedChangesDialog } from '@/components/UnsavedChangesDialog';
 import { jobApi } from '@/api/client/job';
 import { calculateFileChecksum } from '@/lib/file-utils';
 import { Routes } from '@/lib/routes';
@@ -295,7 +295,7 @@ export default function NewPrintForm({ mockMode = false }: NewPrintFormProps = {
           </div>
         </form>
       </Form>
-      <UnsavedChangesGuard isDirty={isDirty && !isSubmitting} />
+      <UnsavedChangesDialog isDirty={isDirty && !isSubmitting} />
     </div>
   );
 }

@@ -2,7 +2,7 @@
 
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
-import { FileDropZone } from '@/components/manufacturing/FileDropZone';
+import { FileUploadDropzone } from '@/components/FileUploadDropzone';
 import { Loader2 } from 'lucide-react';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -25,7 +25,7 @@ import {
   SelectContent,
   SelectItem,
 } from '@/components/ui/select';
-import { UnsavedChangesGuard } from '@/components/ui/unsaved-changes-guard';
+import { UnsavedChangesDialog } from '@/components/UnsavedChangesDialog';
 import { toast } from 'sonner';
 import { submitJob } from '@/lib/job-submission';
 import { Routes } from '@/lib/routes';
@@ -210,7 +210,7 @@ export default function WaterJetForm() {
                   {WATERJET_FILE_TYPES.description} - {WATERJET_FILE_TYPES.validation}
                 </FormDescription>
                 <FormControl>
-                  <FileDropZone
+                  <FileUploadDropzone
                     accept={WATERJET_FILE_TYPES.accept}
                     onFileAccepted={(f) => {
                       field.onChange(f ?? undefined);
@@ -251,7 +251,7 @@ export default function WaterJetForm() {
         </form>
       </Form>
 
-      <UnsavedChangesGuard isDirty={isDirty && !isSubmitting} />
+      <UnsavedChangesDialog isDirty={isDirty && !isSubmitting} />
     </div>
   );
 }

@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { submitJob } from './job-submission';
 
 // Mock external dependencies
@@ -24,9 +24,13 @@ describe('submitJob', () => {
 
   const mockFetch = vi.fn();
 
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
   beforeEach(() => {
     vi.clearAllMocks();
-    global.fetch = mockFetch;
+    vi.stubGlobal('fetch', mockFetch);
 
     // Mock successful fetch by default
     mockFetch.mockResolvedValue({

@@ -287,10 +287,13 @@ describe('invitationApi', () => {
     it('includes credentials in request', async () => {
       let capturedCredentials: RequestCredentials | undefined;
       const originalFetch = global.fetch;
-      global.fetch = vi.fn((url, options) => {
-        capturedCredentials = options?.credentials;
-        return originalFetch(url, options);
-      });
+      vi.stubGlobal(
+        'fetch',
+        vi.fn((url: Parameters<typeof fetch>[0], options: Parameters<typeof fetch>[1]) => {
+          capturedCredentials = options?.credentials;
+          return originalFetch(url, options);
+        }),
+      );
 
       mockServer.use(
         http.get('*' + endpoints.invitations.list, () => {
@@ -316,7 +319,7 @@ describe('invitationApi', () => {
 
       expect(capturedCredentials).toBe('include');
 
-      global.fetch = originalFetch;
+      vi.unstubAllGlobals();
     });
 
     it('throws FORBIDDEN error for non-admin users', async () => {
@@ -431,10 +434,13 @@ describe('invitationApi', () => {
     it('includes credentials in request', async () => {
       let capturedCredentials: RequestCredentials | undefined;
       const originalFetch = global.fetch;
-      global.fetch = vi.fn((url, options) => {
-        capturedCredentials = options?.credentials;
-        return originalFetch(url, options);
-      });
+      vi.stubGlobal(
+        'fetch',
+        vi.fn((url: Parameters<typeof fetch>[0], options: Parameters<typeof fetch>[1]) => {
+          capturedCredentials = options?.credentials;
+          return originalFetch(url, options);
+        }),
+      );
 
       mockServer.use(
         http.get('*' + endpoints.invitations.byId(1), () => {
@@ -449,7 +455,7 @@ describe('invitationApi', () => {
 
       expect(capturedCredentials).toBe('include');
 
-      global.fetch = originalFetch;
+      vi.unstubAllGlobals();
     });
 
     it('throws INVITATION_NOT_FOUND error for non-existent invitation', async () => {
@@ -582,10 +588,13 @@ describe('invitationApi', () => {
     it('includes credentials in request', async () => {
       let capturedCredentials: RequestCredentials | undefined;
       const originalFetch = global.fetch;
-      global.fetch = vi.fn((url, options) => {
-        capturedCredentials = options?.credentials;
-        return originalFetch(url, options);
-      });
+      vi.stubGlobal(
+        'fetch',
+        vi.fn((url: Parameters<typeof fetch>[0], options: Parameters<typeof fetch>[1]) => {
+          capturedCredentials = options?.credentials;
+          return originalFetch(url, options);
+        }),
+      );
 
       mockServer.use(
         http.post('*' + endpoints.invitations.create, () => {
@@ -603,7 +612,7 @@ describe('invitationApi', () => {
 
       expect(capturedCredentials).toBe('include');
 
-      global.fetch = originalFetch;
+      vi.unstubAllGlobals();
     });
 
     it('throws VALIDATION_FAILED for invalid data', async () => {
@@ -744,10 +753,13 @@ describe('invitationApi', () => {
     it('includes credentials in request', async () => {
       let capturedCredentials: RequestCredentials | undefined;
       const originalFetch = global.fetch;
-      global.fetch = vi.fn((url, options) => {
-        capturedCredentials = options?.credentials;
-        return originalFetch(url, options);
-      });
+      vi.stubGlobal(
+        'fetch',
+        vi.fn((url: Parameters<typeof fetch>[0], options: Parameters<typeof fetch>[1]) => {
+          capturedCredentials = options?.credentials;
+          return originalFetch(url, options);
+        }),
+      );
 
       mockServer.use(
         http.patch('*' + endpoints.invitations.revoke(1), () => {
@@ -762,7 +774,7 @@ describe('invitationApi', () => {
 
       expect(capturedCredentials).toBe('include');
 
-      global.fetch = originalFetch;
+      vi.unstubAllGlobals();
     });
 
     it('throws INVITATION_NOT_FOUND error for non-existent invitation', async () => {

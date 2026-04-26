@@ -30,13 +30,13 @@ describe('ensureMockServer', () => {
 
   afterEach(() => {
     vi.doUnmock('@/api/mocks');
+    vi.unstubAllGlobals();
     if (originalWindow !== undefined) {
       global.window = originalWindow;
     } else {
       delete (global as unknown as { window?: unknown }).window;
     }
     process.env.MOCK_ENABLED = originalEnv;
-    globalThis.fetch = originalFetch;
     globalThis.__mswServerStarted = undefined;
     globalThis.__mswFetch = undefined;
     globalThis.__mswInitPromise = null;
@@ -85,7 +85,7 @@ describe('ensureMockServer', () => {
 
       expect(mockServerListen).toHaveBeenCalledTimes(1);
       expect(globalThis.__mswServerStarted).toBe(true);
-      expect(globalThis.__mswFetch).toBe(originalFetch);
+      expect(globalThis.__mswFetch).toBe(globalThis.fetch);
     });
 
     it('sets global variables after initialization', async () => {
@@ -121,7 +121,7 @@ describe('ensureMockServer', () => {
       expect(mockServerListen).toHaveBeenCalledTimes(1);
 
       const newFetch = vi.fn() as unknown as typeof fetch;
-      globalThis.fetch = newFetch;
+      vi.stubGlobal('fetch', newFetch);
 
       await ensureMockServer();
 
@@ -199,7 +199,7 @@ describe('ensureMockServer', () => {
       globalThis.__mswFetch = oldFetch;
 
       const newFetch = vi.fn() as unknown as typeof fetch;
-      globalThis.fetch = newFetch;
+      vi.stubGlobal('fetch', newFetch);
 
       await ensureMockServer();
 

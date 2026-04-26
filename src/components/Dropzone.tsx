@@ -27,7 +27,7 @@ const renderBytes = (bytes: number) => {
     unitIndex++;
   }
 
-  return `${size.toFixed(2)}${units[unitIndex]}`;
+  return `${parseFloat(size.toFixed(2))}${units[unitIndex]}`;
 };
 
 const DropzoneContext = createContext<DropzoneContextType | undefined>(undefined);
@@ -73,7 +73,7 @@ export const Dropzone = ({
 
   return (
     <DropzoneContext.Provider
-      key={JSON.stringify(src)}
+      key={src?.map((f) => `${f.name}-${f.size}`).join(',')}
       value={{ src, accept, maxSize, minSize, maxFiles }}
     >
       <Button
@@ -115,11 +115,8 @@ const maxLabelItems = 3;
 export const DropzoneContent = ({ children, className }: DropzoneContentProps) => {
   const { src } = useDropzoneContext();
 
-  // Compute preview URL as derived state
   const previewUrl = useMemo(() => {
-    if (!src || src.length === 0) {
-      return null;
-    }
+    if (!src?.length) return null;
 
     const file = src[0];
     if (file.type.startsWith('image/')) {
@@ -129,7 +126,6 @@ export const DropzoneContent = ({ children, className }: DropzoneContentProps) =
     return null;
   }, [src]);
 
-  // Clean up object URL when component unmounts or src changes
   useEffect(() => {
     return () => {
       if (previewUrl) {
@@ -138,13 +134,9 @@ export const DropzoneContent = ({ children, className }: DropzoneContentProps) =
     };
   }, [previewUrl]);
 
-  if (!src) {
-    return null;
-  }
+  if (!src?.length) return null;
 
-  if (children) {
-    return children;
-  }
+  if (children) return children;
 
   const label =
     src.length > maxLabelItems
@@ -186,15 +178,11 @@ export type DropzoneEmptyStateProps = {
 };
 
 export const DropzoneEmptyState = ({ children, className }: DropzoneEmptyStateProps) => {
-  const { src, accept: _accept, maxSize, minSize, maxFiles } = useDropzoneContext();
+  const { src, maxSize, minSize, maxFiles } = useDropzoneContext();
 
-  if (src) {
-    return null;
-  }
+  if (src?.length) return null;
 
-  if (children) {
-    return children;
-  }
+  if (children) return children;
 
   let caption = '';
 
@@ -221,4 +209,3 @@ export const DropzoneEmptyState = ({ children, className }: DropzoneEmptyStatePr
     </div>
   );
 };
-export default Dropzone;

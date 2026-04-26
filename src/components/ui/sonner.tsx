@@ -48,6 +48,11 @@ const Toaster = ({ ...props }: ToasterProps) => {
           '--info-border': 'var(--border)',
         } as React.CSSProperties
       }
+      toastOptions={{
+        classNames: {
+          toast: 'cn-toast',
+        },
+      }}
       {...props}
     />
   );

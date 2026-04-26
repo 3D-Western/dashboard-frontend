@@ -92,10 +92,13 @@ describe('apiRequest', () => {
     it('includes credentials with the request', async () => {
       let capturedCredentials: RequestCredentials | undefined;
       const originalFetch = global.fetch;
-      global.fetch = vi.fn((url, options) => {
-        capturedCredentials = options?.credentials;
-        return originalFetch(url, options);
-      });
+      vi.stubGlobal(
+        'fetch',
+        vi.fn((url: Parameters<typeof fetch>[0], options: Parameters<typeof fetch>[1]) => {
+          capturedCredentials = options?.credentials;
+          return originalFetch(url, options);
+        }),
+      );
 
       mockServer.use(
         http.get(testUrl, () => {
@@ -107,7 +110,7 @@ describe('apiRequest', () => {
 
       expect(capturedCredentials).toBe('include');
 
-      global.fetch = originalFetch;
+      vi.unstubAllGlobals();
     });
   });
 
@@ -119,7 +122,6 @@ describe('apiRequest', () => {
     });
 
     afterEach(() => {
-      global.fetch = originalFetch;
       vi.unstubAllGlobals();
       vi.clearAllMocks();
     });
@@ -144,11 +146,14 @@ describe('apiRequest', () => {
         }),
       );
 
-      global.fetch = vi.fn((url, options) => {
-        const headers = new Headers(options?.headers);
-        capturedCookie = headers.get('Cookie');
-        return originalFetch(url, options);
-      });
+      vi.stubGlobal(
+        'fetch',
+        vi.fn((url: Parameters<typeof fetch>[0], options: Parameters<typeof fetch>[1]) => {
+          const headers = new Headers(options?.headers);
+          capturedCookie = headers.get('Cookie');
+          return originalFetch(url, options);
+        }),
+      );
 
       await apiRequest(testUrl, { method: 'GET' });
 
@@ -171,11 +176,14 @@ describe('apiRequest', () => {
         }),
       );
 
-      global.fetch = vi.fn((url, options) => {
-        const headers = new Headers(options?.headers);
-        capturedCookie = headers.get('Cookie');
-        return originalFetch(url, options);
-      });
+      vi.stubGlobal(
+        'fetch',
+        vi.fn((url: Parameters<typeof fetch>[0], options: Parameters<typeof fetch>[1]) => {
+          const headers = new Headers(options?.headers);
+          capturedCookie = headers.get('Cookie');
+          return originalFetch(url, options);
+        }),
+      );
 
       await apiRequest(testUrl, { method: 'GET' });
 
@@ -198,11 +206,14 @@ describe('apiRequest', () => {
         }),
       );
 
-      global.fetch = vi.fn((url, options) => {
-        const headers = new Headers(options?.headers);
-        capturedCookie = headers.get('Cookie');
-        return originalFetch(url, options);
-      });
+      vi.stubGlobal(
+        'fetch',
+        vi.fn((url: Parameters<typeof fetch>[0], options: Parameters<typeof fetch>[1]) => {
+          const headers = new Headers(options?.headers);
+          capturedCookie = headers.get('Cookie');
+          return originalFetch(url, options);
+        }),
+      );
 
       await apiRequest(testUrl, {
         method: 'GET',
@@ -485,18 +496,12 @@ describe('apiRequest', () => {
   });
 
   describe('network error handling', () => {
-    let originalFetch: typeof global.fetch;
-
-    beforeEach(() => {
-      originalFetch = global.fetch;
-    });
-
     afterEach(() => {
-      global.fetch = originalFetch;
+      vi.unstubAllGlobals();
     });
 
     it('throws ApiError with REQUEST_FAILED when network request fails', async () => {
-      global.fetch = vi.fn().mockRejectedValue(new Error('Network connection failed'));
+      vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new Error('Network connection failed')));
 
       await expect(apiRequest(testUrl)).rejects.toThrow(ApiError);
       await expect(apiRequest(testUrl)).rejects.toMatchObject({
@@ -507,7 +512,7 @@ describe('apiRequest', () => {
 
     it('includes original error in ApiError details when network fails', async () => {
       const networkError = new Error('Connection timeout');
-      global.fetch = vi.fn().mockRejectedValue(networkError);
+      vi.stubGlobal('fetch', vi.fn().mockRejectedValue(networkError));
 
       try {
         await apiRequest(testUrl);
@@ -522,7 +527,7 @@ describe('apiRequest', () => {
     });
 
     it('handles non-Error network failures gracefully', async () => {
-      global.fetch = vi.fn().mockRejectedValue('String error');
+      vi.stubGlobal('fetch', vi.fn().mockRejectedValue('String error'));
 
       await expect(apiRequest(testUrl)).rejects.toMatchObject({
         code: ErrorCodes.REQUEST_FAILED,
