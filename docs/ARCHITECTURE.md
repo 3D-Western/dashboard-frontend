@@ -53,14 +53,19 @@ dashboard-frontend/
 │   │
 │   ├── app/                          # Next.js App Router
 │   │   ├── (home)/                   # Public home page
+│   │   ├── (auth)/                   # Auth pages (login, signup, MFA, etc.)
+│   │   │   ├── login/                # Login form
+│   │   │   ├── signup/               # Multi-step registration
+│   │   │   ├── mfa/                  # OTP challenge
+│   │   │   ├── verify-email/         # Email verification
+│   │   │   ├── check-email/          # Post-signup confirmation
+│   │   │   ├── forgot-password/      # Request password reset
+│   │   │   └── reset-password/       # Submit new password
 │   │   ├── (protected)/              # Protected routes
 │   │   │   ├── layout.tsx            # Protected layout with auth
-│   │   │   ├── dashboard/            # User dashboard
-│   │   │   └── admin/                # Admin routes
-│   │   ├── login/                    # Login page
-│   │   ├── signup/                   # Signup page
-│   │   ├── api/                      # API routes
-│   │   │   └── me/                   # Current session endpoint
+│   │   │   ├── dashboard/            # User dashboard + jobs + settings
+│   │   │   └── admin/                # Admin section (jobs, invitations, IAM, users, audit)
+│   │   ├── faqs/                     # Public FAQ page
 │   │   └── layout.tsx                # Root layout
 │   │
 │   ├── components/                   # React components
@@ -109,18 +114,35 @@ The app uses Next.js route groups for layout organization:
 
 **Public Routes:**
 
-- `(home)/` - Landing page (no authentication required)
-- `login/` - Login page
-- `signup/` - Signup page
+- `(home)/` - Landing page
 - `faqs/` - FAQ page
-- `forgot-password/` - Password reset
 
-**Protected Routes:**
+**Auth Routes** (`(auth)/` group — unauthenticated only):
 
-- `(protected)/dashboard/` - User dashboard
-- `(protected)/dashboard/print/` - Print jobs
-- `(protected)/dashboard/settings/` - User settings
-- `(protected)/admin/` - Admin panel (admin role required)
+- `(auth)/login/` - Login with Student ID + password, MFA redirect
+- `(auth)/signup/` - Multi-step registration (invite-code required)
+- `(auth)/mfa/` - 6-digit OTP challenge after login
+- `(auth)/verify-email/` - Token-based email verification
+- `(auth)/check-email/` - Post-signup confirmation
+- `(auth)/forgot-password/` - Request password reset
+- `(auth)/reset-password/` - Submit new password via token
+
+**Protected Routes** (`(protected)/` group — session required):
+
+- `(protected)/dashboard/` - User dashboard home
+- `(protected)/dashboard/jobs/` - Current user's job list (paginated, filtered)
+- `(protected)/dashboard/jobs/new/` - Manufacturing service picker
+- `(protected)/dashboard/jobs/print/new/` - 3D print job submission form
+- `(protected)/dashboard/jobs/cnc/new/` - CNC job form (stub)
+- `(protected)/dashboard/jobs/laser-cutting/new/` - Laser cutting form (stub)
+- `(protected)/dashboard/jobs/water-jet/new/` - Water jet form (stub)
+- `(protected)/dashboard/settings/` - User settings (password, experience level)
+- `(protected)/admin/` - Admin panel (requires at least one admin permission)
+- `(protected)/admin/jobs/` - All-user job management (`jobs:list`)
+- `(protected)/admin/invitations/` - Invitation management (`invitations:list`)
+- `(protected)/admin/iam/` - Role & group management (`iam:read`)
+- `(protected)/admin/users/` - User management scaffold (`users:list`)
+- `(protected)/admin/audit/` - Audit log scaffold (`audit:read`)
 
 ### Protected Layout
 

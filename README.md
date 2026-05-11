@@ -4,14 +4,21 @@ A modern, full-featured dashboard application for managing 3D printing services.
 
 ## Features
 
-- **User Dashboard**: View and manage print jobs with advanced filtering and sorting
-- **Authentication**: Secure session-based authentication with protected routes
-- **Admin Panel**: Administrative interface for managing users and print jobs
-- **Dark Mode**: Full dark/light theme support
-- **Responsive Design**: Mobile-friendly interface built with Tailwind CSS
-- **Data Tables**: Interactive tables with sorting, filtering, and selection powered by TanStack Table
-- **Mock API**: Development environment with MSW for API simulation
-- **Comprehensive Testing**: Unit, integration, and E2E tests with Vitest and Playwright
+- **Authentication**: Login with Student ID + password, MFA (OTP), email verification, and password reset
+- **Invite-only registration**: Multi-step signup gated by an admin-issued invitation code
+- **User dashboard**: Server-side paginated job list with status and search filters
+- **3D print job submission**: Three-step presigned-URL upload flow (create → upload STL → complete with checksum)
+- **Admin — Job management**: All-user job table with status change and delete actions
+- **Admin — Invitation management**: Create, view, and revoke registration invitations
+- **Admin — IAM**: Role and group management with per-permission granularity
+- **Permission-based access control**: All admin UI gates use `hasPermission()` — no group-name checks
+- **Dark / light mode**: Full theme support via `next-themes`
+- **Responsive design**: Mobile-friendly layout with Tailwind CSS
+- **Data tables**: Sorting, filtering, pagination, and row actions via TanStack Table
+- **Mock API**: Development environment with MSW for full offline development (`MOCK_ENABLED=true`)
+- **Comprehensive testing**: Unit, integration, and E2E tests with Vitest and Playwright
+
+> See [docs/FEATURES.md](docs/FEATURES.md) for the full feature catalog including not-yet-implemented items.
 
 ## Tech Stack
 
@@ -92,20 +99,24 @@ npm run test:all         # Run all tests
 ```
 dashboard-frontend/
 ├── src/
-│   ├── api/                  # API client and mocks
+│   ├── api/                  # API client and MSW mocks
 │   ├── app/                  # Next.js App Router
-│   │   ├── (home)/           # Public pages
-│   │   ├── (protected)/      # Protected routes
-│   │   └── api/              # API routes
+│   │   ├── (home)/           # Public landing page
+│   │   ├── (auth)/           # Auth pages (login, signup, MFA, password reset, email verify)
+│   │   ├── (protected)/      # Session-required routes
+│   │   │   ├── dashboard/    # User dashboard, jobs, settings
+│   │   │   └── admin/        # Admin sections (jobs, invitations, IAM, users, audit)
+│   │   └── faqs/             # Public FAQ page
 │   ├── components/           # React components
-│   │   └── ui/               # shadcn/ui components
+│   │   └── ui/               # shadcn/ui components (do not edit manually)
+│   ├── constants/            # App-wide constants (permissions, faculties, etc.)
 │   ├── hooks/                # Custom React hooks
 │   ├── lib/                  # Utilities and helpers
 │   ├── providers/            # React context providers
 │   ├── types/                # TypeScript types
 │   └── __tests__/            # Integration tests
-├── test/                     # Test utilities
-├── e2e/                      # End-to-end tests
+├── test/                     # Shared test utilities
+├── e2e/                      # End-to-end tests (Playwright)
 ├── docs/                     # Documentation
 └── public/                   # Static assets
 ```
@@ -114,9 +125,11 @@ dashboard-frontend/
 
 Comprehensive documentation is available in the `docs/` folder:
 
-- **[Testing Guide](docs/TESTING.md)** - Unit, integration, and E2E testing
+- **[Feature Reference](docs/FEATURES.md)** - Complete catalog of implemented features and what's not yet built
 - **[Architecture Guide](docs/ARCHITECTURE.md)** - Project architecture, routing, and API structure
 - **[Development Guide](docs/DEVELOPMENT.md)** - Development workflow and best practices
+- **[Testing Guide](docs/TESTING.md)** - Unit, integration, and E2E testing
+- **[IAM Guide](docs/IAM.md)** - Permission model, access control utilities, and mock layer
 
 ## Key Concepts
 
@@ -134,12 +147,19 @@ See [Architecture Guide](docs/ARCHITECTURE.md#authentication) for details.
 
 Built with Next.js 15 App Router using route groups:
 
-- **`(home)/`** - Public landing page
-- **`(protected)/dashboard/`** - User dashboard (requires authentication)
-- **`(protected)/admin/`** - Admin panel (requires admin role)
-- **`login/`, `signup/`** - Authentication pages
+- **`(home)/`** — Public landing page
+- **`(auth)/`** — Login, signup, MFA, email verification, password reset
+- **`(protected)/dashboard/`** — User dashboard and job submission (requires authentication)
+- **`(protected)/admin/`** — Admin sections, each gated by a specific permission
+- **`faqs/`** — Public FAQ page
 
-See [Architecture Guide](docs/ARCHITECTURE.md#routing--layouts) for details.
+See [Architecture Guide](docs/ARCHITECTURE.md#routing--layouts) for the full route list.
+
+### Permissions
+
+All access control is permission-based. The backend derives a `permissions` array from the user's group memberships. The frontend uses `hasPermission(user, PERMISSIONS.*)` exclusively — never group-name checks.
+
+See [IAM Guide](docs/IAM.md) for details.
 
 ### API Integration
 
