@@ -164,7 +164,7 @@ describe('Auth Integration Tests', () => {
   });
 
   describe('Session Expiry Handling', () => {
-    it('handles session expiry gracefully', async () => {
+    it('returns null when session has expired', async () => {
       // User starts authenticated
       const mockUser = createMockUser();
       mockAuthenticatedSession(mockUser);
@@ -177,7 +177,7 @@ describe('Auth Integration Tests', () => {
         groups: mockUser.groups,
       });
 
-      // Session expires (server returns SESSION_INVALID)
+      // Session expires — backend returns UNAUTHORIZED
       mockUnauthenticatedSession();
       const expiredSession = await validateSession();
       expect(expiredSession).toBeNull();

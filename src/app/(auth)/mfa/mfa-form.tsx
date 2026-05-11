@@ -20,69 +20,80 @@ import { useForm, useWatch } from 'react-hook-form';
 import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
 import { Routes } from '@/lib/routes';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { sessionApi } from '@/api/client/session';
+import { ApiError, ErrorCodes } from '@/api/client/errors';
 
 const formSchema = z.object({
   otp: z.string().min(6, 'Please enter the complete OTP code').max(6),
 });
 
-export function MFAForm({ className, ...props }: React.ComponentProps<'div'>) {
+export function MFAForm({
+  challengeId: initialChallengeId,
+  className,
+  ...props
+}: React.ComponentProps<'div'> & { challengeId: number }) {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
-  const [challengeId] = useState<number | null>(() => {
-    const storedChallengeId = sessionStorage.getItem('mfaChallengeId');
-    if (!storedChallengeId) {
-      return null;
-    }
-    return parseInt(storedChallengeId, 10);
-  });
+  const [isResending, setIsResending] = useState(false);
+  const [challengeId, setChallengeId] = useState(initialChallengeId);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
-    defaultValues: {
-      otp: '',
-    },
+    defaultValues: { otp: '' },
   });
 
-  const otpValue = useWatch({
-    control: form.control,
-    name: 'otp',
-    defaultValue: '',
-  });
-
-  // Check for MFA challenge ID on component mount
-  useEffect(() => {
-    if (!challengeId) {
-      toast.error('No MFA challenge found. Please log in again.');
-      router.push(Routes.login);
-    }
-  }, [challengeId, router]);
+  const otpValue = useWatch({ control: form.control, name: 'otp', defaultValue: '' });
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    if (!challengeId) {
-      toast.error('No MFA challenge found. Please log in again.');
-      router.push(Routes.login);
-      return;
-    }
-
     setIsLoading(true);
     try {
-      // Call API to verify OTP
       await sessionApi.verifyMfa(challengeId, values.otp);
-
-      // Clear MFA challenge ID from sessionStorage
-      sessionStorage.removeItem('mfaChallengeId');
-
       toast.success('OTP verified successfully! Redirecting...');
-
-      // Force router to refresh server-side data and navigate
-      // This ensures the session cookie is validated by the protected layout
       router.refresh();
       router.push(Routes.dashboard);
-    } catch (_error) {
-      toast.error('Invalid OTP code. Please try again.');
+    } catch (error) {
+      if (error instanceof ApiError) {
+        switch (error.code) {
+          case ErrorCodes.OTP_EXPIRED:
+          case ErrorCodes.OTP_ALREADY_USED:
+          case ErrorCodes.TOO_MANY_OTP_ATTEMPTS:
+            toast.error('This code is no longer valid. Please request a new one.');
+            break;
+          case ErrorCodes.ACCOUNT_LOCKED:
+            toast.error(
+              'Account temporarily locked due to too many attempts. Try again in 15 minutes.',
+            );
+            break;
+          case ErrorCodes.CHALLENGE_NOT_FOUND:
+            toast.error('MFA session expired. Please log in again.');
+            router.push(Routes.login);
+            break;
+          default:
+            toast.error('Invalid code. Please try again.');
+        }
+      } else {
+        toast.error('Something went wrong. Please try again.');
+      }
       setIsLoading(false);
+    }
+  }
+
+  async function handleResend() {
+    setIsResending(true);
+    try {
+      const response = await sessionApi.resendMfaOtp(challengeId);
+      setChallengeId(response.challengeId);
+      form.reset();
+      toast.success('A new code has been sent to your email.');
+    } catch (error) {
+      if (error instanceof ApiError && error.code === ErrorCodes.RATE_LIMIT_EXCEEDED) {
+        toast.error('Too many resend requests. Please wait a few minutes before trying again.');
+      } else {
+        toast.error('Failed to resend code. Please try again.');
+      }
+    } finally {
+      setIsResending(false);
     }
   }
 
@@ -99,7 +110,7 @@ export function MFAForm({ className, ...props }: React.ComponentProps<'div'>) {
                 <div className="flex flex-col items-center gap-2 text-center">
                   <h1 className="text-2xl font-bold">Two-Factor Authentication</h1>
                   <p className="text-balance text-muted-foreground">
-                    Enter the 6-digit code from your authenticator app
+                    Enter the 6-digit code sent to your email
                   </p>
                 </div>
 
@@ -132,9 +143,14 @@ export function MFAForm({ className, ...props }: React.ComponentProps<'div'>) {
 
                 <FieldDescription className="text-center">
                   Didn&apos;t receive a code?{' '}
-                  <a href="#" className="underline-offset-2 hover:underline">
-                    Resend code
-                  </a>
+                  <button
+                    type="button"
+                    onClick={handleResend}
+                    disabled={isResending}
+                    className="underline-offset-2 hover:underline disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    {isResending ? 'Sending...' : 'Resend code'}
+                  </button>
                 </FieldDescription>
               </div>
             </form>

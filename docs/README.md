@@ -4,6 +4,23 @@ Welcome to the 3D Printing Dashboard documentation. This guide will help you nav
 
 ## Documentation Structure
 
+### [Feature Reference](FEATURES.md)
+
+Catalog of every implemented feature — routes, permissions, form flows, and what is not yet built.
+
+**Topics covered:**
+
+- Authentication, MFA, email verification, password reset
+- User dashboard and job submission flows
+- All admin sections (jobs, invitations, IAM, users, audit)
+- Shared UI patterns and API layer
+
+**When to read:**
+
+- Before sprint planning to understand current scope
+- When onboarding to understand what exists
+- Before building a new feature to avoid duplication
+
 ### [Testing Guide](TESTING.md)
 
 Comprehensive guide to testing in this project.
@@ -69,6 +86,9 @@ Practical guide for day-to-day development work.
 ## Quick Navigation
 
 ### I want to...
+
+**...understand what is already built**
+→ [Feature Reference](FEATURES.md)
 
 **...set up the project**
 → [README.md](../README.md#quick-start) or [Development Guide - Getting Started](DEVELOPMENT.md#getting-started)

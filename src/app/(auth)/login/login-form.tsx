@@ -96,11 +96,7 @@ export function LoginForm({
 
       // Check if MFA is required
       if (response.requiresMfa && response.challengeId) {
-        // Store MFA data for the MFA page
-        sessionStorage.setItem('mfaChallengeId', response.challengeId.toString());
-
-        // Redirect to MFA page
-        router.push(Routes.mfa);
+        router.push(`${Routes.mfa}?challengeId=${response.challengeId}`);
       } else {
         // Successful login without MFA - Redirect to dashboard homepage
         router.push(Routes.dashboard);
@@ -117,6 +113,12 @@ export function LoginForm({
           emailVerification: {
             studentId: parseInt(values.studentId, 10),
           },
+        });
+      } else if (error instanceof ApiError && error.code === ErrorCodes.RATE_LIMIT_EXCEEDED) {
+        setCurrentError({
+          title: 'Too Many Attempts',
+          description: error.message || 'Too many login attempts. Please try again in 15 minutes.',
+          variant: 'warning',
         });
       } else if (error instanceof ApiError) {
         // Handle other API errors
