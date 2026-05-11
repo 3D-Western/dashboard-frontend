@@ -118,6 +118,12 @@ export function LoginForm({
             studentId: parseInt(values.studentId, 10),
           },
         });
+      } else if (error instanceof ApiError && error.code === ErrorCodes.RATE_LIMIT_EXCEEDED) {
+        setCurrentError({
+          title: 'Too Many Attempts',
+          description: error.message || 'Too many login attempts. Please try again in 15 minutes.',
+          variant: 'warning',
+        });
       } else if (error instanceof ApiError) {
         // Handle other API errors
         setCurrentError({

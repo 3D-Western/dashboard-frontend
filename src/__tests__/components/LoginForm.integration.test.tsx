@@ -218,6 +218,40 @@ describe('LoginForm Integration', () => {
       });
     });
 
+    it('shows rate limit warning after too many attempts', async () => {
+      const user = userEvent.setup();
+
+      mockServer.use(
+        http.post('*' + endpoints.auth.login, () => {
+          return HttpResponse.json(
+            {
+              success: false,
+              error: {
+                code: 'RATE_LIMIT_EXCEEDED',
+                message: 'Too many login attempts. Please try again in 15 minutes.',
+              },
+            },
+            { status: 429 },
+          );
+        }),
+      );
+
+      render(<LoginForm />);
+
+      await user.type(screen.getByLabelText(/student id/i), '251000001');
+      await user.type(screen.getByLabelText(/password/i), 'password123');
+      await user.click(screen.getByRole('button', { name: /^login$/i }));
+
+      await waitFor(() => {
+        expect(screen.getByText(/too many attempts/i)).toBeInTheDocument();
+      });
+
+      expect(
+        screen.getByText(/too many login attempts. please try again in 15 minutes/i),
+      ).toBeInTheDocument();
+      expect(mockPush).not.toHaveBeenCalled();
+    });
+
     it('handles network errors gracefully', async () => {
       const user = userEvent.setup();
 
