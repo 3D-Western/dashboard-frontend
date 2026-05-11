@@ -137,8 +137,6 @@ export async function apiRequest<T>(
     );
   }
 
-  if (isDev) console.log(data);
-
   // Don't throw based on response.ok - instead check the data.error field
   // This prevents browser console errors for expected auth failures (401/403)
   if ((!data.success || data.error) && !suppressApiError) {

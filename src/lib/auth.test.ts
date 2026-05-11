@@ -27,7 +27,7 @@ describe('auth', () => {
       });
     });
 
-    it('returns null when session is invalid (graceful error handling)', async () => {
+    it('returns null when unauthenticated', async () => {
       mockUnauthenticatedSession();
 
       const result = await validateSession();
@@ -35,17 +35,14 @@ describe('auth', () => {
       expect(result).toBeNull();
     });
 
-    it('returns null on unexpected errors (graceful error handling)', async () => {
-      // Mock a network error to simulate unexpected failure
+    it('propagates network errors so the error boundary can catch them', async () => {
       mockServer.use(
         http.get(`*${endpoints.users.me}`, () => {
           return HttpResponse.error();
         }),
       );
 
-      const result = await validateSession();
-
-      expect(result).toBeNull();
+      await expect(validateSession()).rejects.toThrow();
     });
   });
 

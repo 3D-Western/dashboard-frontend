@@ -65,7 +65,7 @@ export function mockUnauthenticatedSession(): void {
         {
           success: false,
           error: {
-            code: ErrorCodes.SESSION_INVALID,
+            code: ErrorCodes.UNAUTHORIZED,
             message: 'No valid session',
           },
         },

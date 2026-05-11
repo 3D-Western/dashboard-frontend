@@ -141,8 +141,7 @@ describe('LoginForm Integration', () => {
       await user.click(screen.getByRole('button', { name: /^login$/i }));
 
       await waitFor(() => {
-        expect(sessionStorage.getItem('mfaChallengeId')).toBe('123456');
-        expect(mockPush).toHaveBeenCalledWith('/mfa');
+        expect(mockPush).toHaveBeenCalledWith('/mfa?challengeId=123456');
       });
     });
 

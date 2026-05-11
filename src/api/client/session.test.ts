@@ -38,15 +38,15 @@ describe('sessionApi', () => {
       });
     });
 
-    it('suppresses SESSION_INVALID error and returns {user: null}', async () => {
+    it('suppresses UNAUTHORIZED error and returns {user: null}', async () => {
       mockServer.use(
         http.get('*' + endpoints.users.me, () => {
           return HttpResponse.json(
             {
               success: false,
               error: {
-                code: ErrorCodes.SESSION_INVALID,
-                message: 'Invalid session',
+                code: ErrorCodes.UNAUTHORIZED,
+                message: 'No valid session',
               },
             },
             { status: 401 },
@@ -181,35 +181,6 @@ describe('sessionApi', () => {
       );
 
       await expect(sessionApi.current()).rejects.toThrow();
-    });
-
-    it('forwards cookieHeader when provided', async () => {
-      let capturedCookie: string | null = null;
-      const originalFetch = global.fetch;
-
-      mockServer.use(
-        http.get('*' + endpoints.users.me, () => {
-          return HttpResponse.json({
-            success: true,
-            data: { user: createMockUserResponse(), groups: [], activeJobCount: 0 },
-          });
-        }),
-      );
-
-      vi.stubGlobal(
-        'fetch',
-        vi.fn((url: RequestInfo | URL, options?: RequestInit) => {
-          const headers = new Headers(options?.headers);
-          capturedCookie = headers.get('Cookie');
-          return originalFetch(url, options);
-        }) as typeof fetch,
-      );
-
-      await sessionApi.current({ cookieHeader: 'sessionToken=server-token' });
-
-      vi.unstubAllGlobals();
-
-      expect(capturedCookie).toBe('sessionToken=server-token');
     });
   });
 

@@ -96,11 +96,7 @@ export function LoginForm({
 
       // Check if MFA is required
       if (response.requiresMfa && response.challengeId) {
-        // Store MFA data for the MFA page
-        sessionStorage.setItem('mfaChallengeId', response.challengeId.toString());
-
-        // Redirect to MFA page
-        router.push(Routes.mfa);
+        router.push(`${Routes.mfa}?challengeId=${response.challengeId}`);
       } else {
         // Successful login without MFA - Redirect to dashboard homepage
         router.push(Routes.dashboard);
