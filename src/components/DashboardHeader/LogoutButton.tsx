@@ -14,7 +14,15 @@ export default function LogoutButton() {
       await logout();
     } catch (error) {
       // Session already gone on the backend — treat as successful logout
-      if (error instanceof ApiError && error.code === ErrorCodes.USER_NOT_FOUND) {
+      if (
+        error instanceof ApiError &&
+        [
+          ErrorCodes.USER_NOT_FOUND,
+          ErrorCodes.UNAUTHORIZED,
+          ErrorCodes.SESSION_INVALID,
+          ErrorCodes.SESSION_EXPIRED,
+        ].includes(error.code)
+      ) {
         router.push('/');
         return;
       }

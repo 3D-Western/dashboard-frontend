@@ -47,7 +47,7 @@ export function mockAuthenticatedSession(user: User = createMockUser()): User {
 
 /**
  * Mock an unauthenticated session (no valid session)
- * This makes sessionApi.current() return SESSION_INVALID error
+ * This makes sessionApi.current() return UNAUTHORIZED error
  *
  * @example
  * ```ts

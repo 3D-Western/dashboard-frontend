@@ -16,8 +16,8 @@ import { User } from '@/types/user';
 export const sessionApi = {
   /**
    * Get current authenticated user
-   * Note: This API call suppresses SESSION_INVALID errors since that's an expected state
-   * when checking if a user is logged in. Other errors are still thrown.
+   * Note: This API call suppresses UNAUTHORIZED, SESSION_INVALID, and SESSION_EXPIRED errors
+   * since those are expected states when checking if a user is logged in. Other errors are still thrown.
    */
   current: async (options?: RequestInit): Promise<{ user: User | null }> => {
     const serverUrl = getBaseUrl();
@@ -38,8 +38,13 @@ export const sessionApi = {
           : null,
       };
     } catch (error) {
-      // UNAUTHORIZED means no valid session — expected when checking login state
-      if (error instanceof ApiError && error.code === ErrorCodes.UNAUTHORIZED) {
+      // Auth/session errors mean no valid session — expected when checking login state
+      if (
+        error instanceof ApiError &&
+        [ErrorCodes.UNAUTHORIZED, ErrorCodes.SESSION_INVALID, ErrorCodes.SESSION_EXPIRED].includes(
+          error.code,
+        )
+      ) {
         return { user: null };
       }
       throw error;

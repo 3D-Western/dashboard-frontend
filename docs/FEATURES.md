@@ -38,8 +38,8 @@ This document catalogs all implemented features in the 3D Western Dashboard. Use
 **File:** `src/app/(auth)/mfa/`
 
 - 6-digit OTP input (`InputOTP`) tied to a `challengeId` from the login response
-- Resend OTP via `sessionApi.resendMfaCode()`
-- Auto-submits on 6th digit entry
+- Resend OTP via `sessionApi.resendMfaOtp()`
+- Enables the Verify button when the OTP reaches 6 digits
 
 ### Sign Up
 
