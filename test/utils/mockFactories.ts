@@ -1,7 +1,7 @@
 import { faker } from '@faker-js/faker';
 import { User, UserExperienceLevel, UserPermission } from '@/types/user';
 import type { IamGroup } from '@/types/iam';
-import { PrintJob, PrintJobStatus } from '@/types/jobs';
+import { PrintJob, PrintJobStatus, CompletedPrintJob,JobDetail } from '@/types/jobs';
 import { FileMetadata, FileUploadResult } from '@/types/file';
 import { Invitation, InvitationStatus } from '@/types/invitation';
 import { UserResponse, GroupResponse } from '@/api/types';
@@ -101,6 +101,9 @@ export const createMockGroupResponses = (groups: IamGroup[]): GroupResponse[] =>
  */
 export const createMockPrintJob = (overrides?: Partial<PrintJob>): PrintJob => {
   const studentId = faker.number.int({ min: 251000000, max: 251999999 });
+  
+  const status = overrides?.status || ('InQueue' as PrintJobStatus);
+
   return {
     kind: 'active-print-job',
     id: faker.string.uuid(),
@@ -113,8 +116,42 @@ export const createMockPrintJob = (overrides?: Partial<PrintJob>): PrintJob => {
     name: faker.commerce.productName(),
     description: faker.commerce.productDescription(),
     category: 'ThreeDPrint',
-    status: 'InQueue' as PrintJobStatus,
+    status,
     jobPlaced: faker.date.recent().toISOString(),
+
+// for job detail
+    comments: 'Mocked comment history from MSW',
+    filepath: '/some/filepath/print-file.stl',
+    formAnswersJson: JSON.stringify({ material: 'PLA', color: 'Black' }),
+    dateSubmitted: faker.date.recent().toISOString(),
+
+
+// for pickup  
+    ...(status === 'Ready' && {
+      pickupDetails: {
+        location: 'Western Engineering Spencer Engineering Building, Room 50',
+        hours: '9:00 AM - 4:30 PM (Mon-Fri)',
+        instructions: 'Please bring your Western Student ID Card to verify ownership before picking up your 3D asset.',
+      }
+    }),
+
+    ...overrides,
+  } as PrintJob; 
+};
+
+
+
+
+export const createMockCompletedPrintJob = (
+  overrides?: Partial<CompletedPrintJob>
+): CompletedPrintJob => {
+  const baseJob = createMockPrintJob(overrides as any); 
+  
+  return {
+    ...baseJob,
+    kind: 'completed-print-job',
+    status: 'Succeeded',
+    jobFinished: new Date().toISOString(),
     ...overrides,
   };
 };

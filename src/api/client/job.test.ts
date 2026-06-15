@@ -4,9 +4,9 @@ import { mockServer } from '../mocks';
 import { http, HttpResponse } from 'msw';
 import { getBaseUrl } from './utils';
 import { endpoints } from './endpoints';
-import { createMockPrintJob } from '@/../test/utils/mockFactories';
+import { createMockPrintJob,createMockCompletedPrintJob } from '@/../test/utils/mockFactories';
 import { ApiError, ErrorCodes } from './errors';
-import { PrintJobStatus } from '@/types/jobs';
+import { PrintJobStatus,CompletedPrintJob } from '@/types/jobs';
 
 describe('jobApi', () => {
   const baseUrl = getBaseUrl();
@@ -657,4 +657,93 @@ describe('jobApi', () => {
       expect(requestHeaders?.get('X-Custom-Header')).toBe('custom-value');
     });
   });
+
+  describe('jobApi.getJobById', () => {
+  it('should fetch a single job by ID successfully', async () => {
+
+    const jobId = 'test-job-id';
+    const mockJob = createMockPrintJob({ id: jobId });
+
+    mockServer.use(
+      http.get(`${baseUrl}${endpoints.jobs.byId(jobId)}`, () => {
+        return HttpResponse.json({
+            success: true,
+            data: mockJob
+          });
+      })
+    );
+
+    const response = await jobApi.getJobById(jobId);
+
+    expect(response).toBeDefined();
+    expect(response.id).toBe(jobId);
+    expect(response.status).toBeDefined();
+    expect(response.dateSubmitted).toBeDefined();
+  });
+  it('should fetch a completed job by ID', async () => {
+
+    const jobId = 'test-completed-job-id';
+    const mockCompletedJob = createMockCompletedPrintJob({ id: jobId });
+
+    mockServer.use(
+      http.get(`${baseUrl}${endpoints.jobs.byId(jobId)}`, () => {
+        return HttpResponse.json({
+          success: true,
+          data: mockCompletedJob
+        });
+      })
+    );
+
+    const response = await jobApi.getJobById(jobId);
+
+    expect(response).toBeDefined();
+    expect(response.id).toBe(jobId);
+    expect(response.status).toBe('Succeeded');
+    const completedResponse = response as unknown as CompletedPrintJob;
+    expect(completedResponse.jobFinished).toBeDefined();
+  });
+
+  it('should handle request options (like AbortSignal)', async () => {
+    const controller = new AbortController();
+    const jobId = 'test-job-id';;
+    const mockJob = createMockPrintJob({ id: jobId });
+
+    mockServer.use(
+      http.get(`${baseUrl}${endpoints.jobs.byId(jobId)}`, () => {
+        return HttpResponse.json({
+          success: true,
+          data: {
+              ...mockJob,
+          }
+        });
+      })
+    );
+
+    const requestPromise = jobApi.getJobById(jobId, { 
+      signal: controller.signal 
+    });
+
+    expect(requestPromise).toBeInstanceOf(Promise);
+    await expect(requestPromise).resolves.toBeDefined();
+  });
+
+  it('should throw or return an error when the job is not found', async () => {
+    const jobId = 'random-job-id-i-dont-exist';
+
+    mockServer.use(
+      http.get(`${baseUrl}${endpoints.jobs.byId(jobId)}`, () => {
+        return HttpResponse.json(
+          { success: false, error: { code: 'JOB_NOT_FOUND', message: 'Job not found' } },
+          { status: 404 }
+        );
+      })
+    );
+    
+    await expect(jobApi.getJobById(jobId)).rejects.toThrow();
+  });
+});
+
+
+
+
 });

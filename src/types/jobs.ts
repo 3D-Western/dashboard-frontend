@@ -44,3 +44,31 @@ export interface CompletedPrintJob extends BasePrintJob {
   jobFinished: string; // ISO date string
   status: CompletePrintJobStatus;
 }
+
+export interface JobDetail extends BasePrintJob {
+  dateSubmitted: string;
+  status: PrintJobStatus | CompletePrintJobStatus;
+  comments: string;
+  filepath: string;
+  formAnswersJson: string;
+  pickupDetails?: Pickup;
+
+}
+
+export interface ETA extends JobDetail{
+  // USES DATE Submitted from job detail 
+  // need to find a way to get print times, how long job takes
+  updatedAt: string;
+
+}
+export interface StatusHistory extends JobDetail {
+// in the backend api for get job by id.
+  updatedAt: string;
+
+}
+
+export interface Pickup {
+  location: string;
+  hours: string;
+  instructions: string;
+}

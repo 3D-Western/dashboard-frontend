@@ -1,4 +1,4 @@
-import { PrintJob, PrintJobStatus } from '@/types/jobs';
+import { PrintJob, PrintJobStatus, JobDetail } from '@/types/jobs';
 import {
   CreateJobRequest,
   CreateJobResponse,
@@ -10,6 +10,8 @@ import { JobListParams } from '@/types/common';
 import { apiRequest } from './base';
 import { endpoints } from './endpoints';
 import { getBaseUrl } from './utils';
+
+
 
 export const jobApi = {
   listAllJobs: async (params?: JobListParams, options?: RequestInit) => {
@@ -104,4 +106,12 @@ export const jobApi = {
       ...options,
     });
   },
+  getJobById: async (jobId: string, options?: RequestInit) => {
+    return apiRequest<JobDetail>(`${getBaseUrl()}${endpoints.jobs.byId(jobId)}`,  {
+      method: 'GET',
+      credentials: 'include',
+      ...options,
+    });
+  },
+
 };

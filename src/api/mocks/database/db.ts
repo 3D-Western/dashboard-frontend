@@ -2,6 +2,7 @@ import { PrintJob, User, FileMetadata, Invitation, InvitationStatus } from './ty
 import { mockUsers } from '../data/users';
 import { mockPrintJobs } from '../data/print-jobs';
 import { mockInvitations } from '../data/invitations';
+import { createMockCompletedPrintJob } from '../../../../test/utils/mockFactories';
 
 export class Database {
   private static instance: Database;
@@ -49,6 +50,16 @@ export class Database {
         userJobs.push(userJob);
         this.activePrintJobsIDMap.set(userJob.id, userJob);
       });
+      const completedJob = createMockCompletedPrintJob({ 
+      id: 'default-completed-job',
+      status: 'Succeeded'
+      });
+      this.activePrintJobsIDMap.set(completedJob.id, completedJob as any);
+    
+      const existingUserJobs = this.activePrintJobsUserMap.get(completedJob.user.studentId) || [];
+      existingUserJobs.push(completedJob as any);
+      this.activePrintJobsUserMap.set(completedJob.user.studentId, existingUserJobs);
+
     });
 
     // Load initial mock invitations

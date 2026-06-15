@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import PageTitle from '@/components/PageTitle';
 import { Routes } from '@/lib/routes';
+import DashboardStats from '@/components/DashboardStats';
 
 export const metadata: Metadata = {
   title: 'Dashboard',
@@ -38,32 +39,9 @@ export default async function DashboardPage({
 
       <PageTitle title="Dashboard" description="Welcome to Western 3D Print Club Dashboard" />
 
-      {/* Quick Stats - Placeholder for now */}
-      <div className="grid gap-4 md:grid-cols-3">
-        <div className="space-y-2 rounded-lg border p-6">
-          <div className="flex items-center gap-2 text-muted-foreground">
-            <Printer className="h-4 w-4" />
-            <span className="text-sm font-medium">Active Prints</span>
-          </div>
-          <div className="text-3xl font-bold">0</div>
-        </div>
+      {/* Dashboard Stats*/}
+      <DashboardStats />
 
-        <div className="space-y-2 rounded-lg border p-6">
-          <div className="flex items-center gap-2 text-muted-foreground">
-            <Clock className="h-4 w-4" />
-            <span className="text-sm font-medium">Pending Prints</span>
-          </div>
-          <div className="text-3xl font-bold">0</div>
-        </div>
-
-        <div className="space-y-2 rounded-lg border p-6">
-          <div className="flex items-center gap-2 text-muted-foreground">
-            <LayoutDashboard className="h-4 w-4" />
-            <span className="text-sm font-medium">Total Prints</span>
-          </div>
-          <div className="text-3xl font-bold">0</div>
-        </div>
-      </div>
 
       {/* Quick Actions */}
       <div className="space-y-4">
