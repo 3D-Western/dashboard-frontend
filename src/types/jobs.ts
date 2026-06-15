@@ -47,23 +47,29 @@ export interface CompletedPrintJob extends BasePrintJob {
 
 export interface JobDetail extends BasePrintJob {
   dateSubmitted: string;
-  status: PrintJobStatus | CompletePrintJobStatus;
+  status: PrintJobStatus;
   comments: string;
   filepath: string;
   formAnswersJson: string;
   pickupDetails?: Pickup;
+  jobETA?: ETA;
+  statusHistory?: StatusHistory[];
+
 
 }
 
-export interface ETA extends JobDetail{
-  // USES DATE Submitted from job detail 
-  // need to find a way to get print times, how long job takes
-  updatedAt: string;
-
+export interface ETA {
+  estimatedCompletionTime: string; // ISO Date
+  updatedAt: string;               
 }
-export interface StatusHistory extends JobDetail {
-// in the backend api for get job by id.
-  updatedAt: string;
+
+
+export interface StatusHistory{
+  status: PrintJobStatus;
+  changedAt: string; // ISO Date String
+// if the status gets changed to error or failed from admin side they can put it here. may not be used but creating in the type and mocks for now
+  comments?: string; 
+
 
 }
 

@@ -58,3 +58,18 @@ export interface FileUploadResult {
   mimeType: string;
   uploadedAt: string;
 }
+
+export interface RetryUploadResponse {
+  fileId: string;
+  presignedUrl: string;
+  expiresIn: number; 
+  storageKey: string;
+}
+
+
+export interface CompleteUploadPayload {
+  fileName: string;
+  fileSize: number;
+  contentType: string; 
+  checksum: string; 
+}
