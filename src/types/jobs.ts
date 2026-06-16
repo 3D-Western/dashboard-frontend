@@ -20,6 +20,7 @@ export interface BasePrintJob {
   category: JobCategory;
   description: string;
   name: string;
+  files: File[];
   reprint?: string | null; // link to another print job if this is a reprint
 }
 
@@ -43,4 +44,28 @@ export interface CompletedPrintJob extends BasePrintJob {
   kind: 'completed-print-job'; // For type checking
   jobFinished: string; // ISO date string
   status: CompletePrintJobStatus;
+}
+
+export interface JobDetail extends BasePrintJob {
+  dateSubmitted: string;
+  status: PrintJobStatus | CompletePrintJobStatus;
+  comments: string;
+}
+
+export interface ETA extends JobDetail{
+  // USES DATE Submitted from job detail 
+  // need to find a way to get print times, how long job takes
+
+}
+export interface StatusHistory extends JobDetail {
+
+//date of status update change but not sure how to get that info
+//  date 
+
+}
+
+export interface Pickup extends CompletedPrintJob{
+  location: string;
+  hours: number;
+  instructions: string;
 }
