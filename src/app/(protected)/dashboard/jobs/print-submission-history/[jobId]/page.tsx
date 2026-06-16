@@ -7,9 +7,7 @@ interface PageProps {
   }>;
 }
 
-export default async function JobDetailPage({
-  params,
-}: PageProps) {
+export default async function JobDetailPage({ params }: PageProps) {
   const { jobId } = await params;
 
   let job = null;
@@ -38,12 +36,18 @@ export default async function JobDetailPage({
     console.error("Failed to parse form answers");
   }
 
-  return (
-    <div className="space-y-6">
-      <h1 className="text-3xl font-bold">
-        {job.name}
-      </h1>
+  // Parse print specs safely
+  const specs =
+    typeof job.formAnswersJson === "string"
+      ? JSON.parse(job.formAnswersJson)
+      : job.formAnswersJson;
 
+  const statusHistory = job.statusHistory || [];
+
+  return (
+    <div className="max-w-3xl mx-auto py-8 space-y-6">
+      {/* HEADER */}
+      <h1 className="text-3xl font-bold">{job.name}</h1>
       <PrintJobStatusBadge status={job.status} />
 
       {job.status === 'PendingFile' && (
@@ -82,6 +86,7 @@ export default async function JobDetailPage({
         <p className="text-gray-700">{job.description || 'No description provided.'}</p>
       </div>
 
+      {/* CATEGORY */}
       <div>
         <h2 className="font-semibold">Category</h2>
         <p className="text-gray-700">{job.category}</p>
@@ -102,6 +107,7 @@ export default async function JobDetailPage({
         </p>
       </div>
 
+      {/* SUBMITTED */}
       <div>
         <h2 className="font-semibold">Comments</h2>
         <p className="text-gray-700">{job.comments || 'No comments.'}</p>
