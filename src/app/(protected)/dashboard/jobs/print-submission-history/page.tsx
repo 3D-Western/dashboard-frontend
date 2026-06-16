@@ -1,23 +1,23 @@
-// // 'use client';
-
-// // import { useRouter } from 'next/navigation';
-// // // tie to data
-// // export default function PrintSubmissionHistory() {
-
-// //   return (
-// //     <h1>h</h1>
-// //   );
-// // }
-
-// // page.tsx
-
-
-'use client';
-
 import JobList from './components/jobList';
-import { mockJobs } from './mockData';
+import { jobApi } from '@/api/client/job';
 
-export default function PrintSubmissionHistory() {
+export default async function PrintSubmissionHistory() {
+  let fetchedJobs = [];
+
+  try {
+    const response = await jobApi.listAllJobs();
+    
+    fetchedJobs = (response as any).data?.data 
+      ? (response as any).data.data 
+      : (response as any).data || response;
+      
+    if (!Array.isArray(fetchedJobs)) {
+      fetchedJobs = [];
+    }
+  } catch (error) {
+    console.error('Failed to fetch print submission history:', error);
+  }
+
   return (
     <div className="space-y-6">
       <div>
@@ -29,8 +29,7 @@ export default function PrintSubmissionHistory() {
           View previously submitted fabrication jobs and their details.
         </p>
       </div>
-
-      <JobList jobs={mockJobs} />
+      <JobList jobs={fetchedJobs} />
     </div>
   );
 }

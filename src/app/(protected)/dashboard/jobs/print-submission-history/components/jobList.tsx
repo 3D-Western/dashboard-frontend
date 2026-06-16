@@ -10,12 +10,20 @@ export default function JobList({
 }: JobListProps) {
   return (
     <div className="grid gap-4">
-      {jobs.map((job) => (
-        <JobCard
-          key={job.id}
-          job={job}
-        />
-      ))}
+      {jobs.map((job) => {
+        
+        const jobWithMappedDate = {
+          ...job,
+          dateSubmitted: job.dateSubmitted || job.jobPlaced,
+        };
+
+        return (
+          <JobCard
+            key={jobWithMappedDate.id}
+            job={jobWithMappedDate as JobDetail}
+          />
+        );
+      })}
     </div>
   );
 }
