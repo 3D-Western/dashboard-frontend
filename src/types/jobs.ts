@@ -20,6 +20,7 @@ export interface BasePrintJob {
   category: JobCategory;
   description: string;
   name: string;
+  files: File[];
   reprint?: string | null; // link to another print job if this is a reprint
 }
 
