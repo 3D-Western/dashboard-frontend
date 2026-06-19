@@ -1,8 +1,21 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
 import { PrintJobStatusBadge } from '@/components/PrintJobStatusBadge';
 import { JobDetail } from '@/types/jobs';
+
+function formatJobDate(isoString?: string) {
+  if (!isoString) return 'Unknown Date';
+  
+  const date = new Date(isoString);
+  return new Intl.DateTimeFormat('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+    hour12: true,
+  }).format(date);
+}
 
 interface JobCardProps {
   job: JobDetail;
@@ -16,8 +29,6 @@ const categoryLabels = {
 };
 
 export default function JobCard({ job }: JobCardProps) {
-  const router = useRouter();
-
   return (
     <div
       className="
@@ -28,16 +39,15 @@ export default function JobCard({ job }: JobCardProps) {
         transition-all
         hover:bg-muted/30
         hover:shadow-md
+        h-full
+        flex
+        flex-col
+        justify-between
       "
-      onClick={() =>
-        router.push(
-          `/dashboard/jobs/print-submission-history/${job.id}`
-        )
-      }
     >
-      <div className="flex items-start justify-between gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
         <div>
-          <h3 className="text-lg font-semibold">
+          <h3 className="text-lg font-semibold line-clamp-2">
             {job.name}
           </h3>
 
@@ -52,19 +62,17 @@ export default function JobCard({ job }: JobCardProps) {
               text-xs
             "
           >
-            {
-              categoryLabels[
-                job.category as keyof typeof categoryLabels
-              ]
-            }
+            {categoryLabels[job.category as keyof typeof categoryLabels]}
           </span>
         </div>
 
-        <PrintJobStatusBadge status={job.status} />
+        <div className="shrink-0">
+          <PrintJobStatusBadge status={job.status} />
+        </div>
       </div>
 
       <p className="mt-4 text-sm text-muted-foreground">
-        Submitted {job.dateSubmitted}
+        Submitted {formatJobDate(job.dateSubmitted)}
       </p>
     </div>
   );

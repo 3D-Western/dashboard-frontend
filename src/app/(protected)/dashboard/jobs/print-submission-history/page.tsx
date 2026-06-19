@@ -19,7 +19,7 @@ export default async function PrintSubmissionHistory() {
   }
 
   return (
-    <div className="space-y-6">
+    <main className="p-6 md:p-8 w-full max-w-7xl mx-auto flex flex-col gap-6">
       <div>
         <h1 className="text-3xl font-bold">
           Print Submission History
@@ -30,6 +30,6 @@ export default async function PrintSubmissionHistory() {
         </p>
       </div>
       <JobList jobs={fetchedJobs} />
-    </div>
+    </main>
   );
 }
