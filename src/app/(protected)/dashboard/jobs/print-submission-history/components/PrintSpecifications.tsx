@@ -10,12 +10,12 @@ export function PrintSpecifications({ specsJson }: PrintSpecsProps) {
   }
 
   let specs: Record<string, any> = {};
-  
+
   try {
     specs = typeof specsJson === 'string' ? JSON.parse(specsJson) : specsJson;
   } catch (error) {
     return (
-      <div className="rounded-xl border p-4 bg-muted/10 overflow-auto">
+      <div className="overflow-auto rounded-xl border bg-muted/10 p-4">
         <pre className="text-sm text-muted-foreground">{String(specsJson)}</pre>
       </div>
     );
@@ -28,17 +28,15 @@ export function PrintSpecifications({ specsJson }: PrintSpecsProps) {
   }
 
   return (
-    <div className="rounded-xl border p-4 bg-muted/10">
+    <div className="rounded-xl border bg-muted/10 p-4">
       <dl className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {specKeys.map((key) => (
           <div key={key}>
             {/* Capitalize the key for better readability (e.g., "material" -> "Material") */}
-            <dt className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1">
+            <dt className="mb-1 text-xs font-medium tracking-wider text-muted-foreground uppercase">
               {key}
             </dt>
-            <dd className="text-sm font-medium text-foreground">
-              {String(specs[key])}
-            </dd>
+            <dd className="text-sm font-medium text-foreground">{String(specs[key])}</dd>
           </div>
         ))}
       </dl>

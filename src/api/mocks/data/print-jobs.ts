@@ -1,4 +1,8 @@
-import { createMockPrintJob, createMockCompletedPrintJob, createMockPendingFileJob } from '../../../../test/utils/mockFactories';
+import {
+  createMockPrintJob,
+  createMockCompletedPrintJob,
+  createMockPendingFileJob,
+} from '../../../../test/utils/mockFactories';
 
 const futureDate = new Date();
 futureDate.setHours(futureDate.getHours() + 4);
@@ -6,7 +10,6 @@ const mockETA = {
   estimatedCompletionTime: futureDate.toISOString(),
   updatedAt: new Date().toISOString(),
 };
-
 
 const mockPickup = {
   location: 'Engineering Building, Room 101',
@@ -23,19 +26,19 @@ export const mockPrintJobs = [
     name: 'Drone Propeller Guards',
     status: 'InQueue',
     category: 'ThreeDPrint',
-    jobETA: mockETA, 
-  } as any), 
+    jobETA: mockETA,
+  } as any),
   createMockPrintJob({
     name: 'Custom Bracket Mount',
     status: 'Printing',
     category: 'ThreeDPrint',
-    jobETA: mockETA, 
+    jobETA: mockETA,
   } as any),
   createMockPrintJob({
     name: 'Robotic Arm Base',
     status: 'Ready',
     category: 'ThreeDPrint',
-    pickupDetails: mockPickup, 
+    pickupDetails: mockPickup,
   } as any),
   createMockCompletedPrintJob({
     name: 'Laser Engraved Coasters',

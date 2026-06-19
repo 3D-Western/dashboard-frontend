@@ -17,7 +17,7 @@ export default function JobList({ jobs }: JobListProps) {
   return (
     <>
       {/* Responsive Grid Layout */}
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
         {jobs.map((job) => {
           const jobWithMappedDate = {
             ...job,
@@ -25,8 +25,8 @@ export default function JobList({ jobs }: JobListProps) {
           };
 
           return (
-            <div 
-              key={jobWithMappedDate.id} 
+            <div
+              key={jobWithMappedDate.id}
               onClick={() => setSelectedJob(jobWithMappedDate as JobDetail)}
               className="h-full"
             >
@@ -38,13 +38,13 @@ export default function JobList({ jobs }: JobListProps) {
 
       {/* Modal Overlay for Job Details */}
       <Dialog open={!!selectedJob} onOpenChange={(open) => !open && setSelectedJob(null)}>
-        <DialogContent className="w-[95vw] max-w-md md:max-w-2xl lg:max-w-3xl max-h-[90vh] overflow-y-auto sm:rounded-2xl">
+        <DialogContent className="max-h-[90vh] w-[95vw] max-w-md overflow-y-auto sm:rounded-2xl md:max-w-2xl lg:max-w-3xl">
           <VisuallyHidden>
             <DialogTitle>Job Details</DialogTitle>
             <DialogDescription>
               View the specifications, status, and history of the selected print job.
             </DialogDescription>
-          </VisuallyHidden>          
+          </VisuallyHidden>
           {selectedJob && <JobDetailContent job={selectedJob} />}
         </DialogContent>
       </Dialog>

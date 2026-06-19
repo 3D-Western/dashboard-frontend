@@ -55,23 +55,18 @@ export interface JobDetail extends BasePrintJob {
   pickupDetails?: Pickup;
   jobETA?: ETA;
   statusHistory?: StatusHistory[];
-
-
 }
 
 export interface ETA {
   estimatedCompletionTime: string; // ISO Date
-  updatedAt: string;               
+  updatedAt: string;
 }
 
-
-export interface StatusHistory{
+export interface StatusHistory {
   status: PrintJobStatus;
   changedAt: string; // ISO Date String
-// if the status gets changed to error or failed from admin side they can put it here. may not be used but creating in the type and mocks for now
-  comments?: string; 
-
-
+  // if the status gets changed to error or failed from admin side they can put it here. may not be used but creating in the type and mocks for now
+  comments?: string;
 }
 
 export interface Pickup {

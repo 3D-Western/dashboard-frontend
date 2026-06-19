@@ -72,8 +72,7 @@ export const jobHandlers = [
     );
   }),
 
-
-http.get(`${apiUrl}/api/v1/jobs/:jobId`, ({ cookies, params }) => {
+  http.get(`${apiUrl}/api/v1/jobs/:jobId`, ({ cookies, params }) => {
     const sessionId = cookies['sessionToken'] || '';
     const user = db.validateSession(sessionId);
     if (!user) {
@@ -83,26 +82,23 @@ http.get(`${apiUrl}/api/v1/jobs/:jobId`, ({ cookies, params }) => {
     const { jobId } = params;
 
     const userJobs = db.getPrintJobs(
-      !mockUserHasPermission(user, PERMISSIONS.JOBS_LIST) 
-        ? { userId: user.studentId } 
-        : {}
+      !mockUserHasPermission(user, PERMISSIONS.JOBS_LIST) ? { userId: user.studentId } : {},
     );
-    
+
     const job = userJobs.find((j) => j.id === jobId);
 
     if (!job) {
       return HttpResponse.json(
         { success: false, error: { code: 'JOB_NOT_FOUND', message: 'Job not found' } },
-        { status: 404 }
+        { status: 404 },
       );
     }
     return HttpResponse.json(
       generateSuccessResponse({
-        data: job, 
-      })
+        data: job,
+      }),
     );
   }),
-
 
   // POST /jobs - Create new job (Step 1: Returns presigned URL)
   http.post(`${apiUrl}${endpoints.jobs.create}`, async ({ cookies, request }) => {

@@ -28,8 +28,8 @@ export default async function JobDetailPage({ params }: PageProps) {
   }
 
   return (
-    <main className="p-6 md:p-8 w-full max-w-4xl mx-auto flex flex-col gap-6">
-      <div className="rounded-2xl border bg-background p-6 md:p-8 shadow-sm">
+    <main className="mx-auto flex w-full max-w-4xl flex-col gap-6 p-6 md:p-8">
+      <div className="rounded-2xl border bg-background p-6 shadow-sm md:p-8">
         <JobDetailContent job={job} />
       </div>
     </main>

@@ -42,7 +42,6 @@ export default async function DashboardPage({
       {/* Dashboard Stats*/}
       <DashboardStats />
 
-
       {/* Quick Actions */}
       <div className="space-y-4">
         <h2 className="text-lg font-semibold">Quick Actions</h2>

@@ -62,14 +62,13 @@ export interface FileUploadResult {
 export interface RetryUploadResponse {
   fileId: string;
   presignedUrl: string;
-  expiresIn: number; 
+  expiresIn: number;
   storageKey: string;
 }
-
 
 export interface CompleteUploadPayload {
   fileName: string;
   fileSize: number;
-  contentType: string; 
-  checksum: string; 
+  contentType: string;
+  checksum: string;
 }

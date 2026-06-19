@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { Printer, Clock, LayoutDashboard } from 'lucide-react';
-import { userApi } from '@/api/client/user'; 
+import { userApi } from '@/api/client/user';
 
 export default function DashboardStats() {
   const [jobCount, setJobCount] = useState<number>(0);
@@ -37,7 +37,7 @@ export default function DashboardStats() {
           <Clock className="h-4 w-4" />
           <span className="text-sm font-medium">Pending Prints</span>
         </div>
-        <div className="text-3xl font-bold">{isLoading ? '...' : 0 }</div>
+        <div className="text-3xl font-bold">{isLoading ? '...' : 0}</div>
       </div>
 
       <div className="space-y-2 rounded-lg border p-6">

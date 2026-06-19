@@ -11,8 +11,6 @@ import { apiRequest } from './base';
 import { endpoints } from './endpoints';
 import { getBaseUrl } from './utils';
 
-
-
 export const jobApi = {
   listAllJobs: async (params?: JobListParams, options?: RequestInit) => {
     const searchParams = new URLSearchParams();
@@ -107,11 +105,10 @@ export const jobApi = {
     });
   },
   getJobById: async (jobId: string, options?: RequestInit) => {
-    return apiRequest<JobDetail>(`${getBaseUrl()}${endpoints.jobs.byId(jobId)}`,  {
+    return apiRequest<JobDetail>(`${getBaseUrl()}${endpoints.jobs.byId(jobId)}`, {
       method: 'GET',
       credentials: 'include',
       ...options,
     });
   },
-
 };

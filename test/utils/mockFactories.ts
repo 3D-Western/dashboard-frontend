@@ -1,7 +1,15 @@
 import { faker } from '@faker-js/faker';
 import { User, UserExperienceLevel, UserPermission } from '@/types/user';
 import type { IamGroup } from '@/types/iam';
-import { PrintJob, PrintJobStatus, CompletedPrintJob, JobDetail, ETA, Pickup, StatusHistory } from '@/types/jobs';
+import {
+  PrintJob,
+  PrintJobStatus,
+  CompletedPrintJob,
+  JobDetail,
+  ETA,
+  Pickup,
+  StatusHistory,
+} from '@/types/jobs';
 import { FileMetadata, FileUploadResult } from '@/types/file';
 import { Invitation, InvitationStatus } from '@/types/invitation';
 import { UserResponse, GroupResponse } from '@/api/types';
@@ -101,26 +109,30 @@ export const createMockGroupResponses = (groups: IamGroup[]): GroupResponse[] =>
  */
 export const createMockPrintJob = (overrides?: Partial<PrintJob>): PrintJob => {
   const studentId = faker.number.int({ min: 251000000, max: 251999999 });
-  
+
   const status = overrides?.status || ('InQueue' as PrintJobStatus);
 
   const statusHistory: StatusHistory[] = [
-    { status: 'InQueue', 
-      changedAt: faker.date.recent({ days: 3 }).toISOString(), 
-      comments: 'Job submitted' }
+    {
+      status: 'InQueue',
+      changedAt: faker.date.recent({ days: 3 }).toISOString(),
+      comments: 'Job submitted',
+    },
   ];
 
   if (status === 'Printing' || status === 'Ready' || status === 'Succeeded') {
-    statusHistory.push({ status: 'Printing', 
-                         changedAt: faker.date.recent({ days: 1 }).toISOString() 
-                        });
+    statusHistory.push({
+      status: 'Printing',
+      changedAt: faker.date.recent({ days: 1 }).toISOString(),
+    });
   }
 
   if (status === 'Ready') {
-    statusHistory.push({ status: 'Ready', 
-                         changedAt: new Date().toISOString(), 
-                         comments: 'Ready for pickup at front desk' 
-                        });
+    statusHistory.push({
+      status: 'Ready',
+      changedAt: new Date().toISOString(),
+      comments: 'Ready for pickup at front desk',
+    });
   }
 
   return {
@@ -138,56 +150,50 @@ export const createMockPrintJob = (overrides?: Partial<PrintJob>): PrintJob => {
     status,
     jobPlaced: faker.date.recent().toISOString(),
 
-// for job detail
+    // for job detail
     comments: 'Mocked comment history from MSW',
     filepath: '/some/filepath/print-file.stl',
     formAnswersJson: JSON.stringify({ material: 'PLA', color: 'Black' }),
     dateSubmitted: faker.date.recent().toISOString(),
 
-// for status history
+    // for status history
     statusHistory,
 
-
-// for ETA
+    // for ETA
     ...((status === 'Printing' || status === 'InQueue') && {
       eta: {
         estimatedCompletionTime: faker.date.soon({ days: 2 }).toISOString(),
         updatedAt: new Date().toISOString(),
-      } as ETA
+      } as ETA,
     }),
 
-
-
-// for pickup  
+    // for pickup
     ...(status === 'Ready' && {
       pickupDetails: {
         location: 'Western Engineering Spencer Engineering Building, Room 50',
         hours: '9:00 AM - 4:30 PM (Mon-Fri)',
-        instructions: 'Please bring your Western Student ID Card to verify ownership before picking up your 3D asset.',
-      }
+        instructions:
+          'Please bring your Western Student ID Card to verify ownership before picking up your 3D asset.',
+      },
     }),
 
     ...overrides,
-  } as PrintJob; 
+  } as PrintJob;
 };
-
-
-
 
 export const createMockCompletedPrintJob = (
-  overrides?: Partial<CompletedPrintJob>
+  overrides?: Partial<CompletedPrintJob>,
 ): CompletedPrintJob => {
-  const job = createMockPrintJob({ status: 'Succeeded', ...overrides } as any); 
-  
+  const job = createMockPrintJob({ status: 'Succeeded', ...overrides } as any);
+
   return {
-    ...job,                      
-    kind: 'completed-print-job',       
-    status: overrides?.status || 'Succeeded', 
-    jobFinished: new Date().toISOString(), 
-    ...overrides,                      
+    ...job,
+    kind: 'completed-print-job',
+    status: overrides?.status || 'Succeeded',
+    jobFinished: new Date().toISOString(),
+    ...overrides,
   } as CompletedPrintJob;
 };
-
 
 export const createMockPendingFileJob = (overrides?: Partial<PrintJob>): PrintJob => {
   return createMockPrintJob({

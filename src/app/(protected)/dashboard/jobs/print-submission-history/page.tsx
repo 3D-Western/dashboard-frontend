@@ -6,11 +6,11 @@ export default async function PrintSubmissionHistory() {
 
   try {
     const response = await jobApi.listAllJobs();
-    
-    fetchedJobs = (response as any).data?.data 
-      ? (response as any).data.data 
+
+    fetchedJobs = (response as any).data?.data
+      ? (response as any).data.data
       : (response as any).data || response;
-      
+
     if (!Array.isArray(fetchedJobs)) {
       fetchedJobs = [];
     }
@@ -19,13 +19,11 @@ export default async function PrintSubmissionHistory() {
   }
 
   return (
-    <main className="p-6 md:p-8 w-full max-w-7xl mx-auto flex flex-col gap-6">
+    <main className="mx-auto flex w-full max-w-7xl flex-col gap-6 p-6 md:p-8">
       <div>
-        <h1 className="text-3xl font-bold">
-          Print Submission History
-        </h1>
+        <h1 className="text-3xl font-bold">Print Submission History</h1>
 
-        <p className="text-muted-foreground mt-2">
+        <p className="mt-2 text-muted-foreground">
           View previously submitted fabrication jobs and their details.
         </p>
       </div>
