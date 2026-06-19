@@ -5,7 +5,7 @@ import JobCard from './jobCard';
 import { JobDetail } from '@/types/jobs';
 import { JobDetailContent } from './JobDetailContent';
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from '@/components/ui/dialog';
-import { VisuallyHidden } from '@radix-ui/react-visually-hidden';
+
 
 interface JobListProps {
   jobs: JobDetail[];
@@ -38,13 +38,11 @@ export default function JobList({ jobs }: JobListProps) {
 
       {/* Modal Overlay for Job Details */}
       <Dialog open={!!selectedJob} onOpenChange={(open) => !open && setSelectedJob(null)}>
-        <DialogContent className="max-h-[90vh] w-[95vw] max-w-md overflow-y-auto sm:rounded-2xl md:max-w-2xl lg:max-w-3xl">
-          <VisuallyHidden>
-            <DialogTitle>Job Details</DialogTitle>
-            <DialogDescription>
+        <DialogContent className="max-h-[90vh] w-[95vw] max-w-md overflow-y-auto sm:rounded-2xl md:max-w-2xl lg:max-w-3xl"> 
+            <DialogTitle className="sr-only">Job Details</DialogTitle>
+            <DialogDescription className="sr-only">
               View the specifications, status, and history of the selected print job.
             </DialogDescription>
-          </VisuallyHidden>
           {selectedJob && <JobDetailContent job={selectedJob} />}
         </DialogContent>
       </Dialog>
