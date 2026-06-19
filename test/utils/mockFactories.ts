@@ -1,15 +1,7 @@
 import { faker } from '@faker-js/faker';
 import { User, UserExperienceLevel, UserPermission } from '@/types/user';
 import type { IamGroup } from '@/types/iam';
-import {
-  PrintJob,
-  PrintJobStatus,
-  CompletedPrintJob,
-  JobDetail,
-  ETA,
-  Pickup,
-  StatusHistory,
-} from '@/types/jobs';
+import { PrintJob, PrintJobStatus, CompletedPrintJob, ETA, StatusHistory } from '@/types/jobs';
 import { FileMetadata, FileUploadResult } from '@/types/file';
 import { Invitation, InvitationStatus } from '@/types/invitation';
 import { UserResponse, GroupResponse } from '@/api/types';
@@ -184,7 +176,7 @@ export const createMockPrintJob = (overrides?: Partial<PrintJob>): PrintJob => {
 export const createMockCompletedPrintJob = (
   overrides?: Partial<CompletedPrintJob>,
 ): CompletedPrintJob => {
-  const job = createMockPrintJob({ status: 'Succeeded', ...overrides } as any);
+  const job = createMockPrintJob({ status: 'Succeeded', ...overrides } as Partial<PrintJob>);
 
   return {
     ...job,

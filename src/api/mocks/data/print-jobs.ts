@@ -3,6 +3,7 @@ import {
   createMockCompletedPrintJob,
   createMockPendingFileJob,
 } from '../../../../test/utils/mockFactories';
+import { PrintJob } from '@/types/jobs';
 
 const futureDate = new Date();
 futureDate.setHours(futureDate.getHours() + 4);
@@ -27,19 +28,19 @@ export const mockPrintJobs = [
     status: 'InQueue',
     category: 'ThreeDPrint',
     jobETA: mockETA,
-  } as any),
+  } as unknown as PrintJob),
   createMockPrintJob({
     name: 'Custom Bracket Mount',
     status: 'Printing',
     category: 'ThreeDPrint',
     jobETA: mockETA,
-  } as any),
+  } as unknown as PrintJob),
   createMockPrintJob({
     name: 'Robotic Arm Base',
     status: 'Ready',
     category: 'ThreeDPrint',
     pickupDetails: mockPickup,
-  } as any),
+  } as unknown as PrintJob),
   createMockCompletedPrintJob({
     name: 'Laser Engraved Coasters',
     status: 'Succeeded',

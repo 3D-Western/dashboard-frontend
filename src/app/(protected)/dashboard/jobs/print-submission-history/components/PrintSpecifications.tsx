@@ -1,7 +1,7 @@
 import React from 'react';
 
 interface PrintSpecsProps {
-  specsJson?: string | Record<string, any>;
+  specsJson?: string | Record<string, unknown>;
 }
 
 export function PrintSpecifications({ specsJson }: PrintSpecsProps) {
@@ -9,11 +9,11 @@ export function PrintSpecifications({ specsJson }: PrintSpecsProps) {
     return <p className="text-sm text-muted-foreground">No specifications provided.</p>;
   }
 
-  let specs: Record<string, any> = {};
+  let specs: Record<string, unknown> = {};
 
   try {
     specs = typeof specsJson === 'string' ? JSON.parse(specsJson) : specsJson;
-  } catch (error) {
+  } catch (_error) {
     return (
       <div className="overflow-auto rounded-xl border bg-muted/10 p-4">
         <pre className="text-sm text-muted-foreground">{String(specsJson)}</pre>

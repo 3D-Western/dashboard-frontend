@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import { Button } from '@/components/ui/button';
-import { Printer, LayoutDashboard, Clock, AlertCircle } from 'lucide-react';
+import { Printer, AlertCircle } from 'lucide-react';
 import Link from 'next/link';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import PageTitle from '@/components/PageTitle';

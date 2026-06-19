@@ -1,18 +1,23 @@
 import JobList from './components/jobList';
 import { jobApi } from '@/api/client/job';
+import { JobDetail } from '@/types/jobs';
 
 export default async function PrintSubmissionHistory() {
-  let fetchedJobs = [];
+  let fetchedJobs: JobDetail[] = [];
 
   try {
     const response = await jobApi.listAllJobs();
 
-    fetchedJobs = (response as any).data?.data
-      ? (response as any).data.data
-      : (response as any).data || response;
+    const res = response as {
+      data?: {
+        data?: JobDetail[];
+      };
+    };
 
-    if (!Array.isArray(fetchedJobs)) {
-      fetchedJobs = [];
+    const extractedData = res.data?.data ? res.data.data : res.data || response;
+
+    if (Array.isArray(extractedData)) {
+      fetchedJobs = extractedData as JobDetail[];
     }
   } catch (error) {
     console.error('Failed to fetch print submission history:', error);

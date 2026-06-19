@@ -50,8 +50,8 @@ export class Database {
         id: `job-${job.id}`,
       };
 
-      this.activePrintJobsIDMap.set(userJob.id, userJob as any);
-      this.activePrintJobsUserMap.get(primaryUser.studentId)?.push(userJob as any);
+      this.activePrintJobsIDMap.set(userJob.id, userJob as unknown as PrintJob);
+      this.activePrintJobsUserMap.get(primaryUser.studentId)?.push(userJob as unknown as PrintJob);
     });
 
     const completedJob = createMockCompletedPrintJob({
@@ -65,8 +65,10 @@ export class Database {
       },
     });
 
-    this.activePrintJobsIDMap.set(completedJob.id, completedJob as any);
-    this.activePrintJobsUserMap.get(primaryUser.studentId)?.push(completedJob as any);
+    this.activePrintJobsIDMap.set(completedJob.id, completedJob as unknown as PrintJob);
+    this.activePrintJobsUserMap
+      .get(primaryUser.studentId)
+      ?.push(completedJob as unknown as PrintJob);
 
     mockInvitations.forEach((invitation) => {
       this.invitations.set(invitation.id, invitation);
