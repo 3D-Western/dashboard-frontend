@@ -39,6 +39,8 @@ export interface AvailabillitySlot {
     startTime: string;
     endTime: string;
     isAvailable: boolean;
+    capacity: number;   
+    remainingSlots: number; 
     reason?: "Booked" | "Maintenance" | "Outside-Hours";
 
 
