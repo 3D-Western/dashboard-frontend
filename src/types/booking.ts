@@ -35,7 +35,7 @@ export interface BookingRequest {
     userInfo: UserInfo;
 }
 
-export interface AvailabillitySlot {
+export interface AvailabilitySlot {
     startTime: string;
     endTime: string;
     isAvailable: boolean;
