@@ -102,3 +102,5 @@ export interface Invitation {
   acceptedAt: string | null;
   createdByUserId: number; // Reference to creator's studentId
 }
+
+

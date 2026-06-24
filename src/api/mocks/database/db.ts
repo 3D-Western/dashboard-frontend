@@ -1,8 +1,10 @@
-import { PrintJob, User, FileMetadata, Invitation, InvitationStatus } from './types';
+import { PrintJob, User, FileMetadata, Invitation, InvitationStatus,} from './types';
 import { mockUsers } from '../data/users';
 import { mockPrintJobs } from '../data/print-jobs';
 import { mockInvitations } from '../data/invitations';
 import { createMockCompletedPrintJob } from '../../../../test/utils/mockFactories';
+import { Booking } from '@/types/booking';
+import { mockBookings } from '../data/bookings';
 
 export class Database {
   private static instance: Database;
@@ -15,6 +17,7 @@ export class Database {
   private files: Map<string, FileMetadata> = new Map(); // fileId to FileMetadata
   private invitations: Map<number, Invitation> = new Map(); // invitationId to Invitation
   private nextInvitationId: number = 1;
+  private Bookings: Map<String,Booking> = new Map(); // bookingId to Booking
 
   // Singleton pattern to ensure only one instance of Database exists
   constructor() {
@@ -30,6 +33,7 @@ export class Database {
     this.activePrintJobsUserMap.clear();
     this.activePrintJobsIDMap.clear();
     this.invitations.clear();
+    this.Bookings.clear();
     mockUsers.forEach((user) => {
       this.users.set(user.studentId, user);
       this.activePrintJobsUserMap.set(user.studentId, []);
@@ -52,6 +56,11 @@ export class Database {
 
       this.activePrintJobsIDMap.set(userJob.id, userJob as unknown as PrintJob);
       this.activePrintJobsUserMap.get(primaryUser.studentId)?.push(userJob as unknown as PrintJob);
+      
+      mockBookings.forEach((booking) => {
+      this.Bookings.set(booking.id, booking);
+    });
+  
     });
 
     const completedJob = createMockCompletedPrintJob({
@@ -332,7 +341,91 @@ export class Database {
       ) || null
     );
   }
+
+  public getBookings(filters?: {
+    userId?: number;
+    equipmentId?: string;
+    from?: string;
+    to?: string;
+    snapshotCreatedBefore?: string;
+  }): Booking[] {
+    let bookings = Array.from(this.Bookings.values());
+
+    // Apply snapshot filter (only bookings created before the snapshot)
+    if (filters?.snapshotCreatedBefore) {
+      bookings = bookings.filter((booking) => booking.startTime <= filters.snapshotCreatedBefore!);
+    }
+
+    // Filter by userId if provided
+    if (filters?.userId !== undefined) {
+      bookings = bookings.filter((booking) => booking.userInfo.studentId === filters.userId);
+    }
+
+    // Filter by equipmentId if provided
+    if (filters?.equipmentId) {
+      bookings = bookings.filter((booking) => booking.equipmentId === filters.equipmentId);
+    }
+
+    // Filter by time range
+    if (filters?.from) {
+      bookings = bookings.filter((booking) => booking.endTime >= filters.from!);
+    }
+    if (filters?.to) {
+       bookings = bookings.filter((booking) => booking.startTime <= filters.to!);
+    }
+
+    return bookings;
+  }
+
+// for adding a new booking to the database
+  public addBooking(booking: Booking): Booking {
+    this.Bookings.set(booking.id, booking);
+    return booking;
+  }
+
+// helper function to cheeck if there is an overlap in booking times
+  public hasBookingConflict(equipmentId: string, startTime: string, endTime: string): boolean {
+    return Array.from(this.Bookings.values()).some((booking) => {
+
+      // check if the booking status is cancelled that way we can keep records of what was cancelled and use the patch method instead of delete
+      if (booking.status === 'Cancelled') {
+
+      return false; 
+      }
+
+      const isSameEquipment = booking.equipmentId === equipmentId;
+      const isOverlapping = startTime < booking.endTime && endTime > booking.startTime;
+      return isSameEquipment && isOverlapping;
+    });
+  }
+
+// helper function for cancelling booking (just updating the status to be Cancelled)
+  public cancelBooking(bookingId: string): Booking | null {
+    const booking = this.Bookings.get(bookingId);
+    if (!booking) {
+      return null;
+    }
+    // Update the job status
+    booking.status = 'Cancelled';
+    return booking;
+  }
+
+  // helper function to get equipment availability
+  public getEquipmentAvailability(equipmentId: string) {
+    return Array.from(this.Bookings.values())
+      .filter(booking => booking.equipmentId === equipmentId)
+      .filter(booking => booking.status !== 'Cancelled')
+      .map(booking => ({
+        startTime: booking.startTime,
+        endTime: booking.endTime
+      }));
+  }
+
+
 }
+
+
+
 
 // Use globalThis to persist database instance across HMR reloads
 // This prevents state loss during development hot reloads

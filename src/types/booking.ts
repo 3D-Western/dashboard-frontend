@@ -8,7 +8,6 @@ export interface UserInfo {
 export interface Booking {
     id: string;
     userInfo: UserInfo;
-    userId: string;
     duration: number; // how long booking is
     equipmentId: string;
     equipment: Equipment;
@@ -16,6 +15,8 @@ export interface Booking {
     startTime: string; // ISO
     endTime: string;  // ISO
     createdAt: string; //ISO STring
+    //added due to president saying chance of booking from organization
+    organizationId?: string;
 
 }
 
