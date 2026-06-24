@@ -65,10 +65,10 @@ export interface CurrentUserJobListParams extends BasePaginationParams {
 /**
  * Booking List Query Parameters
  * Used for fetching paginated list of bookings
- * 
+ *
  */
-export interface BookingsListParams extends BasePaginationParams{
-  userId?: string;
+export interface BookingsListParams extends BasePaginationParams {
+  userId?: number;
   equipmentId?: string;
   startTime?: string;
   endTime?: string;

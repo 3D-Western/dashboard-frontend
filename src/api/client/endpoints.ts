@@ -73,9 +73,8 @@ export const endpoints = {
         `/api/v1/admin/iam/users/${userId}/roles/${roleId}`,
     },
     auditLogs: '/api/v1/admin/iam/audit-logs',
-    
   },
-    bookings:{
+  bookings: {
     list: '/api/v1/bookings',
     create: '/api/v1/bookings',
     byId: (id: string) => `/api/v1/bookings/${id}`, // for details and can be used for delete as well.

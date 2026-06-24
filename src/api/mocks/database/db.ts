@@ -1,4 +1,4 @@
-import { PrintJob, User, FileMetadata, Invitation, InvitationStatus,} from './types';
+import { PrintJob, User, FileMetadata, Invitation, InvitationStatus } from './types';
 import { mockUsers } from '../data/users';
 import { mockPrintJobs } from '../data/print-jobs';
 import { mockInvitations } from '../data/invitations';
@@ -17,7 +17,7 @@ export class Database {
   private files: Map<string, FileMetadata> = new Map(); // fileId to FileMetadata
   private invitations: Map<number, Invitation> = new Map(); // invitationId to Invitation
   private nextInvitationId: number = 1;
-  private Bookings: Map<String,Booking> = new Map(); // bookingId to Booking
+  private Bookings: Map<string, Booking> = new Map(); // bookingId to Booking
 
   // Singleton pattern to ensure only one instance of Database exists
   constructor() {
@@ -56,11 +56,10 @@ export class Database {
 
       this.activePrintJobsIDMap.set(userJob.id, userJob as unknown as PrintJob);
       this.activePrintJobsUserMap.get(primaryUser.studentId)?.push(userJob as unknown as PrintJob);
-      
+
       mockBookings.forEach((booking) => {
-      this.Bookings.set(booking.id, booking);
-    });
-  
+        this.Bookings.set(booking.id, booking);
+      });
     });
 
     const completedJob = createMockCompletedPrintJob({
@@ -371,26 +370,24 @@ export class Database {
       bookings = bookings.filter((booking) => booking.endTime >= filters.from!);
     }
     if (filters?.to) {
-       bookings = bookings.filter((booking) => booking.startTime <= filters.to!);
+      bookings = bookings.filter((booking) => booking.startTime <= filters.to!);
     }
 
     return bookings;
   }
 
-// for adding a new booking to the database
+  // for adding a new booking to the database
   public addBooking(booking: Booking): Booking {
     this.Bookings.set(booking.id, booking);
     return booking;
   }
 
-// helper function to cheeck if there is an overlap in booking times
+  // helper function to cheeck if there is an overlap in booking times
   public hasBookingConflict(equipmentId: string, startTime: string, endTime: string): boolean {
     return Array.from(this.Bookings.values()).some((booking) => {
-
       // check if the booking status is cancelled that way we can keep records of what was cancelled and use the patch method instead of delete
       if (booking.status === 'Cancelled') {
-
-      return false; 
+        return false;
       }
 
       const isSameEquipment = booking.equipmentId === equipmentId;
@@ -399,7 +396,7 @@ export class Database {
     });
   }
 
-// helper function for cancelling booking (just updating the status to be Cancelled)
+  // helper function for cancelling booking (just updating the status to be Cancelled)
   public cancelBooking(bookingId: string): Booking | null {
     const booking = this.Bookings.get(bookingId);
     if (!booking) {
@@ -413,19 +410,14 @@ export class Database {
   // helper function to get equipment availability
   public getEquipmentAvailability(equipmentId: string) {
     return Array.from(this.Bookings.values())
-      .filter(booking => booking.equipmentId === equipmentId)
-      .filter(booking => booking.status !== 'Cancelled')
-      .map(booking => ({
+      .filter((booking) => booking.equipmentId === equipmentId)
+      .filter((booking) => booking.status !== 'Cancelled')
+      .map((booking) => ({
         startTime: booking.startTime,
-        endTime: booking.endTime
+        endTime: booking.endTime,
       }));
   }
-
-
 }
-
-
-
 
 // Use globalThis to persist database instance across HMR reloads
 // This prevents state loss during development hot reloads

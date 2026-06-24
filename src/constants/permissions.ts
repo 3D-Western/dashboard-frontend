@@ -18,7 +18,7 @@ export const PERMISSIONS = {
   JOBS_REORDER: 'jobs:reorder',
   BOOKINGS_LIST: 'bookings:list',
   BOOKINGS_UPDATE_STATUS: 'bookings:update_status',
-  BOOKINGS_READ:'bookings:read',
+  BOOKINGS_READ: 'bookings:read',
   FILES_READ_METADATA: 'files:read_metadata',
   FILES_DOWNLOAD: 'files:download',
   FILES_LIST: 'files:list',
@@ -227,24 +227,21 @@ export const PERMISSION_CATALOG: PermissionDefinition[] = [
     key: PERMISSIONS.BOOKINGS_LIST,
     resource: 'bookings',
     action: 'read',
-    description: 'read all the bookings'
-
+    description: 'read all the bookings',
   },
 
   {
     key: PERMISSIONS.BOOKINGS_UPDATE_STATUS,
     resource: 'bookings',
     action: 'update_status',
-    description: 'Update a Booking Status (Cancel)'
-
+    description: 'Update a Booking Status (Cancel)',
   },
 
   {
     key: PERMISSIONS.BOOKINGS_READ,
     resource: 'bookings',
     action: 'read',
-    description: 'Read equipment availability and individual booking info'
-
+    description: 'Read equipment availability and individual booking info',
   },
 ];
 
@@ -266,5 +263,4 @@ export const ADMIN_SECTION_PERMISSIONS: PermissionKey[] = [
   PERMISSIONS.BOOKINGS_LIST,
   PERMISSIONS.BOOKINGS_UPDATE_STATUS,
   PERMISSIONS.BOOKINGS_READ,
-
 ];
