@@ -88,6 +88,8 @@ test.describe('Bookings E2E', () => {
             await expect(page.getByRole('heading', { name: /bookings/i })).toBeVisible();
             // To be checked later based on how the ui is built.
             await expect(page.locator('main')).toBeVisible();
+
+            // this is a commentg just to trouble shoot my
             
         });
 
