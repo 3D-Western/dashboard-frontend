@@ -54,6 +54,8 @@ export const bookingHandlers = [
       equipmentId: string;
       startTime: string;
       endTime: string;
+      purpose: string;
+      userNotes: string;
     };
 
     const bookingId = `bk-${Math.random().toString(36).substring(2, 11)}`;
@@ -88,6 +90,8 @@ export const bookingHandlers = [
       startTime: body.startTime,
       endTime: body.endTime,
       createdAt: new Date().toISOString(),
+      purpose: body.purpose,    
+      userNotes: body.userNotes  
     };
     db.addBooking(newBooking);
 

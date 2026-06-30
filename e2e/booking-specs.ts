@@ -32,6 +32,9 @@ test.describe('Bookings E2E', () => {
               await page.getByLabel(/start time/i).fill('2026-06-25T10:00');
               await page.getByLabel(/end time/i).fill('2026-06-25T12:00');
 
+              await page.getByLabel(/purpose/i).fill('Need to print a structural bracket for capstone');
+              await page.getByLabel(/notes/i).fill('I will pick it up around 3 PM');
+
               await page.getByRole('button', { name: /confirm/i }).click();
 
               // redirect back to bookings page
@@ -89,7 +92,6 @@ test.describe('Bookings E2E', () => {
             // To be checked later based on how the ui is built.
             await expect(page.locator('main')).toBeVisible();
 
-            // this is a commentg just to trouble shoot my
             
         });
 

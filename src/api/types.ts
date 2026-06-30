@@ -151,4 +151,6 @@ export interface CreateBookingResponse {
   startTime: string;
   endTime: string;
   message?: string;
+  purpose: string;
+  userNotes?: string;
 }

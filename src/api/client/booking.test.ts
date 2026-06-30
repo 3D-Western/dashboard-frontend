@@ -160,6 +160,8 @@ describe('bookingAPI', () => {
         equipmentId: 'printer-1',
         startTime: '2026-06-25T10:00:00.000Z',
         endTime: '2026-06-25T12:00:00.000Z',
+        purpose: 'This is a mock booking purpose',
+        userNotes:'This is a mock booking note',
         userInfo: {
           studentId: 251000000,
           firstName: 'Dev',
@@ -181,6 +183,7 @@ describe('bookingAPI', () => {
         equipmentId: 'printer-1',
         startTime: '2026-06-25T10:00:00.000Z',
         endTime: '2026-06-25T11:00:00.000Z',
+        purpose:'This is a mock purpose',
         userInfo: {
           studentId: mockUsers[0].studentId,
           firstName: mockUsers[0].firstName,
@@ -223,6 +226,7 @@ describe('bookingAPI', () => {
         equipmentId: 'printer-1',
         startTime: '2026-06-25T10:00:00.000Z',
         endTime: '2026-06-25T11:00:00.000Z',
+        purpose:'This is a mock purpose',
         userInfo: {
           studentId: mockUsers[0].studentId,
           firstName: mockUsers[0].firstName,

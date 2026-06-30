@@ -14,9 +14,12 @@ export interface Booking {
   status: BookingStatus;
   startTime: string; // ISO
   endTime: string; // ISO
-  createdAt: string; //ISO STring
+  createdAt: string; //ISO String
+
   //added due to president saying chance of booking from organization
   organizationId?: string;
+  purpose: string;
+  userNotes?: string;
 }
 
 export interface Equipment {
@@ -33,6 +36,8 @@ export interface BookingRequest {
   startTime: string;
   endTime: string;
   userInfo: UserInfo;
+  purpose: string;
+  userNotes?: string;
 }
 
 export interface AvailabilitySlot {
