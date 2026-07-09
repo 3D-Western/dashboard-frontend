@@ -24,7 +24,7 @@ const TIME_SLOTS = [
 
 export default function NewBookingForm() {
   const router = useRouter();
-  const  user  = useUser(); 
+  const user = useUser();
   const { mutate: createBooking, isPending, error: hookError } = useCreateBooking();
   const [authError, setAuthError] = useState<string | null>(null);
 
@@ -43,8 +43,8 @@ export default function NewBookingForm() {
       return;
     }
 
-    const selectedSlot = TIME_SLOTS.find(slot => slot.label === data.timeSlot);
-    
+    const selectedSlot = TIME_SLOTS.find((slot) => slot.label === data.timeSlot);
+
     if (!selectedSlot) return; // Failsafe
 
     try {
@@ -61,9 +61,9 @@ export default function NewBookingForm() {
           email: user.email,
         },
       });
-      
+
       router.push('/dashboard/bookings');
-      router.refresh(); 
+      router.refresh();
     } catch (e) {
       console.error('Booking failed:', e);
     }
@@ -88,14 +88,16 @@ export default function NewBookingForm() {
             <select
               id="equipmentId"
               {...register('equipmentId')}
-              className="w-full rounded-md border bg-background p-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+              className="w-full rounded-md border bg-background p-2 text-sm focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none"
             >
               <option value="">Select Equipment...</option>
               <option value="printer-1">3D Printer 1</option>
               <option value="laser-1">Laser Cutter</option>
               <option value="cnc-1">CNC Router</option>
             </select>
-            {errors.equipmentId && <p className="text-xs text-destructive">{errors.equipmentId.message}</p>}
+            {errors.equipmentId && (
+              <p className="text-xs text-destructive">{errors.equipmentId.message}</p>
+            )}
           </div>
 
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -105,7 +107,7 @@ export default function NewBookingForm() {
                 id="date"
                 type="date"
                 {...register('date')}
-                className="w-full rounded-md border bg-background p-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                className="w-full rounded-md border bg-background p-2 text-sm focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none"
               />
               {errors.date && <p className="text-xs text-destructive">{errors.date.message}</p>}
             </div>
@@ -115,7 +117,7 @@ export default function NewBookingForm() {
               <select
                 id="timeSlot"
                 {...register('timeSlot')}
-                className="w-full rounded-md border bg-background p-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                className="w-full rounded-md border bg-background p-2 text-sm focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none"
               >
                 <option value="">Select Time Slot...</option>
                 {TIME_SLOTS.map((slot) => (
@@ -124,7 +126,9 @@ export default function NewBookingForm() {
                   </option>
                 ))}
               </select>
-              {errors.timeSlot && <p className="text-xs text-destructive">{errors.timeSlot.message}</p>}
+              {errors.timeSlot && (
+                <p className="text-xs text-destructive">{errors.timeSlot.message}</p>
+              )}
             </div>
           </div>
 
@@ -135,7 +139,7 @@ export default function NewBookingForm() {
               type="text"
               placeholder="e.g., Capstone project prototyping"
               {...register('purpose')}
-              className="w-full rounded-md border bg-background p-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+              className="w-full rounded-md border bg-background p-2 text-sm focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none"
             />
             {errors.purpose && <p className="text-xs text-destructive">{errors.purpose.message}</p>}
           </div>
@@ -147,7 +151,7 @@ export default function NewBookingForm() {
               rows={3}
               placeholder="Any special requirements or pickup notes..."
               {...register('userNotes')}
-              className="w-full rounded-md border bg-background p-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+              className="w-full rounded-md border bg-background p-2 text-sm focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none"
             />
           </div>
         </div>
@@ -161,9 +165,9 @@ export default function NewBookingForm() {
             Cancel
           </Button>
 
-          <Button 
-            type="submit" 
-            disabled={isPending} 
+          <Button
+            type="submit"
+            disabled={isPending}
             className="w-full bg-sky-500/75 text-white hover:bg-sky-500"
           >
             <CalendarPlus className="mr-2 h-4 w-4" />

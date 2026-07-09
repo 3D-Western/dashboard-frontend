@@ -90,8 +90,8 @@ export const bookingHandlers = [
       startTime: body.startTime,
       endTime: body.endTime,
       createdAt: new Date().toISOString(),
-      purpose: body.purpose,    
-      userNotes: body.userNotes  
+      purpose: body.purpose,
+      userNotes: body.userNotes,
     };
     db.addBooking(newBooking);
 

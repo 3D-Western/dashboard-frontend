@@ -1,95 +1,53 @@
 'use client';
 
+import { useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
+import { AlertCircle, Loader2 } from 'lucide-react';
 import BookingCalendar from '@/components/Booking/BookingCalendar';
 import BookingList from '@/components/Booking/BookingList';
 import { AvailabilityIndicator } from '@/components/Booking/AvailabilityIndicator';
 import PageTitle from '@/components/PageTitle';
 import { Button } from '@/components/ui/button';
-import { Booking, AvailabilitySlot } from '@/types/booking';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { useBookings, useAvailability } from '@/hooks/useBookings';
+import { useUser } from '@/providers/user-provider';
 
 export default function BookingsPage() {
   const router = useRouter();
-  
-  // Set up dynamic dates so the calendar always looks populated
-  const today = new Date();
-  const tomorrow = new Date(today);
-  tomorrow.setDate(tomorrow.getDate() + 1);
+  const user = useUser();
 
-  // MOCK 1: The Calendar Availability Data (What everyone sees)
-  // TODO: Replace with Dev B's useAvailability hook -> const { data: slots } = useAvailability(selectedEquipment)
-  const mockSlots: AvailabilitySlot[] = [
-    {
-      startTime: new Date(today.setHours(8, 0, 0, 0)).toISOString(),
-      endTime: new Date(today.setHours(10, 0, 0, 0)).toISOString(),
-      isAvailable: false,
-      capacity: 2,
-      remainingSlots: 0,
-      reason: 'Booked'
-    },
-    {
-      startTime: new Date(today.setHours(10, 0, 0, 0)).toISOString(),
-      endTime: new Date(today.setHours(12, 0, 0, 0)).toISOString(),
-      isAvailable: true,
-      capacity: 2,
-      remainingSlots: 1, 
-    },
-    {
-      startTime: new Date(today.setHours(12, 0, 0, 0)).toISOString(),
-      endTime: new Date(today.setHours(14, 0, 0, 0)).toISOString(),
-      isAvailable: true,
-      capacity: 2,
-      remainingSlots: 2, 
-    },
-    {
-      startTime: new Date(tomorrow.setHours(14, 0, 0, 0)).toISOString(),
-      endTime: new Date(tomorrow.setHours(16, 0, 0, 0)).toISOString(),
-      isAvailable: false, 
-      capacity: 1,
-      remainingSlots: 0,
-      reason: 'Maintenance' 
-    }
-  ];
+  const [selectedEquipment, setSelectedEquipment] = useState<string>('printer-1');
 
-  // MOCK 2: The User's Personal Data (What populates the side list)
-  // TODO: Replace with Dev B's useBookings hook -> const { data: myBookings } = useBookings({ userId: user.id })
-  const mockUserBookings: Booking[] = [
-    {
-      id: 'bk-1',
-      equipmentId: 'printer-1',
-      equipment: { id: 'printer-1', name: '3D Printer 1', category: 'ThreeDPrinter', status: 'Available' },
-      startTime: new Date(today.setHours(10, 0, 0, 0)).toISOString(),
-      endTime: new Date(today.setHours(12, 0, 0, 0)).toISOString(),
-      duration: 120,
-      status: 'Confirmed',
-      createdAt: new Date().toISOString(),
-      purpose: 'Prototyping chassis brackets',
-      userInfo: { studentId: 123456, firstName: 'User', lastName: 'Dev', email: 'test@uwo.ca' }
-    },
-    {
-      id: 'bk-2',
-      equipmentId: 'laser-1',
-      equipment: { id: 'laser-1', name: 'Laser Cutter 1', category: 'LaserCutter', status: 'Available' },
-      startTime: new Date(tomorrow.setHours(14, 0, 0, 0)).toISOString(),
-      endTime: new Date(tomorrow.setHours(16, 0, 0, 0)).toISOString(),
-      duration: 120,
-      status: 'Pending',
-      createdAt: new Date().toISOString(),
-      purpose: 'Cutting acrylic panels for robot enclosure',
-      userInfo: { studentId: 123456, firstName: 'User', lastName: 'Dev', email: 'test@uwo.ca' }
-    }
-  ];
+  const dateRange = useMemo(() => {
+    const from = new Date();
+    from.setHours(0, 0, 0, 0);
+    const to = new Date(from);
+    to.setDate(to.getDate() + 30);
+    return { from: from.toISOString(), to: to.toISOString() };
+  }, []);
+
+  const bookingParams = useMemo(() => {
+    return user ? { userId: user.studentId } : undefined;
+  }, [user]);
+
+  const { bookings, isLoading: bookingsLoading, error: bookingsError } = useBookings(bookingParams);
+
+  const {
+    slots,
+    isLoading: slotsLoading,
+    error: slotsError,
+  } = useAvailability(selectedEquipment, dateRange.from, dateRange.to);
 
   return (
     <div className="container space-y-8 p-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <PageTitle 
-          title="Equipment Schedule" 
-          description="View availability and manage your reservations." 
+        <PageTitle
+          title="Equipment Schedule"
+          description="View availability and manage your reservations."
         />
-        <Button 
+        <Button
           onClick={() => router.push('/dashboard/bookings/new')}
-          className="bg-green-600 text-white hover:bg-green-700 w-full sm:w-auto"
+          className="w-full bg-green-600 text-white hover:bg-green-700 sm:w-auto"
         >
           + New Booking
         </Button>
@@ -97,12 +55,49 @@ export default function BookingsPage() {
 
       <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
         <div className="space-y-4 lg:col-span-2">
-          <AvailabilityIndicator />
-          <BookingCalendar slots={mockSlots} />
+          <div className="flex items-center justify-between">
+            <AvailabilityIndicator />
+
+            <select
+              value={selectedEquipment}
+              onChange={(e) => setSelectedEquipment(e.target.value)}
+              className="rounded-md border bg-background p-2 text-sm focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none"
+            >
+              <option value="printer-1">3D Printer 1</option>
+              <option value="laser-1">Laser Cutter</option>
+              <option value="cnc-1">CNC Router</option>
+            </select>
+          </div>
+
+          {slotsError ? (
+            <Alert variant="destructive">
+              <AlertCircle className="h-4 w-4" />
+              <AlertTitle>Error Loading Calendar</AlertTitle>
+              <AlertDescription>{slotsError}</AlertDescription>
+            </Alert>
+          ) : slotsLoading ? (
+            <div className="flex h-[400px] items-center justify-center rounded-xl border bg-muted/10">
+              <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+            </div>
+          ) : (
+            <BookingCalendar slots={slots} />
+          )}
         </div>
-        
-        <div className="rounded-xl border bg-muted/10 p-4 h-fit">
-          <BookingList bookings={mockUserBookings} />
+
+        <div className="h-fit rounded-xl border bg-muted/10 p-4">
+          <h3 className="mb-4 font-semibold">My Bookings</h3>
+
+          {bookingsError ? (
+            <p className="text-sm text-destructive">{bookingsError}</p>
+          ) : bookingsLoading ? (
+            <div className="flex justify-center py-8">
+              <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+            </div>
+          ) : bookings.length === 0 ? (
+            <p className="text-sm text-muted-foreground">You have no upcoming bookings.</p>
+          ) : (
+            <BookingList bookings={bookings} />
+          )}
         </div>
       </div>
     </div>

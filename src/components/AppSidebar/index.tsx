@@ -41,7 +41,7 @@ const navigationItems = [
   },
   {
     title: 'Equipment Booking',
-    url: Routes.bookings, 
+    url: Routes.bookings,
     icon: Calendar,
   },
   {

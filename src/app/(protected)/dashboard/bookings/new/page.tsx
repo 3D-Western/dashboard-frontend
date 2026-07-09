@@ -1,12 +1,12 @@
 import NewBookingForm from '@/components/Booking/NewBookingForm';
-import PageTitle from '@/components/PageTitle'; 
+import PageTitle from '@/components/PageTitle';
 
 export default function NewBookingPage() {
   return (
     <div className="container space-y-6 p-6">
-      <PageTitle 
-        title="New Equipment Booking" 
-        description="Reserve time on 3D printers, laser cutters, and other lab equipment." 
+      <PageTitle
+        title="New Equipment Booking"
+        description="Reserve time on 3D printers, laser cutters, and other lab equipment."
       />
 
       <div className="grid grid-cols-1 gap-8 md:grid-cols-3">

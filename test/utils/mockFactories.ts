@@ -399,7 +399,7 @@ export const createMockBooking = (overrides?: Partial<Booking>): Booking => {
     startTime: startTime.toISOString(),
     endTime: endTime.toISOString(),
     createdAt: faker.date.recent({ days: 3 }).toISOString(),
-    purpose:  faker.lorem.sentence(), 
+    purpose: faker.lorem.sentence(),
     userNotes: faker.lorem.sentence(),
     ...overrides,
   };
