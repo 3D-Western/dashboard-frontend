@@ -13,6 +13,15 @@ import { UnsavedChangesDialog } from '@/components/UnsavedChangesDialog';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
+const TIME_SLOTS = [
+  { label: '8:00 AM - 10:00 AM', start: '08:00:00', end: '10:00:00' },
+  { label: '10:00 AM - 12:00 PM', start: '10:00:00', end: '12:00:00' },
+  { label: '12:00 PM - 2:00 PM', start: '12:00:00', end: '14:00:00' },
+  { label: '2:00 PM - 4:00 PM', start: '14:00:00', end: '16:00:00' },
+  { label: '4:00 PM - 6:00 PM', start: '16:00:00', end: '18:00:00' },
+  { label: '6:00 PM - 8:00 PM', start: '18:00:00', end: '20:00:00' },
+];
+
 export default function NewBookingForm() {
   const router = useRouter();
   const  user  = useUser(); 
@@ -34,11 +43,15 @@ export default function NewBookingForm() {
       return;
     }
 
+    const selectedSlot = TIME_SLOTS.find(slot => slot.label === data.timeSlot);
+    
+    if (!selectedSlot) return; // Failsafe
+
     try {
       await createBooking({
         equipmentId: data.equipmentId,
-        startTime: new Date(data.startTime).toISOString(),
-        endTime: new Date(data.endTime).toISOString(),
+        startTime: new Date(`${data.date}T${selectedSlot.start}`).toISOString(),
+        endTime: new Date(`${data.date}T${selectedSlot.end}`).toISOString(),
         purpose: data.purpose,
         userNotes: data.userNotes,
         userInfo: {
@@ -60,7 +73,7 @@ export default function NewBookingForm() {
 
   return (
     <>
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 max-w-xl rounded-xl border bg-card p-6 shadow-sm">
+      <form onSubmit={handleSubmit(onSubmit)} className="max-w-xl space-y-6">
         {displayError && (
           <Alert variant="destructive">
             <AlertCircle className="h-4 w-4" />
@@ -69,74 +82,90 @@ export default function NewBookingForm() {
           </Alert>
         )}
 
-        <div className="space-y-2">
-          <label className="text-sm font-semibold">Equipment</label>
-          <select
-            {...register('equipmentId')}
-            className="w-full rounded-md border bg-background p-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
-          >
-            <option value="">Select Equipment...</option>
-            <option value="printer-1">3D Printer 1</option>
-            <option value="laser-1">Laser Cutter</option>
-            <option value="cnc-1">CNC Router</option>
-          </select>
-          {errors.equipmentId && <p className="text-xs text-destructive">{errors.equipmentId.message}</p>}
-        </div>
-
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <div className="space-y-6 rounded-xl border bg-card p-6 shadow-sm">
           <div className="space-y-2">
-            <label className="text-sm font-semibold">Start Time</label>
-            <input
-              type="datetime-local"
-              {...register('startTime')}
+            <label className="text-sm font-semibold">Equipment</label>
+            <select
+              id="equipmentId"
+              {...register('equipmentId')}
               className="w-full rounded-md border bg-background p-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
-            />
-            {errors.startTime && <p className="text-xs text-destructive">{errors.startTime.message}</p>}
+            >
+              <option value="">Select Equipment...</option>
+              <option value="printer-1">3D Printer 1</option>
+              <option value="laser-1">Laser Cutter</option>
+              <option value="cnc-1">CNC Router</option>
+            </select>
+            {errors.equipmentId && <p className="text-xs text-destructive">{errors.equipmentId.message}</p>}
+          </div>
+
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div className="space-y-2">
+              <label className="text-sm font-semibold">Date</label>
+              <input
+                id="date"
+                type="date"
+                {...register('date')}
+                className="w-full rounded-md border bg-background p-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+              />
+              {errors.date && <p className="text-xs text-destructive">{errors.date.message}</p>}
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-sm font-semibold">Time Slot</label>
+              <select
+                id="timeSlot"
+                {...register('timeSlot')}
+                className="w-full rounded-md border bg-background p-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+              >
+                <option value="">Select Time Slot...</option>
+                {TIME_SLOTS.map((slot) => (
+                  <option key={slot.label} value={slot.label}>
+                    {slot.label}
+                  </option>
+                ))}
+              </select>
+              {errors.timeSlot && <p className="text-xs text-destructive">{errors.timeSlot.message}</p>}
+            </div>
           </div>
 
           <div className="space-y-2">
-            <label className="text-sm font-semibold">End Time</label>
+            <label className="text-sm font-semibold">Purpose</label>
             <input
-              type="datetime-local"
-              {...register('endTime')}
+              id="purpose"
+              type="text"
+              placeholder="e.g., Capstone project prototyping"
+              {...register('purpose')}
               className="w-full rounded-md border bg-background p-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
             />
-            {errors.endTime && <p className="text-xs text-destructive">{errors.endTime.message}</p>}
+            {errors.purpose && <p className="text-xs text-destructive">{errors.purpose.message}</p>}
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-sm font-semibold">Additional Notes (Optional)</label>
+            <textarea
+              id="userNotes"
+              rows={3}
+              placeholder="Any special requirements or pickup notes..."
+              {...register('userNotes')}
+              className="w-full rounded-md border bg-background p-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+            />
           </div>
         </div>
 
-        <div className="space-y-2">
-          <label className="text-sm font-semibold">Purpose</label>
-          <input
-            type="text"
-            placeholder="e.g., Capstone project prototyping"
-            {...register('purpose')}
-            className="w-full rounded-md border bg-background p-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
-          />
-          {errors.purpose && <p className="text-xs text-destructive">{errors.purpose.message}</p>}
-        </div>
-
-        <div className="space-y-2">
-          <label className="text-sm font-semibold">Additional Notes (Optional)</label>
-          <textarea
-            rows={3}
-            placeholder="Any special requirements or pickup notes..."
-            {...register('userNotes')}
-            className="w-full rounded-md border bg-background p-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
-          />
-        </div>
-
-        <div className="flex gap-4 pt-2">
+        <div className="flex flex-col gap-3">
           <Button
             type="button"
-            variant="outline"
-            className="w-full"
+            className="w-full bg-red-400 text-white hover:bg-red-500"
             onClick={() => router.push('/dashboard/bookings')}
           >
             Cancel
           </Button>
 
-          <Button type="submit" disabled={isPending} className="w-full">
+          <Button 
+            type="submit" 
+            disabled={isPending} 
+            className="w-full bg-sky-500/75 text-white hover:bg-sky-500"
+          >
             <CalendarPlus className="mr-2 h-4 w-4" />
             {isPending ? 'Confirming...' : 'Confirm Booking'}
           </Button>

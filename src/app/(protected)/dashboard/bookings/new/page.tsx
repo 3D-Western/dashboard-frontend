@@ -13,7 +13,7 @@ export default function NewBookingPage() {
         <div className="md:col-span-2">
           <NewBookingForm />
         </div>
-        <div className="space-y-4 rounded-xl border bg-muted/30 p-6">
+        <div className="h fit space-y-4 rounded-xl border bg-muted/30 p-6">
           <h3 className="font-semibold">Booking Guidelines</h3>
           <ul className="ml-4 list-disc space-y-2 text-sm text-muted-foreground">
             <li>Check the calendar for available slots before booking.</li>
