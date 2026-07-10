@@ -86,7 +86,7 @@ export const bookingHandlers = [
       duration: durationMinutes,
       equipmentId: body.equipmentId,
       equipment: selectedEquipment,
-      status: 'Confirmed' as const,
+      status: 'APPROVED' as const,
       startTime: body.startTime,
       endTime: body.endTime,
       createdAt: new Date().toISOString(),

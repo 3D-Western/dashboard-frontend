@@ -12,7 +12,7 @@ import { Booking } from '@/types/booking';
 
 // helper function for checking if a cancelled bookking shows as cancelled
 function isCancelledBooking(booking: Booking): boolean {
-  return booking.status === 'Cancelled';
+  return booking.status === 'CANCELLED';
 }
 
 describe('bookingAPI', () => {
@@ -262,7 +262,7 @@ describe('bookingAPI', () => {
 
     it('should fetch a cancelled booking by ID', async () => {
       const bookingId = 'booking-id-101';
-      const mockCancelledBooking = createMockBooking({ id: bookingId, status: 'Cancelled' });
+      const mockCancelledBooking = createMockBooking({ id: bookingId, status: 'CANCELLED' });
 
       mockServer.use(
         http.get(`${baseUrl}${endpoints.bookings.byId(bookingId)}`, () => {

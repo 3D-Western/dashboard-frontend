@@ -29,7 +29,7 @@ for (let i = 1; i <= 3; i++) {
       duration: 90,
       equipmentId: equipmentId,
       equipment: mockEquipment.find((e) => e.id === equipmentId)!,
-      status: 'Confirmed',
+      status: 'APPROVED',
       startTime: startTime,
       endTime: endTime,
     }),
@@ -52,7 +52,7 @@ for (let i = 0; i < 50; i++) {
   const hasConflict = generatedBookings.some(
     (b) =>
       b.equipmentId === equipmentId &&
-      b.status !== 'Cancelled' &&
+      b.status !== 'CANCELLED' &&
       startTime < b.endTime &&
       endTime > b.startTime,
   );

@@ -1,3 +1,5 @@
+import { PaginationMetadata } from './common'; 
+
 export interface UserInfo {
   studentId: number;
   firstName: string;
@@ -20,6 +22,10 @@ export interface Booking {
   organizationId?: string;
   purpose: string;
   userNotes?: string;
+  // added
+  rejectReason?: string;
+  overrideReason?: string; 
+  waitlistPosition?: number;
 }
 
 export interface Equipment {
@@ -29,7 +35,8 @@ export interface Equipment {
   id: string;
 }
 
-export type BookingStatus = 'Confirmed' | 'Pending' | 'Cancelled';
+// extended to fit sprint
+export type BookingStatus = 'APPROVED' | 'PENDING' | 'REJECTED' | 'CANCELLED';
 
 export interface BookingRequest {
   equipmentId: string;
@@ -38,6 +45,8 @@ export interface BookingRequest {
   userInfo: UserInfo;
   purpose: string;
   userNotes?: string;
+// added 
+  joinWaitlist?: boolean;
 }
 
 export interface AvailabilitySlot {
@@ -47,4 +56,52 @@ export interface AvailabilitySlot {
   capacity: number;
   remainingSlots: number;
   reason?: 'Booked' | 'Maintenance' | 'Outside-Hours';
+}
+
+// all types below this message are newly added
+export interface PendingRequest extends Booking {
+  status: 'PENDING' | BookingStatus; 
+  urgencyLevel: 'High' | 'Medium' | 'Low'; 
+  hasConflict: boolean; 
+  meetsRestrictions: boolean; 
+}
+
+export interface AdminBookingListResponse {
+  data: Booking[];
+  pagination: PaginationMetadata;
+  summary: {
+    totalPending: number;
+    totalApproved: number;
+    totalConflicts: number;
+  };
+}
+
+export interface CapacitySettings {
+  equipmentId: string;
+  maxSimultaneousBookings: number; 
+  requireAdminApproval: boolean;
+  allowWaitlist: boolean;
+  restrictions: {
+    requiresTraining: boolean;
+  };
+}
+
+export interface AlternativeSlot {
+  startTime: string;
+  endTime: string;
+  availableCapacity: number;
+}
+
+export interface RestrictionViolation {
+  rule: 'TrainingRequired';
+  message: string; 
+}
+
+// 409 Error Response
+export interface ConflictResponse {
+  code: 'BOOKING_CONFLICT' | 'CAPACITY_EXCEEDED' | 'RESTRICTION_VIOLATED';
+  message: string;
+  conflictingBookings?: Booking[]; 
+  alternativeSlots?: AlternativeSlot[]; 
+  violations?: RestrictionViolation[]; 
 }

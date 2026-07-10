@@ -386,7 +386,7 @@ export class Database {
   public hasBookingConflict(equipmentId: string, startTime: string, endTime: string): boolean {
     return Array.from(this.Bookings.values()).some((booking) => {
       // check if the booking status is cancelled that way we can keep records of what was cancelled and use the patch method instead of delete
-      if (booking.status === 'Cancelled') {
+      if (booking.status === 'CANCELLED') {
         return false;
       }
 
@@ -403,7 +403,7 @@ export class Database {
       return null;
     }
     // Update the job status
-    booking.status = 'Cancelled';
+    booking.status = 'CANCELLED';
     return booking;
   }
 
@@ -411,7 +411,7 @@ export class Database {
   public getEquipmentAvailability(equipmentId: string) {
     return Array.from(this.Bookings.values())
       .filter((booking) => booking.equipmentId === equipmentId)
-      .filter((booking) => booking.status !== 'Cancelled')
+      .filter((booking) => booking.status !== 'CANCELLED')
       .map((booking) => ({
         startTime: booking.startTime,
         endTime: booking.endTime,
