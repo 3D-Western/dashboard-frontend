@@ -26,6 +26,7 @@ import {
   TicketPlus,
   Lock,
   ClipboardList,
+  History,
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -36,6 +37,11 @@ const navigationItems = [
     title: 'Dashboard',
     url: Routes.dashboard,
     icon: LayoutDashboard,
+  },
+  {
+    title: 'Print History',
+    url: Routes.dashboardSubmissionHistory,
+    icon: History,
   },
   {
     title: 'My Jobs',

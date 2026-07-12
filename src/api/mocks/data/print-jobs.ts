@@ -1,59 +1,54 @@
-import { PrintJob } from '../database/types';
+import {
+  createMockPrintJob,
+  createMockCompletedPrintJob,
+  createMockPendingFileJob,
+} from '../../../../test/utils/mockFactories';
+import { PrintJob } from '@/types/jobs';
 
-export const mockPrintJobs: PrintJob[] = [
-  {
-    id: '123456',
-    userId: 123456,
-    user: { studentId: 123456, firstName: 'Mock', lastName: 'User' },
-    jobPlaced: '2023-10-01T10:00:00Z',
+const futureDate = new Date();
+futureDate.setHours(futureDate.getHours() + 4);
+const mockETA = {
+  estimatedCompletionTime: futureDate.toISOString(),
+  updatedAt: new Date().toISOString(),
+};
+
+const mockPickup = {
+  location: 'Engineering Building, Room 101',
+  hours: 'Mon-Fri, 9AM - 5PM',
+  instructions: 'Please bring your student ID to the front desk.',
+};
+
+export const mockPrintJobs = [
+  createMockPendingFileJob({
+    name: 'Mechanical Keyboard Case',
     category: 'ThreeDPrint',
-    description: 'A cool 3D print',
-    name: 'CoolPrint1',
+  }),
+  createMockPrintJob({
+    name: 'Drone Propeller Guards',
     status: 'InQueue',
-    kind: 'active-print-job',
-  },
-  {
-    id: '789012',
-    userId: 123456,
-    user: { studentId: 123456, firstName: 'Mock', lastName: 'User' },
-    jobPlaced: '2023-10-02T11:30:00Z',
     category: 'ThreeDPrint',
-    description: 'Another cool 3D print',
-    name: 'CoolPrint2',
+    jobETA: mockETA,
+  } as unknown as PrintJob),
+  createMockPrintJob({
+    name: 'Custom Bracket Mount',
     status: 'Printing',
-    kind: 'active-print-job',
-  },
-  {
-    id: '345678',
-    userId: 123456,
-    user: { studentId: 123456, firstName: 'Mock', lastName: 'User' },
-    jobPlaced: '2023-10-03T14:15:00Z',
     category: 'ThreeDPrint',
-    description: 'Yet another cool 3D print',
-    name: 'CoolPrint3',
+    jobETA: mockETA,
+  } as unknown as PrintJob),
+  createMockPrintJob({
+    name: 'Robotic Arm Base',
     status: 'Ready',
-    kind: 'active-print-job',
-  },
-  {
-    id: '901234',
-    userId: 123456,
-    user: { studentId: 123456, firstName: 'Mock', lastName: 'User' },
-    jobPlaced: '2023-10-04T09:45:00Z',
     category: 'ThreeDPrint',
-    description: 'A flagged 3D print',
-    name: 'FlaggedPrint',
-    status: 'Flagged',
-    kind: 'active-print-job',
-  },
-  {
-    id: '567890',
-    userId: 123456,
-    user: { studentId: 123456, firstName: 'Mock', lastName: 'User' },
-    jobPlaced: '2023-10-05T16:20:00Z',
-    category: 'ThreeDPrint',
-    description: 'A failed 3D print',
-    name: 'FailedPrint',
-    status: 'Error',
-    kind: 'active-print-job',
-  },
+    pickupDetails: mockPickup,
+  } as unknown as PrintJob),
+  createMockCompletedPrintJob({
+    name: 'Laser Engraved Coasters',
+    status: 'Succeeded',
+    category: 'LaserCutting',
+  }),
+  createMockCompletedPrintJob({
+    name: 'Waterjet Metal Gear',
+    status: 'Failed',
+    category: 'Waterjet',
+  }),
 ];

@@ -20,6 +20,7 @@ export interface BasePrintJob {
   category: JobCategory;
   description: string;
   name: string;
+  files: File[];
   reprint?: string | null; // link to another print job if this is a reprint
 }
 
@@ -43,4 +44,33 @@ export interface CompletedPrintJob extends BasePrintJob {
   kind: 'completed-print-job'; // For type checking
   jobFinished: string; // ISO date string
   status: CompletePrintJobStatus;
+}
+
+export interface JobDetail extends BasePrintJob {
+  dateSubmitted: string;
+  status: PrintJobStatus;
+  comments: string;
+  filepath: string;
+  formAnswersJson: string;
+  pickupDetails?: Pickup;
+  jobETA?: ETA;
+  statusHistory?: StatusHistory[];
+}
+
+export interface ETA {
+  estimatedCompletionTime: string; // ISO Date
+  updatedAt: string;
+}
+
+export interface StatusHistory {
+  status: PrintJobStatus;
+  changedAt: string; // ISO Date String
+  // if the status gets changed to error or failed from admin side they can put it here. may not be used but creating in the type and mocks for now
+  comments?: string;
+}
+
+export interface Pickup {
+  location: string;
+  hours: string;
+  instructions: string;
 }

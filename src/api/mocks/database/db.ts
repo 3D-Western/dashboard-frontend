@@ -2,6 +2,7 @@ import { PrintJob, User, FileMetadata, Invitation, InvitationStatus } from './ty
 import { mockUsers } from '../data/users';
 import { mockPrintJobs } from '../data/print-jobs';
 import { mockInvitations } from '../data/invitations';
+import { createMockCompletedPrintJob } from '../../../../test/utils/mockFactories';
 
 export class Database {
   private static instance: Database;
@@ -25,33 +26,50 @@ export class Database {
   }
 
   private loadInitialData() {
-    // Load some initial mock users
+    this.users.clear();
+    this.activePrintJobsUserMap.clear();
+    this.activePrintJobsIDMap.clear();
+    this.invitations.clear();
     mockUsers.forEach((user) => {
       this.users.set(user.studentId, user);
+      this.activePrintJobsUserMap.set(user.studentId, []);
     });
 
-    // Load some initial mock print jobs
-    this.users.forEach((user) => {
-      const userJobs: PrintJob[] = [];
-      this.activePrintJobsUserMap.set(user.studentId, userJobs);
-      mockPrintJobs.forEach((job) => {
-        const userJob = {
-          ...job,
-          userId: user.studentId,
-          user: {
-            studentId: user.studentId,
-            firstName: user.firstName,
-            lastName: user.lastName,
-            email: user.email,
-          },
-          id: `${user.studentId}-${job.id}`,
-        };
-        userJobs.push(userJob);
-        this.activePrintJobsIDMap.set(userJob.id, userJob);
-      });
+    const primaryUser = mockUsers[0];
+
+    mockPrintJobs.forEach((job) => {
+      const userJob = {
+        ...job,
+        userId: primaryUser.studentId,
+        user: {
+          studentId: primaryUser.studentId,
+          firstName: primaryUser.firstName,
+          lastName: primaryUser.lastName,
+          email: primaryUser.email,
+        },
+        id: `job-${job.id}`,
+      };
+
+      this.activePrintJobsIDMap.set(userJob.id, userJob as unknown as PrintJob);
+      this.activePrintJobsUserMap.get(primaryUser.studentId)?.push(userJob as unknown as PrintJob);
     });
 
-    // Load initial mock invitations
+    const completedJob = createMockCompletedPrintJob({
+      id: 'default-completed-job',
+      status: 'Succeeded',
+      user: {
+        studentId: primaryUser.studentId,
+        firstName: primaryUser.firstName,
+        lastName: primaryUser.lastName,
+        email: primaryUser.email,
+      },
+    });
+
+    this.activePrintJobsIDMap.set(completedJob.id, completedJob as unknown as PrintJob);
+    this.activePrintJobsUserMap
+      .get(primaryUser.studentId)
+      ?.push(completedJob as unknown as PrintJob);
+
     mockInvitations.forEach((invitation) => {
       this.invitations.set(invitation.id, invitation);
       if (invitation.id >= this.nextInvitationId) {
