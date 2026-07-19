@@ -1,4 +1,4 @@
-import { PaginationMetadata } from './common'; 
+import { PaginationMetadata } from './common';
 
 export interface UserInfo {
   studentId: number;
@@ -24,7 +24,7 @@ export interface Booking {
   userNotes?: string;
   // added
   rejectReason?: string;
-  overrideReason?: string; 
+  overrideReason?: string;
   waitlistPosition?: number;
 }
 
@@ -45,7 +45,7 @@ export interface BookingRequest {
   userInfo: UserInfo;
   purpose: string;
   userNotes?: string;
-// added 
+  // added
   joinWaitlist?: boolean;
 }
 
@@ -60,10 +60,10 @@ export interface AvailabilitySlot {
 
 // all types below this message are newly added
 export interface PendingRequest extends Booking {
-  status: 'PENDING' | BookingStatus; 
-  urgencyLevel: 'High' | 'Medium' | 'Low'; 
-  hasConflict: boolean; 
-  meetsRestrictions: boolean; 
+  status: 'PENDING' | BookingStatus;
+  urgencyLevel: 'High' | 'Medium' | 'Low';
+  hasConflict: boolean;
+  meetsRestrictions: boolean;
 }
 
 export interface AdminBookingListResponse {
@@ -78,7 +78,7 @@ export interface AdminBookingListResponse {
 
 export interface CapacitySettings {
   equipmentId: string;
-  maxSimultaneousBookings: number; 
+  maxSimultaneousBookings: number;
   requireAdminApproval: boolean;
   allowWaitlist: boolean;
   restrictions: {
@@ -94,14 +94,14 @@ export interface AlternativeSlot {
 
 export interface RestrictionViolation {
   rule: 'TrainingRequired';
-  message: string; 
+  message: string;
 }
 
 // 409 Error Response
 export interface ConflictResponse {
   code: 'BOOKING_CONFLICT' | 'CAPACITY_EXCEEDED' | 'RESTRICTION_VIOLATED';
   message: string;
-  conflictingBookings?: Booking[]; 
-  alternativeSlots?: AlternativeSlot[]; 
-  violations?: RestrictionViolation[]; 
+  conflictingBookings?: Booking[];
+  alternativeSlots?: AlternativeSlot[];
+  violations?: RestrictionViolation[];
 }

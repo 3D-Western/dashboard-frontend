@@ -79,4 +79,77 @@ for (let i = 0; i < 50; i++) {
   );
 }
 
+const at = (hoursFromNow: number, durationMinutes: number) => {
+  const start = new Date(Date.now() + hoursFromNow * 3600000);
+  start.setSeconds(0, 0);
+  const end = new Date(start.getTime() + durationMinutes * 60000);
+  return { startTime: start.toISOString(), endTime: end.toISOString() };
+};
+
+const conflictEquipment = mockEquipment.find((e) => e.id === 'printer-1')!;
+const conflictWindow = at(96, 90);
+
+// two approved bookings on a equipment with only one capacity for testing for admin override testing
+generatedBookings.push(
+  createMockBooking({
+    id: 'bk-conflict-a',
+    userInfo: {
+      studentId: currentUser.studentId,
+      firstName: currentUser.firstName,
+      lastName: currentUser.lastName,
+      email: currentUser.email,
+    },
+    duration: 90,
+    equipmentId: conflictEquipment.id,
+    equipment: conflictEquipment,
+    status: 'APPROVED',
+    startTime: conflictWindow.startTime,
+    endTime: conflictWindow.endTime,
+  }),
+  createMockBooking({
+    id: 'bk-conflict-b',
+    userInfo: {
+      studentId: getRandom(mockUsers).studentId,
+      firstName: 'Casey',
+      lastName: 'Overlap',
+    },
+    duration: 90,
+    equipmentId: conflictEquipment.id,
+    equipment: conflictEquipment,
+    status: 'PENDING',
+    startTime: conflictWindow.startTime,
+    endTime: conflictWindow.endTime,
+  }),
+);
+
+// pending requests with varying urgency (High <=24h, Medium <=72h, Low >72h)
+const pendingSeeds: { id: string; hours: number }[] = [
+  { id: 'bk-pending-high', hours: 12 },
+  { id: 'bk-pending-medium', hours: 48 },
+  { id: 'bk-pending-low', hours: 120 },
+];
+
+pendingSeeds.forEach((seed, index) => {
+  const equipment = mockEquipment[(index + 1) % mockEquipment.length];
+  const window = at(seed.hours, 60);
+  const requester = getRandom(mockUsers);
+  generatedBookings.push(
+    createMockBooking({
+      id: seed.id,
+      userInfo: {
+        studentId: requester.studentId,
+        firstName: requester.firstName,
+        lastName: requester.lastName,
+        email: requester.email,
+      },
+      duration: 60,
+      equipmentId: equipment.id,
+      equipment,
+      status: 'PENDING',
+      startTime: window.startTime,
+      endTime: window.endTime,
+    }),
+  );
+});
+
 export const mockBookings = generatedBookings;

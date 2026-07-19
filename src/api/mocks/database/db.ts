@@ -3,8 +3,9 @@ import { mockUsers } from '../data/users';
 import { mockPrintJobs } from '../data/print-jobs';
 import { mockInvitations } from '../data/invitations';
 import { createMockCompletedPrintJob } from '../../../../test/utils/mockFactories';
-import { Booking } from '@/types/booking';
+import { Booking, BookingStatus, CapacitySettings } from '@/types/booking';
 import { mockBookings } from '../data/bookings';
+import { mockCapacitySettings } from '../data/capacity-settings';
 
 export class Database {
   private static instance: Database;
@@ -18,6 +19,7 @@ export class Database {
   private invitations: Map<number, Invitation> = new Map(); // invitationId to Invitation
   private nextInvitationId: number = 1;
   private Bookings: Map<string, Booking> = new Map(); // bookingId to Booking
+  private capacitySettings: Map<string, CapacitySettings> = new Map(); // equipmentId to settings
 
   // Singleton pattern to ensure only one instance of Database exists
   constructor() {
@@ -34,6 +36,10 @@ export class Database {
     this.activePrintJobsIDMap.clear();
     this.invitations.clear();
     this.Bookings.clear();
+    this.capacitySettings.clear();
+    mockCapacitySettings.forEach((settings) => {
+      this.capacitySettings.set(settings.equipmentId, settings);
+    });
     mockUsers.forEach((user) => {
       this.users.set(user.studentId, user);
       this.activePrintJobsUserMap.set(user.studentId, []);
@@ -386,7 +392,7 @@ export class Database {
   public hasBookingConflict(equipmentId: string, startTime: string, endTime: string): boolean {
     return Array.from(this.Bookings.values()).some((booking) => {
       // check if the booking status is cancelled that way we can keep records of what was cancelled and use the patch method instead of delete
-      if (booking.status === 'CANCELLED') {
+      if (booking.status === 'CANCELLED' || booking.status === 'REJECTED') {
         return false;
       }
 
@@ -416,6 +422,88 @@ export class Database {
         startTime: booking.startTime,
         endTime: booking.endTime,
       }));
+  }
+
+  // read capacity + restriction settings for an equipment (falls back to a default)
+  public getCapacitySettings(equipmentId: string): CapacitySettings {
+    const existing = this.capacitySettings.get(equipmentId);
+    if (existing) {
+      return existing;
+    }
+    const fallback: CapacitySettings = {
+      equipmentId,
+      maxSimultaneousBookings: 1,
+      requireAdminApproval: false,
+      allowWaitlist: false,
+      restrictions: { requiresTraining: false },
+    };
+    this.capacitySettings.set(equipmentId, fallback);
+    return fallback;
+  }
+
+  // update capacity limits / restrictions for an equipment
+  public updateCapacitySettings(
+    equipmentId: string,
+    updates: Partial<CapacitySettings>,
+  ): CapacitySettings {
+    const current = this.getCapacitySettings(equipmentId);
+    const next: CapacitySettings = {
+      ...current,
+      ...updates,
+      equipmentId,
+      restrictions: { ...current.restrictions, ...updates.restrictions },
+    };
+    this.capacitySettings.set(equipmentId, next);
+    return next;
+  }
+
+  // transition a request/booking status (PENDING -> APPROVED/REJECTED/CANCELLED)
+  public updateBookingStatus(
+    bookingId: string,
+    status: BookingStatus,
+    reason?: string,
+  ): Booking | null {
+    const booking = this.Bookings.get(bookingId);
+    if (!booking) {
+      return null;
+    }
+    booking.status = status;
+    if (status === 'REJECTED' && reason) {
+      booking.rejectReason = reason;
+    }
+    return booking;
+  }
+
+  // admin force approve / reject / cancel regardless of conflicts
+  public overrideBooking(
+    bookingId: string,
+    action: 'APPROVE' | 'REJECT' | 'CANCEL',
+    reason?: string,
+  ): Booking | null {
+    const booking = this.Bookings.get(bookingId);
+    if (!booking) {
+      return null;
+    }
+    if (action === 'APPROVE') {
+      booking.status = 'APPROVED';
+    } else if (action === 'REJECT') {
+      booking.status = 'REJECTED';
+    } else {
+      booking.status = 'CANCELLED';
+    }
+    if (reason) {
+      if (action === 'REJECT') {
+        booking.rejectReason = reason;
+      } else {
+        booking.overrideReason = reason;
+      }
+    }
+    return booking;
+  }
+
+  // pending request queue
+  public getPendingRequests(): Booking[] {
+    return Array.from(this.Bookings.values()).filter((booking) => booking.status === 'PENDING');
   }
 }
 

@@ -7,8 +7,8 @@ export interface User {
   groups: string[]; // group keys, e.g. ['members'] or ['super_admins']
   experience: string;
   createdDate?: string;
-  trainingLevel?: string;
-  experienceLevel?: string;
+  trainingLevel?: 'None' | 'Level 1';
+  experienceLevel?: 'Novice' | 'Intermediate' | 'Expert';
 }
 
 export interface File {

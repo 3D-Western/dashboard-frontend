@@ -82,5 +82,7 @@ export const endpoints = {
     availability: (equipmentId: string) => `/api/v1/equipment/${equipmentId}/availability`, // for checking availability
     adminCapacity: (equipmentId: string) => `/api/v1/admin/equipment/${equipmentId}/capacity`,
     adminOverride: (id: string) => `/api/v1/admin/bookings/${id}/override`,
+    adminRestrictions: (equipmentId: string) =>
+      `/api/v1/admin/equipment/${equipmentId}/restrictions`,
   },
 };
