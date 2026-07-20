@@ -75,16 +75,12 @@ export default function BookingsPage() {
               <AlertTitle>Error Loading Calendar</AlertTitle>
               <AlertDescription>{slotsError}</AlertDescription>
             </Alert>
-          ) : slotsLoading ? (
-            <div className="flex h-[400px] items-center justify-center rounded-xl border bg-muted/10">
-              <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-            </div>
           ) : (
-            <BookingCalendar slots={slots} />
+            <BookingCalendar slots={slots} isLoading={slotsLoading} />
           )}
         </div>
 
-        <div className="h-fit rounded-xl border bg-muted/10 p-4">
+        <div className="h-fit max-h-[600px] overflow-y-auto rounded-xl border bg-muted/10 p-4">
           <h3 className="mb-4 font-semibold">My Bookings</h3>
 
           {bookingsError ? (

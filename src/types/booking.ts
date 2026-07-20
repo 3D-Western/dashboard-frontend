@@ -47,4 +47,8 @@ export interface AvailabilitySlot {
   capacity: number;
   remainingSlots: number;
   reason?: 'Booked' | 'Maintenance' | 'Outside-Hours';
+  // Only set for the requesting user's own booking - lets the calendar highlight it
+  // and show its purpose without exposing other students' booking reasons.
+  isOwnBooking?: boolean;
+  purpose?: string;
 }
