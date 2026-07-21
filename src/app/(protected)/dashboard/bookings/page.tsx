@@ -45,9 +45,11 @@ export default function BookingsPage() {
     dateRange.to,
   );
 
-  const { slots, isLoading: slotsLoading, error: slotsError } = isAllEquipment
-    ? allEquipment
-    : singleEquipment;
+  const {
+    slots,
+    isLoading: slotsLoading,
+    error: slotsError,
+  } = isAllEquipment ? allEquipment : singleEquipment;
 
   return (
     <div className="container space-y-8 p-6">
