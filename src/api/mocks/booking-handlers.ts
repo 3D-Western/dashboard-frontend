@@ -149,7 +149,7 @@ export const bookingHandlers = [
         return HttpResponse.json({ success: false, error: 'Equipment not found' }, { status: 404 });
       }
 
-      const occupiedSlots = db.getEquipmentAvailability(equipmentId as string);
+      const occupiedSlots = db.getEquipmentAvailability(equipmentId as string, user.studentId);
 
       return HttpResponse.json(
         generateSuccessResponse({

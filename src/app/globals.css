@@ -205,3 +205,48 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* Reskin FullCalendar's default toolbar to match the app's button styling */
+.booking-calendar .fc {
+  --fc-border-color: var(--border);
+  --fc-page-bg-color: transparent;
+  --fc-neutral-bg-color: var(--muted);
+  font-family: inherit;
+}
+
+.booking-calendar .fc-toolbar-title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--foreground);
+}
+
+.booking-calendar .fc-button {
+  background: var(--background);
+  border: 1px solid var(--border);
+  color: var(--foreground);
+  border-radius: var(--radius-md);
+  text-transform: capitalize;
+  box-shadow: none;
+  padding: 0.35rem 0.75rem;
+}
+
+.booking-calendar .fc-button:hover {
+  background: var(--muted);
+  color: var(--foreground);
+}
+
+.booking-calendar .fc-button:focus,
+.booking-calendar .fc-button:focus-visible {
+  box-shadow: 0 0 0 3px var(--ring);
+}
+
+.booking-calendar .fc-button-primary:not(:disabled).fc-button-active,
+.booking-calendar .fc-button-primary:not(:disabled):active {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: var(--primary-foreground);
+}
+
+.booking-calendar .fc-button:disabled {
+  opacity: 0.5;
+}
