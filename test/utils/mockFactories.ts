@@ -5,6 +5,8 @@ import { PrintJob, PrintJobStatus, CompletedPrintJob, ETA, StatusHistory } from 
 import { FileMetadata, FileUploadResult } from '@/types/file';
 import { Invitation, InvitationStatus } from '@/types/invitation';
 import { UserResponse, GroupResponse } from '@/api/types';
+import { Booking, BookingStatus } from '@/types/booking';
+import { mockEquipment } from '@/api/mocks/data/equipment';
 
 export const perm = (key: string, scopeKey = 'any'): UserPermission => ({ key, scopeKey });
 
@@ -366,3 +368,39 @@ export const createMockRevokedInvitation = (overrides?: Partial<Invitation>): In
  */
 export const createMockInvitations = (count: number): Invitation[] =>
   Array.from({ length: count }, () => createMockInvitation());
+
+/**
+ * Creates a mock Booking
+ *
+ * @example
+ * ```ts
+ * const booking = createMockBooking({ status: 'CANCELED' });
+ * ```
+ */
+export const createMockBooking = (overrides?: Partial<Booking>): Booking => {
+  const startTime = faker.date.soon({ days: 14 });
+  const durationMinutes = faker.helpers.arrayElement([30, 60, 90, 120]);
+  const endTime = new Date(startTime.getTime() + durationMinutes * 60000);
+
+  const equipment = faker.helpers.arrayElement(mockEquipment);
+
+  return {
+    id: `bk-${faker.string.alphanumeric(9)}`,
+    userInfo: {
+      studentId: faker.number.int({ min: 10000, max: 990000 }),
+      firstName: faker.person.firstName(),
+      lastName: faker.person.lastName(),
+      email: faker.internet.email(),
+    },
+    duration: durationMinutes,
+    equipmentId: equipment.id,
+    equipment: equipment,
+    status: 'Confirmed' as BookingStatus,
+    startTime: startTime.toISOString(),
+    endTime: endTime.toISOString(),
+    createdAt: faker.date.recent({ days: 3 }).toISOString(),
+    purpose: faker.lorem.sentence(),
+    userNotes: faker.lorem.sentence(),
+    ...overrides,
+  };
+};

@@ -27,6 +27,7 @@ import {
   Lock,
   ClipboardList,
   History,
+  Calendar,
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -37,6 +38,11 @@ const navigationItems = [
     title: 'Dashboard',
     url: Routes.dashboard,
     icon: LayoutDashboard,
+  },
+  {
+    title: 'Equipment Booking',
+    url: Routes.bookings,
+    icon: Calendar,
   },
   {
     title: 'Print History',

@@ -5,6 +5,7 @@ export const Routes = {
   mfa: '/mfa',
   dashboardUserSettings: '/dashboard/settings',
   dashboardSubmissionHistory: '/dashboard/jobs/print-submission-history',
+  bookings: '/dashboard/bookings',
   forgotPassword: '/forgot-password',
   resetPassword: '/reset-password',
   checkEmail: '/check-email',

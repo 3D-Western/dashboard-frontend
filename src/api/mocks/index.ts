@@ -8,6 +8,7 @@ import { mfaHandlers } from './mfa-handlers';
 import { invitationHandlers } from './invitation-handlers';
 import { iamHandlers } from './iam-handlers';
 import { FileSystemUtils } from './utils/fileSystem';
+import { bookingHandlers } from './booking-handlers';
 
 // Initialize tmp/ directory when server module loads
 FileSystemUtils.initTmpDirectory();
@@ -21,4 +22,5 @@ export const mockServer = setupServer(
   ...mfaHandlers,
   ...invitationHandlers,
   ...iamHandlers,
+  ...bookingHandlers,
 );

@@ -74,4 +74,13 @@ export const endpoints = {
     },
     auditLogs: '/api/v1/admin/iam/audit-logs',
   },
+  bookings: {
+    list: '/api/v1/bookings',
+    create: '/api/v1/bookings',
+    byId: (id: string) => `/api/v1/bookings/${id}`, // for details and can be used for delete as well.
+    update: (id: string) => `/api/v1/bookings/${id}`,
+    availability: (equipmentId: string) => `/api/v1/equipment/${equipmentId}/availability`, // for checking availability
+    adminCapacity: (equipmentId: string) => `/api/v1/admin/equipment/${equipmentId}/capacity`,
+    adminOverride: (id: string) => `/api/v1/admin/bookings/${id}/override`,
+  },
 };

@@ -25,14 +25,7 @@ export interface BasePrintJob {
 }
 
 export type PrintJobStatus =
-  | 'InQueue'
-  | 'Printing'
-  | 'Ready'
-  | 'Flagged'
-  | 'Error'
-  | 'Succeeded'
-  | 'Failed'
-  | 'PendingFile';
+  'InQueue' | 'Printing' | 'Ready' | 'Flagged' | 'Error' | 'Succeeded' | 'Failed' | 'PendingFile';
 export type CompletePrintJobStatus = 'Succeeded' | 'Failed';
 
 export interface PrintJob extends BasePrintJob {

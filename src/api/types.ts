@@ -4,6 +4,7 @@ import { FileUploadResult, FileMetadata, FileList } from '@/types/file';
 import { PaginatedResponse } from '@/types/common';
 import { IamRole, IamGroup, IamPermission, IamScope, IamAuditLog } from '@/types/iam';
 import { UserPermission } from '@/types/user';
+import { Booking, BookingStatus } from '@/types/booking';
 
 export interface ApiResponseError {
   code: string;
@@ -139,4 +140,17 @@ export interface IamAuditLogPageResponse {
   first: boolean;
   last: boolean;
   numberOfElements: number;
+}
+
+// Bookings API response Types
+export type PrintBookingListResponse = PaginatedResponse<Booking>;
+
+export interface CreateBookingResponse {
+  id: string;
+  status: BookingStatus;
+  startTime: string;
+  endTime: string;
+  message?: string;
+  purpose: string;
+  userNotes?: string;
 }
