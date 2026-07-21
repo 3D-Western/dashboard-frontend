@@ -24,11 +24,12 @@ export default function BookingCalendar({ slots, isLoading }: BookingCalendarPro
   } | null>(null);
 
   const calendarEvents = slots.map((slot, index) => {
-    const title = slot.isAvailable
+    const baseTitle = slot.isAvailable
       ? `${slot.remainingSlots} Available`
       : slot.isOwnBooking
         ? slot.purpose || 'Your Booking'
         : slot.reason || 'Booked';
+    const title = slot.equipmentLabel ? `${slot.equipmentLabel} — ${baseTitle}` : baseTitle;
 
     return {
       id: `slot-${index}`,
@@ -54,7 +55,7 @@ export default function BookingCalendar({ slots, isLoading }: BookingCalendarPro
   });
 
   return (
-    <div className="booking-calendar relative rounded-xl border bg-card p-4 shadow-sm">
+    <div className="booking-calendar relative h-[700px] rounded-xl border bg-card p-4 shadow-sm">
       {isLoading && (
         <div className="absolute inset-0 z-10 flex items-center justify-center rounded-xl bg-card/60 backdrop-blur-[1px]">
           <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
@@ -69,7 +70,7 @@ export default function BookingCalendar({ slots, isLoading }: BookingCalendarPro
           right: 'dayGridMonth,timeGridWeek,timeGridDay',
         }}
         events={calendarEvents}
-        height="auto"
+        height="100%"
         allDaySlot={false}
         slotMinTime="08:00:00"
         slotMaxTime="22:00:00"

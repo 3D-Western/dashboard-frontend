@@ -1,3 +1,5 @@
+import { JobCategory } from './jobs';
+
 export interface UserInfo {
   studentId: number;
   firstName: string;
@@ -23,7 +25,7 @@ export interface Booking {
 }
 
 export interface Equipment {
-  category: 'ThreeDPrinter' | 'LaserCutter' | 'CNC';
+  category: JobCategory;
   status: 'Available' | 'Maintenance' | 'Offline';
   name: string;
   id: string;
@@ -51,4 +53,7 @@ export interface AvailabilitySlot {
   // and show its purpose without exposing other students' booking reasons.
   isOwnBooking?: boolean;
   purpose?: string;
+  // Set when merging availability across multiple equipment (the "All Equipment"
+  // calendar view) so each event can show which machine/category it belongs to.
+  equipmentLabel?: string;
 }

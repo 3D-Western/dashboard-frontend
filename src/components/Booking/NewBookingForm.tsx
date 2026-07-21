@@ -12,6 +12,7 @@ import { useUser } from '@/providers/user-provider';
 import { UnsavedChangesDialog } from '@/components/UnsavedChangesDialog';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { EQUIPMENT_CATEGORY_OPTIONS } from '@/constants/equipment';
 
 const TIME_SLOTS = [
   { label: '8:00 AM - 10:00 AM', start: '08:00:00', end: '10:00:00' },
@@ -121,9 +122,11 @@ export default function NewBookingForm() {
               className="w-full rounded-md border bg-background p-2 text-sm focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none"
             >
               <option value="">Select Equipment...</option>
-              <option value="printer-1">3D Printer 1</option>
-              <option value="laser-1">Laser Cutter</option>
-              <option value="cnc-1">CNC Router</option>
+              {EQUIPMENT_CATEGORY_OPTIONS.map((option) => (
+                <option key={option.id} value={option.id}>
+                  {option.label}
+                </option>
+              ))}
             </select>
             {errors.equipmentId && (
               <p className="text-xs text-destructive">{errors.equipmentId.message}</p>

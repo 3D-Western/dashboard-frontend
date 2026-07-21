@@ -9,14 +9,16 @@ import { AvailabilityIndicator } from '@/components/Booking/AvailabilityIndicato
 import PageTitle from '@/components/PageTitle';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { useBookings, useAvailability } from '@/hooks/useBookings';
+import { useBookings, useAvailability, useAllEquipmentAvailability } from '@/hooks/useBookings';
 import { useUser } from '@/providers/user-provider';
+import { EQUIPMENT_CATEGORY_OPTIONS, ALL_EQUIPMENT_OPTION } from '@/constants/equipment';
 
 export default function BookingsPage() {
   const router = useRouter();
   const user = useUser();
 
-  const [selectedEquipment, setSelectedEquipment] = useState<string>('printer-1');
+  const [selectedEquipment, setSelectedEquipment] = useState<string>(ALL_EQUIPMENT_OPTION.id);
+  const isAllEquipment = selectedEquipment === ALL_EQUIPMENT_OPTION.id;
 
   const dateRange = useMemo(() => {
     const from = new Date();
@@ -32,11 +34,20 @@ export default function BookingsPage() {
 
   const { bookings, isLoading: bookingsLoading, error: bookingsError } = useBookings(bookingParams);
 
-  const {
-    slots,
-    isLoading: slotsLoading,
-    error: slotsError,
-  } = useAvailability(selectedEquipment, dateRange.from, dateRange.to);
+  const singleEquipment = useAvailability(
+    isAllEquipment ? undefined : selectedEquipment,
+    dateRange.from,
+    dateRange.to,
+  );
+  const allEquipment = useAllEquipmentAvailability(
+    isAllEquipment ? EQUIPMENT_CATEGORY_OPTIONS : undefined,
+    dateRange.from,
+    dateRange.to,
+  );
+
+  const { slots, isLoading: slotsLoading, error: slotsError } = isAllEquipment
+    ? allEquipment
+    : singleEquipment;
 
   return (
     <div className="container space-y-8 p-6">
@@ -63,9 +74,12 @@ export default function BookingsPage() {
               onChange={(e) => setSelectedEquipment(e.target.value)}
               className="rounded-md border bg-background p-2 text-sm focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none"
             >
-              <option value="printer-1">3D Printer 1</option>
-              <option value="laser-1">Laser Cutter</option>
-              <option value="cnc-1">CNC Router</option>
+              <option value={ALL_EQUIPMENT_OPTION.id}>{ALL_EQUIPMENT_OPTION.label}</option>
+              {EQUIPMENT_CATEGORY_OPTIONS.map((option) => (
+                <option key={option.id} value={option.id}>
+                  {option.label}
+                </option>
+              ))}
             </select>
           </div>
 
@@ -80,7 +94,7 @@ export default function BookingsPage() {
           )}
         </div>
 
-        <div className="h-fit max-h-[600px] overflow-y-auto rounded-xl border bg-muted/10 p-4">
+        <div className="h-[700px] overflow-y-auto rounded-xl border bg-muted/10 p-4">
           <h3 className="mb-4 font-semibold">My Bookings</h3>
 
           {bookingsError ? (
