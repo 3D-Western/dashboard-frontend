@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useForm } from 'react-hook-form';
+import { useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { AlertCircle, CalendarPlus } from 'lucide-react';
 
@@ -34,14 +34,14 @@ export default function NewBookingForm() {
   const {
     register,
     handleSubmit,
-    watch,
+    control,
     formState: { errors, isDirty },
   } = useForm<NewBookingFormData>({
     resolver: zodResolver(newBookingSchema),
   });
 
-  const selectedEquipmentId = watch('equipmentId');
-  const selectedDate = watch('date');
+  const selectedEquipmentId = useWatch({ control, name: 'equipmentId' });
+  const selectedDate = useWatch({ control, name: 'date' });
 
   // Fetch this equipment's existing bookings for the selected day so we can
   // grey out time slots that would conflict, instead of letting the user pick
