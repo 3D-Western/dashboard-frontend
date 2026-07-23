@@ -1,10 +1,10 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { AlertCircle, CalendarPlus } from 'lucide-react';
+import { AlertCircle, CalendarPlus, ShieldAlert } from 'lucide-react';
 
 import { newBookingSchema, NewBookingFormData } from '@/types/booking-schema';
 import { useCreateBooking } from '@/hooks/useBookings';
@@ -12,6 +12,9 @@ import { useUser } from '@/providers/user-provider';
 import { UnsavedChangesDialog } from '@/components/UnsavedChangesDialog';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+
+import { apiRequest } from '@/api/client/base';
+import { endpoints } from '@/api/client/endpoints';
 
 const TIME_SLOTS = [
   { label: '8:00 AM - 10:00 AM', start: '08:00:00', end: '10:00:00' },
@@ -31,10 +34,50 @@ export default function NewBookingForm() {
   const {
     register,
     handleSubmit,
+    watch,
+    setValue,
     formState: { errors, isDirty },
   } = useForm<NewBookingFormData>({
     resolver: zodResolver(newBookingSchema),
   });
+
+  const selectedEquipmentId = watch('equipmentId');
+
+  const [equipmentSettings, setEquipmentSettings] = useState<any>(null);
+  const [isFetchingSettings, setIsFetchingSettings] = useState(false);
+
+  useEffect(() => {
+    if (!selectedEquipmentId) {
+      setEquipmentSettings(null);
+      return;
+    }
+
+    const fetchLiveSettings = async () => {
+      setIsFetchingSettings(true);
+      try {
+        const url = endpoints.bookings.adminRestrictions(selectedEquipmentId);
+        const response = await apiRequest(url, { method: 'GET', credentials: 'include' });
+        const data = (response as any).data || response;
+        
+        setEquipmentSettings(data);
+
+        if (!data.allowWaitlist) {
+          setValue('joinWaitlist', false);
+        }
+
+      } catch (error) {
+        console.warn('Failed to load dynamic settings, defaulting to strict mode.', error);
+        setEquipmentSettings({ requireAdminApproval: true, allowWaitlist: false });
+      } finally {
+        setIsFetchingSettings(false);
+      }
+    };
+
+    fetchLiveSettings();
+  }, [selectedEquipmentId, setValue]);
+
+  const requiresAdminApproval = equipmentSettings?.requireAdminApproval ?? false;
+  const allowWaitlist = equipmentSettings?.allowWaitlist ?? false;
 
   const onSubmit = async (data: NewBookingFormData) => {
     setAuthError(null);
@@ -44,8 +87,7 @@ export default function NewBookingForm() {
     }
 
     const selectedSlot = TIME_SLOTS.find((slot) => slot.label === data.timeSlot);
-
-    if (!selectedSlot) return; // Failsafe
+    if (!selectedSlot) return; 
 
     try {
       await createBooking({
@@ -54,6 +96,7 @@ export default function NewBookingForm() {
         endTime: new Date(`${data.date}T${selectedSlot.end}`).toISOString(),
         purpose: data.purpose,
         userNotes: data.userNotes,
+        joinWaitlist: data.joinWaitlist,
         userInfo: {
           studentId: user.studentId,
           firstName: user.firstName,
@@ -154,7 +197,37 @@ export default function NewBookingForm() {
               className="w-full rounded-md border bg-background p-2 text-sm focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none"
             />
           </div>
+
+          <div className={`pt-4 border-t flex items-center space-x-2 transition-opacity ${!allowWaitlist || !selectedEquipmentId ? 'opacity-40 grayscale' : ''}`}>
+            <input
+              type="checkbox"
+              id="joinWaitlist"
+              disabled={!allowWaitlist || isFetchingSettings || !selectedEquipmentId}
+              {...register('joinWaitlist')}
+              className="h-4 w-4 rounded border-gray-300 text-sky-600 focus:ring-sky-500 disabled:cursor-not-allowed"
+            />
+            <label 
+              htmlFor="joinWaitlist" 
+              className={`text-sm font-medium text-muted-foreground ${(!allowWaitlist || !selectedEquipmentId) ? 'cursor-not-allowed' : 'cursor-pointer'}`}
+            >
+              {!selectedEquipmentId 
+                ? 'Select equipment to view waitlist options'
+                : allowWaitlist 
+                  ? 'Automatically add me to the waitlist if this time block is at full capacity' 
+                  : 'Waitlist is currently disabled by administrators for this equipment'}
+            </label>
+          </div>
         </div>
+
+        {requiresAdminApproval && selectedEquipmentId && !isFetchingSettings && (
+          <Alert className="bg-yellow-50 text-yellow-800 border-yellow-200">
+            <ShieldAlert className="h-4 w-4 text-yellow-600" />
+            <AlertTitle className="text-yellow-800">Admin Approval Required</AlertTitle>
+            <AlertDescription className="text-yellow-700">
+              This equipment requires staff authorization. Your booking will be placed in a pending queue until reviewed.
+            </AlertDescription>
+          </Alert>
+        )}
 
         <div className="flex flex-col gap-3">
           <Button
@@ -167,11 +240,16 @@ export default function NewBookingForm() {
 
           <Button
             type="submit"
-            disabled={isPending}
-            className="w-full bg-sky-500/75 text-white hover:bg-sky-500"
+            disabled={isPending || isFetchingSettings || !selectedEquipmentId}
+            className="w-full bg-sky-500/75 text-white hover:bg-sky-500 transition-colors"
           >
             <CalendarPlus className="mr-2 h-4 w-4" />
-            {isPending ? 'Confirming...' : 'Confirm Booking'}
+            {isFetchingSettings 
+              ? 'Loading Rules...' 
+              : requiresAdminApproval 
+                ? 'Submit Request for Approval' 
+                : 'Confirm Booking'
+            }
           </Button>
         </div>
       </form>

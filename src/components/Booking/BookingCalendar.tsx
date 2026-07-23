@@ -6,30 +6,60 @@ import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGridPlugin from '@fullcalendar/timegrid';
 import interactionPlugin from '@fullcalendar/interaction';
 import { EventClickArg } from '@fullcalendar/core';
-import { AvailabilitySlot } from '@/types/booking';
-import { BookingDetailModal } from './BookingDetailModal';
+import { Booking, ConflictResponse } from '@/types/booking';
+import BookingDetailModal from './BookingDetailModal';
 
 interface BookingCalendarProps {
-  slots: AvailabilitySlot[];
+  bookings: Booking[] | any; // Flexibly accept any structure to prevent client crashes
 }
 
-export default function BookingCalendar({ slots }: BookingCalendarProps) {
+export default function BookingCalendar({ bookings }: BookingCalendarProps) {
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [selectedEvent, setSelectedEvent] = useState<{
-    title: string;
-    start: string;
-    end: string;
-  } | null>(null);
+  const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
+  const [selectedConflict, setSelectedConflict] = useState<ConflictResponse | undefined>(undefined);
 
-  const calendarEvents = slots.map((slot, index) => {
+  // SAFE UNPACKING: If the incoming data is wrapped inside data.data from the backend, extract it safely
+  const rawList = Array.isArray(bookings) 
+    ? bookings 
+    : (bookings && Array.isArray((bookings as any).data) ? (bookings as any).data : []);
+
+  const calendarEvents = rawList.map((booking: Booking) => {
+    // PENDING (Yellow)
+    let backgroundColor = '#facc15'; 
+    let borderColor = '#eab308';
+    
+    if (booking.status === 'APPROVED') {
+      backgroundColor = '#22c55e';
+      borderColor = '#16a34a';
+    } else if (booking.status === 'REJECTED' || booking.status === 'CANCELLED') {
+      backgroundColor = '#ef4444'; 
+      borderColor = '#dc2626';
+    }
+
+    const hasConflict = booking.waitlistPosition && booking.waitlistPosition > 0;
+    if (hasConflict) {
+      borderColor = '#991b1b'; // Dark red border for conflicts
+    }
+
+    const machineName = booking.equipment?.name || booking.equipmentId || 'Equipment';
+    const rawBooking = booking as any;
+    const fallbackId = rawBooking.studentId || rawBooking.userId || rawBooking.createdById || 'Unknown';
+    const userName = booking.userInfo?.firstName || `User #${fallbackId}`;
+
     return {
-      id: `slot-${index}`,
-      title: slot.isAvailable ? `${slot.remainingSlots} Available` : slot.reason || 'Booked',
-      start: slot.startTime,
-      end: slot.endTime,
-      backgroundColor: slot.isAvailable ? '#75e09c' : '#f76b6b',
-      borderColor: slot.isAvailable ? '#16a34a' : '#dc2626',
-      textColor: '#ffffff',
+      id: booking.id,
+      title: `${machineName} (${booking.status})`, 
+      start: booking.startTime,
+      end: booking.endTime,
+      backgroundColor,
+      borderColor,
+      textColor: booking.status === 'PENDING' ? '#000000' : '#ffffff', // Dark text for yellow bg
+      extendedProps: {
+        booking,
+        hasConflict,
+        machineName,
+        userName
+      }
     };
   });
 
@@ -48,21 +78,56 @@ export default function BookingCalendar({ slots }: BookingCalendarProps) {
         allDaySlot={false}
         slotMinTime="08:00:00"
         slotMaxTime="22:00:00"
+        eventOverlap={true} 
+        
+        eventDidMount={(info) => {
+          const { booking, hasConflict, userName, machineName } = info.event.extendedProps;
+          if (!booking) return;
+
+          const purpose = booking.purpose || 'No purpose provided';
+          const waitlistText = hasConflict ? `\n⚠️ Waitlist Position: #${booking.waitlistPosition}` : '';
+
+          info.el.setAttribute(
+            'title',
+            `Status: ${booking.status}\nUser: ${userName}\nEquipment: ${machineName}\nPurpose: ${purpose}${waitlistText}`
+          );
+          
+          if (hasConflict) {
+            info.el.style.borderStyle = 'dashed';
+            info.el.style.borderWidth = '3px';
+            info.el.style.opacity = '0.8';
+          }
+        }}
+
         eventClick={(info: EventClickArg) => {
-          setSelectedEvent({
-            title: info.event.title,
-            start: info.event.start?.toISOString() || '',
-            end: info.event.end?.toISOString() || '',
-          });
+          const clickedBooking: Booking = info.event.extendedProps.booking;
+          setSelectedBooking(clickedBooking);
+          
+          if (info.event.extendedProps.hasConflict) {
+            setSelectedConflict({
+              code: 'CAPACITY_EXCEEDED',
+              message: `Equipment overbooked. Waitlist position: #${clickedBooking.waitlistPosition}`
+            });
+          } else {
+            setSelectedConflict(undefined);
+          }
+          
           setIsModalOpen(true);
         }}
       />
 
-      <BookingDetailModal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        eventDetails={selectedEvent}
-      />
+      {selectedBooking && (
+        <BookingDetailModal
+          isOpen={isModalOpen}
+          onClose={() => {
+            setIsModalOpen(false);
+            setSelectedBooking(null);
+            setSelectedConflict(undefined);
+          }}
+          booking={selectedBooking}
+          conflictData={selectedConflict}
+        />
+      )}
     </div>
   );
 }

@@ -6,6 +6,7 @@ export const newBookingSchema = z.object({
   timeSlot: z.string().min(1, 'Please select a time slot.'),
   purpose: z.string().min(5, 'Please provide a brief purpose (min 5 characters).'),
   userNotes: z.string().optional(),
+  joinWaitlist: z.boolean().optional(),
 });
 
 export type NewBookingFormData = z.infer<typeof newBookingSchema>;

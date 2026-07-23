@@ -3,6 +3,9 @@ import { bookingAPI } from '@/api/client/booking';
 import { Booking, BookingRequest, AvailabilitySlot } from '@/types/booking';
 import { BookingsListParams, PaginationMetadata, PaginatedResponse } from '@/types/common';
 
+// Global event bus or simple listener tracker to sync mutations across hooks if needed
+let globalRefetchTriggers: (() => void)[] = [];
+
 // Hook for filtered or paginated list of all bookings for frontend
 export function useBookings(params?: BookingsListParams) {
   const [bookings, setBookings] = useState<Booking[]>([]);
@@ -38,10 +41,12 @@ export function useBookings(params?: BookingsListParams) {
   }, [params]);
 
   useEffect(() => {
-    const runFetch = async () => {
-      await fetchBookings();
+    fetchBookings();
+
+    globalRefetchTriggers.push(fetchBookings);
+    return () => {
+      globalRefetchTriggers = globalRefetchTriggers.filter(fn => fn !== fetchBookings);
     };
-    runFetch();
   }, [fetchBookings]);
 
   return { bookings, pagination, isLoading, error, refetch: fetchBookings };
@@ -91,9 +96,12 @@ export function useCreateBooking() {
 
     try {
       const response = await bookingAPI.createBooking(payload);
+      
+      // TRIGGER REFETCH ACROSS ALL ACTIVE BOOKING HOOKS INSTANTLY
+      globalRefetchTriggers.forEach(refetchFn => refetchFn());
+
       return response;
     } catch (err: unknown) {
-      // The 409 in the back will be sent when theres a conflicting timeslot
       const errorMessage =
         err instanceof Error ? err.message : 'An error occurred while creating the booking.';
       setError(errorMessage);
