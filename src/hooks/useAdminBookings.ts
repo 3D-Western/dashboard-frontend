@@ -33,8 +33,10 @@ export function useAdminBookings(params?: BookingsListParams) {
     setError(null);
     try {
       const requestParams = { status, page, pageSize, startTime, endTime, equipmentId };
-      
-      const response = (await bookingAPI.listAllBookings(requestParams)) as AdminListResponse | Booking[];
+
+      const response = (await bookingAPI.listAllBookings(requestParams)) as
+        | AdminListResponse
+        | Booking[];
       if (Array.isArray(response)) {
         setBookings(response);
         setPagination(null);

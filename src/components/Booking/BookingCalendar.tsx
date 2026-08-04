@@ -11,30 +11,28 @@ import BookingDetailModal from './BookingDetailModal';
 import { Loader2 } from 'lucide-react';
 
 interface BookingCalendarProps {
-  bookings: Booking[] | any; // Flexibly accept any structure to prevent client crashes
+  bookings: Booking[] | { data?: Booking[] };
   isLoading?: boolean;
 }
 
-export default function BookingCalendar({ bookings, isLoading}: BookingCalendarProps) {
+export default function BookingCalendar({ bookings, isLoading }: BookingCalendarProps) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
   const [selectedConflict, setSelectedConflict] = useState<ConflictResponse | undefined>(undefined);
 
   // SAFE UNPACKING: If the incoming data is wrapped inside data.data from the backend, extract it safely
-  const rawList = Array.isArray(bookings) 
-    ? bookings 
-    : (bookings && Array.isArray((bookings as any).data) ? (bookings as any).data : []);
+  const rawList: Booking[] = Array.isArray(bookings) ? bookings : (bookings?.data ?? []);
 
-  const calendarEvents = rawList.map((booking: Booking) => {
+  const calendarEvents = rawList.map((booking) => {
     // PENDING (Yellow)
-    let backgroundColor = '#facc15'; 
+    let backgroundColor = '#facc15';
     let borderColor = '#eab308';
-    
+
     if (booking.status === 'APPROVED') {
       backgroundColor = '#22c55e';
       borderColor = '#16a34a';
     } else if (booking.status === 'REJECTED' || booking.status === 'CANCELLED') {
-      backgroundColor = '#ef4444'; 
+      backgroundColor = '#ef4444';
       borderColor = '#dc2626';
     }
 
@@ -44,13 +42,12 @@ export default function BookingCalendar({ bookings, isLoading}: BookingCalendarP
     }
 
     const machineName = booking.equipment?.name || booking.equipmentId || 'Equipment';
-    const rawBooking = booking as any;
-    const fallbackId = rawBooking.studentId || rawBooking.userId || rawBooking.createdById || 'Unknown';
-    const userName = booking.userInfo?.firstName || `User #${fallbackId}`;
+    const userName =
+      booking.userInfo?.firstName || `User #${booking.userInfo?.studentId ?? 'Unknown'}`;
 
     return {
       id: booking.id,
-      title: `${machineName} (${booking.status})`, 
+      title: `${machineName} (${booking.status})`,
       start: booking.startTime,
       end: booking.endTime,
       backgroundColor,
@@ -60,8 +57,8 @@ export default function BookingCalendar({ bookings, isLoading}: BookingCalendarP
         booking,
         hasConflict,
         machineName,
-        userName
-      }
+        userName,
+      },
     };
   });
 
@@ -85,40 +82,40 @@ export default function BookingCalendar({ bookings, isLoading}: BookingCalendarP
         allDaySlot={false}
         slotMinTime="08:00:00"
         slotMaxTime="22:00:00"
-        eventOverlap={true} 
-        
+        eventOverlap={true}
         eventDidMount={(info) => {
           const { booking, hasConflict, userName, machineName } = info.event.extendedProps;
           if (!booking) return;
 
           const purpose = booking.purpose || 'No purpose provided';
-          const waitlistText = hasConflict ? `\n⚠️ Waitlist Position: #${booking.waitlistPosition}` : '';
+          const waitlistText = hasConflict
+            ? `\n⚠️ Waitlist Position: #${booking.waitlistPosition}`
+            : '';
 
           info.el.setAttribute(
             'title',
-            `Status: ${booking.status}\nUser: ${userName}\nEquipment: ${machineName}\nPurpose: ${purpose}${waitlistText}`
+            `Status: ${booking.status}\nUser: ${userName}\nEquipment: ${machineName}\nPurpose: ${purpose}${waitlistText}`,
           );
-          
+
           if (hasConflict) {
             info.el.style.borderStyle = 'dashed';
             info.el.style.borderWidth = '3px';
             info.el.style.opacity = '0.8';
           }
         }}
-
         eventClick={(info: EventClickArg) => {
           const clickedBooking: Booking = info.event.extendedProps.booking;
           setSelectedBooking(clickedBooking);
-          
+
           if (info.event.extendedProps.hasConflict) {
             setSelectedConflict({
               code: 'CAPACITY_EXCEEDED',
-              message: `Equipment overbooked. Waitlist position: #${clickedBooking.waitlistPosition}`
+              message: `Equipment overbooked. Waitlist position: #${clickedBooking.waitlistPosition}`,
             });
           } else {
             setSelectedConflict(undefined);
           }
-          
+
           setIsModalOpen(true);
         }}
       />

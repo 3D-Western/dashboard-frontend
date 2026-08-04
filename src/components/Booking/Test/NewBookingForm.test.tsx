@@ -6,6 +6,7 @@ import NewBookingForm from '../NewBookingForm';
 import { useRouter } from 'next/navigation';
 import { useCreateBooking } from '@/hooks/useBookings';
 import { useUser } from '@/providers/user-provider';
+import { apiRequest } from '@/api/client/base';
 
 // 1. Mock modules directly
 vi.mock('next/navigation', () => ({
@@ -18,6 +19,10 @@ vi.mock('@/providers/user-provider', () => ({
 
 vi.mock('@/hooks/useBookings', () => ({
   useCreateBooking: vi.fn(),
+}));
+
+vi.mock('@/api/client/base', () => ({
+  apiRequest: vi.fn(),
 }));
 
 describe('NewBookingForm', () => {
@@ -45,6 +50,18 @@ describe('NewBookingForm', () => {
       isPending: false,
       error: null,
     });
+
+    // Equipment settings fetch fired on equipment-select. No approval required so
+    // the submit button stays "Confirm Booking" rather than "Loading Rules...".
+    (apiRequest as Mock).mockResolvedValue({
+      data: {
+        equipmentId: 'printer-1',
+        maxSimultaneousBookings: 1,
+        requireAdminApproval: false,
+        allowWaitlist: false,
+        restrictions: { requiresTraining: false },
+      },
+    });
   });
 
   it('renders all required form fields', () => {
@@ -61,22 +78,14 @@ describe('NewBookingForm', () => {
     expect(screen.getByRole('button', { name: /Confirm Booking/i })).toBeInTheDocument();
   });
 
-  it('displays validation errors when submitting an empty form', async () => {
+  it('disables submit until equipment is selected and does not call the API', () => {
     render(<NewBookingForm />);
 
-    // Click submit without filling anything out
+    // The form gates submit behind equipment selection, so an empty form cannot submit.
     const submitButton = screen.getByRole('button', { name: /Confirm Booking/i });
+    expect(submitButton).toBeDisabled();
+
     fireEvent.click(submitButton);
-
-    // Wait for the Zod schema to trigger React Hook Form errors
-    await waitFor(() => {
-      expect(screen.getByText(/Please select equipment/i)).toBeInTheDocument();
-      expect(screen.getByText(/Please select a date/i)).toBeInTheDocument();
-      expect(screen.getByText(/Please select a time slot/i)).toBeInTheDocument();
-      expect(screen.getByText(/Please provide a brief purpose/i)).toBeInTheDocument();
-    });
-
-    // Ensure the API was NEVER called
     expect(mockMutate).not.toHaveBeenCalled();
   });
 
@@ -94,6 +103,11 @@ describe('NewBookingForm', () => {
     fireEvent.change(dateInput, { target: { value: '2026-10-15' } });
     fireEvent.change(timeSlotSelect, { target: { value: '10:00 AM - 12:00 PM' } });
     fireEvent.change(purposeInput, { target: { value: 'Capstone Prototyping' } });
+
+    // Settings fetch resolves and the button returns to "Confirm Booking" before we submit
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: /Confirm Booking/i })).toBeEnabled();
+    });
 
     // 3. Click Submit
     fireEvent.click(screen.getByRole('button', { name: /Confirm Booking/i }));

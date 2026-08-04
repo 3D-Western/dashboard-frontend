@@ -374,7 +374,7 @@ export const createMockInvitations = (count: number): Invitation[] =>
  *
  * @example
  * ```ts
- * const booking = createMockBooking({ status: 'CANCELED' });
+ * const booking = createMockBooking({ status: 'CANCELLED' });
  * ```
  */
 export const createMockBooking = (overrides?: Partial<Booking>): Booking => {
@@ -395,7 +395,7 @@ export const createMockBooking = (overrides?: Partial<Booking>): Booking => {
     duration: durationMinutes,
     equipmentId: equipment.id,
     equipment: equipment,
-    status: 'Confirmed' as BookingStatus,
+    status: 'APPROVED' as BookingStatus,
     startTime: startTime.toISOString(),
     endTime: endTime.toISOString(),
     createdAt: faker.date.recent({ days: 3 }).toISOString(),

@@ -20,12 +20,18 @@ export default function BookingsPage() {
   const [selectedEquipment, setSelectedEquipment] = useState<string>('all');
 
   const bookingParams = useMemo(() => {
-    const rawUser = user as any;
-    const trueUserId = rawUser?.id || user?.studentId;
-    return trueUserId ? { userId: trueUserId } : undefined;
+    const trueUserId = user?.studentId;
+    // Calendar needs every booking in view, not a paginated slice — fetch a large page.
+    // TODO: switch to date-range (from/to) fetching so this scales past 1000.
+    return trueUserId ? { userId: trueUserId, pageSize: 1000 } : { pageSize: 1000 };
   }, [user]);
 
-  const { bookings, isLoading: bookingsLoading, error: bookingsError, refetch } = useBookings(bookingParams);
+  const {
+    bookings,
+    isLoading: bookingsLoading,
+    error: bookingsError,
+    refetch,
+  } = useBookings(bookingParams);
 
   const availableEquipment = useMemo(() => {
     if (!bookings) return [];
@@ -46,11 +52,7 @@ export default function BookingsPage() {
           description="View availability and manage your reservations."
         />
         <div className="flex gap-2">
-          <Button
-            onClick={() => refetch()}
-            variant="outline"
-            className="w-full sm:w-auto"
-          >
+          <Button onClick={() => refetch()} variant="outline" className="w-full sm:w-auto">
             Refresh
           </Button>
           <Button
@@ -90,7 +92,7 @@ export default function BookingsPage() {
               <AlertDescription>{bookingsError}</AlertDescription>
             </Alert>
           ) : bookingsLoading ? (
-            <div className="flex h-[400px] items-center justify-center rounded-xl border bg-muted/10">
+            <div className="flex h-100 items-center justify-center rounded-xl border bg-muted/10">
               <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
             </div>
           ) : (
@@ -99,12 +101,12 @@ export default function BookingsPage() {
         </div>
 
         {/* Status Tracker & Sidebar Information Column */}
-        <div className="h-fit rounded-xl border bg-muted/10 p-4 space-y-6">
+        <div className="h-fit space-y-6 rounded-xl border bg-muted/10 p-4">
           {!bookingsError && !bookingsLoading && bookings && bookings.length > 0 && (
             <BookingStatusTracker bookings={bookings} />
           )}
 
-          <div className={bookings && bookings.length > 0 ? "pt-4 border-t" : ""}>
+          <div className={bookings && bookings.length > 0 ? 'border-t pt-4' : ''}>
             <h3 className="mb-4 font-semibold">My Bookings</h3>
 
             {bookingsError ? (

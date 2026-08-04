@@ -43,3 +43,4 @@ next-env.d.ts
 
 # mock file storage
 /tmp
+package-lock.json
