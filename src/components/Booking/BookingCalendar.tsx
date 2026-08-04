@@ -8,12 +8,14 @@ import interactionPlugin from '@fullcalendar/interaction';
 import { EventClickArg } from '@fullcalendar/core';
 import { Booking, ConflictResponse } from '@/types/booking';
 import BookingDetailModal from './BookingDetailModal';
+import { Loader2 } from 'lucide-react';
 
 interface BookingCalendarProps {
   bookings: Booking[] | any; // Flexibly accept any structure to prevent client crashes
+  isLoading?: boolean;
 }
 
-export default function BookingCalendar({ bookings }: BookingCalendarProps) {
+export default function BookingCalendar({ bookings, isLoading}: BookingCalendarProps) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
   const [selectedConflict, setSelectedConflict] = useState<ConflictResponse | undefined>(undefined);
@@ -64,7 +66,12 @@ export default function BookingCalendar({ bookings }: BookingCalendarProps) {
   });
 
   return (
-    <div className="rounded-xl border bg-card p-4 shadow-sm">
+    <div className="booking-calendar relative h-175 rounded-xl border bg-card p-4 shadow-sm">
+      {isLoading && (
+        <div className="absolute inset-0 z-10 flex items-center justify-center rounded-xl bg-card/60 backdrop-blur-[1px]">
+          <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+        </div>
+      )}
       <FullCalendar
         plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
         initialView="timeGridWeek"
@@ -74,7 +81,7 @@ export default function BookingCalendar({ bookings }: BookingCalendarProps) {
           right: 'dayGridMonth,timeGridWeek,timeGridDay',
         }}
         events={calendarEvents}
-        height="auto"
+        height="100%"
         allDaySlot={false}
         slotMinTime="08:00:00"
         slotMaxTime="22:00:00"
