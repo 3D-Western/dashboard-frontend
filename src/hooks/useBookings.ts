@@ -3,9 +3,6 @@ import { bookingAPI } from '@/api/client/booking';
 import { Booking, BookingRequest, AvailabilitySlot } from '@/types/booking';
 import { BookingsListParams, PaginationMetadata, PaginatedResponse } from '@/types/common';
 
-// Global event bus or simple listener tracker to sync mutations across hooks if needed
-let globalRefetchTriggers: (() => void)[] = [];
-
 // Hook for filtered or paginated list of all bookings for frontend
 export function useBookings(params?: BookingsListParams) {
   const [bookings, setBookings] = useState<Booking[]>([]);
@@ -41,12 +38,10 @@ export function useBookings(params?: BookingsListParams) {
   }, [params]);
 
   useEffect(() => {
-    fetchBookings();
-
-    globalRefetchTriggers.push(fetchBookings);
-    return () => {
-      globalRefetchTriggers = globalRefetchTriggers.filter(fn => fn !== fetchBookings);
+    const runFetch = async () => {
+      await fetchBookings();
     };
+    runFetch();
   }, [fetchBookings]);
 
   return { bookings, pagination, isLoading, error, refetch: fetchBookings };
@@ -85,6 +80,54 @@ export function useAvailability(equipmentId?: string, from?: string, to?: string
   return { slots, isLoading, error };
 }
 
+// hook for viewing merged availability across several equipment at once (the
+// "All Equipment" calendar view) - reuses the single-equipment endpoint per id
+// and tags each slot with its equipment label so events stay distinguishable.
+export function useAllEquipmentAvailability(
+  equipment?: { id: string; label: string }[],
+  from?: string,
+  to?: string,
+) {
+  const [slots, setSlots] = useState<AvailabilitySlot[]>([]);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const equipmentKey = equipment?.map((e) => e.id).join(',');
+
+  useEffect(() => {
+    if (!equipment || equipment.length === 0 || !from || !to) return;
+
+    const fetchAll = async () => {
+      setIsLoading(true);
+      setError(null);
+      try {
+        const results = await Promise.all(
+          equipment.map(async (e) => {
+            const response = await bookingAPI.checkAvailability(e.id, from, to);
+            const typedResponse = response as { data?: AvailabilitySlot[] } | AvailabilitySlot[];
+            const data = Array.isArray(typedResponse) ? typedResponse : typedResponse.data || [];
+            return data.map((slot) => ({ ...slot, equipmentLabel: e.label }));
+          }),
+        );
+
+        setSlots(results.flat());
+      } catch (err: unknown) {
+        const errorMessage = err instanceof Error ? err.message : 'Failed to fetch availability';
+        setError(errorMessage);
+        console.error('Error fetching combined availability:', err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchAll();
+    // equipmentKey mirrors `equipment`'s identity without re-firing on every render's new array reference
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [equipmentKey, from, to]);
+
+  return { slots, isLoading, error };
+}
+
 // hook for making new booking
 export function useCreateBooking() {
   const [isPending, setIsPending] = useState<boolean>(false);
@@ -96,12 +139,9 @@ export function useCreateBooking() {
 
     try {
       const response = await bookingAPI.createBooking(payload);
-      
-      // TRIGGER REFETCH ACROSS ALL ACTIVE BOOKING HOOKS INSTANTLY
-      globalRefetchTriggers.forEach(refetchFn => refetchFn());
-
       return response;
     } catch (err: unknown) {
+      // The 409 in the back will be sent when theres a conflicting timeslot
       const errorMessage =
         err instanceof Error ? err.message : 'An error occurred while creating the booking.';
       setError(errorMessage);
