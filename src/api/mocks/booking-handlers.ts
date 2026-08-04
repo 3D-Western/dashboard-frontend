@@ -47,7 +47,7 @@ function enrichPendingRequest(booking: Booking): PendingRequest {
   const settings = db.getCapacitySettings(booking.equipmentId);
   const others = db
     .getBookings({ equipmentId: booking.equipmentId })
-    .filter((b) => b.id !== booking.id && b.status !== 'CANCELLED' && b.status !== 'REJECTED');
+    .filter((b) => b.id !== booking.id);
   const overlapping = checkOverlap(others, booking);
   const violations = validateRestrictions(booking.equipmentId, booking.userInfo.studentId);
 
@@ -79,26 +79,18 @@ export const bookingHandlers = [
 
     const isAdmin = mockUserHasPermission(user, PERMISSIONS.BOOKINGS_LIST);
     const requestedUserId = url.searchParams.get('userId');
-    
-    // Convert to numbers for safe comparison
     const userIdFilter = isAdmin
-      ? requestedUserId ? Number(requestedUserId) : undefined
+      ? requestedUserId
+        ? Number(requestedUserId)
+        : undefined
       : Number(user.studentId);
 
-    // Let the mock DB get everything first
     let bookings = db.getBookings({
+      userId: userIdFilter,
       equipmentId: equipmentIdFilter,
       from,
       to,
     });
-
-    // Manually filter by looking INSIDE the userInfo object!
-    if (userIdFilter !== undefined && !isNaN(userIdFilter)) {
-      bookings = bookings.filter((b) => 
-        Number(b.userInfo?.studentId) === userIdFilter || 
-        Number((b as any).userId) === userIdFilter
-      );
-    }
 
     if (statusFilter) {
       bookings = bookings.filter((b) => b.status === statusFilter);
@@ -152,16 +144,7 @@ export const bookingHandlers = [
 
     const selectedEquipment = mockEquipment.find((e) => e.id === body.equipmentId);
     if (!selectedEquipment) {
-      return HttpResponse.json(
-        { 
-          success: false, 
-          error: { 
-            code: 'NOT_FOUND', 
-            message: 'Equipment not found' 
-          } 
-        },
-        { status: 404 }
-      );
+      return HttpResponse.json({ error: 'Equipment not found' }, { status: 404 });
     }
 
     const settings = db.getCapacitySettings(body.equipmentId);
@@ -170,11 +153,9 @@ export const bookingHandlers = [
     if (violations.length > 0) {
       return HttpResponse.json(
         {
-          error: {
-            code: 'RESTRICTION_VIOLATED',
-            message: 'You do not meet the requirements to book this equipment.',
-            details: violations,
-          },
+          code: 'RESTRICTION_VIOLATED',
+          message: 'You do not meet the requirements to book this equipment.',
+          violations,
         },
         { status: 403 },
       );
@@ -195,7 +176,6 @@ export const bookingHandlers = [
     const buildBooking = (status: BookingStatus, waitlistPosition?: number): Booking =>
       ({
         id: bookingId,
-        userId: Number(user.studentId),
         userInfo: {
           studentId: user.studentId,
           firstName: user.firstName,
@@ -232,11 +212,10 @@ export const bookingHandlers = [
       );
       return HttpResponse.json(
         {
-          error: {
-            code: settings.maxSimultaneousBookings > 1 ? 'CAPACITY_EXCEEDED' : 'BOOKING_CONFLICT',
-            message: 'Maximum capacity reached for this time slot.',
-            details: { conflictingBookings: overlapping, alternativeSlots }
-          }
+          code: settings.maxSimultaneousBookings > 1 ? 'CAPACITY_EXCEEDED' : 'BOOKING_CONFLICT',
+          message: 'Maximum capacity reached for this time slot.',
+          conflictingBookings: overlapping,
+          alternativeSlots,
         },
         { status: 409 },
       );
@@ -260,14 +239,8 @@ export const bookingHandlers = [
 
     if (!mockUserHasPermission(user, PERMISSIONS.BOOKINGS_UPDATE_STATUS)) {
       return HttpResponse.json(
-        { 
-          success: false, 
-          error: { 
-            code: 'FORBIDDEN', 
-            message: 'Insufficient permissions' 
-          } 
-        },
-        { status: 403 }
+        { success: false, error: 'Insufficient permissions' },
+        { status: 403 },
       );
     }
 
@@ -275,16 +248,7 @@ export const bookingHandlers = [
 
     const cancelledBooking = db.cancelBooking(id as string);
     if (!cancelledBooking) {
-      return HttpResponse.json(
-        { 
-          success: false, 
-          error: { 
-            code: 'NOT_FOUND', 
-            message: 'Booking not found' 
-          } 
-        },
-        { status: 404 }
-      );
+      return HttpResponse.json({ success: false, error: 'Booking not found' }, { status: 404 });
     }
 
     return HttpResponse.json(
@@ -304,15 +268,9 @@ export const bookingHandlers = [
 
       if (!mockUserHasPermission(user, PERMISSIONS.BOOKINGS_UPDATE_STATUS)) {
         return HttpResponse.json(
-        { 
-          success: false, 
-          error: { 
-            code: 'FORBIDDEN', 
-            message: 'Insufficient permissions' 
-          } 
-        },
-        { status: 403 }
-      );
+          { success: false, error: 'Insufficient permissions' },
+          { status: 403 },
+        );
       }
 
       const { id } = params;
@@ -336,16 +294,7 @@ export const bookingHandlers = [
 
       const booking = db.overrideBooking(id as string, body.action, body.reason);
       if (!booking) {
-        return HttpResponse.json(
-          { 
-            success: false, 
-            error: { 
-              code: 'NOT_FOUND', 
-              message: 'Booking not found' 
-            } 
-          },
-          { status: 404 }
-        );
+        return HttpResponse.json({ success: false, error: 'Booking not found' }, { status: 404 });
       }
 
       console.log(
@@ -359,7 +308,7 @@ export const bookingHandlers = [
     },
   ),
 
-  // POST /admin/equipment/:id/capacity update capacity limits
+  // POST /admin/equipment/:id/capacity - update capacity limits
   http.post(
     `${apiUrl}${endpoints.bookings.adminCapacity(':equipmentId')}`,
     async ({ cookies, params, request }) => {
@@ -371,13 +320,7 @@ export const bookingHandlers = [
 
       if (!mockUserHasPermission(user, PERMISSIONS.BOOKINGS_UPDATE_STATUS)) {
         return HttpResponse.json(
-          { 
-            success: false, 
-            error: { 
-              code: 'FORBIDDEN', 
-              message: 'Insufficient permissions' 
-            } 
-          },
+          { success: false, error: 'Insufficient permissions' },
           { status: 403 },
         );
       }
@@ -385,16 +328,7 @@ export const bookingHandlers = [
       const { equipmentId } = params;
       const equipmentExists = mockEquipment.find((e) => e.id === equipmentId);
       if (!equipmentExists) {
-        return HttpResponse.json(
-          { 
-            success: false, 
-            error: { 
-              code: 'NOT_FOUND', 
-              message: 'Equipment not found' 
-            } 
-          },
-          { status: 404 }
-        );
+        return HttpResponse.json({ success: false, error: 'Equipment not found' }, { status: 404 });
       }
 
       const body = (await request.json()) as Partial<{
@@ -434,30 +368,15 @@ export const bookingHandlers = [
 
       if (!mockUserHasPermission(user, PERMISSIONS.BOOKINGS_READ)) {
         return HttpResponse.json(
-        { 
-          success: false, 
-          error: { 
-            code: 'FORBIDDEN', 
-            message: 'Insufficient permissions' 
-          } 
-        },
-        { status: 403 }
-      );
+          { success: false, error: 'Insufficient permissions' },
+          { status: 403 },
+        );
       }
 
       const { equipmentId } = params;
       const equipmentExists = mockEquipment.find((e) => e.id === equipmentId);
       if (!equipmentExists) {
-        return HttpResponse.json(
-          { 
-            success: false, 
-            error: { 
-              code: 'NOT_FOUND', 
-              message: 'Equipment not found' 
-            } 
-          },
-          { status: 404 }
-        );
+        return HttpResponse.json({ success: false, error: 'Equipment not found' }, { status: 404 });
       }
 
       const settings = db.getCapacitySettings(equipmentId as string);
@@ -477,34 +396,19 @@ export const bookingHandlers = [
 
       if (!mockUserHasPermission(user, PERMISSIONS.BOOKINGS_READ)) {
         return HttpResponse.json(
-        { 
-          success: false, 
-          error: { 
-            code: 'FORBIDDEN', 
-            message: 'Insufficient permissions' 
-          } 
-        },
-        { status: 403 }
-      );
+          { success: false, error: 'Insufficient permissions' },
+          { status: 403 },
+        );
       }
 
       const { equipmentId } = params;
 
       const equipmentExists = mockEquipment.find((e) => e.id === equipmentId);
       if (!equipmentExists) {
-        return HttpResponse.json(
-          { 
-            success: false, 
-            error: { 
-              code: 'NOT_FOUND', 
-              message: 'Equipment not found' 
-            } 
-          },
-          { status: 404 }
-        );
+        return HttpResponse.json({ success: false, error: 'Equipment not found' }, { status: 404 });
       }
 
-      const occupiedSlots = db.getEquipmentAvailability(equipmentId as string);
+      const occupiedSlots = db.getEquipmentAvailability(equipmentId as string, user.studentId);
 
       return HttpResponse.json(
         generateSuccessResponse({

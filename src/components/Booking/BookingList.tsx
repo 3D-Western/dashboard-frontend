@@ -1,6 +1,7 @@
 'use client';
 
 import { Booking } from '@/types/booking';
+import { getEquipmentCategoryLabel } from '@/constants/equipment';
 import { Calendar, Clock, Laptop } from 'lucide-react';
 
 interface BookingListProps {
@@ -42,7 +43,7 @@ export default function BookingList({ bookings }: BookingListProps) {
                   <Laptop className="h-4 w-4 text-muted-foreground" />
                   <span className="text-sm font-semibold">{booking.equipment.name}</span>
                   <span className="text-xs text-muted-foreground">
-                    ({booking.equipment.category})
+                    ({getEquipmentCategoryLabel(booking.equipment.category)})
                   </span>
                 </div>
 

@@ -414,14 +414,23 @@ export class Database {
   }
 
   // helper function to get equipment availability
-  public getEquipmentAvailability(equipmentId: string) {
+  public getEquipmentAvailability(equipmentId: string, requestingUserId?: number) {
     return Array.from(this.Bookings.values())
       .filter((booking) => booking.equipmentId === equipmentId)
       .filter((booking) => booking.status !== 'CANCELLED')
-      .map((booking) => ({
-        startTime: booking.startTime,
-        endTime: booking.endTime,
-      }));
+      .map((booking) => {
+        const isOwnBooking = booking.userInfo.studentId === requestingUserId;
+        return {
+          startTime: booking.startTime,
+          endTime: booking.endTime,
+          isAvailable: false,
+          capacity: 1,
+          remainingSlots: 0,
+          reason: 'Booked' as const,
+          isOwnBooking,
+          purpose: isOwnBooking ? booking.purpose : undefined,
+        };
+      });
   }
 
   // read capacity + restriction settings for an equipment (falls back to a default)
