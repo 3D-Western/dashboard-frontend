@@ -1,5 +1,5 @@
-import { JobCategory } from './jobs';
 import { PaginationMetadata } from './common';
+import { JobCategory } from './jobs';
 
 export interface UserInfo {
   studentId: number;

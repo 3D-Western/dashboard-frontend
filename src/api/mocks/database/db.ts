@@ -391,7 +391,8 @@ export class Database {
   // helper function to cheeck if there is an overlap in booking times
   public hasBookingConflict(equipmentId: string, startTime: string, endTime: string): boolean {
     return Array.from(this.Bookings.values()).some((booking) => {
-      // check if the booking status is cancelled that way we can keep records of what was cancelled and use the patch method instead of delete
+      // check if the booking status is cancelled/rejected that way we can keep records of what
+      // was cancelled and use the patch method instead of delete
       if (booking.status === 'CANCELLED' || booking.status === 'REJECTED') {
         return false;
       }
@@ -417,7 +418,7 @@ export class Database {
   public getEquipmentAvailability(equipmentId: string, requestingUserId?: number) {
     return Array.from(this.Bookings.values())
       .filter((booking) => booking.equipmentId === equipmentId)
-      .filter((booking) => booking.status !== 'CANCELLED')
+      .filter((booking) => booking.status !== 'CANCELLED' && booking.status !== 'REJECTED')
       .map((booking) => {
         const isOwnBooking = booking.userInfo.studentId === requestingUserId;
         return {
