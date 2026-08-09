@@ -27,7 +27,7 @@ test.describe('Bookings E2E', () => {
       // Navigate to new booking page
       await page.goto('/dashboard/bookings/new');
 
-      await page.getByRole('combobox', { name: /equipment/i }).selectOption('printer-1');
+      await page.getByRole('combobox', { name: /equipment/i }).selectOption('laser-1');
       await page.getByLabel(/start time/i).fill('2026-06-25T10:00');
       await page.getByLabel(/end time/i).fill('2026-06-25T12:00');
 
@@ -67,7 +67,7 @@ test.describe('Bookings E2E', () => {
       });
 
       // mock booking
-      await page.getByRole('combobox', { name: /equipment/i }).selectOption('printer-1');
+      await page.getByRole('combobox', { name: /equipment/i }).selectOption('laser-1');
       await page.getByLabel(/start time/i).fill('2026-06-25T10:00');
       await page.getByLabel(/end time/i).fill('2026-06-25T12:00');
       await page.getByRole('button', { name: /confirm/i }).click();

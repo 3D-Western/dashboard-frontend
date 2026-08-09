@@ -55,7 +55,7 @@ describe('NewBookingForm', () => {
     // the submit button stays "Confirm Booking" rather than "Loading Rules...".
     (apiRequest as Mock).mockResolvedValue({
       data: {
-        equipmentId: 'printer-1',
+        equipmentId: 'laser-1',
         maxSimultaneousBookings: 1,
         requireAdminApproval: false,
         allowWaitlist: false,
@@ -99,7 +99,7 @@ describe('NewBookingForm', () => {
     const purposeInput = container.querySelector('#purpose') as HTMLInputElement;
 
     // 2. Fill out the form
-    fireEvent.change(equipmentSelect, { target: { value: 'printer-1' } });
+    fireEvent.change(equipmentSelect, { target: { value: 'laser-1' } });
     fireEvent.change(dateInput, { target: { value: '2026-10-15' } });
     fireEvent.change(timeSlotSelect, { target: { value: '10:00 AM - 12:00 PM' } });
     fireEvent.change(purposeInput, { target: { value: 'Capstone Prototyping' } });
@@ -116,7 +116,7 @@ describe('NewBookingForm', () => {
     await waitFor(() => {
       expect(mockMutate).toHaveBeenCalledWith(
         expect.objectContaining({
-          equipmentId: 'printer-1',
+          equipmentId: 'laser-1',
           purpose: 'Capstone Prototyping',
         }),
       );

@@ -86,7 +86,7 @@ const at = (hoursFromNow: number, durationMinutes: number) => {
   return { startTime: start.toISOString(), endTime: end.toISOString() };
 };
 
-const conflictEquipment = mockEquipment.find((e) => e.id === 'printer-1')!;
+const conflictEquipment = mockEquipment.find((e) => e.id === 'laser-1')!;
 const conflictWindow = at(96, 90);
 
 // two approved bookings on a equipment with only one capacity for testing for admin override testing
