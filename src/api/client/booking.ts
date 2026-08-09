@@ -1,9 +1,15 @@
-import { BookingsListParams } from '@/types/common';
+import { BookingsListParams, PaginatedResponse } from '@/types/common';
 import { endpoints } from './endpoints';
 import { getBaseUrl } from './utils';
 import { apiRequest } from './base';
 import { PrintBookingListResponse, CreateBookingResponse } from '../types';
-import { Booking, BookingRequest, AvailabilitySlot } from '@/types/booking';
+import {
+  Booking,
+  BookingRequest,
+  AvailabilitySlot,
+  CapacitySettings,
+  PendingRequest,
+} from '@/types/booking';
 
 export const bookingAPI = {
   // client wrapper for listing all bookings
@@ -15,6 +21,9 @@ export const bookingAPI = {
     }
     if (params?.equipmentId !== undefined) {
       searchParams.append('equipmentId', params.equipmentId);
+    }
+    if (params?.status !== undefined) {
+      searchParams.append('status', params.status);
     }
     if (params?.startTime !== undefined) {
       searchParams.append('from', params.startTime);
@@ -37,6 +46,18 @@ export const bookingAPI = {
     const url = `${getBaseUrl()}${endpoints.bookings.list}${queryString ? `?${queryString}` : ''}`;
 
     return apiRequest<PrintBookingListResponse>(url, {
+      method: 'GET',
+      credentials: 'include',
+      ...options,
+    });
+  },
+
+  // client wrapper for listing pending requests
+  listPendingRequests: async (options?: RequestInit) => {
+    const searchParams = new URLSearchParams({ status: 'PENDING' });
+    const url = `${getBaseUrl()}${endpoints.bookings.list}?${searchParams.toString()}`;
+
+    return apiRequest<PaginatedResponse<PendingRequest>>(url, {
       method: 'GET',
       credentials: 'include',
       ...options,
@@ -72,7 +93,7 @@ export const bookingAPI = {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ status: 'Cancelled' }),
+        body: JSON.stringify({ status: 'CANCELLED' }),
         ...options,
       },
     );
@@ -98,5 +119,57 @@ export const bookingAPI = {
       credentials: 'include',
       ...options,
     });
+  },
+
+  // client wrapper for admin force approve/cancel
+  overrideBooking: async (
+    bookingId: string,
+    payload: { action: 'APPROVE' | 'REJECT' | 'CANCEL'; reason?: string },
+    options?: RequestInit,
+  ) => {
+    return apiRequest<{ data: Booking }>(
+      `${getBaseUrl()}${endpoints.bookings.adminOverride(bookingId)}`,
+      {
+        method: 'PATCH',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload),
+        ...options,
+      },
+    );
+  },
+
+  // client wrapper for updating equipment capacity limits
+  updateCapacity: async (
+    equipmentId: string,
+    payload: Partial<CapacitySettings>,
+    options?: RequestInit,
+  ) => {
+    return apiRequest<{ data: { settings: CapacitySettings; affectedBookings: Booking[] } }>(
+      `${getBaseUrl()}${endpoints.bookings.adminCapacity(equipmentId)}`,
+      {
+        method: 'POST',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload),
+        ...options,
+      },
+    );
+  },
+
+  // client wrapper for reading equipment-specific rules
+  getEquipmentRestrictions: async (equipmentId: string, options?: RequestInit) => {
+    return apiRequest<{ data: CapacitySettings }>(
+      `${getBaseUrl()}${endpoints.bookings.adminRestrictions(equipmentId)}`,
+      {
+        method: 'GET',
+        credentials: 'include',
+        ...options,
+      },
+    );
   },
 };

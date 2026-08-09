@@ -66,9 +66,9 @@ export default function BookingList({ bookings }: BookingListProps) {
               <div className="flex items-center justify-between border-t pt-2 sm:border-none sm:pt-0">
                 <span
                   className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${
-                    booking.status === 'Confirmed'
+                    booking.status === 'APPROVED'
                       ? 'bg-green-100 text-green-800'
-                      : booking.status === 'Pending'
+                      : booking.status === 'PENDING'
                         ? 'bg-yellow-100 text-yellow-800'
                         : 'bg-red-100 text-red-800'
                   }`}

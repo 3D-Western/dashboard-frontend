@@ -3,6 +3,8 @@
  * Shared types used across the application
  */
 
+import { BookingStatus } from './booking';
+
 /**
  * Generic pagination metadata
  * Used for paginated API responses
@@ -72,4 +74,5 @@ export interface BookingsListParams extends BasePaginationParams {
   equipmentId?: string;
   startTime?: string;
   endTime?: string;
+  status?: BookingStatus;
 }

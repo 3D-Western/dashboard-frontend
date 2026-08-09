@@ -19,6 +19,8 @@ export const PERMISSIONS = {
   BOOKINGS_LIST: 'bookings:list',
   BOOKINGS_UPDATE_STATUS: 'bookings:update_status',
   BOOKINGS_READ: 'bookings:read',
+  BOOKINGS_CREATE: 'bookings:create',
+  BOOKINGS_CANCEL: 'bookings:cancel',
   FILES_READ_METADATA: 'files:read_metadata',
   FILES_DOWNLOAD: 'files:download',
   FILES_LIST: 'files:list',
@@ -243,6 +245,20 @@ export const PERMISSION_CATALOG: PermissionDefinition[] = [
     action: 'read',
     description: 'Read equipment availability and individual booking info',
   },
+
+  {
+    key: PERMISSIONS.BOOKINGS_CREATE,
+    resource: 'bookings',
+    action: 'create',
+    description: 'Create a new booking',
+  },
+
+  {
+    key: PERMISSIONS.BOOKINGS_CANCEL,
+    resource: 'bookings',
+    action: 'cancel',
+    description: 'Cancel a booking',
+  },
 ];
 
 export const PERMISSION_KEYS = PERMISSION_CATALOG.map((permission) => permission.key);
@@ -263,4 +279,6 @@ export const ADMIN_SECTION_PERMISSIONS: PermissionKey[] = [
   PERMISSIONS.BOOKINGS_LIST,
   PERMISSIONS.BOOKINGS_UPDATE_STATUS,
   PERMISSIONS.BOOKINGS_READ,
+  PERMISSIONS.BOOKINGS_CREATE,
+  PERMISSIONS.BOOKINGS_CANCEL,
 ];
