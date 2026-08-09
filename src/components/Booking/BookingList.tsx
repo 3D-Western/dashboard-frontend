@@ -1,8 +1,8 @@
 'use client';
 
 import { Booking } from '@/types/booking';
-import { Calendar, Clock, Laptop } from 'lucide-react';
 import { getEquipmentCategoryLabel } from '@/constants/equipment';
+import { Calendar, Clock, Laptop } from 'lucide-react';
 
 interface BookingListProps {
   bookings: Booking[];

@@ -374,7 +374,7 @@ export const createMockInvitations = (count: number): Invitation[] =>
  *
  * @example
  * ```ts
- * const booking = createMockBooking({ status: 'CANCELED' });
+ * const booking = createMockBooking({ status: 'CANCELLED' });
  * ```
  */
 export const createMockBooking = (overrides?: Partial<Booking>): Booking => {

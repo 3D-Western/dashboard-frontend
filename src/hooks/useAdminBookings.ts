@@ -21,11 +21,22 @@ export function useAdminBookings(params?: BookingsListParams) {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
 
+  const status = params?.status;
+  const page = params?.page;
+  const pageSize = params?.pageSize;
+  const startTime = params?.startTime;
+  const endTime = params?.endTime;
+  const equipmentId = params?.equipmentId;
+
   const fetchBookings = useCallback(async () => {
     setIsLoading(true);
     setError(null);
     try {
-      const response = (await bookingAPI.listAllBookings(params)) as AdminListResponse | Booking[];
+      const requestParams = { status, page, pageSize, startTime, endTime, equipmentId };
+
+      const response = (await bookingAPI.listAllBookings(requestParams)) as
+        | AdminListResponse
+        | Booking[];
       if (Array.isArray(response)) {
         setBookings(response);
         setPagination(null);
@@ -40,7 +51,7 @@ export function useAdminBookings(params?: BookingsListParams) {
     } finally {
       setIsLoading(false);
     }
-  }, [params]);
+  }, [status, page, pageSize, startTime, endTime, equipmentId]);
 
   useEffect(() => {
     const runFetch = async () => {

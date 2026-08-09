@@ -67,8 +67,6 @@ const MEMBER_PERMISSIONS: UserPermission[] = [
   { key: PERMISSIONS.FILES_READ_METADATA, scopeKey: 'own' },
   { key: PERMISSIONS.FILES_DOWNLOAD, scopeKey: 'own' },
   { key: PERMISSIONS.USERS_UPDATE_PROFILE, scopeKey: 'own' },
-  // Members need to see equipment availability (everyone's bookings on a machine,
-  // not just their own) to check the calendar and to pick a non-conflicting slot.
   { key: PERMISSIONS.BOOKINGS_READ, scopeKey: 'any' },
 ];
 

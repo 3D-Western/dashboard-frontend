@@ -1,18 +1,21 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { useForm, useWatch } from 'react-hook-form';
+import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { AlertCircle, CalendarPlus } from 'lucide-react';
+import { AlertCircle, CalendarPlus, ShieldAlert } from 'lucide-react';
 
 import { newBookingSchema, NewBookingFormData } from '@/types/booking-schema';
-import { useCreateBooking, useAvailability } from '@/hooks/useBookings';
+import { CapacitySettings } from '@/types/booking';
+import { useCreateBooking } from '@/hooks/useBookings';
 import { useUser } from '@/providers/user-provider';
 import { UnsavedChangesDialog } from '@/components/UnsavedChangesDialog';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { EQUIPMENT_CATEGORY_OPTIONS } from '@/constants/equipment';
+
+import { apiRequest } from '@/api/client/base';
+import { endpoints } from '@/api/client/endpoints';
 
 const TIME_SLOTS = [
   { label: '8:00 AM - 10:00 AM', start: '08:00:00', end: '10:00:00' },
@@ -23,8 +26,6 @@ const TIME_SLOTS = [
   { label: '6:00 PM - 8:00 PM', start: '18:00:00', end: '20:00:00' },
 ];
 
-const todayDateString = () => new Date().toISOString().split('T')[0];
-
 export default function NewBookingForm() {
   const router = useRouter();
   const user = useUser();
@@ -34,38 +35,59 @@ export default function NewBookingForm() {
   const {
     register,
     handleSubmit,
-    control,
+    watch,
+    setValue,
     formState: { errors, isDirty },
   } = useForm<NewBookingFormData>({
     resolver: zodResolver(newBookingSchema),
   });
 
-  const selectedEquipmentId = useWatch({ control, name: 'equipmentId' });
-  const selectedDate = useWatch({ control, name: 'date' });
+  // eslint-disable-next-line react-hooks/incompatible-library
+  const selectedEquipmentId = watch('equipmentId');
 
-  // Fetch this equipment's existing bookings for the selected day so we can
-  // grey out time slots that would conflict, instead of letting the user pick
-  // one and only finding out from the 409 after submitting.
-  const dayRange = selectedDate
-    ? {
-        from: new Date(`${selectedDate}T00:00:00`).toISOString(),
-        to: new Date(`${selectedDate}T23:59:59`).toISOString(),
+  const [equipmentSettings, setEquipmentSettings] = useState<CapacitySettings | null>(null);
+  const [isFetchingSettings, setIsFetchingSettings] = useState(false);
+
+  useEffect(() => {
+    if (!selectedEquipmentId) {
+      setEquipmentSettings(null);
+      return;
+    }
+
+    const fetchLiveSettings = async () => {
+      setIsFetchingSettings(true);
+      try {
+        const url = endpoints.bookings.adminRestrictions(selectedEquipmentId);
+        const response = await apiRequest<{ data?: CapacitySettings }>(url, {
+          method: 'GET',
+          credentials: 'include',
+        });
+        const data = response.data ?? (response as unknown as CapacitySettings);
+
+        setEquipmentSettings(data);
+
+        if (!data.allowWaitlist) {
+          setValue('joinWaitlist', false);
+        }
+      } catch (error) {
+        console.warn('Failed to load dynamic settings, defaulting to strict mode.', error);
+        setEquipmentSettings({
+          equipmentId: selectedEquipmentId,
+          maxSimultaneousBookings: 1,
+          requireAdminApproval: true,
+          allowWaitlist: false,
+          restrictions: { requiresTraining: false },
+        });
+      } finally {
+        setIsFetchingSettings(false);
       }
-    : undefined;
-  const { slots: bookedSlots } = useAvailability(
-    selectedEquipmentId || undefined,
-    dayRange?.from,
-    dayRange?.to,
-  );
+    };
 
-  const isSlotBooked = (slot: (typeof TIME_SLOTS)[number]) => {
-    if (!selectedDate) return false;
-    const slotStart = new Date(`${selectedDate}T${slot.start}`);
-    const slotEnd = new Date(`${selectedDate}T${slot.end}`);
-    return bookedSlots.some(
-      (booked) => slotStart < new Date(booked.endTime) && slotEnd > new Date(booked.startTime),
-    );
-  };
+    fetchLiveSettings();
+  }, [selectedEquipmentId, setValue]);
+
+  const requiresAdminApproval = equipmentSettings?.requireAdminApproval ?? false;
+  const allowWaitlist = equipmentSettings?.allowWaitlist ?? false;
 
   const onSubmit = async (data: NewBookingFormData) => {
     setAuthError(null);
@@ -75,8 +97,7 @@ export default function NewBookingForm() {
     }
 
     const selectedSlot = TIME_SLOTS.find((slot) => slot.label === data.timeSlot);
-
-    if (!selectedSlot) return; // Failsafe
+    if (!selectedSlot) return;
 
     try {
       await createBooking({
@@ -85,6 +106,7 @@ export default function NewBookingForm() {
         endTime: new Date(`${data.date}T${selectedSlot.end}`).toISOString(),
         purpose: data.purpose,
         userNotes: data.userNotes,
+        joinWaitlist: data.joinWaitlist,
         userInfo: {
           studentId: user.studentId,
           firstName: user.firstName,
@@ -122,11 +144,9 @@ export default function NewBookingForm() {
               className="w-full rounded-md border bg-background p-2 text-sm focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none"
             >
               <option value="">Select Equipment...</option>
-              {EQUIPMENT_CATEGORY_OPTIONS.map((option) => (
-                <option key={option.id} value={option.id}>
-                  {option.label}
-                </option>
-              ))}
+              <option value="printer-1">3D Printer 1</option>
+              <option value="laser-1">Laser Cutter</option>
+              <option value="cnc-1">CNC Router</option>
             </select>
             {errors.equipmentId && (
               <p className="text-xs text-destructive">{errors.equipmentId.message}</p>
@@ -139,7 +159,6 @@ export default function NewBookingForm() {
               <input
                 id="date"
                 type="date"
-                min={todayDateString()}
                 {...register('date')}
                 className="w-full rounded-md border bg-background p-2 text-sm focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none"
               />
@@ -154,15 +173,11 @@ export default function NewBookingForm() {
                 className="w-full rounded-md border bg-background p-2 text-sm focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none"
               >
                 <option value="">Select Time Slot...</option>
-                {TIME_SLOTS.map((slot) => {
-                  const booked = isSlotBooked(slot);
-                  return (
-                    <option key={slot.label} value={slot.label} disabled={booked}>
-                      {slot.label}
-                      {booked ? ' (Unavailable)' : ''}
-                    </option>
-                  );
-                })}
+                {TIME_SLOTS.map((slot) => (
+                  <option key={slot.label} value={slot.label}>
+                    {slot.label}
+                  </option>
+                ))}
               </select>
               {errors.timeSlot && (
                 <p className="text-xs text-destructive">{errors.timeSlot.message}</p>
@@ -192,7 +207,40 @@ export default function NewBookingForm() {
               className="w-full rounded-md border bg-background p-2 text-sm focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none"
             />
           </div>
+
+          <div
+            className={`flex items-center space-x-2 border-t pt-4 transition-opacity ${!allowWaitlist || !selectedEquipmentId ? 'opacity-40 grayscale' : ''}`}
+          >
+            <input
+              type="checkbox"
+              id="joinWaitlist"
+              disabled={!allowWaitlist || isFetchingSettings || !selectedEquipmentId}
+              {...register('joinWaitlist')}
+              className="h-4 w-4 rounded border-gray-300 text-sky-600 focus:ring-sky-500 disabled:cursor-not-allowed"
+            />
+            <label
+              htmlFor="joinWaitlist"
+              className={`text-sm font-medium text-muted-foreground ${!allowWaitlist || !selectedEquipmentId ? 'cursor-not-allowed' : 'cursor-pointer'}`}
+            >
+              {!selectedEquipmentId
+                ? 'Select equipment to view waitlist options'
+                : allowWaitlist
+                  ? 'Automatically add me to the waitlist if this time block is at full capacity'
+                  : 'Waitlist is currently disabled by administrators for this equipment'}
+            </label>
+          </div>
         </div>
+
+        {requiresAdminApproval && selectedEquipmentId && !isFetchingSettings && (
+          <Alert className="border-yellow-200 bg-yellow-50 text-yellow-800">
+            <ShieldAlert className="h-4 w-4 text-yellow-600" />
+            <AlertTitle className="text-yellow-800">Admin Approval Required</AlertTitle>
+            <AlertDescription className="text-yellow-700">
+              This equipment requires staff authorization. Your booking will be placed in a pending
+              queue until reviewed.
+            </AlertDescription>
+          </Alert>
+        )}
 
         <div className="flex flex-col gap-3">
           <Button
@@ -205,11 +253,15 @@ export default function NewBookingForm() {
 
           <Button
             type="submit"
-            disabled={isPending}
-            className="w-full bg-sky-500/75 text-white hover:bg-sky-500"
+            disabled={isPending || isFetchingSettings || !selectedEquipmentId}
+            className="w-full bg-sky-500/75 text-white transition-colors hover:bg-sky-500"
           >
             <CalendarPlus className="mr-2 h-4 w-4" />
-            {isPending ? 'Confirming...' : 'Confirm Booking'}
+            {isFetchingSettings
+              ? 'Loading Rules...'
+              : requiresAdminApproval
+                ? 'Submit Request for Approval'
+                : 'Confirm Booking'}
           </Button>
         </div>
       </form>

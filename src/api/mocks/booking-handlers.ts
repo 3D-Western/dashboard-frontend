@@ -308,7 +308,7 @@ export const bookingHandlers = [
     },
   ),
 
-  // POST /admin/equipment/:id/capacity update capacity limits
+  // POST /admin/equipment/:id/capacity - update capacity limits
   http.post(
     `${apiUrl}${endpoints.bookings.adminCapacity(':equipmentId')}`,
     async ({ cookies, params, request }) => {
@@ -408,9 +408,6 @@ export const bookingHandlers = [
         return HttpResponse.json({ success: false, error: 'Equipment not found' }, { status: 404 });
       }
 
-      // requesting user's own studentId is passed through so the calendar can
-      // highlight and label their own bookings without exposing other students'
-      // booking purposes (see AvailabilitySlot.isOwnBooking/.purpose)
       const occupiedSlots = db.getEquipmentAvailability(equipmentId as string, user.studentId);
 
       return HttpResponse.json(
