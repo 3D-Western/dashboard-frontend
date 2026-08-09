@@ -12,7 +12,6 @@ import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { useBookings } from '@/hooks/useBookings';
 import { useUser } from '@/providers/user-provider';
-import { EQUIPMENT_CATEGORY_OPTIONS, ALL_EQUIPMENT_OPTION } from '@/constants/equipment';
 
 export default function BookingsPage() {
   const router = useRouter();
