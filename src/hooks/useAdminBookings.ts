@@ -35,8 +35,7 @@ export function useAdminBookings(params?: BookingsListParams) {
       const requestParams = { status, page, pageSize, startTime, endTime, equipmentId };
 
       const response = (await bookingAPI.listAllBookings(requestParams)) as
-        | AdminListResponse
-        | Booking[];
+        AdminListResponse | Booking[];
       if (Array.isArray(response)) {
         setBookings(response);
         setPagination(null);
