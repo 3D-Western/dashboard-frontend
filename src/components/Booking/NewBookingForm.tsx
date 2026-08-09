@@ -8,6 +8,7 @@ import { AlertCircle, CalendarPlus, ShieldAlert } from 'lucide-react';
 
 import { newBookingSchema, NewBookingFormData } from '@/types/booking-schema';
 import { CapacitySettings } from '@/types/booking';
+import { EQUIPMENT_CATEGORY_OPTIONS } from '@/constants/equipment';
 import { useCreateBooking } from '@/hooks/useBookings';
 import { useUser } from '@/providers/user-provider';
 import { UnsavedChangesDialog } from '@/components/UnsavedChangesDialog';
@@ -144,9 +145,11 @@ export default function NewBookingForm() {
               className="w-full rounded-md border bg-background p-2 text-sm focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none"
             >
               <option value="">Select Equipment...</option>
-              <option value="printer-1">3D Printer 1</option>
-              <option value="laser-1">Laser Cutter</option>
-              <option value="cnc-1">CNC Router</option>
+              {EQUIPMENT_CATEGORY_OPTIONS.map((option) => (
+                <option key={option.id} value={option.id}>
+                  {option.label}
+                </option>
+              ))}
             </select>
             {errors.equipmentId && (
               <p className="text-xs text-destructive">{errors.equipmentId.message}</p>

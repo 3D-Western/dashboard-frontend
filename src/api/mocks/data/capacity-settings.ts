@@ -3,25 +3,19 @@ import { mockEquipment } from './equipment';
 
 export const UNLIMITED = Number.MAX_SAFE_INTEGER;
 
+// Every equipment category left in the booking domain (laser cutters, circuit machines, sewing
+// machines, soldering stations, waterjet) is here specifically because it needs controlled/booked
+// access rather than free-for-all use, so requiresTraining defaults to true in base() below instead
+// of being an opt-in override per unit.
 const overrides: Record<string, Partial<CapacitySettings>> = {
-  'printer-1': {
-    maxSimultaneousBookings: 1,
-    requireAdminApproval: true,
-    allowWaitlist: true,
-    restrictions: { requiresTraining: true },
-  },
-  'printer-2': { maxSimultaneousBookings: 1 },
-  'printer-3': { maxSimultaneousBookings: 5 },
-  'printer-4': { maxSimultaneousBookings: 10, allowWaitlist: true },
-  'printer-5': { maxSimultaneousBookings: 1, requireAdminApproval: true },
-  'laser-1': {
-    maxSimultaneousBookings: 1,
-    requireAdminApproval: true,
-    restrictions: { requiresTraining: true },
-  },
+  'laser-1': { maxSimultaneousBookings: 1, requireAdminApproval: true },
   'laser-2': { maxSimultaneousBookings: 5 },
-  'cnc-1': { maxSimultaneousBookings: 1, restrictions: { requiresTraining: true } },
-  'cnc-2': { maxSimultaneousBookings: UNLIMITED, allowWaitlist: false },
+  'circuit-1': { maxSimultaneousBookings: 2, allowWaitlist: true },
+  'sewing-1': { maxSimultaneousBookings: 3 },
+  'sewing-2': { maxSimultaneousBookings: 3 },
+  'soldering-1': { maxSimultaneousBookings: UNLIMITED, allowWaitlist: false },
+  'soldering-2': { maxSimultaneousBookings: UNLIMITED, allowWaitlist: false },
+  'waterjet-1': { maxSimultaneousBookings: 1, requireAdminApproval: true, allowWaitlist: true },
 };
 
 const base = (equipmentId: string): CapacitySettings => ({
@@ -29,7 +23,7 @@ const base = (equipmentId: string): CapacitySettings => ({
   maxSimultaneousBookings: 1,
   requireAdminApproval: false,
   allowWaitlist: false,
-  restrictions: { requiresTraining: false },
+  restrictions: { requiresTraining: true },
 });
 
 export const mockCapacitySettings: CapacitySettings[] = mockEquipment.map((equipment) => {

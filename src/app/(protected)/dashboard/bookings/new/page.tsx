@@ -6,7 +6,7 @@ export default function NewBookingPage() {
     <div className="container space-y-6 p-6">
       <PageTitle
         title="New Equipment Booking"
-        description="Reserve time on 3D printers, laser cutters, and other lab equipment."
+        description="Reserve time on laser cutters, circuit machines, sewing machines, soldering stations, or the waterjet."
       />
 
       <div className="grid grid-cols-1 gap-8 md:grid-cols-3">

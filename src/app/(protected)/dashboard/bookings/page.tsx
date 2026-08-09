@@ -12,12 +12,13 @@ import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { useBookings } from '@/hooks/useBookings';
 import { useUser } from '@/providers/user-provider';
+import { EQUIPMENT_CATEGORY_OPTIONS, ALL_EQUIPMENT_OPTION } from '@/constants/equipment';
 
 export default function BookingsPage() {
   const router = useRouter();
   const user = useUser();
 
-  const [selectedEquipment, setSelectedEquipment] = useState<string>('all');
+  const [selectedEquipment, setSelectedEquipment] = useState<string>(ALL_EQUIPMENT_OPTION.id);
 
   const bookingParams = useMemo(() => {
     const trueUserId = user?.studentId;
@@ -33,15 +34,10 @@ export default function BookingsPage() {
     refetch,
   } = useBookings(bookingParams);
 
-  const availableEquipment = useMemo(() => {
-    if (!bookings) return [];
-    return Array.from(new Set(bookings.map((b) => b.equipmentId)));
-  }, [bookings]);
-
   const filteredBookings = useMemo(() => {
     if (!bookings) return [];
-    if (selectedEquipment === 'all') return bookings;
-    return bookings.filter((b) => b.equipmentId === selectedEquipment);
+    if (selectedEquipment === ALL_EQUIPMENT_OPTION.id) return bookings;
+    return bookings.filter((b) => b.equipment.category === selectedEquipment);
   }, [bookings, selectedEquipment]);
 
   return (
@@ -76,10 +72,10 @@ export default function BookingsPage() {
               disabled={bookingsLoading}
               className="rounded-md border bg-background p-2 text-sm focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none disabled:opacity-50"
             >
-              <option value="all">All Equipment</option>
-              {availableEquipment.map((equipmentId) => (
-                <option key={equipmentId} value={equipmentId}>
-                  {equipmentId}
+              <option value={ALL_EQUIPMENT_OPTION.id}>{ALL_EQUIPMENT_OPTION.label}</option>
+              {EQUIPMENT_CATEGORY_OPTIONS.map((option) => (
+                <option key={option.category} value={option.category}>
+                  {option.label}
                 </option>
               ))}
             </select>

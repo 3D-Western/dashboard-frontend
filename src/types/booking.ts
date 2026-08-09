@@ -1,5 +1,4 @@
 import { PaginationMetadata } from './common';
-import { JobCategory } from './jobs';
 
 export interface UserInfo {
   studentId: number;
@@ -30,11 +29,17 @@ export interface Booking {
 }
 
 export interface Equipment {
-  category: JobCategory;
+  category: EquipmentCategory;
   status: 'Available' | 'Maintenance' | 'Offline';
   name: string;
   id: string;
 }
+
+// Booking equipment categories are intentionally separate from JobCategory (src/types/jobs.ts) -
+// the two features cover different equipment (e.g. Circuit/sewing/soldering aren't job-submittable,
+// and 3D printing/CNC aren't bookable), so they shouldn't share a type even where labels overlap.
+export type EquipmentCategory =
+  'LaserCutter' | 'CircuitMachine' | 'SewingMachine' | 'SolderingStation' | 'Waterjet';
 
 // extended to fit sprint
 export type BookingStatus = 'APPROVED' | 'PENDING' | 'REJECTED' | 'CANCELLED';

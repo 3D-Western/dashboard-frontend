@@ -1,14 +1,27 @@
 import { Equipment } from '@/types/booking';
 
 export const mockEquipment: Equipment[] = [
-  { id: 'printer-1', name: 'Ultimaker S5 - 01', category: 'ThreeDPrint', status: 'Available' },
-  { id: 'printer-2', name: 'Ultimaker S5 - 02', category: 'ThreeDPrint', status: 'Available' },
-  { id: 'printer-3', name: 'Prusa i3 MK3S - 01', category: 'ThreeDPrint', status: 'Available' },
-  { id: 'printer-4', name: 'Prusa i3 MK3S - 02', category: 'ThreeDPrint', status: 'Available' },
-  { id: 'printer-5', name: 'Formlabs Form 3', category: 'ThreeDPrint', status: 'Maintenance' },
-  { id: 'laser-1', name: 'Epilog Zing 24 - 01', category: 'LaserCutting', status: 'Available' },
-  { id: 'laser-2', name: 'Epilog Zing 24 - 02', category: 'LaserCutting', status: 'Available' },
-  { id: 'cnc-1', name: 'ShopBot Desktop', category: 'CNC', status: 'Available' },
-  { id: 'cnc-2', name: 'Haas Mini Mill', category: 'CNC', status: 'Available' },
+  { id: 'laser-1', name: 'Epilog Zing 24 - 01', category: 'LaserCutter', status: 'Available' },
+  { id: 'laser-2', name: 'Epilog Zing 24 - 02', category: 'LaserCutter', status: 'Available' },
+  {
+    id: 'circuit-1',
+    name: 'LPKF ProtoMat S64 - 01',
+    category: 'CircuitMachine',
+    status: 'Available',
+  },
+  { id: 'sewing-1', name: 'Brother CS7000X - 01', category: 'SewingMachine', status: 'Available' },
+  { id: 'sewing-2', name: 'Brother CS7000X - 02', category: 'SewingMachine', status: 'Available' },
+  {
+    id: 'soldering-1',
+    name: 'Hakko FX-888D - 01',
+    category: 'SolderingStation',
+    status: 'Available',
+  },
+  {
+    id: 'soldering-2',
+    name: 'Hakko FX-888D - 02',
+    category: 'SolderingStation',
+    status: 'Available',
+  },
   { id: 'waterjet-1', name: 'OMAX ProtoMAX - 01', category: 'Waterjet', status: 'Available' },
 ];
