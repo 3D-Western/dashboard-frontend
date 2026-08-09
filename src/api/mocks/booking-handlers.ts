@@ -408,7 +408,10 @@ export const bookingHandlers = [
         return HttpResponse.json({ success: false, error: 'Equipment not found' }, { status: 404 });
       }
 
-      const occupiedSlots = db.getEquipmentAvailability(equipmentId as string);
+      // requesting user's own studentId is passed through so the calendar can
+      // highlight and label their own bookings without exposing other students'
+      // booking purposes (see AvailabilitySlot.isOwnBooking/.purpose)
+      const occupiedSlots = db.getEquipmentAvailability(equipmentId as string, user.studentId);
 
       return HttpResponse.json(
         generateSuccessResponse({

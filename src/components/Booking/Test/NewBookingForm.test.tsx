@@ -4,7 +4,7 @@ import NewBookingForm from '../NewBookingForm';
 
 // Import the hooks so we can mock their return values dynamically
 import { useRouter } from 'next/navigation';
-import { useCreateBooking } from '@/hooks/useBookings';
+import { useCreateBooking, useAvailability } from '@/hooks/useBookings';
 import { useUser } from '@/providers/user-provider';
 
 // 1. Mock modules directly
@@ -18,6 +18,7 @@ vi.mock('@/providers/user-provider', () => ({
 
 vi.mock('@/hooks/useBookings', () => ({
   useCreateBooking: vi.fn(),
+  useAvailability: vi.fn(),
 }));
 
 describe('NewBookingForm', () => {
@@ -43,6 +44,12 @@ describe('NewBookingForm', () => {
     (useCreateBooking as Mock).mockReturnValue({
       mutate: mockMutate,
       isPending: false,
+      error: null,
+    });
+
+    (useAvailability as Mock).mockReturnValue({
+      slots: [],
+      isLoading: false,
       error: null,
     });
   });

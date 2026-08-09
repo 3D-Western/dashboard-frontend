@@ -2,16 +2,17 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useForm } from 'react-hook-form';
+import { useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { AlertCircle, CalendarPlus } from 'lucide-react';
 
 import { newBookingSchema, NewBookingFormData } from '@/types/booking-schema';
-import { useCreateBooking } from '@/hooks/useBookings';
+import { useCreateBooking, useAvailability } from '@/hooks/useBookings';
 import { useUser } from '@/providers/user-provider';
 import { UnsavedChangesDialog } from '@/components/UnsavedChangesDialog';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { EQUIPMENT_CATEGORY_OPTIONS } from '@/constants/equipment';
 
 const TIME_SLOTS = [
   { label: '8:00 AM - 10:00 AM', start: '08:00:00', end: '10:00:00' },
@@ -22,6 +23,8 @@ const TIME_SLOTS = [
   { label: '6:00 PM - 8:00 PM', start: '18:00:00', end: '20:00:00' },
 ];
 
+const todayDateString = () => new Date().toISOString().split('T')[0];
+
 export default function NewBookingForm() {
   const router = useRouter();
   const user = useUser();
@@ -31,10 +34,38 @@ export default function NewBookingForm() {
   const {
     register,
     handleSubmit,
+    control,
     formState: { errors, isDirty },
   } = useForm<NewBookingFormData>({
     resolver: zodResolver(newBookingSchema),
   });
+
+  const selectedEquipmentId = useWatch({ control, name: 'equipmentId' });
+  const selectedDate = useWatch({ control, name: 'date' });
+
+  // Fetch this equipment's existing bookings for the selected day so we can
+  // grey out time slots that would conflict, instead of letting the user pick
+  // one and only finding out from the 409 after submitting.
+  const dayRange = selectedDate
+    ? {
+        from: new Date(`${selectedDate}T00:00:00`).toISOString(),
+        to: new Date(`${selectedDate}T23:59:59`).toISOString(),
+      }
+    : undefined;
+  const { slots: bookedSlots } = useAvailability(
+    selectedEquipmentId || undefined,
+    dayRange?.from,
+    dayRange?.to,
+  );
+
+  const isSlotBooked = (slot: (typeof TIME_SLOTS)[number]) => {
+    if (!selectedDate) return false;
+    const slotStart = new Date(`${selectedDate}T${slot.start}`);
+    const slotEnd = new Date(`${selectedDate}T${slot.end}`);
+    return bookedSlots.some(
+      (booked) => slotStart < new Date(booked.endTime) && slotEnd > new Date(booked.startTime),
+    );
+  };
 
   const onSubmit = async (data: NewBookingFormData) => {
     setAuthError(null);
@@ -91,9 +122,11 @@ export default function NewBookingForm() {
               className="w-full rounded-md border bg-background p-2 text-sm focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none"
             >
               <option value="">Select Equipment...</option>
-              <option value="printer-1">3D Printer 1</option>
-              <option value="laser-1">Laser Cutter</option>
-              <option value="cnc-1">CNC Router</option>
+              {EQUIPMENT_CATEGORY_OPTIONS.map((option) => (
+                <option key={option.id} value={option.id}>
+                  {option.label}
+                </option>
+              ))}
             </select>
             {errors.equipmentId && (
               <p className="text-xs text-destructive">{errors.equipmentId.message}</p>
@@ -106,6 +139,7 @@ export default function NewBookingForm() {
               <input
                 id="date"
                 type="date"
+                min={todayDateString()}
                 {...register('date')}
                 className="w-full rounded-md border bg-background p-2 text-sm focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none"
               />
@@ -120,11 +154,15 @@ export default function NewBookingForm() {
                 className="w-full rounded-md border bg-background p-2 text-sm focus:border-primary focus:ring-1 focus:ring-primary focus:outline-none"
               >
                 <option value="">Select Time Slot...</option>
-                {TIME_SLOTS.map((slot) => (
-                  <option key={slot.label} value={slot.label}>
-                    {slot.label}
-                  </option>
-                ))}
+                {TIME_SLOTS.map((slot) => {
+                  const booked = isSlotBooked(slot);
+                  return (
+                    <option key={slot.label} value={slot.label} disabled={booked}>
+                      {slot.label}
+                      {booked ? ' (Unavailable)' : ''}
+                    </option>
+                  );
+                })}
               </select>
               {errors.timeSlot && (
                 <p className="text-xs text-destructive">{errors.timeSlot.message}</p>

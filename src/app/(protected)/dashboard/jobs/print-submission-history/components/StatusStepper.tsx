@@ -65,8 +65,8 @@ export function StatusStepper({ currentStatus, history = [] }: StatusStepperProp
           const isLastCompletedStep =
             (currentStatus === 'Flagged' && step === 'Printing') ||
             (currentStatus === 'Error' && step === 'Printing') ||
-            (currentStatus === 'Failed' && step === 'InQueue') || // failed before printing
-            (currentStatus === 'Failed' && step === 'Printing'); // failed during printing
+            (currentStatus === 'Failed' && step === 'InQueue' && !getHistoryData('Printing')) || // failed before printing
+            (currentStatus === 'Failed' && step === 'Printing' && !!getHistoryData('Printing')); // failed during printing
 
           if (isLastCompletedStep) {
             showExceptionHere = true;
