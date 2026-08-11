@@ -46,6 +46,18 @@ describe('Routes', () => {
     it('defines admin jobs management route', () => {
       expect(Routes.adminJobsManagement).toBe('/admin/jobs');
     });
+
+    it('defines admin bookings management route', () => {
+      expect(Routes.adminBookingsManagement).toBe('/admin/bookings');
+    });
+
+    it('defines admin booking requests route', () => {
+      expect(Routes.adminBookingRequests).toBe('/admin/requests');
+    });
+
+    it('defines admin equipment management route', () => {
+      expect(Routes.adminEquipmentManagement).toBe('/admin/equipment');
+    });
   });
 
   describe('route structure', () => {
@@ -59,6 +71,9 @@ describe('Routes', () => {
       expect(Routes).toHaveProperty('resetPassword');
       expect(Routes).toHaveProperty('adminUsersManagement');
       expect(Routes).toHaveProperty('adminJobsManagement');
+      expect(Routes).toHaveProperty('adminBookingsManagement');
+      expect(Routes).toHaveProperty('adminBookingRequests');
+      expect(Routes).toHaveProperty('adminEquipmentManagement');
       expect(Routes).toHaveProperty('jobs');
     });
 

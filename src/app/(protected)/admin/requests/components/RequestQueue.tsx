@@ -16,12 +16,14 @@ export default function RequestQueue({
   isLoading = false,
 }: RequestQueueProps) {
   if (isLoading) {
-    return <div className="py-8 text-center text-gray-500">Loading pending requests...</div>;
+    return (
+      <div className="py-8 text-center text-muted-foreground">Loading pending requests...</div>
+    );
   }
 
   if (!requests || requests.length === 0) {
     return (
-      <div className="rounded-lg border-2 border-dashed bg-gray-50 py-12 text-center text-gray-500">
+      <div className="rounded-lg border-2 border-dashed border-border bg-muted/40 py-12 text-center text-muted-foreground">
         <p className="text-lg font-medium">You&apos;re all caught up!</p>
         <p className="text-sm">
           There are no pending requests requiring admin approval at this time.

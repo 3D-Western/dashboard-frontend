@@ -11,23 +11,23 @@ export default function CapacityGauge({ currentBookings, maxCapacity }: Capacity
   const utilizationPercentage = Math.min((currentBookings / safeMax) * 100, 100);
 
   // Determine color based on how full the capacity is
-  let barColor = 'bg-green-500';
+  let barColor = 'bg-status-success';
   if (utilizationPercentage >= 90) {
-    barColor = 'bg-red-500';
+    barColor = 'bg-status-error';
   } else if (utilizationPercentage >= 75) {
-    barColor = 'bg-yellow-400';
+    barColor = 'bg-status-flagged';
   }
 
   return (
     <div className="w-full">
       <div className="mb-1 flex items-end justify-between">
-        <span className="text-sm font-medium text-gray-700">Current Utilization</span>
-        <span className="text-sm font-bold text-gray-900">
+        <span className="text-sm font-medium text-muted-foreground">Current Utilization</span>
+        <span className="text-sm font-bold">
           {currentBookings} / {maxCapacity === 999 ? '∞' : maxCapacity}
         </span>
       </div>
 
-      <div className="h-2.5 w-full overflow-hidden rounded-full bg-gray-200">
+      <div className="h-2.5 w-full overflow-hidden rounded-full bg-muted">
         <div
           className={`h-2.5 rounded-full transition-all duration-500 ease-out ${barColor}`}
           style={{ width: `${utilizationPercentage}%` }}
@@ -35,7 +35,7 @@ export default function CapacityGauge({ currentBookings, maxCapacity }: Capacity
       </div>
 
       {utilizationPercentage >= 100 && (
-        <p className="mt-1 text-xs font-medium text-red-600">
+        <p className="mt-1 text-xs font-medium text-destructive">
           Maximum capacity reached. Waitlist active.
         </p>
       )}

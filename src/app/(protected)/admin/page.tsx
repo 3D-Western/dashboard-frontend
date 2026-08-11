@@ -1,6 +1,15 @@
 import type { Metadata } from 'next';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Users, Printer, Lock, ClipboardList, TicketPlus } from 'lucide-react';
+import {
+  Users,
+  Printer,
+  Lock,
+  ClipboardList,
+  TicketPlus,
+  CalendarClock,
+  Inbox,
+  Gauge,
+} from 'lucide-react';
 import Link from 'next/link';
 import PageTitle from '@/components/PageTitle';
 import { Routes } from '@/lib/routes';
@@ -110,6 +119,65 @@ export default async function AdminDashboardPage() {
               <CardContent>
                 <p className="text-sm text-muted-foreground">
                   Review all system actions, user activity, and administrative changes.
+                </p>
+              </CardContent>
+            </Card>
+          </Link>
+        )}
+
+        {user && hasPermission(user, PERMISSIONS.BOOKINGS_LIST) && (
+          <Link href={Routes.adminBookingsManagement}>
+            <Card className="cursor-pointer transition-colors hover:bg-accent">
+              <CardHeader>
+                <div className="flex items-center gap-2">
+                  <CalendarClock className="h-5 w-5 text-muted-foreground" />
+                  <CardTitle>Equipment Bookings</CardTitle>
+                </div>
+                <CardDescription>
+                  Manage all facility reservations and scheduling conflicts
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-muted-foreground">
+                  View, filter, and bulk-approve or reject equipment booking reservations.
+                </p>
+              </CardContent>
+            </Card>
+          </Link>
+        )}
+
+        {user && hasPermission(user, PERMISSIONS.BOOKINGS_UPDATE_STATUS) && (
+          <Link href={Routes.adminBookingRequests}>
+            <Card className="cursor-pointer transition-colors hover:bg-accent">
+              <CardHeader>
+                <div className="flex items-center gap-2">
+                  <Inbox className="h-5 w-5 text-muted-foreground" />
+                  <CardTitle>Booking Requests</CardTitle>
+                </div>
+                <CardDescription>Review pending equipment booking requests</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-muted-foreground">
+                  Approve or reject requests requiring administrative sign-off.
+                </p>
+              </CardContent>
+            </Card>
+          </Link>
+        )}
+
+        {user && hasPermission(user, PERMISSIONS.BOOKINGS_READ) && (
+          <Link href={Routes.adminEquipmentManagement}>
+            <Card className="cursor-pointer transition-colors hover:bg-accent">
+              <CardHeader>
+                <div className="flex items-center gap-2">
+                  <Gauge className="h-5 w-5 text-muted-foreground" />
+                  <CardTitle>Equipment Management</CardTitle>
+                </div>
+                <CardDescription>Configure capacity and restrictions per equipment</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-muted-foreground">
+                  Set simultaneous booking limits, approval workflow, and safety requirements.
                 </p>
               </CardContent>
             </Card>

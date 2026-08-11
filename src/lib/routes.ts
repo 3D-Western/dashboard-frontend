@@ -17,6 +17,9 @@ export const Routes = {
   adminInvitationManagement: '/admin/invitations',
   adminIamManagement: '/admin/iam',
   adminAuditLog: '/admin/audit',
+  adminBookingsManagement: '/admin/bookings',
+  adminBookingRequests: '/admin/requests',
+  adminEquipmentManagement: '/admin/equipment',
 
   jobs: {
     home: '/dashboard/jobs',
