@@ -44,3 +44,6 @@ next-env.d.ts
 # mock file storage
 /tmp
 package-lock.json
+
+# local worktrees for parallel sessions
+.claude/worktrees/

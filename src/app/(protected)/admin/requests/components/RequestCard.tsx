@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { PendingRequest } from '@/types/booking';
+import { UrgencyBadge } from './UrgencyBadge';
 
 interface RequestCardProps {
   request: PendingRequest;
@@ -18,25 +19,15 @@ export default function RequestCard({ request, onApprove, onReject }: RequestCar
   };
 
   return (
-    <div className="mb-4 rounded-lg border bg-white p-4 shadow-sm">
+    <div className="mb-4 rounded-lg border border-border bg-card p-4 text-card-foreground shadow-sm">
       <div className="mb-2 flex items-start justify-between">
         <div>
           <h3 className="text-lg font-semibold">
             {request.equipment.name} - {request.userInfo.firstName} {request.userInfo.lastName}
           </h3>
-          <p className="text-sm text-gray-500">Student ID: {request.userInfo.studentId}</p>
+          <p className="text-sm text-muted-foreground">Student ID: {request.userInfo.studentId}</p>
         </div>
-        <span
-          className={`rounded-full px-2 py-1 text-xs font-bold ${
-            request.urgencyLevel === 'High'
-              ? 'bg-red-100 text-red-800'
-              : request.urgencyLevel === 'Medium'
-                ? 'bg-yellow-100 text-yellow-800'
-                : 'bg-blue-100 text-blue-800'
-          }`}
-        >
-          {request.urgencyLevel} Urgency
-        </span>
+        <UrgencyBadge urgency={request.urgencyLevel} />
       </div>
 
       <div className="mb-4 grid grid-cols-2 gap-4 text-sm">
@@ -50,45 +41,45 @@ export default function RequestCard({ request, onApprove, onReject }: RequestCar
           <span className="font-medium">Purpose:</span> {request.purpose}
         </div>
         {request.hasConflict && (
-          <div className="col-span-2 font-medium text-red-600">
+          <div className="col-span-2 font-medium text-destructive">
             ⚠️ Warning: This booking conflicts with existing reservations or capacity limits.
           </div>
         )}
       </div>
 
       {isRejecting ? (
-        <div className="mt-4 flex items-center gap-2 border-t pt-4">
+        <div className="mt-4 flex items-center gap-2 border-t border-border pt-4">
           <input
             type="text"
             placeholder="Reason for rejection..."
-            className="flex-1 rounded border px-3 py-1 text-sm"
+            className="flex-1 rounded border border-input bg-background px-3 py-1 text-sm text-foreground"
             value={rejectReason}
             onChange={(e) => setRejectReason(e.target.value)}
           />
           <button
             onClick={handleRejectSubmit}
-            className="rounded bg-red-600 px-3 py-1 text-sm text-white hover:bg-red-700"
+            className="rounded bg-destructive px-3 py-1 text-sm text-white hover:bg-destructive/90"
           >
             Confirm Reject
           </button>
           <button
             onClick={() => setIsRejecting(false)}
-            className="text-sm text-gray-600 hover:underline"
+            className="text-sm text-muted-foreground hover:underline"
           >
             Cancel
           </button>
         </div>
       ) : (
-        <div className="mt-4 flex justify-end gap-2 border-t pt-4">
+        <div className="mt-4 flex justify-end gap-2 border-t border-border pt-4">
           <button
             onClick={() => setIsRejecting(true)}
-            className="rounded border border-red-600 px-4 py-2 text-red-600 transition-colors hover:bg-red-50"
+            className="rounded border border-destructive px-4 py-2 text-destructive transition-colors hover:bg-destructive/10"
           >
             Reject
           </button>
           <button
             onClick={() => onApprove(request.id)}
-            className="rounded bg-green-600 px-4 py-2 text-white transition-colors hover:bg-green-700"
+            className="rounded bg-status-success px-4 py-2 text-status-success-foreground transition-colors hover:opacity-90"
           >
             Approve
           </button>

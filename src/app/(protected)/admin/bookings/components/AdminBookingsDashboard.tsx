@@ -1,14 +1,14 @@
 'use client';
 
 import { useState } from 'react';
-import AdminBookingList from '@/components/Booking/Admin/AdminBookingList';
-import BulkActionBar from '@/components/Booking/Admin/BulkActionBar';
+import AdminBookingList from './AdminBookingList';
+import BulkActionBar from './BulkActionBar';
 import { useAdminBookings, useBulkAction } from '@/hooks/useAdminBookings';
 import { BookingStatus } from '@/types/booking';
 
 type TabType = 'All' | 'Pending' | 'Approved' | 'Rejected' | 'Conflicts';
 
-export default function AdminBookingsDashboard() {
+export function AdminBookingsDashboard() {
   const [activeTab, setActiveTab] = useState<TabType>('All');
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
 
@@ -64,25 +64,20 @@ export default function AdminBookingsDashboard() {
   };
 
   if (error) {
-    return <div className="p-6 text-red-600">Failed to load bookings: {error}</div>;
+    return <div className="p-6 text-destructive">Failed to load bookings: {error}</div>;
   }
 
   return (
-    <div className="mx-auto max-w-7xl p-6 pb-24">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">Equipment Bookings</h1>
-        <p className="text-gray-600">Manage all facility reservations and scheduling conflicts.</p>
-      </div>
-
-      <div className="mb-6 flex space-x-1 border-b">
+    <div className="mx-auto max-w-7xl pb-24">
+      <div className="mb-6 flex space-x-1 border-b border-border">
         {tabs.map((tab) => (
           <button
             key={tab}
             onClick={() => handleTabChange(tab)}
             className={`border-b-2 px-4 py-2 text-sm font-medium transition-colors ${
               activeTab === tab
-                ? 'border-blue-600 text-blue-600'
-                : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'
+                ? 'border-primary text-primary'
+                : 'border-transparent text-muted-foreground hover:border-border hover:text-foreground'
             }`}
           >
             {tab}
@@ -91,9 +86,9 @@ export default function AdminBookingsDashboard() {
       </div>
 
       {/* FILTER BAR */}
-      <div className="mb-6 flex flex-wrap gap-4 rounded-lg border border-gray-100 bg-gray-50 p-4">
+      <div className="mb-6 flex flex-wrap gap-4 rounded-lg border border-border bg-muted/40 p-4">
         <div className="flex flex-col">
-          <label className="mb-1 text-xs text-gray-500">Start Date</label>
+          <label className="mb-1 text-xs text-muted-foreground">Start Date</label>
           <input
             type="date"
             value={startTime}
@@ -101,11 +96,11 @@ export default function AdminBookingsDashboard() {
               setStartTime(e.target.value);
               setPage(1);
             }}
-            className="rounded border border-gray-300 px-3 py-1.5 text-sm"
+            className="rounded border border-input bg-background px-3 py-1.5 text-sm text-foreground"
           />
         </div>
         <div className="flex flex-col">
-          <label className="mb-1 text-xs text-gray-500">End Date</label>
+          <label className="mb-1 text-xs text-muted-foreground">End Date</label>
           <input
             type="date"
             value={endTime}
@@ -113,11 +108,11 @@ export default function AdminBookingsDashboard() {
               setEndTime(e.target.value);
               setPage(1);
             }}
-            className="rounded border border-gray-300 px-3 py-1.5 text-sm"
+            className="rounded border border-input bg-background px-3 py-1.5 text-sm text-foreground"
           />
         </div>
         <div className="flex max-w-xs flex-grow flex-col">
-          <label className="mb-1 text-xs text-gray-500">Equipment</label>
+          <label className="mb-1 text-xs text-muted-foreground">Equipment</label>
           <input
             type="text"
             placeholder="Search by Equipment ID/Name..."
@@ -126,7 +121,7 @@ export default function AdminBookingsDashboard() {
               setEquipmentId(e.target.value);
               setPage(1);
             }}
-            className="w-full rounded border border-gray-300 px-3 py-1.5 text-sm"
+            className="w-full rounded border border-input bg-background px-3 py-1.5 text-sm text-foreground"
           />
         </div>
         <div className="flex items-end">
@@ -137,7 +132,7 @@ export default function AdminBookingsDashboard() {
               setEquipmentId('');
               setPage(1);
             }}
-            className="py-1.5 text-sm text-gray-500 hover:text-gray-800"
+            className="py-1.5 text-sm text-muted-foreground hover:text-foreground"
           >
             Clear Filters
           </button>
@@ -153,16 +148,16 @@ export default function AdminBookingsDashboard() {
       />
 
       {/* PAGINATION CONTROLS */}
-      <div className="mt-6 flex items-center justify-between border-t border-gray-200 p-4">
+      <div className="mt-6 flex items-center justify-between border-t border-border p-4">
         <div className="flex items-center space-x-2">
-          <span className="text-sm text-gray-600">Rows per page:</span>
+          <span className="text-sm text-muted-foreground">Rows per page:</span>
           <select
             value={pageSize}
             onChange={(e) => {
               setPageSize(Number(e.target.value));
               setPage(1);
             }}
-            className="rounded border border-gray-300 bg-white px-2 py-1 text-sm"
+            className="rounded border border-input bg-background px-2 py-1 text-sm text-foreground"
           >
             <option value={10}>10</option>
             <option value={25}>25</option>
@@ -171,14 +166,14 @@ export default function AdminBookingsDashboard() {
         </div>
 
         <div className="flex items-center space-x-4">
-          <span className="text-sm text-gray-600">
+          <span className="text-sm text-muted-foreground">
             Page {page} {pagination?.totalPages ? `of ${pagination.totalPages}` : ''}
           </span>
           <div className="flex space-x-2">
             <button
               onClick={() => setPage((p) => Math.max(1, p - 1))}
               disabled={page === 1 || isLoading}
-              className="rounded border border-gray-300 px-3 py-1 text-sm hover:bg-gray-50 disabled:opacity-50"
+              className="rounded border border-input px-3 py-1 text-sm text-foreground hover:bg-muted disabled:opacity-50"
             >
               Previous
             </button>
@@ -189,7 +184,7 @@ export default function AdminBookingsDashboard() {
                   ? page >= pagination.totalPages
                   : bookings.length < pageSize) || isLoading
               }
-              className="rounded border border-gray-300 px-3 py-1 text-sm hover:bg-gray-50 disabled:opacity-50"
+              className="rounded border border-input px-3 py-1 text-sm text-foreground hover:bg-muted disabled:opacity-50"
             >
               Next
             </button>

@@ -28,6 +28,9 @@ import {
   ClipboardList,
   History,
   Calendar,
+  CalendarClock,
+  Inbox,
+  Gauge,
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -97,6 +100,24 @@ const adminNavigationItems = [
     url: Routes.adminAuditLog,
     icon: ClipboardList,
     permission: PERMISSIONS.AUDIT_READ,
+  },
+  {
+    title: 'Equipment Bookings',
+    url: Routes.adminBookingsManagement,
+    icon: CalendarClock,
+    permission: PERMISSIONS.BOOKINGS_LIST,
+  },
+  {
+    title: 'Booking Requests',
+    url: Routes.adminBookingRequests,
+    icon: Inbox,
+    permission: PERMISSIONS.BOOKINGS_UPDATE_STATUS,
+  },
+  {
+    title: 'Equipment Management',
+    url: Routes.adminEquipmentManagement,
+    icon: Gauge,
+    permission: PERMISSIONS.BOOKINGS_READ,
   },
 ];
 
