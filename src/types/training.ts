@@ -1,0 +1,1 @@
+export type TrainingLevel = 'LEVEL_1' | 'LEVEL_2';

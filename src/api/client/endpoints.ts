@@ -85,4 +85,7 @@ export const endpoints = {
     adminRestrictions: (equipmentId: string) =>
       `/api/v1/admin/equipment/${equipmentId}/restrictions`,
   },
+   training: {
+    level: '/api/v1/users/me/training-level', //get users level
+  },
 };
