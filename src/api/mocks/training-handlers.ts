@@ -14,8 +14,6 @@ export const trainingHandlers = [
       return createInvalidSessionResponse();
     }
 
-    return HttpResponse.json(
-      generateSuccessResponse({ trainingLevel: user.trainingLevel }),
-    );
+    return HttpResponse.json(generateSuccessResponse({ trainingLevel: user.trainingLevel }));
   }),
 ];
