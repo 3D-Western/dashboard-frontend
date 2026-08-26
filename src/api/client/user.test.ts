@@ -136,33 +136,35 @@ describe('userApi', () => {
       expect(capturedUrl).toContain('trainingLevel=advanced');
     });
 
-    it('includes experienceLevel query parameter when provided', async () => {
-      let capturedUrl: string | null = null;
-      mockServer.use(
-        http.get('*' + endpoints.users.list, ({ request }) => {
-          capturedUrl = request.url;
-          return HttpResponse.json({
-            success: true,
-            data: {
-              data: [],
-              pagination: {
-                page: 1,
-                pageSize: 10,
-                totalItems: 0,
-                totalPages: 0,
-                hasNext: false,
-                hasPrevious: false,
-                snapshotCreatedBefore: new Date().toISOString(),
-              },
-            },
-          });
-        }),
-      );
+    // HELLO THIS IS FOR NANCY REVIEW
+    // commented out because experience level not in use anymore
+    // it('includes experienceLevel query parameter when provided', async () => {
+    //   let capturedUrl: string | null = null;
+    //   mockServer.use(
+    //     http.get('*' + endpoints.users.list, ({ request }) => {
+    //       capturedUrl = request.url;
+    //       return HttpResponse.json({
+    //         success: true,
+    //         data: {
+    //           data: [],
+    //           pagination: {
+    //             page: 1,
+    //             pageSize: 10,
+    //             totalItems: 0,
+    //             totalPages: 0,
+    //             hasNext: false,
+    //             hasPrevious: false,
+    //             snapshotCreatedBefore: new Date().toISOString(),
+    //           },
+    //         },
+    //       });
+    //     }),
+    //   );
 
-      await userApi.listAllUsers({ experienceLevel: 'beginner' });
+    //   await userApi.listAllUsers({ experienceLevel: 'beginner' });
 
-      expect(capturedUrl).toContain('experienceLevel=beginner');
-    });
+    //   expect(capturedUrl).toContain('experienceLevel=beginner');
+    // });
 
     it('includes page query parameter when provided', async () => {
       let capturedUrl: string | null = null;

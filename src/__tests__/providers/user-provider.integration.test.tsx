@@ -147,7 +147,9 @@ describe('UserProvider Integration', () => {
     const adminUser = createMockAdmin({
       firstName: 'Admin',
       lastName: 'User',
-      experienceLevel: 'advanced',
+      // HELLO THIS IS FOR NANCY REVIEW
+      // experience level no longer used
+      // experienceLevel: 'advanced',
     });
 
     render(
@@ -160,29 +162,31 @@ describe('UserProvider Integration', () => {
     expect(screen.getByTestId('user-groups')).toHaveTextContent('super_admins');
   });
 
-  it('handles user with different experience levels', () => {
-    const beginnerUser = createMockUser({
-      experienceLevel: 'beginner',
-    });
+  // HELLO THIS IS FOR NANCY REVIEW
+  // experience level no longer supported
+  //   it('handles user with different experience levels', () => {
+  //     const beginnerUser = createMockUser({
+  //       experienceLevel: 'beginner',
+  //     });
 
-    const advancedUser = createMockUser({
-      experienceLevel: 'advanced',
-    });
+  //     const advancedUser = createMockUser({
+  //       experienceLevel: 'advanced',
+  //     });
 
-    const { rerender } = render(
-      <UserProvider user={beginnerUser}>
-        <TestComponent />
-      </UserProvider>,
-    );
+  //     const { rerender } = render(
+  //       <UserProvider user={beginnerUser}>
+  //         <TestComponent />
+  //       </UserProvider>,
+  //     );
 
-    expect(screen.getByTestId('user-name')).toBeInTheDocument();
+  //     expect(screen.getByTestId('user-name')).toBeInTheDocument();
 
-    rerender(
-      <UserProvider user={advancedUser}>
-        <TestComponent />
-      </UserProvider>,
-    );
+  //     rerender(
+  //       <UserProvider user={advancedUser}>
+  //         <TestComponent />
+  //       </UserProvider>,
+  //     );
 
-    expect(screen.getByTestId('user-name')).toBeInTheDocument();
-  });
+  //     expect(screen.getByTestId('user-name')).toBeInTheDocument();
+  //   });
 });

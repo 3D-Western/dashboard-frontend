@@ -10,6 +10,8 @@ export interface User {
   experience: string;
   createdDate?: string;
   trainingLevel?: TrainingLevel;
+  // HELLO THIS IS FOR NANCY REVIEW
+  // eperience level no longer valid , But not removed because it breaks multiple other files
   experienceLevel?: 'Novice' | 'Intermediate' | 'Expert';
 }
 

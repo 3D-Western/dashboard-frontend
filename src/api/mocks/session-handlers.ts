@@ -89,11 +89,13 @@ export const sessionHandlers = [
       email: user.email,
       firstName: user.firstName,
       lastName: user.lastName,
-      experienceLevel:
-        user.experienceLevel
-          ?.split('_')
-          .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-          .join('_') || 'Beginner', // "no_experience" -> "No_experience", "beginner" -> "Beginner"
+      // HELLO THIS IS FOR NANCY REVIEW
+      // removed due to experience level no longer being active
+      // experienceLevel:
+      // user.experienceLevel
+      //   ?.split('_')
+      //   .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+      //   .join('_') || 'Beginner', // "no_experience" -> "No_experience", "beginner" -> "Beginner"
     };
 
     return HttpResponse.json(

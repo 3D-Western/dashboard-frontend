@@ -11,7 +11,9 @@ export const mockUsers: User[] = [
     password: 'password',
     createdDate: new Date('2024-01-01').toISOString(),
     trainingLevel: 'LEVEL_2',
-    experienceLevel: 'Expert',
+    // HELLO THIS IS FOR NANCY REVIEW
+    // removed due to experience level no longer existing
+    // experienceLevel: 'Expert',
   },
   {
     studentId: 251000001,
@@ -23,7 +25,9 @@ export const mockUsers: User[] = [
     password: 'password',
     createdDate: new Date('2024-01-01').toISOString(),
     trainingLevel: 'LEVEL_2',
-    experienceLevel: 'Expert',
+    // HELLO THIS IS FOR NANCY REVIEW
+    // removed due to experience level no longer being used
+    // experienceLevel: 'Expert',
   },
   {
     studentId: 251000002,
@@ -35,6 +39,8 @@ export const mockUsers: User[] = [
     password: 'password',
     createdDate: new Date('2024-01-15').toISOString(),
     trainingLevel: 'LEVEL_1',
+    // HELLO THIS IS FOR NANCY REVIEW
+    // flagged but not removed because it breaks multiple other files
     experienceLevel: 'Novice',
   },
 ];

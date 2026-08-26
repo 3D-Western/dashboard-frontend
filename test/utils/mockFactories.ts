@@ -1,5 +1,6 @@
 import { faker } from '@faker-js/faker';
-import { User, UserExperienceLevel, UserPermission } from '@/types/user';
+// removed experience level from here UserExperienceLevel
+import { User, UserPermission } from '@/types/user';
 import type { IamGroup } from '@/types/iam';
 import { PrintJob, PrintJobStatus, CompletedPrintJob, ETA, StatusHistory } from '@/types/jobs';
 import { FileMetadata, FileUploadResult } from '@/types/file';
@@ -47,7 +48,9 @@ export const createMockUser = (overrides?: Partial<User>): User => ({
   lastName: faker.person.lastName(),
   groups: [MOCK_GROUP_MEMBERS],
   permissions: [],
-  experienceLevel: 'beginner' as UserExperienceLevel,
+  // HELLO THIS IS FOR NANCY REVIEW
+  // experience level no longer used
+  // experienceLevel: 'beginner' as UserExperienceLevel,
   ...overrides,
 });
 
@@ -60,7 +63,9 @@ export const createMockUser = (overrides?: Partial<User>): User => ({
  * ```
  */
 export const createMockAdmin = (overrides?: Partial<User>): User =>
-  createMockUser({ groups: [MOCK_GROUP_SUPER_ADMINS], experienceLevel: 'advanced', ...overrides });
+  // HELLO THIS IS FOR NANCY REVIEW
+  //  experienceLevel: 'advanced', removed this from this because experience level no longer there
+  createMockUser({ groups: [MOCK_GROUP_SUPER_ADMINS], ...overrides });
 
 /**
  * Creates a mock UserResponse object (backend format)
