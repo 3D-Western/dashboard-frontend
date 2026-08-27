@@ -1,6 +1,7 @@
 'use client';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import { useTrainingLevel } from '@/hooks/useTraining';
 import { canAccessBooking } from '@/utils/usage-calculators';
 import { SettingsSectionSkeleton } from './SettingsSectionSkeleton';
@@ -10,7 +11,7 @@ import { TrainingLevelBadge } from './TrainingLevelBadge';
 import { CertificateAcquiredNote } from './CertificateAcquiredNote';
 
 export function TrainingStatusCard() {
-  const { trainingLevel, isLoading, error, refetch } = useTrainingLevel();
+  const { trainingLevel, isLoading, isToggling, error, refetch, toggleLevel } = useTrainingLevel();
 
   return (
     <Card>
@@ -39,6 +40,24 @@ export function TrainingStatusCard() {
                 ? 'Level 2 training is complete — you can book equipment.'
                 : 'Level 2 training is required to book equipment.'}
             </p>
+            <div className="space-y-1 pt-2">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={toggleLevel}
+                disabled={isToggling}
+              >
+                {isToggling
+                  ? 'Updating...'
+                  : trainingLevel === 'LEVEL_2'
+                    ? 'Downgrade to Level 1'
+                    : 'Level Up to Level 2'}
+              </Button>
+              <p className="text-xs text-muted-foreground">
+                For testing the booking gate!!* not a real feature yet (held until sept)
+              </p>
+            </div>
           </div>
         )}
       </CardContent>

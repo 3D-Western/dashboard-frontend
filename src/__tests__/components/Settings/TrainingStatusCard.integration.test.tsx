@@ -16,8 +16,10 @@ describe('TrainingStatusCard Integration', () => {
     (useTrainingLevel as Mock).mockReturnValue({
       trainingLevel: null,
       isLoading: true,
+      isToggling: false,
       error: null,
       refetch: vi.fn(),
+      toggleLevel: vi.fn(),
     });
 
     render(<TrainingStatusCard />);
@@ -29,8 +31,10 @@ describe('TrainingStatusCard Integration', () => {
     (useTrainingLevel as Mock).mockReturnValue({
       trainingLevel: null,
       isLoading: false,
+      isToggling: false,
       error: 'Failed to fetch',
       refetch: vi.fn(),
+      toggleLevel: vi.fn(),
     });
 
     render(<TrainingStatusCard />);
@@ -42,8 +46,10 @@ describe('TrainingStatusCard Integration', () => {
     (useTrainingLevel as Mock).mockReturnValue({
       trainingLevel: null,
       isLoading: false,
+      isToggling: false,
       error: null,
       refetch: vi.fn(),
+      toggleLevel: vi.fn(),
     });
 
     render(<TrainingStatusCard />);
@@ -55,8 +61,10 @@ describe('TrainingStatusCard Integration', () => {
     (useTrainingLevel as Mock).mockReturnValue({
       trainingLevel: 'LEVEL_1',
       isLoading: false,
+      isToggling: false,
       error: null,
       refetch: vi.fn(),
+      toggleLevel: vi.fn(),
     });
 
     render(<TrainingStatusCard />);
@@ -70,8 +78,10 @@ describe('TrainingStatusCard Integration', () => {
     (useTrainingLevel as Mock).mockReturnValue({
       trainingLevel: 'LEVEL_2',
       isLoading: false,
+      isToggling: false,
       error: null,
       refetch: vi.fn(),
+      toggleLevel: vi.fn(),
     });
 
     render(<TrainingStatusCard />);
@@ -79,5 +89,54 @@ describe('TrainingStatusCard Integration', () => {
     expect(screen.getByText('Level 2')).toBeInTheDocument();
     expect(screen.getByText('Certificate Acquired')).toBeInTheDocument();
     expect(screen.getByText(/you can book equipment/i)).toBeInTheDocument();
+  });
+
+  it('shows a "Level Up" button when on Level 1 and calls toggleLevel when clicked', () => {
+    const toggleLevel = vi.fn();
+    (useTrainingLevel as Mock).mockReturnValue({
+      trainingLevel: 'LEVEL_1',
+      isLoading: false,
+      isToggling: false,
+      error: null,
+      refetch: vi.fn(),
+      toggleLevel,
+    });
+
+    render(<TrainingStatusCard />);
+
+    const button = screen.getByRole('button', { name: /level up to level 2/i });
+    button.click();
+
+    expect(toggleLevel).toHaveBeenCalled();
+  });
+
+  it('shows a "Downgrade" button when on Level 2', () => {
+    (useTrainingLevel as Mock).mockReturnValue({
+      trainingLevel: 'LEVEL_2',
+      isLoading: false,
+      isToggling: false,
+      error: null,
+      refetch: vi.fn(),
+      toggleLevel: vi.fn(),
+    });
+
+    render(<TrainingStatusCard />);
+
+    expect(screen.getByRole('button', { name: /downgrade to level 1/i })).toBeInTheDocument();
+  });
+
+  it('disables the toggle button while isToggling is true', () => {
+    (useTrainingLevel as Mock).mockReturnValue({
+      trainingLevel: 'LEVEL_1',
+      isLoading: false,
+      isToggling: true,
+      error: null,
+      refetch: vi.fn(),
+      toggleLevel: vi.fn(),
+    });
+
+    render(<TrainingStatusCard />);
+
+    expect(screen.getByRole('button', { name: /updating/i })).toBeDisabled();
   });
 });

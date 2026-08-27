@@ -15,4 +15,19 @@ export const trainingAPI = {
       },
     );
   },
+
+  // client wrapper for updating the current user's training level (temporary test scaffolding
+  // for the booking gate, not a real feature - see Sprint 4 Slack thread)
+  updateTrainingLevel: async (trainingLevel: TrainingLevel, options?: RequestInit) => {
+    return apiRequest<{ trainingLevel: TrainingLevel }>(
+      `${getBaseUrl()}${endpoints.training.level}`,
+      {
+        method: 'PATCH',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ trainingLevel }),
+        ...options,
+      },
+    );
+  },
 };
