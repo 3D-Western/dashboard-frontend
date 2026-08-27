@@ -8,6 +8,7 @@ import { Invitation, InvitationStatus } from '@/types/invitation';
 import { UserResponse, GroupResponse } from '@/api/types';
 import { Booking, BookingStatus } from '@/types/booking';
 import { mockEquipment } from '@/api/mocks/data/equipment';
+import { UsageEntry, ProjectTypeLimit } from '@/types/usage';
 
 export const perm = (key: string, scopeKey = 'any'): UserPermission => ({ key, scopeKey });
 
@@ -409,3 +410,35 @@ export const createMockBooking = (overrides?: Partial<Booking>): Booking => {
     ...overrides,
   };
 };
+
+/**
+ * Creates a mock UsageEntry object
+ *
+ * @example
+ * ```ts
+ * const entry = createMockUsageEntry({ used: 4, limit: 5 });
+ * ```
+ */
+export const createMockUsageEntry = (overrides?: Partial<UsageEntry>): UsageEntry => ({
+  projectType: 'ThreeDPrint',
+  used: 2,
+  period: 'month',
+  ...overrides,
+});
+
+/**
+ * Creates a mock ProjectTypeLimit object
+ *
+ * @example
+ * ```ts
+ * const limit = createMockProjectTypeLimit({ projectType: 'CNC', limit: 2 });
+ * ```
+ */
+export const createMockProjectTypeLimit = (
+  overrides?: Partial<ProjectTypeLimit>,
+): ProjectTypeLimit => ({
+  projectType: 'ThreeDPrint',
+  limit: 5,
+  period: 'month',
+  ...overrides,
+});

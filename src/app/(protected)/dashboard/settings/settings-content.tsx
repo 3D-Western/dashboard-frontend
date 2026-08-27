@@ -31,6 +31,9 @@ import { userApi } from '@/api/client/user';
 import { ApiError } from '@/api/client/errors';
 import { useRouter } from 'next/navigation';
 import { Routes } from '@/lib/routes';
+import { UsageSummaryCard } from './components/UsageSummaryCard';
+import { LimitCard } from './components/LimitCard';
+import { TrainingStatusCard } from './components/TrainingStatusCard';
 
 // Password change form schema
 const passwordSchema = z
@@ -270,6 +273,10 @@ export function SettingsContent() {
             </Form>
           </CardContent>
         </Card>
+
+        <UsageSummaryCard />
+        <LimitCard />
+        <TrainingStatusCard />
       </div>
     </div>
   );
