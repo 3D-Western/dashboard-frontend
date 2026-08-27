@@ -25,9 +25,6 @@ export interface UserResponse {
   firstName: string;
   lastName: string;
   status?: string;
-  // HELLO THIS IS FOR NANCY REVIEW
-  // experience level no longer active but not removed because it breaks multiple other files
-  experienceLevel?: string;
   faculty?: string;
 }
 
@@ -67,9 +64,6 @@ export interface ApiSignupRequest {
   inviteCode: string;
   firstName: string;
   lastName: string;
-  // HELLO THIS IS FOR NANCY REVIEW
-  // experience level no longer active
-  // experienceLevel: string;
   faculty: string;
 }
 

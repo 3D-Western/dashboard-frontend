@@ -39,9 +39,6 @@ export const userHandlers = [
     const searchTerm = url.searchParams.get('search');
     const statusFilter = url.searchParams.get('status');
     const trainingLevelFilter = url.searchParams.get('trainingLevel');
-    // HELLO THIS IS FOR NANCY REVIEW
-    // removed to experience level filter no longer being active
-    // const experienceLevelFilter = url.searchParams.get('experienceLevel');
     const page = parseInt(url.searchParams.get('page') || '1', 10);
     const pageSize = parseInt(url.searchParams.get('pageSize') || '10', 10);
     const snapshotCreatedBefore =
@@ -77,12 +74,6 @@ export const userHandlers = [
     if (trainingLevelFilter) {
       users = users.filter((u) => u.trainingLevel === trainingLevelFilter);
     }
-    // HELLO THIS IS FOR NANCY REVIEW
-    // Apply experience level filter
-    // filter no longer active, experience level not used
-    // if (experienceLevelFilter) {
-    //   users = users.filter((u) => u.experienceLevel === experienceLevelFilter);
-    // }
 
     // Map to API response format (with capitalized values to match backend)
     const userList = users.map((u) => ({
@@ -93,13 +84,6 @@ export const userHandlers = [
       createdDate: u.createdDate || new Date().toISOString(),
       groups: u.groups,
       trainingLevel: u.trainingLevel,
-      // HELLO THIS IS FOR NANCY REVIEW
-      // experience level no longer active
-      // experienceLevel:
-      //   u.experienceLevel
-      //     ?.split('_')
-      //     .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-      //     .join('_') || 'Beginner', // "no_experience" -> "No_experience"
     }));
 
     // Calculate pagination
@@ -171,13 +155,6 @@ export const userHandlers = [
         createdDate: targetUser.createdDate || new Date().toISOString(),
         groups: targetUser.groups,
         trainingLevel: targetUser.trainingLevel,
-        // HELLO THIS IS FOR NANCY REVIEW
-        // experience level filter no longer active
-        // experienceLevel:
-        //   targetUser.experienceLevel
-        //     ?.split('_')
-        //     .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-        //     .join('_') || 'Beginner', // "no_experience" -> "No_experience"
       }),
     );
   }),

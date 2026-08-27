@@ -1,10 +1,7 @@
 'use client';
 import { ApiError } from '@/api/client/errors';
 import { sessionApi } from '@/api/client/session';
-import {
-  transformExperienceLevelToBackend,
-  transformFacultyToBackend,
-} from '@/api/client/transformers';
+import { transformFacultyToBackend } from '@/api/client/transformers';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -26,7 +23,6 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import { EXPERIENCE_LEVELS, EXPERIENCE_LEVEL_OPTIONS } from '@/constants/experience-levels';
 import { FACULTIES, FACULTY_OPTIONS } from '@/constants/faculties';
 import { Routes } from '@/lib/routes';
 import { cn } from '@/lib/utils';
@@ -65,11 +61,6 @@ const formSchema = z.object({
   inviteCode: z.string().min(1, 'Invite code is required'),
   firstName: z.string().min(1, 'First name is required'),
   lastName: z.string().min(1, 'Last name is required'),
-  experienceLevel: z.enum([
-    EXPERIENCE_LEVELS.NO_EXPERIENCE,
-    EXPERIENCE_LEVELS.BEGINNER,
-    EXPERIENCE_LEVELS.ADVANCED,
-  ]),
   faculty: z.enum([
     FACULTIES.UNDECLARED,
     FACULTIES.ARTS_AND_HUMANITIES,
@@ -105,7 +96,6 @@ export function SignupForm({ className, ...props }: React.ComponentProps<'div'>)
       inviteCode: '',
       firstName: '',
       lastName: '',
-      experienceLevel: EXPERIENCE_LEVELS.NO_EXPERIENCE,
       faculty: FACULTIES.UNDECLARED,
       agreedToTerms: false,
     },
@@ -141,7 +131,6 @@ export function SignupForm({ className, ...props }: React.ComponentProps<'div'>)
         inviteCode: values.inviteCode,
         firstName: values.firstName,
         lastName: values.lastName,
-        experienceLevel: transformExperienceLevelToBackend(values.experienceLevel),
         faculty: transformFacultyToBackend(values.faculty),
       };
 
@@ -308,31 +297,6 @@ export function SignupForm({ className, ...props }: React.ComponentProps<'div'>)
                 {/* Step 2: Complete Your Profile */}
                 {currentStep === 2 && (
                   <>
-                    <FormField
-                      control={form.control}
-                      name="experienceLevel"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Experience Level</FormLabel>
-                          <Select onValueChange={field.onChange} value={field.value}>
-                            <FormControl>
-                              <SelectTrigger>
-                                <SelectValue placeholder="Select your experience level" />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              {EXPERIENCE_LEVEL_OPTIONS.map((option) => (
-                                <SelectItem key={option.value} value={option.value}>
-                                  {option.label}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
                     <FormField
                       control={form.control}
                       name="faculty"

@@ -1,39 +1,7 @@
-import { User, UserExperienceLevel, UserFaculty, UserPermission } from '@/types/user';
+import { User, UserFaculty, UserPermission } from '@/types/user';
 import type { IamGroup } from '@/types/iam';
 import { PaginatedResponse } from '@/types/common';
 import { UserResponse, UserListResponseRaw, GroupResponse } from '../types';
-
-/**
- * Transforms frontend experience level to backend format.
- *
- * Frontend: "no_experience", "beginner", "advanced"
- * Backend: "NoExperience", "Beginner", "Advanced"
- */
-export function transformExperienceLevelToBackend(experienceLevel: UserExperienceLevel): string {
-  const mapping: Record<UserExperienceLevel, string> = {
-    no_experience: 'NoExperience',
-    beginner: 'Beginner',
-    advanced: 'Advanced',
-  };
-
-  return mapping[experienceLevel] || mapping['no_experience'];
-}
-
-/**
- * Transforms backend experience level to frontend format.
- *
- * Backend: "NoExperience", "Beginner", "Advanced"
- * Frontend: "no_experience", "beginner", "advanced"
- */
-export function transformExperienceLevelFromBackend(experienceLevel: string): UserExperienceLevel {
-  const mapping: Record<string, UserExperienceLevel> = {
-    NoExperience: 'no_experience',
-    Beginner: 'beginner',
-    Advanced: 'advanced',
-  };
-
-  return mapping[experienceLevel] || ('no_experience' as UserExperienceLevel);
-}
 
 /**
  * Transforms frontend faculty to backend format.
@@ -103,10 +71,10 @@ export function transformGroupResponse(groupResponse: GroupResponse): IamGroup {
 
 /**
  * Transforms a UserResponse from the backend into a User object for the frontend.
- * Handles case conversion for experienceLevel and faculty fields.
+ * Handles case conversion for the faculty field.
  *
- * Backend format: "Beginner", "Advanced", "NoExperience", "Engineering", etc.
- * Frontend format: "beginner", "advanced", "no_experience", "engineering", etc.
+ * Backend format: "Engineering", etc.
+ * Frontend format: "engineering", etc.
  */
 export function transformUserResponse(
   userResponse: UserResponse,
@@ -120,9 +88,6 @@ export function transformUserResponse(
     lastName: userResponse.lastName,
     groups: groups.map(transformGroupResponse),
     permissions,
-    experienceLevel: userResponse.experienceLevel
-      ? transformExperienceLevelFromBackend(userResponse.experienceLevel)
-      : undefined,
     faculty: userResponse.faculty ? transformFacultyFromBackend(userResponse.faculty) : undefined,
   };
 }

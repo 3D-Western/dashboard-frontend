@@ -1,7 +1,5 @@
 import { describe, it, expect } from 'vitest';
 import {
-  transformExperienceLevelToBackend,
-  transformExperienceLevelFromBackend,
   transformFacultyToBackend,
   transformFacultyFromBackend,
   transformUserResponse,
@@ -11,42 +9,6 @@ import { UserResponse, UserListResponseRaw } from '../types';
 import { createMockUserResponse } from '@test/utils/mockFactories';
 
 describe('transformers', () => {
-  describe('transformExperienceLevelToBackend', () => {
-    it('transforms "no_experience" to "NoExperience"', () => {
-      expect(transformExperienceLevelToBackend('no_experience')).toBe('NoExperience');
-    });
-
-    it('transforms "beginner" to "Beginner"', () => {
-      expect(transformExperienceLevelToBackend('beginner')).toBe('Beginner');
-    });
-
-    it('transforms "advanced" to "Advanced"', () => {
-      expect(transformExperienceLevelToBackend('advanced')).toBe('Advanced');
-    });
-  });
-
-  describe('transformExperienceLevelFromBackend', () => {
-    it('transforms "NoExperience" to "no_experience"', () => {
-      expect(transformExperienceLevelFromBackend('NoExperience')).toBe('no_experience');
-    });
-
-    it('transforms "Beginner" to "beginner"', () => {
-      expect(transformExperienceLevelFromBackend('Beginner')).toBe('beginner');
-    });
-
-    it('transforms "Advanced" to "advanced"', () => {
-      expect(transformExperienceLevelFromBackend('Advanced')).toBe('advanced');
-    });
-
-    it('returns "no_experience" as fallback for unknown values', () => {
-      expect(transformExperienceLevelFromBackend('Unknown')).toBe('no_experience');
-    });
-
-    it('returns "no_experience" as fallback for empty string', () => {
-      expect(transformExperienceLevelFromBackend('')).toBe('no_experience');
-    });
-  });
-
   describe('transformFacultyToBackend', () => {
     it('transforms "undeclared" to "Undeclared"', () => {
       expect(transformFacultyToBackend('undeclared')).toBe('Undeclared');
@@ -170,7 +132,6 @@ describe('transformers', () => {
         email: 'test@uwo.ca',
         firstName: 'John',
         lastName: 'Doe',
-        experienceLevel: 'Beginner',
         faculty: 'Engineering',
       };
 
@@ -183,7 +144,6 @@ describe('transformers', () => {
         lastName: 'Doe',
         groups: [],
         permissions: [],
-        experienceLevel: 'beginner',
         faculty: 'engineering',
       });
     });
@@ -256,19 +216,6 @@ describe('transformers', () => {
       expect(result.groups).toEqual([]);
     });
 
-    it('handles missing experienceLevel field', () => {
-      const userResponse: UserResponse = {
-        studentId: 251000001,
-        email: 'test@uwo.ca',
-        firstName: 'John',
-        lastName: 'Doe',
-      };
-
-      const result = transformUserResponse(userResponse);
-
-      expect(result.experienceLevel).toBeUndefined();
-    });
-
     it('handles missing faculty field', () => {
       const userResponse: UserResponse = {
         studentId: 251000001,
@@ -280,20 +227,6 @@ describe('transformers', () => {
       const result = transformUserResponse(userResponse);
 
       expect(result.faculty).toBeUndefined();
-    });
-
-    it('transforms experienceLevel correctly', () => {
-      const userResponse: UserResponse = {
-        studentId: 251000001,
-        email: 'test@uwo.ca',
-        firstName: 'John',
-        lastName: 'Doe',
-        experienceLevel: 'Advanced',
-      };
-
-      const result = transformUserResponse(userResponse);
-
-      expect(result.experienceLevel).toBe('advanced');
     });
 
     it('transforms faculty correctly', () => {
@@ -316,7 +249,6 @@ describe('transformers', () => {
         email: 'specific@uwo.ca',
         firstName: 'Jane',
         lastName: 'Smith',
-        experienceLevel: 'NoExperience',
         faculty: 'ArtsAndHumanities',
       });
 
@@ -327,7 +259,6 @@ describe('transformers', () => {
       expect(result.firstName).toBe('Jane');
       expect(result.lastName).toBe('Smith');
       expect(result.groups).toEqual([]);
-      expect(result.experienceLevel).toBe('no_experience');
       expect(result.faculty).toBe('arts_and_humanities');
     });
 
@@ -337,13 +268,11 @@ describe('transformers', () => {
         email: 'unknown@uwo.ca',
         firstName: 'Mystery',
         lastName: 'User',
-        experienceLevel: 'UnknownLevel',
         faculty: 'UnknownFaculty',
       };
 
       const result = transformUserResponse(userResponse);
 
-      expect(result.experienceLevel).toBe('no_experience');
       expect(result.faculty).toBe('undeclared');
     });
   });
@@ -377,7 +306,6 @@ describe('transformers', () => {
         email: 'test@uwo.ca',
         firstName: 'John',
         lastName: 'Doe',
-        experienceLevel: 'Beginner',
         faculty: 'Engineering',
       };
 
@@ -404,7 +332,6 @@ describe('transformers', () => {
         lastName: 'Doe',
         groups: [],
         permissions: [],
-        experienceLevel: 'beginner',
         faculty: 'engineering',
       });
       expect(result.pagination.totalItems).toBe(1);
@@ -419,7 +346,6 @@ describe('transformers', () => {
           email: 'user1@uwo.ca',
           firstName: 'User',
           lastName: 'One',
-          experienceLevel: 'Beginner',
           faculty: 'Engineering',
         },
         {
@@ -427,7 +353,6 @@ describe('transformers', () => {
           email: 'admin@uwo.ca',
           firstName: 'Admin',
           lastName: 'User',
-          experienceLevel: 'Advanced',
           faculty: 'Science',
         },
         {
@@ -455,8 +380,8 @@ describe('transformers', () => {
 
       expect(result.data).toHaveLength(3);
       expect(result.data[0].groups).toEqual([]);
-      expect(result.data[1].experienceLevel).toBe('advanced');
-      expect(result.data[2].experienceLevel).toBeUndefined();
+      expect(result.data[1].faculty).toBe('science');
+      expect(result.data[2].faculty).toBeUndefined();
       expect(result.pagination.totalItems).toBe(3);
     });
 

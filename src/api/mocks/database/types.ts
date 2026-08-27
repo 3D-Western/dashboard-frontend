@@ -10,9 +10,6 @@ export interface User {
   experience: string;
   createdDate?: string;
   trainingLevel?: TrainingLevel;
-  // HELLO THIS IS FOR NANCY REVIEW
-  // eperience level no longer valid , But not removed because it breaks multiple other files
-  experienceLevel?: 'Novice' | 'Intermediate' | 'Expert';
 }
 
 export interface File {
@@ -42,14 +39,7 @@ export interface BasePrintJob {
 }
 
 export type PrintJobStatus =
-  | 'InQueue'
-  | 'Printing'
-  | 'Ready'
-  | 'Flagged'
-  | 'Error'
-  | 'Succeeded'
-  | 'Failed'
-  | 'PendingFile';
+  'InQueue' | 'Printing' | 'Ready' | 'Flagged' | 'Error' | 'Succeeded' | 'Failed' | 'PendingFile';
 export type CompletePrintJobStatus = 'Succeeded' | 'Failed';
 
 export interface PrintJob extends BasePrintJob {

@@ -23,11 +23,6 @@ export const userApi = {
     if (params?.trainingLevel !== undefined) {
       searchParams.append('trainingLevel', params.trainingLevel);
     }
-    // HELLO THIS IS FOR NANCY REVIEW
-    // removed due to experience level no longer being used
-    // if (params?.experienceLevel !== undefined) {
-    //   searchParams.append('experienceLevel', params.experienceLevel);
-    // }
     if (params?.page !== undefined) {
       searchParams.append('page', params.page.toString());
     }

@@ -18,15 +18,6 @@ import {
   FormMessage,
   FormDescription,
 } from '@/components/ui/form';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import { EXPERIENCE_LEVEL_OPTIONS, EXPERIENCE_LEVELS } from '@/constants/experience-levels';
-import { useUser } from '@/providers/user-provider';
 import { userApi } from '@/api/client/user';
 import { ApiError } from '@/api/client/errors';
 import { useRouter } from 'next/navigation';
@@ -53,23 +44,11 @@ const passwordSchema = z
     path: ['confirmPassword'],
   });
 
-// Experience level form schema
-const experienceLevelSchema = z.object({
-  experienceLevel: z.enum([
-    EXPERIENCE_LEVELS.NO_EXPERIENCE,
-    EXPERIENCE_LEVELS.BEGINNER,
-    EXPERIENCE_LEVELS.ADVANCED,
-  ]),
-});
-
 type PasswordFormData = z.infer<typeof passwordSchema>;
-type ExperienceLevelFormData = z.infer<typeof experienceLevelSchema>;
 
 export function SettingsContent() {
-  const user = useUser();
   const router = useRouter();
   const [isPasswordLoading, setIsPasswordLoading] = useState(false);
-  const [isExperienceLoading, setIsExperienceLoading] = useState(false);
 
   const passwordForm = useForm<PasswordFormData>({
     resolver: zodResolver(passwordSchema),
@@ -78,13 +57,6 @@ export function SettingsContent() {
       newPassword: '',
       confirmPassword: '',
       invalidateAllSessions: false,
-    },
-  });
-
-  const experienceForm = useForm<ExperienceLevelFormData>({
-    resolver: zodResolver(experienceLevelSchema),
-    defaultValues: {
-      experienceLevel: user?.experienceLevel || EXPERIENCE_LEVELS.NO_EXPERIENCE,
     },
   });
 
@@ -116,35 +88,6 @@ export function SettingsContent() {
       }
     } finally {
       setIsPasswordLoading(false);
-    }
-  }
-
-  async function onExperienceLevelSubmit(values: ExperienceLevelFormData) {
-    try {
-      setIsExperienceLoading(true);
-
-      const response = await fetch('/api/user/experience-level', {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          experienceLevel: values.experienceLevel,
-        }),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({ message: 'An error occurred' }));
-        toast.error(errorData.message || 'Failed to update experience level');
-        return;
-      }
-
-      toast.success('Experience level updated successfully');
-    } catch (error) {
-      console.error('Experience level update error', error);
-      toast.error('Failed to connect to the server. Please try again.');
-    } finally {
-      setIsExperienceLoading(false);
     }
   }
 
@@ -223,51 +166,6 @@ export function SettingsContent() {
 
                 <Button type="submit" disabled={isPasswordLoading}>
                   {isPasswordLoading ? 'Updating...' : 'Update Password'}
-                </Button>
-              </form>
-            </Form>
-          </CardContent>
-        </Card>
-
-        {/* Experience Level Card */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Experience Level</CardTitle>
-            <CardDescription>Update your 3D printing experience level</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Form {...experienceForm}>
-              <form
-                onSubmit={experienceForm.handleSubmit(onExperienceLevelSubmit)}
-                className="space-y-4"
-              >
-                <FormField
-                  control={experienceForm.control}
-                  name="experienceLevel"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Experience Level</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select your experience level" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {EXPERIENCE_LEVEL_OPTIONS.map((option) => (
-                            <SelectItem key={option.value} value={option.value}>
-                              {option.label}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <Button type="submit" disabled={isExperienceLoading}>
-                  {isExperienceLoading ? 'Updating...' : 'Update Experience Level'}
                 </Button>
               </form>
             </Form>

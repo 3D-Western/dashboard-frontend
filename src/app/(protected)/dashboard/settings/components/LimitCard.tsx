@@ -73,10 +73,7 @@ export function LimitCard() {
               const limitReached = !isUnlimited && used >= limit.limit;
 
               return (
-                <div
-                  key={limit.projectType}
-                  className="flex items-center justify-between text-sm"
-                >
+                <div key={limit.projectType} className="flex items-center justify-between text-sm">
                   <span className="font-medium">{label}</span>
                   <span className="flex items-center gap-2">
                     <span className="text-muted-foreground">

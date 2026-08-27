@@ -147,9 +147,6 @@ describe('UserProvider Integration', () => {
     const adminUser = createMockAdmin({
       firstName: 'Admin',
       lastName: 'User',
-      // HELLO THIS IS FOR NANCY REVIEW
-      // experience level no longer used
-      // experienceLevel: 'advanced',
     });
 
     render(
@@ -161,32 +158,4 @@ describe('UserProvider Integration', () => {
     expect(screen.getByTestId('user-name')).toHaveTextContent('Admin User');
     expect(screen.getByTestId('user-groups')).toHaveTextContent('super_admins');
   });
-
-  // HELLO THIS IS FOR NANCY REVIEW
-  // experience level no longer supported
-  //   it('handles user with different experience levels', () => {
-  //     const beginnerUser = createMockUser({
-  //       experienceLevel: 'beginner',
-  //     });
-
-  //     const advancedUser = createMockUser({
-  //       experienceLevel: 'advanced',
-  //     });
-
-  //     const { rerender } = render(
-  //       <UserProvider user={beginnerUser}>
-  //         <TestComponent />
-  //       </UserProvider>,
-  //     );
-
-  //     expect(screen.getByTestId('user-name')).toBeInTheDocument();
-
-  //     rerender(
-  //       <UserProvider user={advancedUser}>
-  //         <TestComponent />
-  //       </UserProvider>,
-  //     );
-
-  //     expect(screen.getByTestId('user-name')).toBeInTheDocument();
-  //   });
 });

@@ -56,9 +56,6 @@ export interface UserListParams extends BasePaginationParams {
   search?: string;
   status?: string;
   trainingLevel?: string;
-  // HELLO THIS IS FOR NANCY REVIEW
-  // no longer being used but not removed because breaks multiple other files
-  // experienceLevel?: string;
 }
 
 export interface CurrentUserJobListParams extends BasePaginationParams {

@@ -229,7 +229,10 @@ export class Database {
     return this.users.get(userId) || null;
   }
 
-  public updateUserTrainingLevel(userId: number, trainingLevel: User['trainingLevel']): User | null {
+  public updateUserTrainingLevel(
+    userId: number,
+    trainingLevel: User['trainingLevel'],
+  ): User | null {
     const user = this.users.get(userId);
     if (!user) {
       return null;

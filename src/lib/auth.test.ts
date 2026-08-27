@@ -17,7 +17,6 @@ describe('auth', () => {
 
       const result = await validateSession();
 
-      // Backend doesn't return experienceLevel, so we only check the fields that are returned
       expect(result).toMatchObject({
         studentId: mockUser.studentId,
         email: mockUser.email,

@@ -1,5 +1,4 @@
 import { faker } from '@faker-js/faker';
-// removed experience level from here UserExperienceLevel
 import { User, UserPermission } from '@/types/user';
 import type { IamGroup } from '@/types/iam';
 import { PrintJob, PrintJobStatus, CompletedPrintJob, ETA, StatusHistory } from '@/types/jobs';
@@ -49,9 +48,6 @@ export const createMockUser = (overrides?: Partial<User>): User => ({
   lastName: faker.person.lastName(),
   groups: [MOCK_GROUP_MEMBERS],
   permissions: [],
-  // HELLO THIS IS FOR NANCY REVIEW
-  // experience level no longer used
-  // experienceLevel: 'beginner' as UserExperienceLevel,
   ...overrides,
 });
 
@@ -64,8 +60,6 @@ export const createMockUser = (overrides?: Partial<User>): User => ({
  * ```
  */
 export const createMockAdmin = (overrides?: Partial<User>): User =>
-  // HELLO THIS IS FOR NANCY REVIEW
-  //  experienceLevel: 'advanced', removed this from this because experience level no longer there
   createMockUser({ groups: [MOCK_GROUP_SUPER_ADMINS], ...overrides });
 
 /**

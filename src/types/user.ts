@@ -1,11 +1,7 @@
-import type { ExperienceLevel } from '@/constants/experience-levels';
 import type { Faculty } from '@/constants/faculties';
 import { ADMIN_SECTION_PERMISSIONS } from '@/constants/permissions';
 import type { IamGroup } from '@/types/iam';
 
-// HELLO THIS IS FOR NANCY REVIEW
-// flagged but not removed breaks multiple files if removed
-export type UserExperienceLevel = ExperienceLevel;
 export type UserFaculty = Faculty;
 
 export interface UserPermission {
@@ -20,9 +16,6 @@ export interface User {
   lastName: string;
   groups: IamGroup[];
   permissions: UserPermission[];
-  // HELLO THIS IS FOR NANCY REVIEW
-  // no longer being used experience level but not removed because breaks multiple other files
-  experienceLevel?: UserExperienceLevel;
   faculty?: UserFaculty;
 }
 
