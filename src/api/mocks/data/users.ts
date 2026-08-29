@@ -10,8 +10,7 @@ export const mockUsers: User[] = [
     experience: 'advanced',
     password: 'password',
     createdDate: new Date('2024-01-01').toISOString(),
-    trainingLevel: 'Level 1',
-    experienceLevel: 'Expert',
+    trainingLevel: 'LEVEL_2',
   },
   {
     studentId: 251000001,
@@ -22,8 +21,7 @@ export const mockUsers: User[] = [
     experience: 'advanced',
     password: 'password',
     createdDate: new Date('2024-01-01').toISOString(),
-    trainingLevel: 'Level 1',
-    experienceLevel: 'Expert',
+    trainingLevel: 'LEVEL_2',
   },
   {
     studentId: 251000002,
@@ -34,7 +32,6 @@ export const mockUsers: User[] = [
     experience: 'beginner',
     password: 'password',
     createdDate: new Date('2024-01-15').toISOString(),
-    trainingLevel: 'None',
-    experienceLevel: 'Novice',
+    trainingLevel: 'LEVEL_1',
   },
 ];

@@ -33,7 +33,7 @@ export function validateRestrictions(equipmentId: string, userId: number): Restr
   const settings = db.getCapacitySettings(equipmentId);
   const user = db.getUserById(userId);
   const violations: RestrictionViolation[] = [];
-  if (settings.restrictions.requiresTraining && user?.trainingLevel !== 'Level 1') {
+  if (settings.restrictions.requiresTraining && user?.trainingLevel !== 'LEVEL_2') {
     violations.push({
       rule: 'TrainingRequired',
       message: 'Level 1 training is required to book this equipment.',

@@ -1,9 +1,7 @@
-import type { ExperienceLevel } from '@/constants/experience-levels';
 import type { Faculty } from '@/constants/faculties';
 import { ADMIN_SECTION_PERMISSIONS } from '@/constants/permissions';
 import type { IamGroup } from '@/types/iam';
 
-export type UserExperienceLevel = ExperienceLevel;
 export type UserFaculty = Faculty;
 
 export interface UserPermission {
@@ -18,7 +16,6 @@ export interface User {
   lastName: string;
   groups: IamGroup[];
   permissions: UserPermission[];
-  experienceLevel?: UserExperienceLevel;
   faculty?: UserFaculty;
 }
 

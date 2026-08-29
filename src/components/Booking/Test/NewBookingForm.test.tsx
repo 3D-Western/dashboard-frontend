@@ -1,6 +1,7 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach, Mock } from 'vitest';
 import NewBookingForm from '../NewBookingForm';
+import { useTrainingLevel } from '@/hooks/useTraining';
 
 // Import the hooks so we can mock their return values dynamically
 import { useRouter } from 'next/navigation';
@@ -23,6 +24,10 @@ vi.mock('@/hooks/useBookings', () => ({
 
 vi.mock('@/api/client/base', () => ({
   apiRequest: vi.fn(),
+}));
+
+vi.mock('@/hooks/useTraining', () => ({
+  useTrainingLevel: vi.fn(),
 }));
 
 describe('NewBookingForm', () => {
@@ -61,6 +66,13 @@ describe('NewBookingForm', () => {
         allowWaitlist: false,
         restrictions: { requiresTraining: false },
       },
+    });
+
+    (useTrainingLevel as Mock).mockReturnValue({
+      trainingLevel: 'LEVEL_2',
+      isLoading: false,
+      error: null,
+      refetch: vi.fn(),
     });
   });
 

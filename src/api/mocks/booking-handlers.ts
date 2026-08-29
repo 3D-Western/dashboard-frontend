@@ -15,6 +15,7 @@ import {
   validateRestrictions,
   suggestAlternativeSlots,
 } from '@/utils/booking-validators';
+import { canAccessBooking } from '@/utils/usage-calculators';
 
 const apiUrl = process.env.API_URL;
 
@@ -145,6 +146,16 @@ export const bookingHandlers = [
     const selectedEquipment = mockEquipment.find((e) => e.id === body.equipmentId);
     if (!selectedEquipment) {
       return HttpResponse.json({ error: 'Equipment not found' }, { status: 404 });
+    }
+
+    if (!canAccessBooking(user.trainingLevel)) {
+      return HttpResponse.json(
+        {
+          code: 'TRAINING_LEVEL_REQUIRED',
+          message: 'You must complete required training before booking equipment.',
+        },
+        { status: 403 },
+      );
     }
 
     const settings = db.getCapacitySettings(body.equipmentId);

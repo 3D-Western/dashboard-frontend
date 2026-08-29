@@ -25,7 +25,6 @@ export interface UserResponse {
   firstName: string;
   lastName: string;
   status?: string;
-  experienceLevel?: string;
   faculty?: string;
 }
 
@@ -65,7 +64,6 @@ export interface ApiSignupRequest {
   inviteCode: string;
   firstName: string;
   lastName: string;
-  experienceLevel: string;
   faculty: string;
 }
 

@@ -56,7 +56,6 @@ export interface UserListParams extends BasePaginationParams {
   search?: string;
   status?: string;
   trainingLevel?: string;
-  experienceLevel?: string;
 }
 
 export interface CurrentUserJobListParams extends BasePaginationParams {

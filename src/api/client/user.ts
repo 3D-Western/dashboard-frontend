@@ -23,9 +23,6 @@ export const userApi = {
     if (params?.trainingLevel !== undefined) {
       searchParams.append('trainingLevel', params.trainingLevel);
     }
-    if (params?.experienceLevel !== undefined) {
-      searchParams.append('experienceLevel', params.experienceLevel);
-    }
     if (params?.page !== undefined) {
       searchParams.append('page', params.page.toString());
     }

@@ -1,3 +1,5 @@
+import { TrainingLevel } from '@/types/training';
+
 export interface User {
   studentId: number;
   lastName: string;
@@ -7,8 +9,7 @@ export interface User {
   groups: string[]; // group keys, e.g. ['members'] or ['super_admins']
   experience: string;
   createdDate?: string;
-  trainingLevel?: 'None' | 'Level 1';
-  experienceLevel?: 'Novice' | 'Intermediate' | 'Expert';
+  trainingLevel?: TrainingLevel;
 }
 
 export interface File {
