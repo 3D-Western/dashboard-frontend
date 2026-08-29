@@ -74,4 +74,5 @@ export interface BookingsListParams extends BasePaginationParams {
   startTime?: string;
   endTime?: string;
   status?: BookingStatus;
+  hasConflict?: boolean;
 }
