@@ -129,6 +129,7 @@ export class Database {
       experience: '',
       createdDate: new Date().toISOString(),
       emailVerified: false,
+      onboardingCompleted: false,
     };
     this.users.set(user.studentId, user);
     this.activePrintJobsUserMap.set(user.studentId, []);
@@ -295,7 +296,7 @@ export class Database {
   }
 
   public getOnboardingStatus(userId: number): boolean {
-    return this.users.get(userId)?.onboardingCompleted ?? false;
+    return this.users.get(userId)?.onboardingCompleted ?? true;
   }
 
   public completeOnboarding(userId: number, answers: OnboardingAnswers): User | null {

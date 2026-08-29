@@ -11,6 +11,9 @@ export interface User {
   experience: string;
   createdDate?: string;
   trainingLevel?: TrainingLevel;
+  // Absent/undefined is treated as completed (see db.ts), matching the emailVerified convention
+  // below — existing seeded users, which never set this field, aren't retroactively sent back
+  // through onboarding. Only a newly mock-signed-up user starts with this explicitly `false`.
   onboardingCompleted?: boolean;
   onboardingAnswers?: OnboardingAnswers;
   // Absent/undefined is treated as verified (see db.ts) so existing seeded users, which never

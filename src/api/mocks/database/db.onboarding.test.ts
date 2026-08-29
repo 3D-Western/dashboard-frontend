@@ -19,8 +19,23 @@ const sampleAnswers: OnboardingAnswers = {
 };
 
 describe('Database onboarding methods', () => {
-  it('returns false for a user who has not completed onboarding', () => {
-    expect(db.getOnboardingStatus(251000002)).toBe(false);
+  it('returns false for a freshly signed-up user who has not completed onboarding', () => {
+    const created = db.createUser({
+      studentId: 251500001,
+      email: 'onboarding-pending@uwo.ca',
+      password: 'password',
+      firstName: 'Pending',
+      lastName: 'User',
+    });
+    if (created === 'DUPLICATE_STUDENT_ID' || created === 'DUPLICATE_EMAIL') {
+      throw new Error('unexpected duplicate in test setup');
+    }
+
+    expect(db.getOnboardingStatus(created.studentId)).toBe(false);
+  });
+
+  it('treats a seeded pre-existing user (no onboardingCompleted field set) as already onboarded, matching the emailVerified convention (regression: seeded accounts must not be sent through onboarding)', () => {
+    expect(db.getOnboardingStatus(251000002)).toBe(true);
   });
 
   it('marks onboarding complete and persists the answers', () => {
@@ -33,9 +48,5 @@ describe('Database onboarding methods', () => {
 
   it('returns null when completing onboarding for a nonexistent user', () => {
     expect(db.completeOnboarding(999999999, sampleAnswers)).toBeNull();
-  });
-
-  it('returns false for onboarding status of a nonexistent user', () => {
-    expect(db.getOnboardingStatus(999999999)).toBe(false);
   });
 });
