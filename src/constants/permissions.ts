@@ -270,15 +270,19 @@ export const LOCKED_ROLE_KEYS = ['super_admin', 'member'] as const;
 export const HIDDEN_GROUP_KEYS = ['members'] as const;
 
 // Permissions that grant access to the admin section (at least one required)
+// NOTE: BOOKINGS_READ and JOBS_LIST are deliberately excluded — both are granted to regular
+// members too (own-scoped: reading the booking calendar, listing their own jobs), and
+// hasPermission()/hasAnyAdminPermission() only match on the permission key, not scopeKey, so
+// including either here made every regular member incorrectly pass hasAnyAdminPermission() and
+// see the Admin nav section / pass the /admin route guard. Verified systematically against the
+// full MEMBER_PERMISSIONS list (src/api/mocks/utils.ts) — these two are the only overlaps.
 export const ADMIN_SECTION_PERMISSIONS: PermissionKey[] = [
   PERMISSIONS.USERS_LIST,
-  PERMISSIONS.JOBS_LIST,
   PERMISSIONS.INVITATIONS_LIST,
   PERMISSIONS.IAM_READ,
   PERMISSIONS.AUDIT_READ,
   PERMISSIONS.BOOKINGS_LIST,
   PERMISSIONS.BOOKINGS_UPDATE_STATUS,
-  PERMISSIONS.BOOKINGS_READ,
   PERMISSIONS.BOOKINGS_CREATE,
   PERMISSIONS.BOOKINGS_CANCEL,
 ];
