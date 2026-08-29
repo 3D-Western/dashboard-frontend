@@ -64,7 +64,9 @@ export interface ApiSignupRequest {
   inviteCode: string;
   firstName: string;
   lastName: string;
-  faculty: string;
+  // Faculty now collected in the post-login Onboarding questionnaire instead of at signup —
+  // see feat/onboarding-questionnaire. Optional here since Signup no longer sends it.
+  faculty?: string;
 }
 
 export interface VerifyEmailResponse {

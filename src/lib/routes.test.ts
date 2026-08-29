@@ -22,6 +22,10 @@ describe('Routes', () => {
     it('defines reset password route', () => {
       expect(Routes.resetPassword).toBe('/reset-password');
     });
+
+    it('defines onboarding route', () => {
+      expect(Routes.onboarding).toBe('/onboarding');
+    });
   });
 
   describe('user dashboard routes', () => {

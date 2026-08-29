@@ -1,4 +1,5 @@
 import { PrintJob, User, FileMetadata, Invitation, InvitationStatus } from './types';
+import { OnboardingAnswers } from '@/types/onboarding';
 import { mockUsers } from '../data/users';
 import { mockPrintJobs } from '../data/print-jobs';
 import { mockInvitations } from '../data/invitations';
@@ -13,6 +14,7 @@ export class Database {
   private users: Map<number, User> = new Map();
   private sessions: Map<string, number> = new Map(); // sessionId to userId
   private mfaChallenges: Map<number, number> = new Map(); // challengeId to userId
+  private verificationTokens: Map<string, number> = new Map(); // token to userId
   private activePrintJobsUserMap: Map<number, PrintJob[]> = new Map(); // userId to PrintJobs
   private activePrintJobsIDMap: Map<string, PrintJob> = new Map(); // printJobId to PrintJob
   private files: Map<string, FileMetadata> = new Map(); // fileId to FileMetadata
@@ -100,6 +102,57 @@ export class Database {
     if (user.password !== password) {
       return null;
     }
+    return user;
+  }
+
+  public createUser(input: {
+    studentId: number;
+    email: string;
+    password: string;
+    firstName: string;
+    lastName: string;
+  }): User | 'DUPLICATE_STUDENT_ID' | 'DUPLICATE_EMAIL' {
+    if (this.users.has(input.studentId)) {
+      return 'DUPLICATE_STUDENT_ID';
+    }
+    if (Array.from(this.users.values()).some((u) => u.email === input.email)) {
+      return 'DUPLICATE_EMAIL';
+    }
+
+    const user: User = {
+      studentId: input.studentId,
+      email: input.email,
+      password: input.password,
+      firstName: input.firstName,
+      lastName: input.lastName,
+      groups: ['members'],
+      experience: '',
+      createdDate: new Date().toISOString(),
+      emailVerified: false,
+    };
+    this.users.set(user.studentId, user);
+    this.activePrintJobsUserMap.set(user.studentId, []);
+    return user;
+  }
+
+  public createVerificationToken(userId: number): string {
+    const token = `verify-${Math.random().toString(36).slice(2)}`;
+    this.verificationTokens.set(token, userId);
+    console.log(`[MSW Mock] Email verification token for student ${userId}: ${token}`);
+    return token;
+  }
+
+  public verifyEmailToken(token: string): User | null {
+    const userId = this.verificationTokens.get(token);
+    if (!userId) {
+      return null;
+    }
+    const user = this.users.get(userId);
+    if (!user) {
+      return null;
+    }
+    user.emailVerified = true;
+    this.verificationTokens.delete(token);
     return user;
   }
 
@@ -238,6 +291,20 @@ export class Database {
       return null;
     }
     user.trainingLevel = trainingLevel;
+    return user;
+  }
+
+  public getOnboardingStatus(userId: number): boolean {
+    return this.users.get(userId)?.onboardingCompleted ?? false;
+  }
+
+  public completeOnboarding(userId: number, answers: OnboardingAnswers): User | null {
+    const user = this.users.get(userId);
+    if (!user) {
+      return null;
+    }
+    user.onboardingCompleted = true;
+    user.onboardingAnswers = answers;
     return user;
   }
 
