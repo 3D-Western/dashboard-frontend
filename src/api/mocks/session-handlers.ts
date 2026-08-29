@@ -30,6 +30,16 @@ export const sessionHandlers = [
       );
     }
 
+    if (user.emailVerified === false) {
+      return HttpResponse.json(
+        generateErrorResponse({
+          code: ErrorCodes.EMAIL_NOT_VERIFIED,
+          message: 'You must verify your email before logging in',
+        }),
+        { status: 401 },
+      );
+    }
+
     // Mock MFA flow - return mfaToken instead of sessionToken
     const mfaToken = 'mock-mfa-token-' + Date.now();
     const challengeId = 123;
@@ -60,6 +70,77 @@ export const sessionHandlers = [
       {
         headers: headers,
       },
+    );
+  }),
+
+  // Faithful to the real backend's SessionService.signup(): creates an unverified account,
+  // sends (logs) a verification token, and never returns a session/mfa token from signup itself.
+  http.post(`${apiUrl}${endpoints.auth.signup}`, async ({ request }) => {
+    const body = (await request.json()) as {
+      studentId: number;
+      email: string;
+      password: string;
+      firstName: string;
+      lastName: string;
+    };
+
+    const result = db.createUser(body);
+
+    if (result === 'DUPLICATE_STUDENT_ID') {
+      return HttpResponse.json(
+        generateErrorResponse({
+          code: 'USER_ALREADY_EXISTS',
+          message: `User with student ID ${body.studentId} already exists`,
+        }),
+        { status: 409 },
+      );
+    }
+    if (result === 'DUPLICATE_EMAIL') {
+      return HttpResponse.json(
+        generateErrorResponse({
+          code: 'USER_ALREADY_EXISTS',
+          message: `User with email ${body.email} already exists`,
+        }),
+        { status: 409 },
+      );
+    }
+
+    db.createVerificationToken(result.studentId);
+
+    return HttpResponse.json(
+      generateSuccessResponse({
+        user: {
+          studentId: result.studentId,
+          email: result.email,
+          firstName: result.firstName,
+          lastName: result.lastName,
+        },
+        requiresEmailVerification: true,
+        message: 'Account created successfully. Please check your email to verify your account.',
+      }),
+      { status: 201 },
+    );
+  }),
+
+  http.post(`${apiUrl}${endpoints.emailVerify.verifyEmail}`, async ({ request }) => {
+    const { token } = (await request.json()) as { token: string };
+    const user = db.verifyEmailToken(token);
+
+    if (!user) {
+      return HttpResponse.json(
+        generateErrorResponse({
+          code: 'INVALID_VERIFICATION_TOKEN',
+          message: 'Invalid or expired verification token',
+        }),
+        { status: 400 },
+      );
+    }
+
+    return HttpResponse.json(
+      generateSuccessResponse({
+        message: 'Email verified successfully. You can now log in.',
+        email: user.email,
+      }),
     );
   }),
 

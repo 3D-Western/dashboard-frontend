@@ -88,6 +88,9 @@ export const endpoints = {
   training: {
     level: '/api/v1/users/me/training-level', //get users level
   },
+  onboarding: {
+    status: '/api/v1/users/me/onboarding',
+  },
   usage: {
     summary: (userId: string) => `/api/v1/users/${userId}/usage`,
     limits: (userId: string) => `/api/v1/users/${userId}/limits`,
