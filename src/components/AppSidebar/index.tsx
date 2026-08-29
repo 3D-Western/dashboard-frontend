@@ -81,7 +81,10 @@ const adminNavigationItems = [
     title: 'Job Management',
     url: Routes.adminJobsManagement,
     icon: Settings,
-    permission: PERMISSIONS.JOBS_LIST,
+    // JOBS_LIST is also granted to regular members (own-scoped, for "My Jobs"), so it can't
+    // distinguish admins here. JOBS_UPDATE_STATUS is the permission the actual admin job-status
+    // override endpoint requires (PATCH /jobs/:jobId) and is never granted to members.
+    permission: PERMISSIONS.JOBS_UPDATE_STATUS,
   },
   {
     title: 'Invitation Management',
@@ -117,7 +120,12 @@ const adminNavigationItems = [
     title: 'Equipment Management',
     url: Routes.adminEquipmentManagement,
     icon: Gauge,
-    permission: PERMISSIONS.BOOKINGS_READ,
+    // BOOKINGS_READ is also granted to regular members (for reading equipment
+    // availability/their own bookings — always scope 'any', so scope alone can't distinguish
+    // it here either), so it can't gate an admin-only nav item. BOOKINGS_UPDATE_STATUS is what
+    // the actual admin capacity-management endpoint requires (POST /admin/equipment/:id/capacity)
+    // and is never granted to members.
+    permission: PERMISSIONS.BOOKINGS_UPDATE_STATUS,
   },
 ];
 

@@ -2,6 +2,8 @@ import { AppSidebar } from '@/components/AppSidebar';
 import { PageHeader } from '@/components/PageHeader';
 import { SidebarInset, SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
 import { validateSession } from '@/lib/auth';
+import { onboardingAPI } from '@/api/client/onboarding';
+import { Routes } from '@/lib/routes';
 import { UserProvider } from '@/providers/user-provider';
 import { redirect } from 'next/navigation';
 
@@ -14,6 +16,11 @@ export default async function ProtectedLayout({ children }: { children: React.Re
 
   if (!currentUser) {
     redirect('/login?error=unauthenticated');
+  }
+
+  const { onboardingCompleted } = await onboardingAPI.getStatus();
+  if (!onboardingCompleted) {
+    redirect(Routes.onboarding);
   }
 
   return (

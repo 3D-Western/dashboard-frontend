@@ -10,6 +10,7 @@ export const Routes = {
   resetPassword: '/reset-password',
   checkEmail: '/check-email',
   verifyEmail: '/verify-email',
+  onboarding: '/onboarding',
 
   // Admin routes
   adminUsersManagement: '/admin/users',

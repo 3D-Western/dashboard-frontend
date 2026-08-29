@@ -62,8 +62,8 @@ describe('AppSidebar', () => {
       ).not.toBeInTheDocument();
     });
 
-    it('shows Job Management only when user has jobs:list', () => {
-      const admin = createMockAdmin({ permissions: [perm(PERMISSIONS.JOBS_LIST)] });
+    it('shows Job Management only when user has jobs:update_status', () => {
+      const admin = createMockAdmin({ permissions: [perm(PERMISSIONS.JOBS_UPDATE_STATUS)] });
       renderSidebar(admin);
 
       expect(screen.getByRole('link', { name: /job management/i })).toBeInTheDocument();
@@ -100,10 +100,11 @@ describe('AppSidebar', () => {
       const admin = createMockAdmin({
         permissions: [
           perm(PERMISSIONS.USERS_LIST),
-          perm(PERMISSIONS.JOBS_LIST),
+          perm(PERMISSIONS.JOBS_UPDATE_STATUS),
           perm(PERMISSIONS.INVITATIONS_LIST),
           perm(PERMISSIONS.IAM_READ),
           perm(PERMISSIONS.AUDIT_READ),
+          perm(PERMISSIONS.BOOKINGS_UPDATE_STATUS),
         ],
       });
       renderSidebar(admin);
@@ -113,6 +114,21 @@ describe('AppSidebar', () => {
       expect(screen.getByRole('link', { name: /invitation management/i })).toBeInTheDocument();
       expect(screen.getByRole('link', { name: /iam management/i })).toBeInTheDocument();
       expect(screen.getByRole('link', { name: /audit log/i })).toBeInTheDocument();
+      expect(screen.getByRole('link', { name: /equipment management/i })).toBeInTheDocument();
+    });
+
+    it('does not show Job Management or Equipment Management for a regular member permission set (regression: jobs:list and bookings:read are granted to members too)', () => {
+      const member = createMockAdmin({
+        permissions: [
+          perm(PERMISSIONS.JOBS_LIST),
+          perm(PERMISSIONS.BOOKINGS_READ),
+          perm(PERMISSIONS.USERS_LIST),
+        ],
+      });
+      renderSidebar(member);
+
+      expect(screen.queryByRole('link', { name: /job management/i })).not.toBeInTheDocument();
+      expect(screen.queryByRole('link', { name: /equipment management/i })).not.toBeInTheDocument();
     });
 
     it('shows Admin Dashboard when user has any admin permission', () => {

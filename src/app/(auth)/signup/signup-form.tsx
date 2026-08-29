@@ -1,10 +1,8 @@
 'use client';
 import { ApiError } from '@/api/client/errors';
 import { sessionApi } from '@/api/client/session';
-import { transformFacultyToBackend } from '@/api/client/transformers';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { Checkbox } from '@/components/ui/checkbox';
 import { FieldDescription } from '@/components/ui/field';
 import {
   Form,
@@ -15,19 +13,11 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import { FACULTIES, FACULTY_OPTIONS } from '@/constants/faculties';
 import { Routes } from '@/lib/routes';
 import { cn } from '@/lib/utils';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { ArrowLeft, ArrowRight, Info } from 'lucide-react';
+import { Info } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -61,30 +51,12 @@ const formSchema = z.object({
   inviteCode: z.string().min(1, 'Invite code is required'),
   firstName: z.string().min(1, 'First name is required'),
   lastName: z.string().min(1, 'Last name is required'),
-  faculty: z.enum([
-    FACULTIES.UNDECLARED,
-    FACULTIES.ARTS_AND_HUMANITIES,
-    FACULTIES.MUSIC,
-    FACULTIES.EDUCATION,
-    FACULTIES.ENGINEERING,
-    FACULTIES.HEALTH_SCIENCES,
-    FACULTIES.INFORMATION_AND_MEDIA_STUDIES,
-    FACULTIES.IVEY_BUSINESS_SCHOOL,
-    FACULTIES.LAW,
-    FACULTIES.SCHULICH_MEDICINE_AND_DENTISTRY,
-    FACULTIES.SCIENCE,
-    FACULTIES.SOCIAL_SCIENCE,
-  ]),
-  agreedToTerms: z.boolean().refine((val) => val === true, {
-    message: 'You must agree to the terms and conditions',
-  }),
 });
 
 type FormData = z.infer<typeof formSchema>;
 
 export function SignupForm({ className, ...props }: React.ComponentProps<'div'>) {
   const [isLoading, setIsLoading] = useState(false);
-  const [currentStep, setCurrentStep] = useState(1);
   const router = useRouter();
 
   const form = useForm<FormData>({
@@ -96,28 +68,8 @@ export function SignupForm({ className, ...props }: React.ComponentProps<'div'>)
       inviteCode: '',
       firstName: '',
       lastName: '',
-      faculty: FACULTIES.UNDECLARED,
-      agreedToTerms: false,
     },
   });
-
-  // Step 1 validation
-  const validateStep1 = async () => {
-    const fields = [
-      'firstName',
-      'lastName',
-      'studentId',
-      'email',
-      'password',
-      'inviteCode',
-    ] as const;
-    const isValid = await form.trigger(fields);
-
-    if (isValid) {
-      setCurrentStep(2);
-    }
-    return isValid;
-  };
 
   async function onSubmit(values: FormData) {
     try {
@@ -131,7 +83,6 @@ export function SignupForm({ className, ...props }: React.ComponentProps<'div'>)
         inviteCode: values.inviteCode,
         firstName: values.firstName,
         lastName: values.lastName,
-        faculty: transformFacultyToBackend(values.faculty),
       };
 
       // Call signup API endpoint
@@ -160,200 +111,114 @@ export function SignupForm({ className, ...props }: React.ComponentProps<'div'>)
               <div className="flex min-h-[600px] flex-col gap-6">
                 {/* Header */}
                 <div className="flex flex-col items-center gap-2 text-center">
-                  <div className="mb-2 flex items-center gap-2">
-                    {currentStep === 2 && (
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => setCurrentStep(1)}
-                        className="p-1"
-                      >
-                        <ArrowLeft className="h-4 w-4" />
-                      </Button>
-                    )}
-                    <h1 className="text-2xl font-bold">
-                      {currentStep === 1 ? 'Create your account' : 'Complete your profile'}
-                    </h1>
-                  </div>
-                  <p className="text-balance text-muted-foreground">
-                    {currentStep === 1
-                      ? 'Step 1 of 2: Enter your credentials'
-                      : 'Step 2 of 2: Tell us about yourself'}
-                  </p>
+                  <h1 className="text-2xl font-bold">Create your account</h1>
+                  <p className="text-balance text-muted-foreground">Enter your credentials</p>
                 </div>
 
-                {/* Step 1: Your Identity */}
-                {currentStep === 1 && (
-                  <>
-                    <div className="grid gap-4 sm:grid-cols-2">
-                      <FormField
-                        control={form.control}
-                        name="firstName"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>First Name</FormLabel>
-                            <FormControl>
-                              <Input placeholder="John" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <FormField
+                    control={form.control}
+                    name="firstName"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>First Name</FormLabel>
+                        <FormControl>
+                          <Input placeholder="John" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
 
-                      <FormField
-                        control={form.control}
-                        name="lastName"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Last Name</FormLabel>
-                            <FormControl>
-                              <Input placeholder="Doe" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    </div>
+                  <FormField
+                    control={form.control}
+                    name="lastName"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Last Name</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Doe" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
 
-                    <FormField
-                      control={form.control}
-                      name="studentId"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Student ID</FormLabel>
-                          <FormControl>
-                            <Input placeholder="251000000" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
+                <FormField
+                  control={form.control}
+                  name="studentId"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Student ID</FormLabel>
+                      <FormControl>
+                        <Input placeholder="251000000" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-                    <FormField
-                      control={form.control}
-                      name="email"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>UWO Email</FormLabel>
-                          <FormControl>
-                            <Input placeholder="example@uwo.ca" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
+                <FormField
+                  control={form.control}
+                  name="email"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>UWO Email</FormLabel>
+                      <FormControl>
+                        <Input placeholder="example@uwo.ca" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-                    <FormField
-                      control={form.control}
-                      name="password"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Password</FormLabel>
-                          <FormControl>
-                            <Input type="password" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
+                <FormField
+                  control={form.control}
+                  name="password"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Password</FormLabel>
+                      <FormControl>
+                        <Input type="password" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-                    <FormField
-                      control={form.control}
-                      name="inviteCode"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel className="flex items-center gap-1.5">
-                            Invite Code
-                            <Tooltip>
-                              <TooltipTrigger type="button">
-                                <Info className="h-4 w-4 text-muted-foreground" />
-                              </TooltipTrigger>
-                              <TooltipContent side="right" className="max-w-xs">
-                                <p>
-                                  Currently we are in invite only testing. If you want to give it a
-                                  try, email support@3dwestern.ca
-                                </p>
-                              </TooltipContent>
-                            </Tooltip>
-                          </FormLabel>
-                          <FormControl>
-                            <Input placeholder="Enter your invite code" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
+                <FormField
+                  control={form.control}
+                  name="inviteCode"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="flex items-center gap-1.5">
+                        Invite Code
+                        <Tooltip>
+                          <TooltipTrigger type="button">
+                            <Info className="h-4 w-4 text-muted-foreground" />
+                          </TooltipTrigger>
+                          <TooltipContent side="right" className="max-w-xs">
+                            <p>
+                              Currently we are in invite only testing. If you want to give it a
+                              try, email support@3dwestern.ca
+                            </p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </FormLabel>
+                      <FormControl>
+                        <Input placeholder="Enter your invite code" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-                    <div className="grow" />
+                <div className="grow" />
 
-                    <Button type="button" onClick={validateStep1} className="w-full">
-                      Continue
-                      <ArrowRight className="ml-2 h-4 w-4" />
-                    </Button>
-                  </>
-                )}
-
-                {/* Step 2: Complete Your Profile */}
-                {currentStep === 2 && (
-                  <>
-                    <FormField
-                      control={form.control}
-                      name="faculty"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Faculty</FormLabel>
-                          <Select onValueChange={field.onChange} value={field.value}>
-                            <FormControl>
-                              <SelectTrigger>
-                                <SelectValue placeholder="Select your faculty" />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              {FACULTY_OPTIONS.map((option) => (
-                                <SelectItem key={option.value} value={option.value}>
-                                  {option.label}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={form.control}
-                      name="agreedToTerms"
-                      render={({ field }) => (
-                        <FormItem className="flex flex-row items-start space-y-0 space-x-3">
-                          <FormControl>
-                            <Checkbox checked={field.value} onCheckedChange={field.onChange} />
-                          </FormControl>
-                          <div className="space-y-1 leading-none">
-                            <FormLabel className="text-sm">
-                              I agree to the{' '}
-                              <Link href="/terms-and-conditions" className="underline">
-                                Terms of Service
-                              </Link>{' '}
-                              and{' '}
-                              <Link href="/data-policy" className="underline">
-                                Privacy Policy
-                              </Link>
-                            </FormLabel>
-                            <FormMessage />
-                          </div>
-                        </FormItem>
-                      )}
-                    />
-
-                    <div className="grow" />
-
-                    <Button type="submit" disabled={isLoading} className="w-full">
-                      {isLoading ? 'Creating Account...' : 'Create Account'}
-                    </Button>
-                  </>
-                )}
+                <Button type="submit" disabled={isLoading} className="w-full">
+                  {isLoading ? 'Creating Account...' : 'Create Account'}
+                </Button>
 
                 <FieldDescription className="text-center">
                   Already have an account?{' '}
