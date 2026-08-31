@@ -26,6 +26,7 @@ const STATUS_LABELS: Record<PrintJobStatus, string> = {
   Flagged: 'Flagged / Under Review',
   Error: 'Technical Error',
   Failed: 'Job Failed',
+  Cancelled: 'Cancelled',
 };
 
 export function StatusStepper({ currentStatus, history = [] }: StatusStepperProps) {
@@ -37,7 +38,12 @@ export function StatusStepper({ currentStatus, history = [] }: StatusStepperProp
   const coreIndex = CORE_PROGRESSION.indexOf(currentStatus);
 
   // Identify if the current state is an exception state
-  const isExceptionState = ['Flagged', 'Error', 'Failed'].includes(currentStatus);
+  const isExceptionState = ['Flagged', 'Error', 'Failed', 'Cancelled'].includes(currentStatus);
+
+  // A job can be cancelled from any non-terminal state, so the halt point isn't fixed —
+  // find the last core step that was actually reached (falling back to PendingFile).
+  const lastCoreStepReached =
+    [...CORE_PROGRESSION].reverse().find((step) => getHistoryData(step)) ?? 'PendingFile';
 
   return (
     <div className="flex flex-col gap-6 py-2">
@@ -66,7 +72,8 @@ export function StatusStepper({ currentStatus, history = [] }: StatusStepperProp
             (currentStatus === 'Flagged' && step === 'Printing') ||
             (currentStatus === 'Error' && step === 'Printing') ||
             (currentStatus === 'Failed' && step === 'InQueue' && !getHistoryData('Printing')) || // failed before printing
-            (currentStatus === 'Failed' && step === 'Printing' && !!getHistoryData('Printing')); // failed during printing
+            (currentStatus === 'Failed' && step === 'Printing' && !!getHistoryData('Printing')) || // failed during printing
+            (currentStatus === 'Cancelled' && step === lastCoreStepReached);
 
           if (isLastCompletedStep) {
             showExceptionHere = true;
@@ -123,11 +130,16 @@ export function StatusStepper({ currentStatus, history = [] }: StatusStepperProp
                       {historyEntry.comments}
                     </p>
                   )}
+                  {historyEntry?.changedBy && (
+                    <p className="mt-0.5 text-xs text-muted-foreground">
+                      by {historyEntry.changedBy.firstName} {historyEntry.changedBy.lastName}
+                    </p>
+                  )}
                 </div>
               </div>
             </div>
 
-            {/* Dynamic Injection of Exception Statuses (Flagged, Error, Failed) */}
+            {/* Dynamic Injection of Exception Statuses (Flagged, Error, Failed, Cancelled) */}
             {showExceptionHere && (
               <div className="relative flex items-start pl-0">
                 {/* Exception Connector Line linking back to flow */}
@@ -142,9 +154,18 @@ export function StatusStepper({ currentStatus, history = [] }: StatusStepperProp
                       <AlertCircle className="h-5 w-5 text-orange-500" />
                     )}
                     {currentStatus === 'Failed' && <XCircle className="h-5 w-5 text-destructive" />}
+                    {currentStatus === 'Cancelled' && (
+                      <XCircle className="h-5 w-5 text-muted-foreground" />
+                    )}
                   </div>
 
-                  <div className="flex flex-1 flex-col rounded-xl border border-destructive/10 bg-destructive/5 p-3">
+                  <div
+                    className={`flex flex-1 flex-col rounded-xl border p-3 ${
+                      currentStatus === 'Cancelled'
+                        ? 'border-muted bg-muted/30'
+                        : 'border-destructive/10 bg-destructive/5'
+                    }`}
+                  >
                     <span className="text-sm font-bold text-foreground">
                       {STATUS_LABELS[currentStatus]}
                     </span>
@@ -161,6 +182,14 @@ export function StatusStepper({ currentStatus, history = [] }: StatusStepperProp
                       return exEntry?.comments ? (
                         <p className="mt-1.5 border-l-2 border-destructive/40 pl-2 text-xs font-medium text-destructive">
                           Reason: {exEntry.comments}
+                        </p>
+                      ) : null;
+                    })()}
+                    {(() => {
+                      const exEntry = getHistoryData(currentStatus);
+                      return exEntry?.changedBy ? (
+                        <p className="mt-0.5 text-xs text-muted-foreground">
+                          by {exEntry.changedBy.firstName} {exEntry.changedBy.lastName}
                         </p>
                       ) : null;
                     })()}

@@ -195,14 +195,64 @@ export class Database {
     return this.activePrintJobsIDMap.get(printJobId) || null;
   }
 
-  public updatePrintJobStatus(printJobId: string, status: string): PrintJob | null {
+  public updatePrintJobStatus(
+    printJobId: string,
+    status: string,
+    actingUser?: User,
+  ): PrintJob | null {
     const job = this.activePrintJobsIDMap.get(printJobId);
     if (!job) {
       return null;
     }
-    // Update the job status
+
+    if (!job.statusHistory) {
+      job.statusHistory = [];
+    }
+    job.statusHistory.push({
+      status: status as PrintJob['status'],
+      changedAt: new Date().toISOString(),
+      changedBy: actingUser
+        ? {
+            studentId: actingUser.studentId,
+            firstName: actingUser.firstName,
+            lastName: actingUser.lastName,
+            email: actingUser.email,
+          }
+        : undefined,
+    });
+
     job.status = status as PrintJob['status'];
+
+    // completedAt is set for terminal states and cleared when moved back to a non-terminal one
+    const terminalStatuses: PrintJob['status'][] = ['Ready', 'Succeeded', 'Failed', 'Cancelled'];
+    job.completedAt = terminalStatuses.includes(job.status) ? new Date().toISOString() : null;
+
     return job;
+  }
+
+  public reorderPrintJob(
+    originalJobId: string,
+    name: string,
+    description: string,
+  ): PrintJob | null {
+    const original = this.activePrintJobsIDMap.get(originalJobId);
+    if (!original) {
+      return null;
+    }
+
+    const clone: PrintJob = {
+      ...original,
+      id: `job-${Date.now()}`,
+      name,
+      description,
+      jobPlaced: new Date().toISOString(),
+      status: 'InQueue',
+      reprint: originalJobId,
+      statusHistory: [],
+      completedAt: null,
+    };
+
+    return this.addPrintJob(clone);
   }
 
   public addPrintJob(printJob: PrintJob): PrintJob {

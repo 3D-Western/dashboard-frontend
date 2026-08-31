@@ -156,7 +156,7 @@ describe('useColumns', () => {
     });
 
     describe('status priority sorting', () => {
-      it('sorts by priority: Error > Failed > Flagged > PendingFile > InQueue > Printing > Ready > Succeeded', () => {
+      it('sorts by priority: Error > Failed > Cancelled > Flagged > PendingFile > InQueue > Printing > Ready > Succeeded', () => {
         const { result } = renderHook(() => useColumns());
         const columns = result.current;
         const statusColumn = columns.find((col) => hasAccessorKey(col, 'status'));
@@ -207,6 +207,7 @@ describe('useColumns', () => {
         const expectedOrder = [
           'Error',
           'Failed',
+          'Cancelled',
           'Flagged',
           'PendingFile',
           'InQueue',

@@ -32,6 +32,7 @@ const BACKEND_STATUSES: PrintJobStatus[] = [
   'Error',
   'Succeeded',
   'Failed',
+  'Cancelled',
 ];
 
 const STATUS_DISPLAY_LABELS: Record<PrintJobStatus, string> = {
@@ -42,6 +43,7 @@ const STATUS_DISPLAY_LABELS: Record<PrintJobStatus, string> = {
   Error: 'Error',
   Succeeded: 'Succeeded',
   Failed: 'Failed',
+  Cancelled: 'Cancelled',
   PendingFile: 'Pending File',
 };
 
@@ -73,16 +75,23 @@ export function ChangeStatusDialog({
 
 type ChangeStatusDialogContentProps = Omit<ChangeStatusDialogProps, 'open'>;
 
+// A job's current status may not be a valid override target (e.g. PendingFile) — in that
+// case there's no sensible pre-selected value, so default to "nothing selected" instead.
+const getInitialSelectedStatus = (currentStatus: PrintJobStatus): PrintJobStatus | undefined =>
+  BACKEND_STATUSES.includes(currentStatus) ? currentStatus : undefined;
+
 function ChangeStatusDialogContent({
   printJob,
   onOpenChange,
   onStatusChanged,
 }: ChangeStatusDialogContentProps) {
-  const [selectedStatus, setSelectedStatus] = useState<PrintJobStatus>(printJob.status);
+  const [selectedStatus, setSelectedStatus] = useState<PrintJobStatus | undefined>(
+    getInitialSelectedStatus(printJob.status),
+  );
   const [isUpdating, setIsUpdating] = useState(false);
 
   const handleConfirm = async () => {
-    if (selectedStatus === printJob.status) {
+    if (!selectedStatus || selectedStatus === printJob.status) {
       onOpenChange(false);
       return;
     }
@@ -110,7 +119,7 @@ function ChangeStatusDialogContent({
   };
 
   const handleCancel = () => {
-    setSelectedStatus(printJob.status);
+    setSelectedStatus(getInitialSelectedStatus(printJob.status));
     onOpenChange(false);
   };
 
@@ -155,7 +164,10 @@ function ChangeStatusDialogContent({
         <Button variant="outline" onClick={handleCancel} disabled={isUpdating}>
           Cancel
         </Button>
-        <Button onClick={handleConfirm} disabled={isUpdating || selectedStatus === printJob.status}>
+        <Button
+          onClick={handleConfirm}
+          disabled={isUpdating || !selectedStatus || selectedStatus === printJob.status}
+        >
           {isUpdating && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
           {isUpdating ? 'Updating...' : 'Confirm'}
         </Button>

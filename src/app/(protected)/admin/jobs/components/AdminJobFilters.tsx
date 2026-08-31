@@ -15,6 +15,7 @@ const ADMIN_STATUS_OPTIONS: PrintJobStatus[] = [
   'Error',
   'Succeeded',
   'Failed',
+  'Cancelled',
 ];
 
 export function AdminJobFilters() {

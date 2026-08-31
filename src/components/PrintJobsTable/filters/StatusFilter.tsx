@@ -27,6 +27,7 @@ const statusLabels: Record<PrintJobStatus, string> = {
   Error: 'Error',
   Succeeded: 'Succeeded',
   Failed: 'Failed',
+  Cancelled: 'Cancelled',
   PendingFile: 'Pending File',
 };
 

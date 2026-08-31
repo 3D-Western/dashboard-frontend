@@ -1,14 +1,61 @@
-import React from 'react';
+'use client';
+
+import React, { useRef, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { toast } from 'sonner';
+import Link from 'next/link';
 import { PrintJobStatusBadge } from '@/components/PrintJobStatusBadge';
 import { PrintSpecifications } from './PrintSpecifications';
 import { StatusStepper } from './StatusStepper';
 import { JobDetail } from '@/types/jobs';
+import { jobApi } from '@/api/client/job';
+import { calculateFileChecksum } from '@/lib/file-utils';
+import { Routes } from '@/lib/routes';
 
 interface JobDetailContentProps {
   job: JobDetail;
 }
 
 export function JobDetailContent({ job }: JobDetailContentProps) {
+  const router = useRouter();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [isRetrying, setIsRetrying] = useState(false);
+
+  const handleRetryUploadClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleFileSelected = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file) {
+      return;
+    }
+
+    setIsRetrying(true);
+    try {
+      const { presignedUrl } = await jobApi.retryUpload(job.id);
+      await jobApi.uploadJobFile(presignedUrl, file);
+      const checksum = await calculateFileChecksum(file);
+      await jobApi.completeUpload(job.id, {
+        fileName: file.name,
+        fileSize: file.size,
+        contentType: file.type || 'application/sla',
+        checksum,
+      });
+
+      toast.success('File uploaded successfully');
+      router.refresh();
+    } catch (error) {
+      console.error('Failed to retry upload:', error);
+      toast.error('Failed to upload file', {
+        description: error instanceof Error ? error.message : 'An error occurred while uploading',
+      });
+    } finally {
+      setIsRetrying(false);
+    }
+  };
+
   return (
     <div className="space-y-6 pb-6">
       {/* HEADER */}
@@ -25,8 +72,18 @@ export function JobDetailContent({ job }: JobDetailContentProps) {
           <p className="mb-3 text-sm text-red-700">
             The file for this print job failed to upload properly.
           </p>
-          <button className="rounded bg-red-600 px-4 py-2 text-sm text-white transition-colors hover:bg-red-700">
-            Retry Upload
+          <input
+            ref={fileInputRef}
+            type="file"
+            className="hidden"
+            onChange={handleFileSelected}
+          />
+          <button
+            onClick={handleRetryUploadClick}
+            disabled={isRetrying}
+            className="rounded bg-red-600 px-4 py-2 text-sm text-white transition-colors hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            {isRetrying ? 'Uploading...' : 'Retry Upload'}
           </button>
         </div>
       )}
@@ -81,6 +138,20 @@ export function JobDetailContent({ job }: JobDetailContentProps) {
             {job.dateSubmitted ? new Date(job.dateSubmitted).toLocaleDateString() : 'Unknown Date'}
           </p>
         </div>
+
+        {job.reprint && (
+          <div>
+            <h2 className="mb-1 text-xs font-semibold tracking-wider text-muted-foreground uppercase">
+              Reprint Of
+            </h2>
+            <Link
+              href={`${Routes.dashboardSubmissionHistory}/${job.reprint}`}
+              className="text-sm font-medium text-primary underline-offset-4 hover:underline"
+            >
+              Job #{job.reprint}
+            </Link>
+          </div>
+        )}
 
         <div>
           <h2 className="mb-1 text-xs font-semibold tracking-wider text-muted-foreground uppercase">

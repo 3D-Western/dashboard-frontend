@@ -103,6 +103,15 @@ export interface RetryUploadResponse {
   storageKey: string;
 }
 
+export interface ReorderJobRequest {
+  name: string;
+  description: string;
+}
+
+export interface ReorderJobResponse {
+  job: PrintJob;
+}
+
 export type ApiSignupResponse = ApiLoginResponse;
 
 // Print Jobs API Response Types
