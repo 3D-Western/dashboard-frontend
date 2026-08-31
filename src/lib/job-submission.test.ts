@@ -77,6 +77,7 @@ describe('submitJob', () => {
     });
     expect(JSON.parse(body.formAnswerJson)).toEqual({
       material: 'acrylic',
+      purpose: '',
       fileId: expect.stringMatching(/^mock-lasercutting-file-\d+$/),
       priority: 'standard',
       urgency: 'normal',
@@ -128,6 +129,7 @@ describe('submitJob', () => {
         description: 'Job without file',
         formAnswerJson: JSON.stringify({
           material: 'wood',
+          purpose: '',
           fileId: '',
           priority: 'standard',
           urgency: 'normal',

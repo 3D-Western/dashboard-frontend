@@ -45,6 +45,7 @@ describe('LaserCuttingJobForm Integration', () => {
       // Form fields
       expect(screen.getByLabelText(/Request Name/i)).toBeInTheDocument();
       expect(screen.getByLabelText(/Description/i)).toBeInTheDocument();
+      expect(screen.getByText(/Project Purpose/i)).toBeInTheDocument();
       expect(screen.getByText(/Design File/i)).toBeInTheDocument();
       expect(screen.getByText('Preferred Material')).toBeInTheDocument();
     });
@@ -127,6 +128,18 @@ describe('LaserCuttingJobForm Integration', () => {
         expect(screen.getByText(/Please select a material/i)).toBeInTheDocument();
       });
     });
+
+    it('shows error when Project Purpose is not selected', async () => {
+      const user = setupUser();
+      render(<LaserCuttingJobForm />);
+
+      const submitButton = screen.getByRole('button', { name: /Submit/i });
+      await user.click(submitButton);
+
+      await waitFor(() => {
+        expect(screen.getAllByText(/Select a purpose/i).length).toBeGreaterThan(0);
+      });
+    });
   });
 
   describe('form interactions', () => {
@@ -153,8 +166,8 @@ describe('LaserCuttingJobForm Integration', () => {
     it('material select is interactive', async () => {
       render(<LaserCuttingJobForm />);
 
-      // Find material select
-      const materialSelect = screen.getByRole('combobox');
+      // Purpose is index 0, Material is index 1
+      const materialSelect = screen.getAllByRole('combobox')[1];
       expect(materialSelect).toBeInTheDocument();
     });
   });
@@ -171,7 +184,8 @@ describe('LaserCuttingJobForm Integration', () => {
       const file = new File(['dummy'], 'design.dxf', { type: 'application/dxf' });
       await user.upload(fileInput, file);
 
-      await selectComboboxOption(user, 0, 'Acrylic');
+      await selectComboboxOption(user, 0, 'Casual / Recreation');
+      await selectComboboxOption(user, 1, 'Acrylic');
     };
 
     it('uploads design file and shows filename', async () => {
@@ -224,8 +238,8 @@ describe('LaserCuttingJobForm Integration', () => {
       const descriptionField = screen.getByLabelText(/Description/i);
       await user.type(descriptionField, 'This is a test description');
 
-      // Select material
-      const materialTrigger = screen.getByRole('combobox');
+      // Select material (Purpose is index 0, Material is index 1)
+      const materialTrigger = screen.getAllByRole('combobox')[1];
       await user.click(materialTrigger);
       const acrylicOptions = await screen.findAllByText('Acrylic');
       await user.click(acrylicOptions[0]);
@@ -326,11 +340,11 @@ describe('LaserCuttingJobForm Integration', () => {
       const user = setupUser();
       render(<LaserCuttingJobForm />);
 
-      // Select Acrylic
-      await selectComboboxOption(user, 0, 'Acrylic');
+      // Select Acrylic (Purpose is index 0, Material is index 1)
+      await selectComboboxOption(user, 1, 'Acrylic');
 
-      // Check that Acrylic is now selected in the combobox trigger
-      const trigger = screen.getByRole('combobox');
+      // Check that Acrylic is now selected in the material combobox trigger
+      const trigger = screen.getAllByRole('combobox')[1];
       expect(trigger).toHaveTextContent('Acrylic');
     });
 

@@ -36,6 +36,7 @@ describe('CNCJobForm Integration', () => {
       // Form fields
       expect(screen.getByLabelText(/Request Name/i)).toBeInTheDocument();
       expect(screen.getByLabelText(/Description/i)).toBeInTheDocument();
+      expect(screen.getByText(/Project Purpose/i)).toBeInTheDocument();
       expect(screen.getByText(/Design File/i)).toBeInTheDocument();
       expect(screen.getAllByText(/Preferred Material/i).length).toBeGreaterThan(0);
     });
@@ -111,6 +112,18 @@ describe('CNCJobForm Integration', () => {
         expect(screen.getByText(/Please select a material/i)).toBeInTheDocument();
       });
     });
+
+    it('shows error when Project Purpose is not selected', async () => {
+      const user = setupUser();
+      render(<CNCJobForm />);
+
+      const submitButton = screen.getByRole('button', { name: /Submit/i });
+      await user.click(submitButton);
+
+      await waitFor(() => {
+        expect(screen.getAllByText(/Select a purpose/i).length).toBeGreaterThan(0);
+      });
+    });
   });
 
   describe('form interactions', () => {
@@ -137,8 +150,8 @@ describe('CNCJobForm Integration', () => {
     it('material select is interactive', async () => {
       render(<CNCJobForm />);
 
-      // Verify we have the material select trigger
-      const selectTrigger = screen.getByRole('combobox');
+      // Purpose is index 0, Material is index 1
+      const selectTrigger = screen.getAllByRole('combobox')[1];
       expect(selectTrigger).toBeInTheDocument();
     });
   });
@@ -155,7 +168,8 @@ describe('CNCJobForm Integration', () => {
       const file = new File(['dummy'], 'model.stl', { type: 'model/stl' });
       await user.upload(fileInput, file);
 
-      await selectComboboxOption(user, 0, 'Aluminum');
+      await selectComboboxOption(user, 0, 'Casual / Recreation');
+      await selectComboboxOption(user, 1, 'Aluminum');
     };
 
     it('uploads STL file and shows filename', async () => {
