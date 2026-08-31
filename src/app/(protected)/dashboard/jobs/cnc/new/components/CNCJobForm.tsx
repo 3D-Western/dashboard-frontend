@@ -28,8 +28,10 @@ import { UnsavedChangesDialog } from '@/components/UnsavedChangesDialog';
 import { ProjectPurposeField } from '@/components/ProjectPurposeField';
 import { toast } from 'sonner';
 import { FileUploadDropzone } from '@/components/FileUploadDropzone';
-import { submitJob } from '@/lib/job-submission';
+import { jobApi } from '@/api/client/job';
+import { calculateFileChecksum } from '@/lib/file-utils';
 import { Routes } from '@/lib/routes';
+import { CreateJobRequest } from '@/api/types';
 
 // Type definitions for form options
 type MaterialOption = {
@@ -56,7 +58,11 @@ const CNC_FILE_TYPES = {
   validation: 'Please upload an STL file',
 };
 
-export default function CNCJobForm() {
+type CNCJobFormProps = {
+  mockMode?: boolean;
+};
+
+export default function CNCJobForm({ mockMode = false }: CNCJobFormProps = {}) {
   const router = useRouter();
 
   const formSchema = z.object({
@@ -82,28 +88,48 @@ export default function CNCJobForm() {
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     try {
-      // TODO: Enable actual submission when backend is ready
-      // For now, show success message and redirect to jobs page
-      toast.success('CNC job submission will be available soon');
-      router.push(Routes.jobs.home);
-      return;
+      const file = values.file as File;
 
-      // Actual submission logic (to be enabled when backend is ready)
-      await submitJob(
-        {
-          name: values.name,
-          description: values.description,
+      // STEP 1: Create job with file metadata (not the file itself)
+      const createJobPayload: CreateJobRequest = {
+        jobName: values.name,
+        description: values.description,
+        category: 'CNC',
+        formAnswerJson: JSON.stringify({
           purpose: values.purpose,
           material: values.material,
-          file: values.file as File,
-        },
-        {
-          category: 'cnc',
-          successRedirectPath: Routes.jobs.home,
-          errorMessagePrefix: 'CNC job submit failed',
-        },
-        router,
-      );
+          contentType: file.type || 'application/sla',
+        }),
+      };
+
+      const createJobResponse = await jobApi.createJob(createJobPayload);
+
+      if (!createJobResponse.jobId || !createJobResponse.uploadUrl) {
+        throw new Error('Invalid response from server: missing jobId or uploadUrl');
+      }
+
+      // STEP 2: Upload file to presigned URL (skip in mock mode to avoid CORS)
+      if (!mockMode) {
+        await jobApi.uploadJobFile(createJobResponse.uploadUrl, file);
+      }
+
+      // STEP 3: Complete upload with file metadata
+      const checksum = await calculateFileChecksum(file);
+
+      await jobApi.completeUpload(createJobResponse.jobId, {
+        fileName: file.name,
+        fileSize: file.size,
+        contentType: file.type || 'application/sla',
+        checksum: checksum,
+      });
+
+      // Reset form to prevent unsaved changes warning
+      form.reset();
+      toast.success('CNC request submitted successfully');
+
+      // Navigate to dashboard and force refresh to show new data
+      router.push(Routes.jobs.home);
+      router.refresh();
     } catch (err) {
       toast.error('Failed to submit CNC request. ' + (err instanceof Error ? err.message : ''));
     }

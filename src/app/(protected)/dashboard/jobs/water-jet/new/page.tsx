@@ -8,6 +8,8 @@ export const metadata: Metadata = {
 };
 
 export default function NewWaterJetJobPage() {
+  const mockMode = process.env.MOCK_ENABLED === 'true';
+
   return (
     <div className="px-6 py-8">
       <PageTitle
@@ -15,7 +17,7 @@ export default function NewWaterJetJobPage() {
         description="Upload your design files and specify cutting requirements"
       />
 
-      <WaterJetForm />
+      <WaterJetForm mockMode={mockMode} />
     </div>
   );
 }
