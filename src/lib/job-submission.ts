@@ -4,6 +4,7 @@ import { JobCategory } from '@/types/jobs';
 export interface JobSubmissionData {
   name: string;
   description: string;
+  purpose?: string;
   material: string;
   file?: File;
 }
@@ -58,6 +59,7 @@ export async function submitJob(
     description: data.description,
     formAnswerJson: JSON.stringify({
       material: data.material,
+      purpose: data.purpose || '',
       fileId: fileId || '',
       priority: 'standard',
       urgency: 'normal',

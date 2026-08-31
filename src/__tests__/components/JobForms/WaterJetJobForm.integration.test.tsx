@@ -45,6 +45,7 @@ describe('WaterJetForm Integration', () => {
       // Form fields
       expect(screen.getByLabelText(/Request Name/i)).toBeInTheDocument();
       expect(screen.getByLabelText(/Description/i)).toBeInTheDocument();
+      expect(screen.getByText(/Project Purpose/i)).toBeInTheDocument();
       expect(screen.getByText(/Design File/i)).toBeInTheDocument();
       expect(screen.getByText('Preferred Material')).toBeInTheDocument();
     });
@@ -127,6 +128,18 @@ describe('WaterJetForm Integration', () => {
         expect(screen.getByText(/Please select a material/i)).toBeInTheDocument();
       });
     });
+
+    it('shows error when Project Purpose is not selected', async () => {
+      const user = setupUser();
+      render(<WaterJetForm />);
+
+      const submitButton = screen.getByRole('button', { name: /Submit/i });
+      await user.click(submitButton);
+
+      await waitFor(() => {
+        expect(screen.getAllByText(/Select a purpose/i).length).toBeGreaterThan(0);
+      });
+    });
   });
 
   describe('form interactions', () => {
@@ -155,8 +168,8 @@ describe('WaterJetForm Integration', () => {
     it('material select is interactive', async () => {
       render(<WaterJetForm />);
 
-      // Find material select
-      const materialSelect = screen.getByRole('combobox');
+      // Purpose is index 0, Material is index 1
+      const materialSelect = screen.getAllByRole('combobox')[1];
       expect(materialSelect).toBeInTheDocument();
     });
   });
@@ -173,7 +186,8 @@ describe('WaterJetForm Integration', () => {
       const file = new File(['dummy'], 'design.dxf', { type: 'application/dxf' });
       await user.upload(fileInput, file);
 
-      await selectComboboxOption(user, 0, 'Steel');
+      await selectComboboxOption(user, 0, 'Casual / Recreation');
+      await selectComboboxOption(user, 1, 'Steel');
     };
 
     it('uploads design file and shows filename', async () => {
@@ -226,8 +240,8 @@ describe('WaterJetForm Integration', () => {
       const descriptionField = screen.getByLabelText(/Description/i);
       await user.type(descriptionField, 'This is a test description');
 
-      // Select material
-      const materialTrigger = screen.getByRole('combobox');
+      // Select material (Purpose is index 0, Material is index 1)
+      const materialTrigger = screen.getAllByRole('combobox')[1];
       await user.click(materialTrigger);
       const steelOptions = await screen.findAllByText('Steel');
       await user.click(steelOptions[0]);
@@ -328,11 +342,11 @@ describe('WaterJetForm Integration', () => {
       const user = setupUser();
       render(<WaterJetForm />);
 
-      // Select Steel
-      await selectComboboxOption(user, 0, 'Steel');
+      // Select Steel (Purpose is index 0, Material is index 1)
+      await selectComboboxOption(user, 1, 'Steel');
 
-      // Check that Steel is now selected in the combobox trigger
-      const trigger = screen.getByRole('combobox');
+      // Check that Steel is now selected in the material combobox trigger
+      const trigger = screen.getAllByRole('combobox')[1];
       expect(trigger).toHaveTextContent('Steel');
     });
 

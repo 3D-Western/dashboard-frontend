@@ -25,6 +25,7 @@ import {
   SelectItem,
 } from '@/components/ui/select';
 import { UnsavedChangesDialog } from '@/components/UnsavedChangesDialog';
+import { ProjectPurposeField } from '@/components/ProjectPurposeField';
 import { toast } from 'sonner';
 import { FileUploadDropzone } from '@/components/FileUploadDropzone';
 import { submitJob } from '@/lib/job-submission';
@@ -64,6 +65,7 @@ export default function LaserCuttingJobForm() {
   const formSchema = z.object({
     name: z.string().min(1, { message: 'Must have a name for the request' }).max(50),
     description: z.string().min(2, { message: 'Must have a description for the request' }).max(500),
+    purpose: z.string().min(1, { message: 'Select a purpose' }),
     material: z.string().min(1, { message: 'Please select a material' }),
     file: z
       .any()
@@ -75,6 +77,7 @@ export default function LaserCuttingJobForm() {
     defaultValues: {
       name: '',
       description: '',
+      purpose: '',
       material: '',
       file: undefined,
     },
@@ -95,6 +98,7 @@ export default function LaserCuttingJobForm() {
         {
           name: values.name,
           description: values.description,
+          purpose: values.purpose,
           material: values.material,
           file: values.file as File,
         },
@@ -168,6 +172,9 @@ export default function LaserCuttingJobForm() {
               );
             }}
           />
+
+          {/* Project Purpose */}
+          <ProjectPurposeField />
 
           {/* Material Selection */}
           <FormField

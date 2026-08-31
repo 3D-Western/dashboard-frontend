@@ -19,14 +19,8 @@ import {
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import {
-  Select,
-  SelectTrigger,
-  SelectValue,
-  SelectContent,
-  SelectItem,
-} from '@/components/ui/select';
 import { UnsavedChangesDialog } from '@/components/UnsavedChangesDialog';
+import { ProjectPurposeField } from '@/components/ProjectPurposeField';
 import { jobApi } from '@/api/client/job';
 import { calculateFileChecksum } from '@/lib/file-utils';
 import { Routes } from '@/lib/routes';
@@ -38,15 +32,6 @@ type MaterialOption = {
   readonly value: string;
   readonly label: string;
 };
-
-const PURPOSE_OPTIONS: readonly MaterialOption[] = [
-  { value: 'casual', label: 'Casual / Recreation' },
-  { value: 'personal', label: 'Personal Project' },
-  { value: 'school', label: 'School Project' },
-  { value: 'research', label: 'Academic Research' },
-  { value: 'community', label: 'Charity / Community' },
-  { value: 'product', label: 'Product Development' },
-] as const;
 
 const DESIGN_INTENT_OPTIONS: readonly MaterialOption[] = [
   { value: 'functional', label: 'Optimized for standard fit, practical use, and assemblies' },
@@ -217,40 +202,7 @@ export default function NewPrintForm({ mockMode = false }: NewPrintFormProps = {
             }}
           />
 
-          <FormField
-            control={form.control}
-            name="purpose"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel className="text-lg">Project Purpose</FormLabel>
-                <FormDescription>What is this project primarily for?*</FormDescription>
-                <FormControl>
-                  <Select
-                    value={field.value}
-                    onValueChange={(val) => {
-                      if (form.getValues('purpose') === val) {
-                        form.setValue('purpose', '');
-                      }
-                      field.onChange(val ?? '');
-                    }}
-                    defaultValue={''}
-                  >
-                    <SelectTrigger className="w-[200px]">
-                      <SelectValue placeholder="Select a purpose" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {PURPOSE_OPTIONS.map((opt) => (
-                        <SelectItem key={opt.value} value={opt.value}>
-                          {opt.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+          <ProjectPurposeField />
           <FormField
             control={form.control}
             name="design_intent"
