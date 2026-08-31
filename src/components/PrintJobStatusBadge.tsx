@@ -14,6 +14,7 @@ const statusBadgeVariants = cva('border-transparent transition-colors', {
       Error: 'bg-status-error text-status-error-foreground',
       Succeeded: 'bg-status-success text-status-success-foreground',
       Failed: 'bg-status-fail text-status-fail-foreground',
+      Cancelled: 'bg-status-cancelled text-status-cancelled-foreground',
       PendingFile: 'bg-status-draft text-status-draft-foreground',
     },
   },
@@ -35,6 +36,8 @@ const mapPrintJobStatusToDisplayLabel = (status: PrintJobStatus): string => {
       return 'Succeeded';
     case 'Failed':
       return 'Failed';
+    case 'Cancelled':
+      return 'Cancelled';
     case 'PendingFile':
       return 'Pending File';
     default:

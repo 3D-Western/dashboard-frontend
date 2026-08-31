@@ -313,12 +313,47 @@ export const jobHandlers = [
     const { jobId } = params;
     const body = (await request.json()) as { status: string };
 
-    const updatedJob = db.updatePrintJobStatus(jobId as string, body.status);
+    const updatedJob = db.updatePrintJobStatus(jobId as string, body.status, user);
     if (!updatedJob) {
       return HttpResponse.json({ success: false, error: 'Job not found' }, { status: 404 });
     }
 
     return HttpResponse.json(generateSuccessResponse({ job: updatedJob }));
+  }),
+
+  // POST /jobs/:jobId/reorder - Clone job (same file, new name/description)
+  http.post(`${apiUrl}/api/v1/jobs/:jobId/reorder`, async ({ cookies, params, request }) => {
+    const sessionId = cookies['sessionToken'] || '';
+    const user = db.validateSession(sessionId);
+    if (!user) {
+      return createInvalidSessionResponse();
+    }
+
+    if (!mockUserHasPermission(user, PERMISSIONS.JOBS_REORDER)) {
+      return HttpResponse.json(
+        { success: false, error: 'Insufficient permissions' },
+        { status: 403 },
+      );
+    }
+
+    const { jobId } = params;
+    const body = (await request.json()) as { name: string; description: string };
+
+    // jobs:reorder is own-scoped — only the owning user may clone their own job
+    const job = db.getPrintJobs({ userId: user.studentId }).find((j) => j.id === jobId);
+    if (!job) {
+      return HttpResponse.json(
+        { success: false, error: { code: 'JOB_NOT_FOUND', message: 'Job not found' } },
+        { status: 404 },
+      );
+    }
+
+    const clonedJob = db.reorderPrintJob(jobId as string, body.name, body.description);
+    if (!clonedJob) {
+      return HttpResponse.json({ success: false, error: 'Job not found' }, { status: 404 });
+    }
+
+    return HttpResponse.json(generateSuccessResponse({ job: clonedJob }), { status: 201 });
   }),
 
   // DELETE /jobs/:jobId

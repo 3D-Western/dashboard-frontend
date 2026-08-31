@@ -22,10 +22,20 @@ export interface BasePrintJob {
   name: string;
   files: File[];
   reprint?: string | null; // link to another print job if this is a reprint
+  // Set for Ready/Succeeded/Failed/Cancelled, cleared when moved back to a non-terminal state
+  completedAt?: string | null;
 }
 
 export type PrintJobStatus =
-  'InQueue' | 'Printing' | 'Ready' | 'Flagged' | 'Error' | 'Succeeded' | 'Failed' | 'PendingFile';
+  | 'InQueue'
+  | 'Printing'
+  | 'Ready'
+  | 'Flagged'
+  | 'Error'
+  | 'Succeeded'
+  | 'Failed'
+  | 'Cancelled'
+  | 'PendingFile';
 export type CompletePrintJobStatus = 'Succeeded' | 'Failed';
 
 export interface PrintJob extends BasePrintJob {
@@ -60,6 +70,8 @@ export interface StatusHistory {
   changedAt: string; // ISO Date String
   // if the status gets changed to error or failed from admin side they can put it here. may not be used but creating in the type and mocks for now
   comments?: string;
+  // who made this change; absent for system-generated transitions (e.g. auto InQueue on upload complete)
+  changedBy?: UserInfo;
 }
 
 export interface Pickup {

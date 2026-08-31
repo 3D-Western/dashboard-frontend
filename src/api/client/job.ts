@@ -5,6 +5,8 @@ import {
   CompleteUploadRequest,
   RetryUploadResponse,
   PrintJobListResponse,
+  ReorderJobRequest,
+  ReorderJobResponse,
 } from '../types';
 import { JobListParams } from '@/types/common';
 import { apiRequest } from './base';
@@ -108,6 +110,18 @@ export const jobApi = {
     return apiRequest<JobDetail>(`${getBaseUrl()}${endpoints.jobs.byId(jobId)}`, {
       method: 'GET',
       credentials: 'include',
+      ...options,
+    });
+  },
+
+  reorder: async (jobId: string, payload: ReorderJobRequest, options?: RequestInit) => {
+    return apiRequest<ReorderJobResponse>(`${getBaseUrl()}${endpoints.jobs.reorder(jobId)}`, {
+      method: 'POST',
+      credentials: 'include',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(payload),
       ...options,
     });
   },

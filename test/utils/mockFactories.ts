@@ -126,6 +126,12 @@ export const createMockPrintJob = (overrides?: Partial<PrintJob>): PrintJob => {
       status: 'Ready',
       changedAt: new Date().toISOString(),
       comments: 'Ready for pickup at front desk',
+      changedBy: {
+        studentId: faker.number.int({ min: 251000000, max: 251999999 }),
+        firstName: faker.person.firstName(),
+        lastName: faker.person.lastName(),
+        email: faker.internet.email(),
+      },
     });
   }
 

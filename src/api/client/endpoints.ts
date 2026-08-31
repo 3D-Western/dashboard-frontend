@@ -22,6 +22,7 @@ export const endpoints = {
     create: '/api/v1/jobs',
     completeUpload: (jobId: string) => `/api/v1/jobs/${jobId}/complete-upload`,
     retryUpload: (jobId: string) => `/api/v1/jobs/${jobId}/retry-upload`,
+    reorder: (jobId: string) => `/api/v1/jobs/${jobId}/reorder`,
   },
   files: {
     list: '/api/v1/files',

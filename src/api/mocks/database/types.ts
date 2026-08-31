@@ -37,6 +37,13 @@ export interface UserInfo {
 
 export type JobCategory = 'ThreeDPrint' | 'CNC' | 'Waterjet' | 'LaserCutting';
 
+export interface StatusHistory {
+  status: PrintJobStatus;
+  changedAt: string; // ISO Date String
+  comments?: string;
+  changedBy?: UserInfo;
+}
+
 export interface BasePrintJob {
   id: string;
   userId: number; // Internal: for database tracking
@@ -46,10 +53,21 @@ export interface BasePrintJob {
   description: string;
   name: string;
   reprint?: string | null; // link to another print job if this is a reprint
+  statusHistory?: StatusHistory[];
+  // Set for Ready/Succeeded/Failed/Cancelled, cleared when moved back to a non-terminal state
+  completedAt?: string | null;
 }
 
 export type PrintJobStatus =
-  'InQueue' | 'Printing' | 'Ready' | 'Flagged' | 'Error' | 'Succeeded' | 'Failed' | 'PendingFile';
+  | 'InQueue'
+  | 'Printing'
+  | 'Ready'
+  | 'Flagged'
+  | 'Error'
+  | 'Succeeded'
+  | 'Failed'
+  | 'Cancelled'
+  | 'PendingFile';
 export type CompletePrintJobStatus = 'Succeeded' | 'Failed';
 
 export interface PrintJob extends BasePrintJob {

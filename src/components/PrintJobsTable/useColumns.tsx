@@ -133,12 +133,13 @@ export const useColumns = (opts: UseColumnsOptions = {}) => {
           const statusOrder: Record<PrintJobStatus, number> = {
             Error: 0,
             Failed: 1,
-            Flagged: 2,
-            PendingFile: 3,
-            InQueue: 4,
-            Printing: 5,
-            Ready: 6,
-            Succeeded: 7,
+            Cancelled: 2,
+            Flagged: 3,
+            PendingFile: 4,
+            InQueue: 5,
+            Printing: 6,
+            Ready: 7,
+            Succeeded: 8,
           };
           const statusA = rowA.getValue('status') as PrintJobStatus;
           const statusB = rowB.getValue('status') as PrintJobStatus;
@@ -182,8 +183,19 @@ export const useColumns = (opts: UseColumnsOptions = {}) => {
             }
           };
 
+          const handleJobDeleted = (jobId: string) => {
+            if (setJobs) {
+              setJobs((prev) => prev.filter((j) => j.id !== jobId));
+            }
+          };
+
           return (
-            <ActionsCell printJob={printJob} mode={mode} onStatusChanged={handleStatusChanged} />
+            <ActionsCell
+              printJob={printJob}
+              mode={mode}
+              onStatusChanged={handleStatusChanged}
+              onJobDeleted={handleJobDeleted}
+            />
           );
         },
       },
