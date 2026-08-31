@@ -3,20 +3,36 @@ import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import WaterJetForm from '@/app/(protected)/dashboard/jobs/water-jet/new/components/WaterJetForm';
 import { toast } from 'sonner';
+import { jobApi } from '@/api/client/job';
 
 // Mock next/navigation
 const mockPush = vi.fn();
+const mockRefresh = vi.fn();
 vi.mock('next/navigation', () => ({
   useRouter: () => ({
     push: mockPush,
+    refresh: mockRefresh,
   }),
 }));
 
 // Mock sonner toast
 vi.mock('sonner', () => ({
   toast: {
+    success: vi.fn(),
     error: vi.fn(),
   },
+}));
+
+vi.mock('@/api/client/job', () => ({
+  jobApi: {
+    createJob: vi.fn(),
+    uploadJobFile: vi.fn(),
+    completeUpload: vi.fn(),
+  },
+}));
+
+vi.mock('@/lib/file-utils', () => ({
+  calculateFileChecksum: vi.fn(() => Promise.resolve('sha256:test')),
 }));
 
 const setupUser = () => userEvent.setup({ pointerEventsCheck: 0 });
@@ -35,7 +51,12 @@ const selectComboboxOption = async (
 describe('WaterJetForm Integration', () => {
   beforeEach(() => {
     mockPush.mockClear();
+    mockRefresh.mockClear();
+    vi.mocked(toast.success).mockClear();
     vi.mocked(toast.error).mockClear();
+    vi.mocked(jobApi.createJob).mockReset();
+    vi.mocked(jobApi.uploadJobFile).mockReset();
+    vi.mocked(jobApi.completeUpload).mockReset();
   });
 
   describe('form rendering', () => {
@@ -203,19 +224,19 @@ describe('WaterJetForm Integration', () => {
       expect(screen.getAllByText('design.dxf').length).toBeGreaterThan(0);
     });
 
-    // TODO: Re-enable when backend is ready
-    it.skip('submits valid data and redirects', async () => {
+    it('submits valid data and redirects in mock mode', async () => {
       const user = setupUser();
 
-      // Mock fetch to simulate successful submission
-      const fetchSpy = vi.spyOn(global, 'fetch').mockResolvedValueOnce(
-        new Response(JSON.stringify({ success: true, data: { job: { id: 'test-job' } } }), {
-          status: 200,
-          headers: { 'Content-Type': 'application/json' },
-        }),
-      );
+      vi.mocked(jobApi.createJob).mockResolvedValue({
+        jobId: 'test-job-id',
+        createdAt: new Date().toISOString(),
+        fileId: 'test-file-id',
+        uploadUrl: 'http://mock-storage.local/uploads/test-file-id',
+        uploadExpiresIn: 900,
+      });
+      vi.mocked(jobApi.completeUpload).mockResolvedValue(null);
 
-      render(<WaterJetForm />);
+      render(<WaterJetForm mockMode />);
 
       await fillRequiredFields(user);
 
@@ -223,10 +244,45 @@ describe('WaterJetForm Integration', () => {
       await user.click(submitButton);
 
       await waitFor(() => {
-        expect(mockPush).toHaveBeenCalledWith('/dashboard/print');
+        expect(jobApi.createJob).toHaveBeenCalledTimes(1);
+        expect(jobApi.uploadJobFile).not.toHaveBeenCalled();
+        expect(jobApi.completeUpload).toHaveBeenCalledTimes(1);
+        expect(mockPush).toHaveBeenCalledWith('/dashboard/jobs');
+      });
+    });
+
+    it('sends Waterjet category and material/purpose in formAnswerJson', async () => {
+      const user = setupUser();
+
+      vi.mocked(jobApi.createJob).mockResolvedValue({
+        jobId: 'test-job-id',
+        createdAt: new Date().toISOString(),
+        fileId: 'test-file-id',
+        uploadUrl: 'http://mock-storage.local/uploads/test-file-id',
+        uploadExpiresIn: 900,
+      });
+      vi.mocked(jobApi.completeUpload).mockResolvedValue(null);
+
+      render(<WaterJetForm mockMode />);
+
+      await fillRequiredFields(user);
+
+      const submitButton = screen.getByRole('button', { name: /Submit/i });
+      await user.click(submitButton);
+
+      await waitFor(() => {
+        expect(jobApi.createJob).toHaveBeenCalledWith(
+          expect.objectContaining({
+            jobName: 'Test Water Jet Cutting Job',
+            category: 'Waterjet',
+          }),
+        );
       });
 
-      fetchSpy.mockRestore();
+      const payload = vi.mocked(jobApi.createJob).mock.calls[0][0];
+      const formAnswers = JSON.parse(payload.formAnswerJson);
+      expect(formAnswers.material).toBe('steel');
+      expect(formAnswers.purpose).toBe('casual');
     });
 
     it('form submission with all valid data succeeds', async () => {
@@ -273,14 +329,11 @@ describe('WaterJetForm Integration', () => {
       expect(submitButton).not.toBeDisabled();
     });
 
-    // TODO: Re-enable when backend is ready
-    it.skip('handles submit failure', async () => {
+    it('shows an error toast when job creation fails', async () => {
       const user = setupUser();
-      const fetchSpy = vi.spyOn(global, 'fetch');
+      vi.mocked(jobApi.createJob).mockRejectedValue(new Error('Submit failed'));
 
-      fetchSpy.mockResolvedValueOnce(new Response('Submit failed', { status: 400 }));
-
-      render(<WaterJetForm />);
+      render(<WaterJetForm mockMode />);
       await fillRequiredFields(user);
 
       const submitButton = screen.getByRole('button', { name: /Submit/i });
@@ -291,39 +344,13 @@ describe('WaterJetForm Integration', () => {
       });
 
       expect(mockPush).not.toHaveBeenCalled();
-      fetchSpy.mockRestore();
     });
 
-    // TODO: Re-enable when backend is ready
-    it.skip('uses fallback submit error message when response is empty', async () => {
+    it('handles non-Error throw in submit flow', async () => {
       const user = setupUser();
-      const fetchSpy = vi.spyOn(global, 'fetch');
+      vi.mocked(jobApi.createJob).mockRejectedValue('boom');
 
-      fetchSpy.mockResolvedValueOnce(new Response('', { status: 400 }));
-
-      render(<WaterJetForm />);
-      await fillRequiredFields(user);
-
-      const submitButton = screen.getByRole('button', { name: /Submit/i });
-      await user.click(submitButton);
-
-      await waitFor(() => {
-        expect(toast.error).toHaveBeenCalledWith(
-          expect.stringContaining('Water jet job submit failed'),
-        );
-      });
-
-      fetchSpy.mockRestore();
-    });
-
-    // TODO: Re-enable when backend is ready
-    it.skip('handles non-Error throw in submit flow', async () => {
-      const user = setupUser();
-      const fetchSpy = vi.spyOn(global, 'fetch');
-
-      fetchSpy.mockRejectedValueOnce('boom');
-
-      render(<WaterJetForm />);
+      render(<WaterJetForm mockMode />);
       await fillRequiredFields(user);
 
       const submitButton = screen.getByRole('button', { name: /Submit/i });
@@ -332,8 +359,6 @@ describe('WaterJetForm Integration', () => {
       await waitFor(() => {
         expect(toast.error).toHaveBeenCalledWith('Failed to submit water jet request. ');
       });
-
-      fetchSpy.mockRestore();
     });
   });
 

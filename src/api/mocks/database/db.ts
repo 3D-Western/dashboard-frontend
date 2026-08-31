@@ -326,6 +326,12 @@ export class Database {
       );
     }
 
+    // Most recently placed jobs first, so newly created jobs show up on page 1
+    // instead of being pushed onto a later page as the list grows.
+    jobs = [...jobs].sort(
+      (a, b) => new Date(b.jobPlaced).getTime() - new Date(a.jobPlaced).getTime(),
+    );
+
     return jobs;
   }
 

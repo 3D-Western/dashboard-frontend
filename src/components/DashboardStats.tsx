@@ -4,15 +4,33 @@ import { useEffect, useState } from 'react';
 import { Printer, Clock, LayoutDashboard } from 'lucide-react';
 import { userApi } from '@/api/client/user';
 
+interface DashboardCounts {
+  total: number;
+  active: number;
+  pending: number;
+}
+
 export default function DashboardStats() {
-  const [jobCount, setJobCount] = useState<number>(0);
+  const [counts, setCounts] = useState<DashboardCounts>({ total: 0, active: 0, pending: 0 });
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     async function fetchStats() {
       try {
-        const jobs = await userApi.getCurrentUserJobs();
-        setJobCount(jobs.pagination?.totalItems || jobs.data.length || 0);
+        const [totalRes, printingRes, pendingFileRes, inQueueRes] = await Promise.all([
+          userApi.getCurrentUserJobs({ pageSize: 1 }),
+          userApi.getCurrentUserJobs({ status: 'Printing', pageSize: 1 }),
+          userApi.getCurrentUserJobs({ status: 'PendingFile', pageSize: 1 }),
+          userApi.getCurrentUserJobs({ status: 'InQueue', pageSize: 1 }),
+        ]);
+
+        setCounts({
+          total: totalRes.pagination?.totalItems ?? 0,
+          active: printingRes.pagination?.totalItems ?? 0,
+          pending:
+            (pendingFileRes.pagination?.totalItems ?? 0) +
+            (inQueueRes.pagination?.totalItems ?? 0),
+        });
       } catch (error) {
         console.error('Failed to fetch jobs', error);
       } finally {
@@ -29,7 +47,7 @@ export default function DashboardStats() {
           <Printer className="h-4 w-4" />
           <span className="text-sm font-medium">Active Prints</span>
         </div>
-        <div className="text-3xl font-bold">{isLoading ? '...' : jobCount}</div>
+        <div className="text-3xl font-bold">{isLoading ? '...' : counts.active}</div>
       </div>
 
       <div className="space-y-2 rounded-lg border p-6">
@@ -37,7 +55,7 @@ export default function DashboardStats() {
           <Clock className="h-4 w-4" />
           <span className="text-sm font-medium">Pending Prints</span>
         </div>
-        <div className="text-3xl font-bold">{isLoading ? '...' : 0}</div>
+        <div className="text-3xl font-bold">{isLoading ? '...' : counts.pending}</div>
       </div>
 
       <div className="space-y-2 rounded-lg border p-6">
@@ -45,7 +63,7 @@ export default function DashboardStats() {
           <LayoutDashboard className="h-4 w-4" />
           <span className="text-sm font-medium">Total Prints</span>
         </div>
-        <div className="text-3xl font-bold">{isLoading ? '...' : jobCount}</div>
+        <div className="text-3xl font-bold">{isLoading ? '...' : counts.total}</div>
       </div>
     </div>
   );

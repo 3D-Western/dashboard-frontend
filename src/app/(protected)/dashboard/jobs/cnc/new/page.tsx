@@ -8,6 +8,8 @@ export const metadata: Metadata = {
 };
 
 export default function NewCNCJobPage() {
+  const mockMode = process.env.MOCK_ENABLED === 'true';
+
   return (
     <div className="px-6 py-8">
       <PageTitle
@@ -15,7 +17,7 @@ export default function NewCNCJobPage() {
         description="Upload your design files and specify machining requirements"
       />
 
-      <CNCJobForm />
+      <CNCJobForm mockMode={mockMode} />
     </div>
   );
 }

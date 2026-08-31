@@ -8,6 +8,8 @@ export const metadata: Metadata = {
 };
 
 export default function NewLaserCuttingJobPage() {
+  const mockMode = process.env.MOCK_ENABLED === 'true';
+
   return (
     <div className="px-6 py-8">
       <PageTitle
@@ -15,7 +17,7 @@ export default function NewLaserCuttingJobPage() {
         description="Upload your 2D design files and specify cutting requirements"
       />
 
-      <LaserCuttingJobForm />
+      <LaserCuttingJobForm mockMode={mockMode} />
     </div>
   );
 }
