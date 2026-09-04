@@ -61,6 +61,17 @@ Deep dive into the application architecture and design decisions.
 - When making architectural decisions
 - When integrating with the backend
 
+### [Launch Scope](LAUNCH_SCOPE.md)
+
+What's deliberately hidden/blocked for the initial launch (Equipment Booking, User Management,
+IAM Management, Audit Log, and the booking-admin pages), and the exact steps to bring each one
+back once it's ready.
+
+**When to read:**
+
+- Before working on any of the held-back features
+- When you hit a route that unexpectedly redirects
+
 ### [Development Guide](DEVELOPMENT.md)
 
 Practical guide for day-to-day development work.
@@ -119,6 +130,9 @@ Practical guide for day-to-day development work.
 
 **...make a commit**
 → [Development Guide - Git Workflow](DEVELOPMENT.md#git-workflow)
+
+**...bring back a feature hidden for launch (Booking, User Management, IAM, Audit Log, etc.)**
+→ [Launch Scope](LAUNCH_SCOPE.md)
 
 ## Getting Help
 
