@@ -426,6 +426,7 @@ Comprehensive guides available in `docs/`:
 - `docs/TESTING.md` - Complete testing guide
 - `docs/ARCHITECTURE.md` - Detailed architecture documentation
 - `docs/DEVELOPMENT.md` - Development workflow and best practices
+- `docs/LAUNCH_SCOPE.md` - Features hidden/blocked for the initial launch and how to restore them
 
 <!-- gitnexus:start -->
 

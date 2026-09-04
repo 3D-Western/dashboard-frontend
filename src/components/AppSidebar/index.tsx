@@ -19,33 +19,25 @@ import { PERMISSIONS } from '@/constants/permissions';
 import {
   LayoutDashboard,
   Printer,
-  Users,
   Settings,
   Shield,
   FilePlus,
   TicketPlus,
-  Lock,
-  ClipboardList,
   History,
-  Calendar,
-  CalendarClock,
-  Inbox,
-  Gauge,
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Routes } from '@/lib/routes';
 
+// NOTE: Equipment Booking, User Management, IAM Management, Audit Log, and the booking-admin
+// pages (Equipment Bookings / Booking Requests / Equipment Management) are intentionally left
+// out of this list for the initial launch — see docs/LAUNCH_SCOPE.md for what's held back and
+// how to bring each one back.
 const navigationItems = [
   {
     title: 'Dashboard',
     url: Routes.dashboard,
     icon: LayoutDashboard,
-  },
-  {
-    title: 'Equipment Booking',
-    url: Routes.bookings,
-    icon: Calendar,
   },
   {
     title: 'Print History',
@@ -72,12 +64,6 @@ const adminNavigationItems = [
     permission: null, // visible to all admins
   },
   {
-    title: 'User Management',
-    url: Routes.adminUsersManagement,
-    icon: Users,
-    permission: PERMISSIONS.USERS_LIST,
-  },
-  {
     title: 'Job Management',
     url: Routes.adminJobsManagement,
     icon: Settings,
@@ -91,41 +77,6 @@ const adminNavigationItems = [
     url: Routes.adminInvitationManagement,
     icon: TicketPlus,
     permission: PERMISSIONS.INVITATIONS_LIST,
-  },
-  {
-    title: 'IAM Management',
-    url: Routes.adminIamManagement,
-    icon: Lock,
-    permission: PERMISSIONS.IAM_READ,
-  },
-  {
-    title: 'Audit Log',
-    url: Routes.adminAuditLog,
-    icon: ClipboardList,
-    permission: PERMISSIONS.AUDIT_READ,
-  },
-  {
-    title: 'Equipment Bookings',
-    url: Routes.adminBookingsManagement,
-    icon: CalendarClock,
-    permission: PERMISSIONS.BOOKINGS_LIST,
-  },
-  {
-    title: 'Booking Requests',
-    url: Routes.adminBookingRequests,
-    icon: Inbox,
-    permission: PERMISSIONS.BOOKINGS_UPDATE_STATUS,
-  },
-  {
-    title: 'Equipment Management',
-    url: Routes.adminEquipmentManagement,
-    icon: Gauge,
-    // BOOKINGS_READ is also granted to regular members (for reading equipment
-    // availability/their own bookings — always scope 'any', so scope alone can't distinguish
-    // it here either), so it can't gate an admin-only nav item. BOOKINGS_UPDATE_STATUS is what
-    // the actual admin capacity-management endpoint requires (POST /admin/equipment/:id/capacity)
-    // and is never granted to members.
-    permission: PERMISSIONS.BOOKINGS_UPDATE_STATUS,
   },
 ];
 
