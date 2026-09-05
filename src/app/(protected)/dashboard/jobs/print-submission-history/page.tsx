@@ -1,24 +1,16 @@
 import JobList from './components/jobList';
-import { jobApi } from '@/api/client/job';
+import { userApi } from '@/api/client/user';
 import { JobDetail } from '@/types/jobs';
 
 export default async function PrintSubmissionHistory() {
   let fetchedJobs: JobDetail[] = [];
 
   try {
-    const response = await jobApi.listAllJobs();
-
-    const res = response as {
-      data?: {
-        data?: JobDetail[];
-      };
-    };
-
-    const extractedData = res.data?.data ? res.data.data : res.data || response;
-
-    if (Array.isArray(extractedData)) {
-      fetchedJobs = extractedData as JobDetail[];
-    }
+    // Scoped to the current user server-side (GET /users/me/jobs) — do not swap this back to
+    // jobApi.listAllJobs(), which is the admin "every user's jobs" endpoint and previously
+    // leaked every student's print history to every other student on this page.
+    const response = await userApi.getCurrentUserJobs();
+    fetchedJobs = response.data as unknown as JobDetail[];
   } catch (error) {
     console.error('Failed to fetch print submission history:', error);
   }

@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import JobCard from './jobCard';
+import { EmptyPrintHistory } from './EmptyPrintHistory';
 import { JobDetail } from '@/types/jobs';
 import { JobDetailContent } from './JobDetailContent';
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from '@/components/ui/dialog';
@@ -12,6 +13,10 @@ interface JobListProps {
 
 export default function JobList({ jobs }: JobListProps) {
   const [selectedJob, setSelectedJob] = useState<JobDetail | null>(null);
+
+  if (jobs.length === 0) {
+    return <EmptyPrintHistory />;
+  }
 
   return (
     <>
