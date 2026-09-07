@@ -2,7 +2,6 @@ import { describe, it, expect, vi, beforeEach, Mock } from 'vitest';
 import { redirect } from 'next/navigation';
 import { validateSession } from '@/lib/auth';
 import { onboardingAPI } from '@/api/client/onboarding';
-import { Routes } from '@/lib/routes';
 import { createMockUser } from '@test/utils/mockFactories';
 import ProtectedLayout from './layout';
 
@@ -36,21 +35,12 @@ describe('ProtectedLayout onboarding gate', () => {
     expect(onboardingAPI.getStatus).not.toHaveBeenCalled();
   });
 
-  it('redirects to onboarding when the session exists but onboarding is incomplete', async () => {
+  it('does not check onboarding status while the check is disabled (TEMP toggle)', async () => {
     (validateSession as Mock).mockResolvedValue(createMockUser());
-    (onboardingAPI.getStatus as Mock).mockResolvedValue({ onboardingCompleted: false });
-
-    await expect(ProtectedLayout({ children: <div /> })).rejects.toThrow('REDIRECT');
-
-    expect(redirect).toHaveBeenCalledWith(Routes.onboarding);
-  });
-
-  it('does not redirect when the session exists and onboarding is complete', async () => {
-    (validateSession as Mock).mockResolvedValue(createMockUser());
-    (onboardingAPI.getStatus as Mock).mockResolvedValue({ onboardingCompleted: true });
 
     await expect(ProtectedLayout({ children: <div /> })).resolves.toBeTruthy();
 
+    expect(onboardingAPI.getStatus).not.toHaveBeenCalled();
     expect(redirect).not.toHaveBeenCalled();
   });
 });

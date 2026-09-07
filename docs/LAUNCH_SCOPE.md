@@ -68,6 +68,17 @@ This spec exercises the booking flow through `/dashboard/bookings` and was left 
 when this restriction was introduced (the route redirected away). Once Equipment Booking's guard
 is removed, re-enable and re-verify this spec.
 
+## Onboarding (backend not implemented yet)
+
+Unlike the features above, onboarding isn't held back by choice — the backend hasn't built
+`GET /api/v1/users/me/onboarding` yet (confirmed 2026-09-07: it 500s for every real user).
+It's turned off in two places so neither path can reach the broken endpoint:
+
+| File | What's disabled | To restore |
+|---|---|---|
+| `src/app/(protected)/layout.tsx` | The redirect-into-onboarding check for users who haven't completed it | Flip `ONBOARDING_CHECK_ENABLED` to `true` and delete the `if` wrapper, leaving the two inner lines unconditional |
+| `src/app/(onboarding)/layout.tsx` | Direct navigation to `/onboarding` (now bounces to `/dashboard`) | Restore the original `validateSession()`-gated body from git history (the commit before this file was replaced with a redirect) |
+
 ## Why a route guard instead of just hiding the nav link
 
 An earlier draft of this change only removed the sidebar links. That's not enough on its own:
