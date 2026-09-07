@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { sessionApi } from './session';
 import { mockServer } from '@/api/mocks';
 import { http, HttpResponse } from 'msw';
@@ -6,6 +6,18 @@ import { endpoints } from './endpoints';
 import { ErrorCodes } from './errors';
 import { createMockUserResponse } from '@test/utils/mockFactories';
 import { hasPermission } from '@/types/user';
+import { transformUserResponse } from './transformers';
+
+// Wraps the real transformUserResponse by default (every existing test keeps exercising real
+// transform behavior) — only the boundary test below overrides it, once, to simulate a genuine
+// non-ApiError bug elsewhere in the transform pipeline.
+vi.mock('./transformers', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('./transformers')>();
+  return {
+    ...actual,
+    transformUserResponse: vi.fn(actual.transformUserResponse),
+  };
+});
 
 describe('sessionApi', () => {
   describe('current', () => {
@@ -59,7 +71,7 @@ describe('sessionApi', () => {
       expect(result.user).toBeNull();
     });
 
-    it('throws error for non-SESSION_INVALID errors', async () => {
+    it('treats an unexpected backend error code as logged out instead of crashing', async () => {
       mockServer.use(
         http.get('*' + endpoints.users.me, () => {
           return HttpResponse.json(
@@ -75,7 +87,28 @@ describe('sessionApi', () => {
         }),
       );
 
-      await expect(sessionApi.current()).rejects.toThrow();
+      const result = await sessionApi.current();
+
+      expect(result.user).toBeNull();
+    });
+
+    it('still throws for a non-ApiError (a genuine bug elsewhere), not just backend errors', async () => {
+      mockServer.use(
+        http.get('*' + endpoints.users.me, () =>
+          HttpResponse.json({
+            success: true,
+            data: { user: createMockUserResponse(), groups: [], activeJobCount: 0 },
+          }),
+        ),
+      );
+
+      // Simulate a genuine bug in the transform layer — a plain Error, not an ApiError.
+      // The widened catch in sessionApi.current() must not swallow this as "logged out."
+      vi.mocked(transformUserResponse).mockImplementationOnce(() => {
+        throw new Error('Simulated non-ApiError bug');
+      });
+
+      await expect(sessionApi.current()).rejects.toThrow('Simulated non-ApiError bug');
     });
 
     it('includes credentials in request', async () => {
@@ -180,7 +213,9 @@ describe('sessionApi', () => {
         }),
       );
 
-      await expect(sessionApi.current()).rejects.toThrow();
+      const result = await sessionApi.current();
+
+      expect(result.user).toBeNull();
     });
   });
 

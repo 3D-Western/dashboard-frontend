@@ -34,14 +34,16 @@ describe('auth', () => {
       expect(result).toBeNull();
     });
 
-    it('propagates network errors so the error boundary can catch them', async () => {
+    it('treats a network error as logged out instead of crashing', async () => {
       mockServer.use(
         http.get(`*${endpoints.users.me}`, () => {
           return HttpResponse.error();
         }),
       );
 
-      await expect(validateSession()).rejects.toThrow();
+      const result = await validateSession();
+
+      expect(result).toBeNull();
     });
   });
 
