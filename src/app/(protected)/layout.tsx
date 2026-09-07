@@ -18,9 +18,16 @@ export default async function ProtectedLayout({ children }: { children: React.Re
     redirect('/login?error=unauthenticated');
   }
 
-  const { onboardingCompleted } = await onboardingAPI.getStatus();
-  if (!onboardingCompleted) {
-    redirect(Routes.onboarding);
+  // TEMP: onboarding is out of scope until the backend implements it — see docs/LAUNCH_SCOPE.md.
+  // Flip to true (and delete the if-wrapper, leaving the two inner lines unconditional) once
+  // GET /api/v1/users/me/onboarding is real.
+  const ONBOARDING_CHECK_ENABLED = false;
+
+  if (ONBOARDING_CHECK_ENABLED) {
+    const { onboardingCompleted } = await onboardingAPI.getStatus();
+    if (!onboardingCompleted) {
+      redirect(Routes.onboarding);
+    }
   }
 
   return (
