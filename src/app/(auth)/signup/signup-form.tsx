@@ -13,11 +13,16 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Routes } from '@/lib/routes';
 import { cn } from '@/lib/utils';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Info } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -25,6 +30,10 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { z } from 'zod';
+import { EXPERIENCE_LEVEL_OPTIONS } from '@/constants/experience-levels';
+import { FACULTY_OPTIONS } from '@/constants/faculties';
+import { transformFacultyToBackend } from '@/api/client/transformers';
+import type { UserFaculty } from '@/types/user';
 
 const formSchema = z.object({
   studentId: z
@@ -48,11 +57,11 @@ const formSchema = z.object({
     .regex(/[A-Z]/, 'Password must contain at least one uppercase letter')
     .regex(/[a-z]/, 'Password must contain at least one lowercase letter')
     .regex(/[0-9]/, 'Password must contain at least one number'),
-  inviteCode: z.string().min(1, 'Invite code is required'),
+  faculty: z.string().min(1, 'Faculty is required'),
+  experienceLevel: z.string().min(1, 'Experience level is required'),
   firstName: z.string().min(1, 'First name is required'),
   lastName: z.string().min(1, 'Last name is required'),
 });
-
 type FormData = z.infer<typeof formSchema>;
 
 export function SignupForm({ className, ...props }: React.ComponentProps<'div'>) {
@@ -65,7 +74,8 @@ export function SignupForm({ className, ...props }: React.ComponentProps<'div'>)
       studentId: '',
       email: '',
       password: '',
-      inviteCode: '',
+      faculty: '',
+      experienceLevel: '',
       firstName: '',
       lastName: '',
     },
@@ -80,7 +90,8 @@ export function SignupForm({ className, ...props }: React.ComponentProps<'div'>)
         studentId: parseInt(values.studentId, 10),
         email: values.email,
         password: values.password,
-        inviteCode: values.inviteCode,
+        faculty: transformFacultyToBackend(values.faculty as UserFaculty),
+        experienceLevel: values.experienceLevel,
         firstName: values.firstName,
         lastName: values.lastName,
       };
@@ -189,26 +200,49 @@ export function SignupForm({ className, ...props }: React.ComponentProps<'div'>)
 
                 <FormField
                   control={form.control}
-                  name="inviteCode"
+                  name="faculty"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="flex items-center gap-1.5">
-                        Invite Code
-                        <Tooltip>
-                          <TooltipTrigger type="button">
-                            <Info className="h-4 w-4 text-muted-foreground" />
-                          </TooltipTrigger>
-                          <TooltipContent side="right" className="max-w-xs">
-                            <p>
-                              Currently we are in invite only testing. If you want to give it a
-                              try, email support@3dwestern.ca
-                            </p>
-                          </TooltipContent>
-                        </Tooltip>
-                      </FormLabel>
-                      <FormControl>
-                        <Input placeholder="Enter your invite code" {...field} />
-                      </FormControl>
+                      <FormLabel>Faculty</FormLabel>
+                      <Select onValueChange={field.onChange} value={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select your faculty" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {FACULTY_OPTIONS.map((option) => (
+                            <SelectItem key={option.value} value={option.value}>
+                              {option.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="experienceLevel"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Experience Level</FormLabel>
+                      <Select onValueChange={field.onChange} value={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select your experience level" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {EXPERIENCE_LEVEL_OPTIONS.map((option) => (
+                            <SelectItem key={option.value} value={option.value}>
+                              {option.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                       <FormMessage />
                     </FormItem>
                   )}

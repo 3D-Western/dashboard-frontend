@@ -61,12 +61,12 @@ export interface ApiSignupRequest {
   studentId: number;
   email: string;
   password: string;
-  inviteCode: string;
   firstName: string;
   lastName: string;
-  // Faculty now collected in the post-login Onboarding questionnaire instead of at signup —
-  // see feat/onboarding-questionnaire. Optional here since Signup no longer sends it.
-  faculty?: string;
+  // Backend RegisterRequest requires both — sent as the backend enum names
+  // (e.g. "Engineering", "Beginner").
+  faculty: string;
+  experienceLevel: string;
 }
 
 export interface VerifyEmailResponse {
