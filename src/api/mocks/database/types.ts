@@ -1,5 +1,6 @@
 import { TrainingLevel } from '@/types/training';
 import { OnboardingAnswers } from '@/types/onboarding';
+import { AccountStatus } from '@/types/user';
 
 export interface User {
   studentId: number;
@@ -11,6 +12,14 @@ export interface User {
   experience: string;
   createdDate?: string;
   trainingLevel?: TrainingLevel;
+  // Mirrors backend's real AccountStatus enum/column. Absent/undefined is treated as 'Active'
+  // (see db.ts) so existing seeded users, which never set this field, aren't retroactively locked.
+  accountStatus?: AccountStatus;
+  accountStatusReason?: string | null;
+  // Raw backend-shaped values (e.g. 'Undeclared', 'Beginner') for the AdminUserProfile mock
+  // responses — separate from the unrelated, unused `experience` field above.
+  faculty?: string;
+  experienceLevel?: string | null;
   // Absent/undefined is treated as completed (see db.ts), matching the emailVerified convention
   // below — existing seeded users, which never set this field, aren't retroactively sent back
   // through onboarding. Only a newly mock-signed-up user starts with this explicitly `false`.

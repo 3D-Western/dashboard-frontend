@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Printer, TicketPlus } from 'lucide-react';
+import { Printer, TicketPlus, Users } from 'lucide-react';
 import Link from 'next/link';
 import PageTitle from '@/components/PageTitle';
 import { Routes } from '@/lib/routes';
@@ -13,10 +13,9 @@ export const metadata: Metadata = {
   description: 'Administrative dashboard for 3D Western',
 };
 
-// NOTE: User Management, IAM Management, Audit Log, and the booking-admin tiles (Equipment
-// Bookings / Booking Requests / Equipment Management) are intentionally left out of this page
-// for the initial launch — see docs/LAUNCH_SCOPE.md for what's held back and how to bring each
-// one back.
+// NOTE: IAM Management, Audit Log, and the booking-admin tiles (Equipment Bookings / Booking
+// Requests / Equipment Management) are intentionally left out of this page for the initial
+// launch — see docs/LAUNCH_SCOPE.md for what's held back and how to bring each one back.
 export default async function AdminDashboardPage() {
   const user = await validateSession();
 
@@ -25,6 +24,25 @@ export default async function AdminDashboardPage() {
       <PageTitle title="Admin Dashboard" description="Administrative dashboard for 3D Western" />
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        {user && hasPermission(user, PERMISSIONS.USERS_LIST) && (
+          <Link href={Routes.adminUsersManagement}>
+            <Card className="cursor-pointer transition-colors hover:bg-accent">
+              <CardHeader>
+                <div className="flex items-center gap-2">
+                  <Users className="h-5 w-5 text-muted-foreground" />
+                  <CardTitle>User Management</CardTitle>
+                </div>
+                <CardDescription>Manage user accounts and permissions</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-muted-foreground">
+                  View and manage all user accounts, roles, and access levels.
+                </p>
+              </CardContent>
+            </Card>
+          </Link>
+        )}
+
         {user && hasPermission(user, PERMISSIONS.JOBS_LIST) && (
           <Link href={Routes.adminJobsManagement}>
             <Card className="cursor-pointer transition-colors hover:bg-accent">

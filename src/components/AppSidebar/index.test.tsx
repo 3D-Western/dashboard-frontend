@@ -77,6 +77,14 @@ describe('AppSidebar', () => {
       expect(screen.queryByRole('link', { name: /job management/i })).not.toBeInTheDocument();
     });
 
+    it('shows User Management only when user has users:list', () => {
+      const admin = createMockAdmin({ permissions: [perm(PERMISSIONS.USERS_LIST)] });
+      renderSidebar(admin);
+
+      expect(screen.getByRole('link', { name: /^user management$/i })).toBeInTheDocument();
+      expect(screen.queryByRole('link', { name: /job management/i })).not.toBeInTheDocument();
+    });
+
     it('shows all admin items when user has all relevant permissions', () => {
       const admin = createMockAdmin({
         permissions: [perm(PERMISSIONS.JOBS_UPDATE_STATUS), perm(PERMISSIONS.INVITATIONS_LIST)],
@@ -111,10 +119,11 @@ describe('AppSidebar', () => {
       expect(screen.queryByText('Admin')).not.toBeInTheDocument();
     });
 
-    // Launch-scope regression: these items exist in the codebase (User Management, IAM
-    // Management, Audit Log, Equipment Bookings, Booking Requests, Equipment Management) but
-    // aren't part of the initial launch — see docs/LAUNCH_SCOPE.md. Even a user with every
-    // permission that used to gate them should never see them in the sidebar.
+    // Launch-scope regression: these items exist in the codebase (IAM Management, Audit Log,
+    // Equipment Bookings, Booking Requests, Equipment Management) but aren't part of the initial
+    // launch — see docs/LAUNCH_SCOPE.md. Even a user with every permission that used to gate them
+    // should never see them in the sidebar. (User Management was restored — see the positive
+    // tests above.)
     it('never shows launch-scope-excluded admin items, even with every permission that used to gate them', () => {
       const admin = createMockAdmin({
         permissions: [
@@ -132,8 +141,8 @@ describe('AppSidebar', () => {
 
       expect(screen.getByRole('link', { name: /job management/i })).toBeInTheDocument();
       expect(screen.getByRole('link', { name: /invitation management/i })).toBeInTheDocument();
+      expect(screen.getByRole('link', { name: /^user management$/i })).toBeInTheDocument();
 
-      expect(screen.queryByRole('link', { name: /^user management$/i })).not.toBeInTheDocument();
       expect(screen.queryByRole('link', { name: /iam management/i })).not.toBeInTheDocument();
       expect(screen.queryByRole('link', { name: /audit log/i })).not.toBeInTheDocument();
       expect(

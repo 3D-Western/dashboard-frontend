@@ -1,11 +1,22 @@
-import { User } from '@/types/user';
+import { AccountStatus, AdminUserProfile, User } from '@/types/user';
 import { PaginatedResponse } from '@/types/common';
-import { PrintJobListResponse, UserListResponseRaw, UserResponse } from '../types';
-import { CurrentUserJobListParams, UserListParams } from '@/types/common';
+import {
+  PrintJobListResponse,
+  UserListResponseRaw,
+  UserResponse,
+  AdminUserProfileResponse,
+  AdminUserListResponseRaw,
+} from '../types';
+import { AdminUserListParams, CurrentUserJobListParams, UserListParams } from '@/types/common';
 import { apiRequest } from './base';
 import { endpoints } from './endpoints';
 import { getBaseUrl } from './utils';
-import { transformUserResponse, transformUserListResponse } from './transformers';
+import {
+  transformUserResponse,
+  transformUserListResponse,
+  transformAdminUserProfileResponse,
+  transformAdminUserListResponse,
+} from './transformers';
 
 export const userApi = {
   listAllUsers: async (
@@ -43,6 +54,81 @@ export const userApi = {
     });
 
     return transformUserListResponse(response);
+  },
+
+  /**
+   * Lists users for the admin Users Management table. Deliberately separate from
+   * `listAllUsers` above: that function's `search`/`status`/`trainingLevel` params don't
+   * correspond to anything the real `GET /api/v1/users` endpoint supports (pre-existing drift,
+   * see AdminUserListParams doc comment) — this one only sends params backend actually accepts.
+   */
+  listAdminUsers: async (
+    params?: AdminUserListParams,
+    options?: RequestInit,
+  ): Promise<PaginatedResponse<AdminUserProfile>> => {
+    const searchParams = new URLSearchParams();
+
+    if (params?.studentId !== undefined) {
+      searchParams.append('studentId', params.studentId.toString());
+    }
+    if (params?.email !== undefined) {
+      searchParams.append('email', params.email);
+    }
+    if (params?.firstName !== undefined) {
+      searchParams.append('firstName', params.firstName);
+    }
+    if (params?.lastName !== undefined) {
+      searchParams.append('lastName', params.lastName);
+    }
+    if (params?.experienceLevel !== undefined) {
+      searchParams.append('experienceLevel', params.experienceLevel);
+    }
+    if (params?.page !== undefined) {
+      searchParams.append('page', params.page.toString());
+    }
+    if (params?.pageSize !== undefined) {
+      searchParams.append('pageSize', params.pageSize.toString());
+    }
+    if (params?.snapshotCreatedBefore !== undefined) {
+      searchParams.append('snapshotCreatedBefore', params.snapshotCreatedBefore);
+    }
+
+    const queryString = searchParams.toString();
+    const url = `${getBaseUrl()}${endpoints.users.list}${queryString ? `?${queryString}` : ''}`;
+
+    const response = await apiRequest<AdminUserListResponseRaw>(url, {
+      method: 'GET',
+      credentials: 'include',
+      ...options,
+    });
+
+    return transformAdminUserListResponse(response);
+  },
+
+  /**
+   * Overrides a user's account status (PATCH /api/v1/users/{id}/status). Endpoint, casing, and
+   * body/response shape confirmed directly against backend source (UserController.kt /
+   * UpdateUserStatusRequest.kt) rather than assumed — see the plan doc for details. `reason` is
+   * optional; backend discards it automatically when status is set back to "Active".
+   */
+  updateAccountStatus: async (
+    studentId: number,
+    status: AccountStatus,
+    reason?: string,
+    options?: RequestInit,
+  ): Promise<AdminUserProfile> => {
+    const response = await apiRequest<AdminUserProfileResponse>(
+      `${getBaseUrl()}${endpoints.users.updateStatus(studentId)}`,
+      {
+        method: 'PATCH',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status, reason: reason ?? null }),
+        ...options,
+      },
+    );
+
+    return transformAdminUserProfileResponse(response);
   },
 
   getUserById: async (userId: number, options?: RequestInit): Promise<User> => {

@@ -1,7 +1,13 @@
-import { User, UserFaculty, UserPermission } from '@/types/user';
+import { AccountStatus, AdminUserProfile, User, UserFaculty, UserPermission } from '@/types/user';
 import type { IamGroup } from '@/types/iam';
 import { PaginatedResponse } from '@/types/common';
-import { UserResponse, UserListResponseRaw, GroupResponse } from '../types';
+import {
+  UserResponse,
+  UserListResponseRaw,
+  GroupResponse,
+  AdminUserProfileResponse,
+  AdminUserListResponseRaw,
+} from '../types';
 
 /**
  * Transforms frontend faculty to backend format.
@@ -99,5 +105,39 @@ export function transformUserListResponse(response: UserListResponseRaw): Pagina
   return {
     ...response,
     data: response.data.map((user) => transformUserResponse(user)),
+  };
+}
+
+/**
+ * Transforms an AdminUserProfileResponse from the backend (GET/PATCH /api/v1/users...) into an
+ * AdminUserProfile for the frontend. Handles case conversion for the faculty field, same as
+ * transformUserResponse.
+ */
+export function transformAdminUserProfileResponse(
+  response: AdminUserProfileResponse,
+): AdminUserProfile {
+  return {
+    studentId: response.studentId,
+    email: response.email,
+    firstName: response.firstName,
+    lastName: response.lastName,
+    createdAt: response.createdAt,
+    updatedAt: response.updatedAt,
+    experienceLevel: response.experienceLevel as AdminUserProfile['experienceLevel'],
+    faculty: transformFacultyFromBackend(response.faculty),
+    accountStatus: response.accountStatus as AccountStatus,
+    accountStatusReason: response.accountStatusReason,
+  };
+}
+
+/**
+ * Transforms a paginated list of AdminUserProfileResponse objects into AdminUserProfile objects.
+ */
+export function transformAdminUserListResponse(
+  response: AdminUserListResponseRaw,
+): PaginatedResponse<AdminUserProfile> {
+  return {
+    ...response,
+    data: response.data.map(transformAdminUserProfileResponse),
   };
 }
