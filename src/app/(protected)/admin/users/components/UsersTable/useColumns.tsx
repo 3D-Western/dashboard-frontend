@@ -25,6 +25,9 @@ export const useColumns = (opts: UseColumnsOptions = {}) => {
   const { onStatusChanged } = opts;
   const user = useUser();
   const canChangeStatus = hasPermission(user, PERMISSIONS.USERS_UPDATE_STATUS);
+  // Admins can't change their own status — any non-Active status revokes all of the target's
+  // sessions, so this would lock them out instantly. Backend doesn't enforce this yet.
+  const currentStudentId = user?.studentId;
 
   return useMemo<ColumnDef<AdminUserProfile>[]>(
     () => [
@@ -70,7 +73,10 @@ export const useColumns = (opts: UseColumnsOptions = {}) => {
             <div className="flex w-full flex-col items-center gap-1">
               <AccountStatusBadge status={adminUser.accountStatus} />
               {adminUser.accountStatusReason && (
-                <span className="text-muted-foreground max-w-48 truncate text-xs" title={adminUser.accountStatusReason}>
+                <span
+                  className="max-w-48 truncate text-xs text-muted-foreground"
+                  title={adminUser.accountStatusReason}
+                >
                   {adminUser.accountStatusReason}
                 </span>
               )}
@@ -84,6 +90,7 @@ export const useColumns = (opts: UseColumnsOptions = {}) => {
           const adminUser = row.original;
           const [showChangeStatusDialog, setShowChangeStatusDialog] = useState(false);
           const fullName = `${adminUser.firstName} ${adminUser.lastName}`;
+          const isSelf = adminUser.studentId === currentStudentId;
 
           return (
             <>
@@ -114,15 +121,21 @@ export const useColumns = (opts: UseColumnsOptions = {}) => {
                   {canChangeStatus && (
                     <>
                       <DropdownMenuSeparator />
-                      <DropdownMenuItem onSelect={() => setShowChangeStatusDialog(true)}>
-                        Change Account Status
-                      </DropdownMenuItem>
+                      {isSelf ? (
+                        <DropdownMenuItem disabled>
+                          You can&apos;t change your own status
+                        </DropdownMenuItem>
+                      ) : (
+                        <DropdownMenuItem onSelect={() => setShowChangeStatusDialog(true)}>
+                          Change Account Status
+                        </DropdownMenuItem>
+                      )}
                     </>
                   )}
                 </DropdownMenuContent>
               </DropdownMenu>
 
-              {canChangeStatus && (
+              {canChangeStatus && !isSelf && (
                 <ChangeAccountStatusDialog
                   user={adminUser}
                   open={showChangeStatusDialog}
@@ -135,6 +148,6 @@ export const useColumns = (opts: UseColumnsOptions = {}) => {
         },
       },
     ],
-    [canChangeStatus, onStatusChanged],
+    [canChangeStatus, currentStudentId, onStatusChanged],
   );
 };

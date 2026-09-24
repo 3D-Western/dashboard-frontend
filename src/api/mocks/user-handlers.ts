@@ -197,6 +197,17 @@ export const userHandlers = [
     }
 
     const { userId } = params;
+
+    if (parseInt(userId as string, 10) === user.studentId) {
+      return HttpResponse.json(
+        generateErrorResponse({
+          code: 'FORBIDDEN',
+          message: 'You cannot change your own account status',
+        }),
+        { status: 403 },
+      );
+    }
+
     const { status, reason } = (await request.json()) as {
       status: string;
       reason?: string | null;
