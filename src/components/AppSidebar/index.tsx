@@ -19,6 +19,7 @@ import { PERMISSIONS } from '@/constants/permissions';
 import {
   LayoutDashboard,
   Printer,
+  Users,
   Settings,
   Shield,
   FilePlus,
@@ -29,10 +30,10 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Routes } from '@/lib/routes';
 
-// NOTE: Equipment Booking, User Management, IAM Management, Audit Log, and the booking-admin
-// pages (Equipment Bookings / Booking Requests / Equipment Management) are intentionally left
-// out of this list for the initial launch — see docs/LAUNCH_SCOPE.md for what's held back and
-// how to bring each one back.
+// NOTE: Equipment Booking, IAM Management, Audit Log, and the booking-admin pages (Equipment
+// Bookings / Booking Requests / Equipment Management) are intentionally left out of this list
+// for the initial launch — see docs/LAUNCH_SCOPE.md for what's held back and how to bring each
+// one back.
 const navigationItems = [
   {
     title: 'Dashboard',
@@ -62,6 +63,12 @@ const adminNavigationItems = [
     url: '/admin',
     icon: Shield,
     permission: null, // visible to all admins
+  },
+  {
+    title: 'User Management',
+    url: Routes.adminUsersManagement,
+    icon: Users,
+    permission: PERMISSIONS.USERS_LIST,
   },
   {
     title: 'Job Management',

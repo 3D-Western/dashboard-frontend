@@ -9,8 +9,26 @@ import {
 } from './utils';
 import { ErrorCodes } from '../client/errors';
 import { PERMISSIONS } from '@/constants/permissions';
+import type { AccountStatus } from '@/types/user';
 
 const apiUrl = process.env.API_URL;
+
+// Shape matching backend's AdminUserProfile (see GET/PATCH /api/v1/users... responses).
+// Absent accountStatus is treated as 'Active', matching how other optional mock fields default.
+function mapToAdminUserProfile(u: ReturnType<typeof db.getAllUsers>[number]) {
+  return {
+    studentId: u.studentId,
+    email: u.email,
+    firstName: u.firstName,
+    lastName: u.lastName,
+    createdAt: u.createdDate || new Date().toISOString(),
+    updatedAt: u.createdDate || new Date().toISOString(),
+    experienceLevel: u.experienceLevel ?? null,
+    faculty: u.faculty ?? 'Undeclared',
+    accountStatus: u.accountStatus ?? 'Active',
+    accountStatusReason: u.accountStatusReason ?? null,
+  };
+}
 
 export const userHandlers = [
   // GET /users - List all users with pagination
@@ -84,6 +102,10 @@ export const userHandlers = [
       createdDate: u.createdDate || new Date().toISOString(),
       groups: u.groups,
       trainingLevel: u.trainingLevel,
+      accountStatus: u.accountStatus ?? 'Active',
+      accountStatusReason: u.accountStatusReason ?? null,
+      experienceLevel: u.experienceLevel ?? null,
+      faculty: u.faculty ?? 'Undeclared',
     }));
 
     // Calculate pagination
@@ -148,15 +170,66 @@ export const userHandlers = [
 
     return HttpResponse.json(
       generateSuccessResponse({
-        studentId: targetUser.studentId,
-        email: targetUser.email,
-        firstName: targetUser.firstName,
-        lastName: targetUser.lastName,
         createdDate: targetUser.createdDate || new Date().toISOString(),
         groups: targetUser.groups,
         trainingLevel: targetUser.trainingLevel,
+        ...mapToAdminUserProfile(targetUser),
       }),
     );
+  }),
+
+  // PATCH /users/:userId/status - Override account status (admin)
+  http.patch(`${apiUrl}/api/v1/users/:userId/status`, async ({ cookies, params, request }) => {
+    const sessionId = cookies['sessionToken'] || '';
+    const user = db.validateSession(sessionId);
+    if (!user) {
+      return createInvalidSessionResponse();
+    }
+
+    if (!mockUserHasPermission(user, PERMISSIONS.USERS_UPDATE_STATUS)) {
+      return HttpResponse.json(
+        generateErrorResponse({
+          code: 'FORBIDDEN',
+          message: 'Missing permission or protected super-admin target',
+        }),
+        { status: 403 },
+      );
+    }
+
+    const { userId } = params;
+
+    if (parseInt(userId as string, 10) === user.studentId) {
+      return HttpResponse.json(
+        generateErrorResponse({
+          code: 'FORBIDDEN',
+          message: 'You cannot change your own account status',
+        }),
+        { status: 403 },
+      );
+    }
+
+    const { status, reason } = (await request.json()) as {
+      status: string;
+      reason?: string | null;
+    };
+
+    const updatedUser = db.updateAccountStatus(
+      parseInt(userId as string, 10),
+      status as AccountStatus,
+      reason,
+    );
+
+    if (!updatedUser) {
+      return HttpResponse.json(
+        generateErrorResponse({
+          code: 'USER_NOT_FOUND',
+          message: `User with ID ${userId} not found`,
+        }),
+        { status: 404 },
+      );
+    }
+
+    return HttpResponse.json(generateSuccessResponse(mapToAdminUserProfile(updatedUser)));
   }),
 
   http.get(`${apiUrl}${endpoints.users.jobs}`, ({ cookies, request }) => {

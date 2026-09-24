@@ -351,6 +351,21 @@ export class Database {
     return user;
   }
 
+  public updateAccountStatus(
+    userId: number,
+    status: NonNullable<User['accountStatus']>,
+    reason?: string | null,
+  ): User | null {
+    const user = this.users.get(userId);
+    if (!user) {
+      return null;
+    }
+    user.accountStatus = status;
+    // Mirrors real backend: reason is discarded when reverting to Active.
+    user.accountStatusReason = status === 'Active' ? null : (reason?.trim() ?? null) || null;
+    return user;
+  }
+
   public getOnboardingStatus(userId: number): boolean {
     return this.users.get(userId)?.onboardingCompleted ?? true;
   }

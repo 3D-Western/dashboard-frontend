@@ -58,6 +58,20 @@ export interface UserListParams extends BasePaginationParams {
   trainingLevel?: string;
 }
 
+/**
+ * Admin user list query parameters — matches what GET /api/v1/users actually supports
+ * (verified against backend source). Deliberately does NOT include `search`/`status`(group)/
+ * `trainingLevel` like UserListParams above — the real backend has no such params for this
+ * endpoint, only exact/partial matches on individual fields.
+ */
+export interface AdminUserListParams extends BasePaginationParams {
+  studentId?: number;
+  email?: string;
+  firstName?: string;
+  lastName?: string;
+  experienceLevel?: string;
+}
+
 export interface CurrentUserJobListParams extends BasePaginationParams {
   status?: string;
   search?: string;

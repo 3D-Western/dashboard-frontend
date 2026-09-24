@@ -3,13 +3,12 @@
 For the initial launch, this dashboard intentionally only exposes:
 
 - **User-facing**: Dashboard, Print History, My Jobs, New Job (all 4 forms), Settings
-- **Admin-facing**: Admin Dashboard, Job Management, Invitation Management
+- **Admin-facing**: Admin Dashboard, Job Management, Invitation Management, User Management
 
 Everything else already exists in the codebase and works — it's just hidden from navigation
 and blocked from direct access until it's ready for a future launch:
 
 - Equipment Booking (`/dashboard/bookings` and its sub-routes)
-- User Management (`/admin/users`)
 - IAM Management (`/admin/iam`)
 - Audit Log (`/admin/audit`)
 - Equipment Bookings admin (`/admin/bookings`)
@@ -32,7 +31,6 @@ and nothing but a `redirect(...)` call. Delete the whole file:
 | Feature | File to delete |
 |---|---|
 | Equipment Booking | `src/app/(protected)/dashboard/bookings/layout.tsx` |
-| User Management | `src/app/(protected)/admin/users/layout.tsx` |
 | IAM Management | `src/app/(protected)/admin/iam/layout.tsx` |
 | Audit Log | `src/app/(protected)/admin/audit/layout.tsx` |
 | Equipment Bookings (admin) | `src/app/(protected)/admin/bookings/layout.tsx` |

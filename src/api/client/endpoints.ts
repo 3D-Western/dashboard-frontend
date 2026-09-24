@@ -13,6 +13,7 @@ export const endpoints = {
     me: '/api/v1/users/me',
     list: '/api/v1/users',
     byId: (userId: number) => `/api/v1/users/${userId}`,
+    updateStatus: (userId: number) => `/api/v1/users/${userId}/status`,
     jobs: '/api/v1/users/me/jobs',
     changePassword: '/api/v1/users/me/password',
   },

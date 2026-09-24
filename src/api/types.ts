@@ -28,6 +28,20 @@ export interface UserResponse {
   faculty?: string;
 }
 
+// Raw shape of AdminUserProfile as returned by GET/PATCH /api/v1/users(/{id})(/status).
+export interface AdminUserProfileResponse {
+  studentId: number;
+  email: string;
+  firstName: string;
+  lastName: string;
+  createdAt: string;
+  updatedAt: string;
+  experienceLevel: string | null;
+  faculty: string;
+  accountStatus: string;
+  accountStatusReason: string | null;
+}
+
 export interface GroupResponse {
   id: number;
   groupKey: string;
@@ -126,6 +140,7 @@ export type FileDeleteResponse = null;
 
 // Users API Response Types (backend format)
 export type UserListResponseRaw = PaginatedResponse<UserResponse>;
+export type AdminUserListResponseRaw = PaginatedResponse<AdminUserProfileResponse>;
 
 // Invitations API Response Types
 export type InvitationListResponse = PaginatedResponse<Invitation>;
