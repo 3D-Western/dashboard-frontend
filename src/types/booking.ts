@@ -39,7 +39,11 @@ export interface Equipment {
 // the two features cover different equipment (e.g. Circuit/sewing/soldering aren't job-submittable,
 // and 3D printing/CNC aren't bookable), so they shouldn't share a type even where labels overlap.
 export type EquipmentCategory =
-  'LaserCutter' | 'CircuitMachine' | 'SewingMachine' | 'SolderingStation' | 'Waterjet';
+  | 'LaserCutter'
+  | 'CircuitMachine'
+  | 'SewingMachine'
+  | 'SolderingStation'
+  | 'Waterjet';
 
 // extended to fit sprint
 export type BookingStatus = 'APPROVED' | 'PENDING' | 'REJECTED' | 'CANCELLED';

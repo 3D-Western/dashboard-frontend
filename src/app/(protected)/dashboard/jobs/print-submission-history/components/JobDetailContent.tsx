@@ -72,12 +72,7 @@ export function JobDetailContent({ job }: JobDetailContentProps) {
           <p className="mb-3 text-sm text-red-700">
             The file for this print job failed to upload properly.
           </p>
-          <input
-            ref={fileInputRef}
-            type="file"
-            className="hidden"
-            onChange={handleFileSelected}
-          />
+          <input ref={fileInputRef} type="file" className="hidden" onChange={handleFileSelected} />
           <button
             onClick={handleRetryUploadClick}
             disabled={isRetrying}

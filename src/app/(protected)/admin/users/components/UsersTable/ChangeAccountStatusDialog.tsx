@@ -130,8 +130,7 @@ function ChangeAccountStatusDialogContent({
         <DialogHeader>
           <DialogTitle>Change Account Status</DialogTitle>
           <DialogDescription>
-            Update the account status for <strong>{fullName}</strong> (Student ID:{' '}
-            {user.studentId})
+            Update the account status for <strong>{fullName}</strong> (Student ID: {user.studentId})
           </DialogDescription>
         </DialogHeader>
 
@@ -161,7 +160,7 @@ function ChangeAccountStatusDialogContent({
               </SelectContent>
             </Select>
             {selectedStatus !== 'Active' && (
-              <p className="text-muted-foreground text-sm">
+              <p className="text-sm text-muted-foreground">
                 This will immediately sign the user out of all active sessions.
               </p>
             )}
@@ -201,8 +200,8 @@ function ChangeAccountStatusDialogContent({
             <AlertDialogTitle>Ban this account?</AlertDialogTitle>
             <AlertDialogDescription>
               This will blacklist <strong>{fullName}</strong>&apos;s account and immediately sign
-              them out of all active sessions. This is the most severe account status and should
-              be used carefully.
+              them out of all active sessions. This is the most severe account status and should be
+              used carefully.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

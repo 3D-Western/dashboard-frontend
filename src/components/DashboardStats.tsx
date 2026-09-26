@@ -28,8 +28,7 @@ export default function DashboardStats() {
           total: totalRes.pagination?.totalItems ?? 0,
           active: printingRes.pagination?.totalItems ?? 0,
           pending:
-            (pendingFileRes.pagination?.totalItems ?? 0) +
-            (inQueueRes.pagination?.totalItems ?? 0),
+            (pendingFileRes.pagination?.totalItems ?? 0) + (inQueueRes.pagination?.totalItems ?? 0),
         });
       } catch (error) {
         console.error('Failed to fetch jobs', error);

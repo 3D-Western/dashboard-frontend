@@ -28,9 +28,7 @@ interface ReorderJobDialogProps {
 export function ReorderJobDialog({ printJob, open, onOpenChange }: ReorderJobDialogProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      {open ? (
-        <ReorderJobDialogContent printJob={printJob} onOpenChange={onOpenChange} />
-      ) : null}
+      {open ? <ReorderJobDialogContent printJob={printJob} onOpenChange={onOpenChange} /> : null}
     </Dialog>
   );
 }
