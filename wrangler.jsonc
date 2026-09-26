@@ -1,0 +1,33 @@
+// Cloudflare Workers deployment of this Next.js app (OpenNext adapter).
+// Deploys come from Cloudflare Workers Builds, connected to 3D-Western/dashboard-frontend:
+// a push to main deploys production, and every pull request gets a preview URL.
+// Local check in the Workers runtime: `pnpm preview`.
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "dashboard-frontend",
+  "main": ".open-next/worker.js",
+  "compatibility_date": "2026-09-01",
+  "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
+  "assets": {
+    "directory": ".open-next/assets",
+    "binding": "ASSETS",
+  },
+  "services": [
+    {
+      "binding": "WORKER_SELF_REFERENCE",
+      "service": "dashboard-frontend",
+    },
+  ],
+  "images": {
+    "binding": "IMAGES",
+  },
+  // Non-secret runtime configuration (was set in Vercel). Secrets, if ever needed,
+  // go in the Cloudflare dashboard (Settings > Variables and Secrets), never here.
+  "vars": {
+    "API_URL": "https://create.3dwestern.ca",
+    "MOCK_ENABLED": "false",
+  },
+  "observability": {
+    "enabled": true,
+  },
+}

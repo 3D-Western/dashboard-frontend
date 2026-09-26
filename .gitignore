@@ -47,3 +47,8 @@ package-lock.json
 
 # local worktrees for parallel sessions
 .claude/worktrees/
+
+# Cloudflare Workers (OpenNext build output, local wrangler state and secrets)
+.open-next/
+.wrangler/
+.dev.vars
