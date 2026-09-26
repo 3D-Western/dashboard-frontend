@@ -22,16 +22,10 @@ export function CheckboxGroupField({
   disabledValues,
 }: CheckboxGroupFieldProps) {
   const columnsClass =
-    columns === 3
-      ? 'sm:grid-cols-3'
-      : columns === 2
-        ? 'sm:grid-cols-2'
-        : 'sm:grid-cols-1';
+    columns === 3 ? 'sm:grid-cols-3' : columns === 2 ? 'sm:grid-cols-2' : 'sm:grid-cols-1';
 
   function toggle(optionValue: string, checked: boolean) {
-    onChange(
-      checked ? [...value, optionValue] : value.filter((v) => v !== optionValue),
-    );
+    onChange(checked ? [...value, optionValue] : value.filter((v) => v !== optionValue));
   }
 
   return (

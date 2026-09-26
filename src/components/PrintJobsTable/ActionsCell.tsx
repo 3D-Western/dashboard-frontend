@@ -97,10 +97,7 @@ export function ActionsCell({ printJob, mode, onStatusChanged, onJobDeleted }: A
           {canDelete && (
             <>
               <DropdownMenuSeparator />
-              <DropdownMenuItem
-                variant="destructive"
-                onSelect={() => setShowDeleteDialog(true)}
-              >
+              <DropdownMenuItem variant="destructive" onSelect={() => setShowDeleteDialog(true)}>
                 Delete Job
               </DropdownMenuItem>
             </>

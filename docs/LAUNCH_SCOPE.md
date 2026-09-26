@@ -28,14 +28,14 @@ When a held-back feature is ready to ship, reverse both parts for that feature:
 Each blocked route has a `layout.tsx` at the root of its subtree containing a `// TEMP:` comment
 and nothing but a `redirect(...)` call. Delete the whole file:
 
-| Feature | File to delete |
-|---|---|
-| Equipment Booking | `src/app/(protected)/dashboard/bookings/layout.tsx` |
-| IAM Management | `src/app/(protected)/admin/iam/layout.tsx` |
-| Audit Log | `src/app/(protected)/admin/audit/layout.tsx` |
-| Equipment Bookings (admin) | `src/app/(protected)/admin/bookings/layout.tsx` |
-| Booking Requests | `src/app/(protected)/admin/requests/layout.tsx` |
-| Equipment Management | `src/app/(protected)/admin/equipment/layout.tsx` |
+| Feature                    | File to delete                                      |
+| -------------------------- | --------------------------------------------------- |
+| Equipment Booking          | `src/app/(protected)/dashboard/bookings/layout.tsx` |
+| IAM Management             | `src/app/(protected)/admin/iam/layout.tsx`          |
+| Audit Log                  | `src/app/(protected)/admin/audit/layout.tsx`        |
+| Equipment Bookings (admin) | `src/app/(protected)/admin/bookings/layout.tsx`     |
+| Booking Requests           | `src/app/(protected)/admin/requests/layout.tsx`     |
+| Equipment Management       | `src/app/(protected)/admin/equipment/layout.tsx`    |
 
 ### 2. Re-add its nav entry
 
@@ -56,7 +56,7 @@ and nothing but a `redirect(...)` call. Delete the whole file:
 ### 3. Update tests
 
 `src/components/AppSidebar/index.test.tsx` has a few tests specifically guarding that these
-items *don't* show (search the file for "launch-scope"). Once a feature is re-added, delete or
+items _don't_ show (search the file for "launch-scope"). Once a feature is re-added, delete or
 update the assertion for that specific item, and consider restoring per-item visibility tests
 like the ones this change removed (e.g. "shows User Management only when user has users:list").
 
@@ -72,10 +72,10 @@ Unlike the features above, onboarding isn't held back by choice — the backend 
 `GET /api/v1/users/me/onboarding` yet (confirmed 2026-09-07: it 500s for every real user).
 It's turned off in two places so neither path can reach the broken endpoint:
 
-| File | What's disabled | To restore |
-|---|---|---|
-| `src/app/(protected)/layout.tsx` | The redirect-into-onboarding check for users who haven't completed it | Flip `ONBOARDING_CHECK_ENABLED` to `true` and delete the `if` wrapper, leaving the two inner lines unconditional |
-| `src/app/(onboarding)/layout.tsx` | Direct navigation to `/onboarding` (now bounces to `/dashboard`) | Restore the original `validateSession()`-gated body from git history (the commit before this file was replaced with a redirect) |
+| File                              | What's disabled                                                       | To restore                                                                                                                      |
+| --------------------------------- | --------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
+| `src/app/(protected)/layout.tsx`  | The redirect-into-onboarding check for users who haven't completed it | Flip `ONBOARDING_CHECK_ENABLED` to `true` and delete the `if` wrapper, leaving the two inner lines unconditional                |
+| `src/app/(onboarding)/layout.tsx` | Direct navigation to `/onboarding` (now bounces to `/dashboard`)      | Restore the original `validateSession()`-gated body from git history (the commit before this file was replaced with a redirect) |
 
 ## Why a route guard instead of just hiding the nav link
 

@@ -33,9 +33,7 @@ describe('AppSidebar', () => {
       const user = createMockUser();
       renderSidebar(user);
 
-      expect(
-        screen.queryByRole('link', { name: /equipment booking/i }),
-      ).not.toBeInTheDocument();
+      expect(screen.queryByRole('link', { name: /equipment booking/i })).not.toBeInTheDocument();
     });
   });
 
@@ -145,13 +143,9 @@ describe('AppSidebar', () => {
 
       expect(screen.queryByRole('link', { name: /iam management/i })).not.toBeInTheDocument();
       expect(screen.queryByRole('link', { name: /audit log/i })).not.toBeInTheDocument();
-      expect(
-        screen.queryByRole('link', { name: /equipment bookings/i }),
-      ).not.toBeInTheDocument();
+      expect(screen.queryByRole('link', { name: /equipment bookings/i })).not.toBeInTheDocument();
       expect(screen.queryByRole('link', { name: /booking requests/i })).not.toBeInTheDocument();
-      expect(
-        screen.queryByRole('link', { name: /equipment management/i }),
-      ).not.toBeInTheDocument();
+      expect(screen.queryByRole('link', { name: /equipment management/i })).not.toBeInTheDocument();
     });
   });
 

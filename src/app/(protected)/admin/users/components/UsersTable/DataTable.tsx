@@ -28,7 +28,11 @@ interface DataTableProps<TData, TValue> {
   pagination: PaginationMetadata | Partial<PaginationMetadata>;
 }
 
-export function DataTable<TData, TValue>({ columns, data, pagination }: DataTableProps<TData, TValue>) {
+export function DataTable<TData, TValue>({
+  columns,
+  data,
+  pagination,
+}: DataTableProps<TData, TValue>) {
   'use no memo';
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
