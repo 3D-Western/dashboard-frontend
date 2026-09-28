@@ -86,6 +86,13 @@ export default function BulkActionBar({
           >
             Bulk Reject
           </button>
+          <button
+            onClick={() => handleActionClick('CANCEL')}
+            disabled={isPending}
+            className="rounded-lg bg-gray-700 px-4 py-2 text-sm font-medium transition-colors hover:bg-gray-600 disabled:opacity-50"
+          >
+            Bulk Cancel
+          </button>
         </div>
       )}
     </div>

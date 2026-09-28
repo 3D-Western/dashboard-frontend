@@ -1,5 +1,6 @@
 import { Booking } from '@/types/booking';
 import { CheckCircle2, Clock, XCircle } from 'lucide-react';
+import { BOOKING_STATUS_BADGE_CLASSES } from '@/constants/booking-status';
 
 export default function BookingStatusTracker({ bookings }: { bookings: Booking[] }) {
   const recentBookings = bookings.slice(0, 5);
@@ -27,13 +28,7 @@ export default function BookingStatusTracker({ bookings }: { bookings: Booking[]
 
             <div className="text-right">
               <span
-                className={`rounded-full px-2 py-1 text-xs font-medium ${
-                  booking.status === 'APPROVED'
-                    ? 'bg-green-100 text-green-700'
-                    : booking.status === 'PENDING'
-                      ? 'bg-yellow-100 text-yellow-700'
-                      : 'bg-red-100 text-red-700'
-                }`}
+                className={`rounded-full px-2 py-1 text-xs font-medium ${BOOKING_STATUS_BADGE_CLASSES[booking.status]}`}
               >
                 {booking.status === 'PENDING' ? 'Awaiting Admin Approval' : booking.status}
               </span>

@@ -25,6 +25,9 @@ export const bookingAPI = {
     if (params?.status !== undefined) {
       searchParams.append('status', params.status);
     }
+    if (params?.hasConflict !== undefined) {
+      searchParams.append('hasConflict', params.hasConflict.toString());
+    }
     if (params?.startTime !== undefined) {
       searchParams.append('from', params.startTime);
     }

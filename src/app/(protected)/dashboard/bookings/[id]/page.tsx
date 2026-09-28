@@ -1,9 +1,17 @@
-export default function BookingDetailPage({ params }: { params: { id: string } }) {
-  return (
-    <div className="mx-auto max-w-md space-y-4 p-6">
-      <h1 className="text-2xl font-bold">Reservation Details</h1>
-      <p className="text-sm text-muted-foreground">Viewing reservation ID: {params.id}</p>
-      {/* Placeholder for Status Timeline + Pickup Instructions */}
-    </div>
-  );
+import type { Metadata } from 'next';
+import { BookingDetailClient } from './components/BookingDetailClient';
+
+export const metadata: Metadata = {
+  title: 'Reservation Details',
+  description: 'View and manage an equipment reservation',
+};
+
+interface BookingDetailPageProps {
+  params: Promise<{ id: string }>;
+}
+
+export default async function BookingDetailPage({ params }: BookingDetailPageProps) {
+  const { id } = await params;
+
+  return <BookingDetailClient bookingId={id} />;
 }
