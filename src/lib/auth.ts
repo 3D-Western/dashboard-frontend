@@ -15,8 +15,10 @@ export const logout = async (): Promise<void> => {
   await sessionApi.logout();
 };
 
-// sessionApi.current handles UNAUTHORIZED (no session) → returns null.
-// All other errors (network, 5xx) propagate to the nearest error boundary.
+// sessionApi.current treats any failure to confirm a session (UNAUTHORIZED, an unexpected
+// backend error, a network failure, etc.) as "not logged in" and resolves to null rather than
+// throwing — this check must never crash the app. Only a non-ApiError (a genuine bug elsewhere)
+// still propagates to the nearest error boundary.
 export const validateSession = cache(async (): Promise<User | null> => {
   const response = await sessionApi.current();
   return response.user;
