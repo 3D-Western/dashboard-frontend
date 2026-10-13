@@ -2,7 +2,6 @@
 
 import { useEffect, useState, useRef } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
-import Image from 'next/image';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
 import { Card, CardContent } from '@/components/ui/card';
@@ -12,6 +11,7 @@ import { Mail, CheckCircle2 } from 'lucide-react';
 import { sessionApi } from '@/api/client/session';
 import { StatusAlert } from '@/components/StatusAlert';
 import { ApiError } from '@/api/client/errors';
+import { BrandMark } from '@/components/BrandLogo';
 
 type VerificationStatus = 'loading' | 'success' | 'error' | 'invalid-token';
 
@@ -164,12 +164,7 @@ export function VerifyEmailContent({ className, ...props }: React.ComponentProps
             </div>
           </div>
           <div className="relative hidden min-h-[500px] bg-muted md:block">
-            <Image
-              src="/3dWesternLogo.png"
-              alt="3D Western Logo"
-              fill
-              className="object-contain p-8"
-            />
+            <BrandMark className="p-12" />
           </div>
         </CardContent>
       </Card>

@@ -27,6 +27,7 @@ import {
   History,
 } from 'lucide-react';
 import Link from 'next/link';
+import { BrandLockup } from '@/components/BrandLogo';
 import { usePathname } from 'next/navigation';
 import { Routes } from '@/lib/routes';
 
@@ -97,15 +98,9 @@ export function AppSidebar({ user }: AppSidebarProps) {
   return (
     <Sidebar>
       <SidebarHeader className="border-b p-4">
-        <div className="flex items-center gap-3">
-          {/* Placeholder for company icon */}
-          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
-            <span className="text-lg font-bold text-primary">W3D</span>
-          </div>
-          <div className="flex flex-col">
-            <span className="text-sm font-semibold">Western 3D Print Club</span>
-          </div>
-        </div>
+        <Link href={Routes.dashboard} className="relative block h-12 w-full">
+          <BrandLockup priority className="object-left" />
+        </Link>
       </SidebarHeader>
 
       <SidebarContent>
