@@ -33,7 +33,8 @@ export default async function ProtectedLayout({ children }: { children: React.Re
   return (
     <SidebarProvider>
       <AppSidebar user={currentUser} />
-      <SidebarInset>
+      {/* min-w-0 lets wide tables scroll inside their own box instead of widening the page */}
+      <SidebarInset className="min-w-0">
         <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
           <SidebarTrigger className="-ml-1" />
           <PageHeader />
