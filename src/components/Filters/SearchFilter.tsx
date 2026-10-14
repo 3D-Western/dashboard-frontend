@@ -35,7 +35,7 @@ export function SearchFilter({
         placeholder={placeholder}
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="h-9 bg-card pr-9 pl-9 dark:bg-card [&::-webkit-search-cancel-button]:hidden"
+        className="h-10 bg-card pr-9 pl-9 sm:h-9 dark:bg-card [&::-webkit-search-cancel-button]:hidden"
       />
       {value && (
         <button

@@ -12,6 +12,7 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import { CONTACT_EMAIL } from '@/constants/website';
+import { copyToClipboard } from '@/lib/clipboard';
 
 interface EmailUsButtonProps {
   /** Text of the button that opens the dialog */
@@ -24,7 +25,7 @@ interface EmailUsButtonProps {
 
 async function copy(text: string, what: string) {
   try {
-    await navigator.clipboard.writeText(text);
+    await copyToClipboard(text);
     toast.success(`${what} copied`);
   } catch {
     toast.error(`Couldn't copy the ${what.toLowerCase()}`);

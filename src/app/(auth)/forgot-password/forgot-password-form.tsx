@@ -99,6 +99,7 @@ export function ForgotPasswordForm({ className, ...props }: React.ComponentProps
         <CardContent className="grid p-0 md:grid-cols-2">
           <Form {...form}>
             <form
+              method="post"
               onSubmit={form.handleSubmit(onSubmit)}
               className="flex min-h-[500px] items-center p-6 md:p-8"
             >

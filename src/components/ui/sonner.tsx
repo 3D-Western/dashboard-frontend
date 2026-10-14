@@ -30,27 +30,25 @@ const Toaster = ({ ...props }: ToasterProps) => {
           '--normal-text': 'var(--popover-foreground)',
           '--normal-border': 'var(--border)',
           '--border-radius': 'var(--radius)',
-          // Success toast colors
-          '--success-bg': 'var(--status-success)',
-          '--success-text': 'var(--status-success-foreground)',
-          '--success-border': 'var(--border)',
-          // Error toast colors
-          '--error-bg': 'var(--status-error)',
-          '--error-text': 'var(--status-error-foreground)',
-          '--error-border': 'var(--border)',
-          // Warning toast colors
-          '--warning-bg': 'var(--status-flagged)',
-          '--warning-text': 'var(--status-flagged-foreground)',
-          '--warning-border': 'var(--border)',
-          // Info toast colors
-          '--info-bg': 'var(--status-in-queue)',
-          '--info-text': 'var(--status-in-queue-foreground)',
-          '--info-border': 'var(--border)',
+          // Coloured toasts: the status colour mixed into the (opaque) popover colour, so the page
+          // behind never shows through and the text stays readable
+          '--success-bg': 'color-mix(in srgb, var(--status-purple) 22%, var(--popover))',
+          '--success-text': 'var(--status-purple-foreground)',
+          '--success-border': 'color-mix(in srgb, var(--status-purple) 50%, var(--popover))',
+          '--error-bg': 'color-mix(in srgb, var(--status-red) 22%, var(--popover))',
+          '--error-text': 'var(--status-red-foreground)',
+          '--error-border': 'color-mix(in srgb, var(--status-red) 50%, var(--popover))',
+          '--warning-bg': 'color-mix(in srgb, var(--status-yellow) 22%, var(--popover))',
+          '--warning-text': 'var(--status-yellow-foreground)',
+          '--warning-border': 'color-mix(in srgb, var(--status-yellow) 50%, var(--popover))',
+          '--info-bg': 'color-mix(in srgb, var(--status-blue) 22%, var(--popover))',
+          '--info-text': 'var(--status-blue-foreground)',
+          '--info-border': 'color-mix(in srgb, var(--status-blue) 50%, var(--popover))',
         } as React.CSSProperties
       }
       toastOptions={{
         classNames: {
-          toast: 'cn-toast',
+          toast: 'cn-toast shadow-lg',
         },
       }}
       {...props}

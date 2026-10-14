@@ -49,17 +49,18 @@ export function JobListItem({ job }: { job: JobListEntry }) {
       <div className="flex min-w-0 flex-1 flex-col gap-3 p-4 sm:flex-row sm:items-center sm:gap-6">
         {/* Right padding on phones leaves room for the menu pinned in the top-right corner */}
         <div className="min-w-0 flex-1 pr-8 sm:pr-0">
-          <p className="flex flex-wrap items-center gap-x-2 text-[11px] leading-none">
+          <p className="flex flex-wrap items-center gap-x-2.5 gap-y-2 text-[11px] leading-none">
             <span className={cn('inline-flex items-center gap-1.5 eyebrow', tone.text)}>
               <span aria-hidden="true" className={cn('size-1.5 rounded-full', tone.bar)} />
               {stage.label}
             </span>
-            <span aria-hidden="true" className="text-muted-foreground">
-              ·
+            {/* Dot and date stay together so a wrap never leaves the dot dangling */}
+            <span className="inline-flex items-center gap-2.5 text-muted-foreground">
+              <span aria-hidden="true">·</span>
+              <time dateTime={job.jobPlaced} className="eyebrow">
+                {createdAt}
+              </time>
             </span>
-            <time dateTime={job.jobPlaced} className="eyebrow text-muted-foreground">
-              {createdAt}
-            </time>
           </p>
           <h3 className="mt-2 truncate text-base">
             {/* Stretched link: the whole card opens the job; the buttons sit above it */}

@@ -74,6 +74,9 @@ const adminNavigationItems = [
   },
 ];
 
+// Larger text and tap area than the shadcn default, especially on phones
+const NAV_BUTTON_CLASS = 'h-11 text-base md:h-9 md:text-[15px] [&_svg]:size-5 md:[&_svg]:size-4';
+
 interface AppSidebarProps {
   user: User;
 }
@@ -95,7 +98,11 @@ export function AppSidebar({ user }: AppSidebarProps) {
             <SidebarMenu>
               {navigationItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild isActive={isNavItemActive(pathname, item.url)}>
+                  <SidebarMenuButton
+                    asChild
+                    isActive={isNavItemActive(pathname, item.url)}
+                    className={NAV_BUTTON_CLASS}
+                  >
                     <Link href={item.url}>
                       <item.icon className="h-4 w-4" />
                       <span>{item.title}</span>
@@ -120,7 +127,11 @@ export function AppSidebar({ user }: AppSidebarProps) {
                   )
                   .map((item) => (
                     <SidebarMenuItem key={item.title}>
-                      <SidebarMenuButton asChild isActive={pathname === item.url}>
+                      <SidebarMenuButton
+                        asChild
+                        isActive={pathname === item.url}
+                        className={NAV_BUTTON_CLASS}
+                      >
                         <Link href={item.url}>
                           <item.icon className="h-4 w-4" />
                           <span>{item.title}</span>

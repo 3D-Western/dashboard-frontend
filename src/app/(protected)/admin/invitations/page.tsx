@@ -46,8 +46,9 @@ export default async function InvitationManagementPage({
 
   return (
     <div className="container space-y-6 p-6">
-      <div className="flex items-center justify-between">
-        <div className="flex-1">
+      {/* Phones: button under the title (like My Jobs); PageTitle's own bottom margin is dropped here */}
+      <div className="flex flex-col items-start gap-4 sm:flex-row sm:justify-between">
+        <div className="flex-1 [&>div]:mb-0">
           <PageTitle
             title="Invitation Management"
             description="Manage user registration invitations"

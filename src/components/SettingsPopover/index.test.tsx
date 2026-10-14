@@ -7,9 +7,11 @@ import { SettingsPopover } from './index';
 // Mock next-themes
 const mockSetTheme = vi.fn();
 const mockTheme = vi.fn();
+const mockResolvedTheme = vi.fn();
 vi.mock('next-themes', () => ({
   useTheme: () => ({
     theme: mockTheme(),
+    resolvedTheme: mockResolvedTheme(),
     setTheme: mockSetTheme,
   }),
 }));
@@ -37,6 +39,7 @@ describe('SettingsPopover', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockTheme.mockReturnValue('light');
+    mockResolvedTheme.mockReturnValue(undefined);
     Object.defineProperty(window, 'location', {
       value: { ...originalLocation, href: '' },
       writable: true,
@@ -97,7 +100,7 @@ describe('SettingsPopover', () => {
       expect(mockSetTheme).toHaveBeenCalledWith('dark');
     });
 
-    it('cycles from dark to system theme', async () => {
+    it('switches from dark straight to light theme', async () => {
       mockTheme.mockReturnValue('dark');
       const user = userEvent.setup();
       render(<SettingsPopover />);
@@ -107,17 +110,18 @@ describe('SettingsPopover', () => {
       const themeButton = await screen.findByText('Dark');
       await user.click(themeButton);
 
-      expect(mockSetTheme).toHaveBeenCalledWith('system');
+      expect(mockSetTheme).toHaveBeenCalledWith('light');
     });
 
-    it('cycles from system to light theme', async () => {
+    it('treats a saved system preference as whatever is on screen', async () => {
       mockTheme.mockReturnValue('system');
+      mockResolvedTheme.mockReturnValue('dark');
       const user = userEvent.setup();
       render(<SettingsPopover />);
 
       await user.click(screen.getByRole('button', { name: 'Settings' }));
 
-      const themeButton = await screen.findByText('System');
+      const themeButton = await screen.findByText('Dark');
       await user.click(themeButton);
 
       expect(mockSetTheme).toHaveBeenCalledWith('light');
@@ -135,19 +139,7 @@ describe('SettingsPopover', () => {
       });
     });
 
-    it('displays Monitor icon for system theme', async () => {
-      mockTheme.mockReturnValue('system');
-      const user = userEvent.setup();
-      render(<SettingsPopover />);
-
-      await user.click(screen.getByRole('button', { name: 'Settings' }));
-
-      await waitFor(() => {
-        expect(screen.getByText('System')).toBeInTheDocument();
-      });
-    });
-
-    it('shows default Sun icon when not mounted', async () => {
+    it('treats an unset theme as light', async () => {
       mockTheme.mockReturnValue(undefined);
       const user = userEvent.setup();
       render(<SettingsPopover />);
@@ -155,7 +147,7 @@ describe('SettingsPopover', () => {
       await user.click(screen.getByRole('button', { name: 'Settings' }));
 
       await waitFor(() => {
-        expect(screen.getByText('Theme')).toBeInTheDocument();
+        expect(screen.getByText('Light')).toBeInTheDocument();
       });
     });
   });

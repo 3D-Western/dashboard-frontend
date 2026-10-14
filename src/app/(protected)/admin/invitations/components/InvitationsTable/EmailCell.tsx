@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Copy } from 'lucide-react';
 import { memo } from 'react';
 import { toast } from 'sonner';
+import { copyToClipboard } from '@/lib/clipboard';
 
 interface EmailCellProps {
   email: string;
@@ -12,7 +13,7 @@ interface EmailCellProps {
 export const EmailCell = memo(function EmailCell({ email }: EmailCellProps) {
   const handleCopy = async () => {
     try {
-      await navigator.clipboard.writeText(email);
+      await copyToClipboard(email);
       toast.success('Email copied to clipboard');
     } catch (error) {
       console.error('Failed to copy email:', error);

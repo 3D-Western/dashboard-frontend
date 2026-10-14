@@ -28,15 +28,16 @@ export function JobDetailHeader({ job }: { job: JobDetail }) {
 
       <div className="mt-4 flex items-start justify-between gap-4">
         <div className="min-w-0">
-          <p className="flex flex-wrap items-center gap-x-2 text-[11px] leading-none">
+          <p className="flex flex-wrap items-center gap-x-2.5 gap-y-2 text-[11px] leading-none">
             <span className={cn('inline-flex items-center gap-1.5 eyebrow', tone.text)}>
               <span aria-hidden="true" className={cn('size-1.5 rounded-full', tone.bar)} />
               {stage?.label ?? job.status}
             </span>
-            <span aria-hidden="true" className="text-muted-foreground">
-              ·
+            {/* Dot and date stay together so a wrap never leaves the dot dangling */}
+            <span className="inline-flex items-center gap-2.5 text-muted-foreground">
+              <span aria-hidden="true">·</span>
+              <span className="eyebrow">Created {createdAt}</span>
             </span>
-            <span className="eyebrow text-muted-foreground">Created {createdAt}</span>
           </p>
           <h1 className="mt-2 text-3xl font-bold break-words">{job.name}</h1>
         </div>

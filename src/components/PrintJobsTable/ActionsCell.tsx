@@ -16,6 +16,7 @@ import {
 import { ChangeStatusDialog } from './ChangeStatusDialog';
 import { DeleteJobDialog } from './DeleteJobDialog';
 import { ReorderJobDialog } from './ReorderJobDialog';
+import { copyToClipboard } from '@/lib/clipboard';
 
 interface ActionsCellProps {
   printJob: PrintJob;
@@ -70,7 +71,7 @@ export function ActionsCell({ printJob, mode, onStatusChanged, onJobDeleted }: A
           <DropdownMenuItem
             onSelect={async () => {
               try {
-                await navigator.clipboard.writeText(printJob.id);
+                await copyToClipboard(printJob.id);
               } catch (error) {
                 console.error('Failed to copy Job ID to clipboard', error);
               }

@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { FieldDescription } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
+import { PasswordInput } from '@/components/ui/password-input';
 import {
   Form,
   FormControl,
@@ -208,7 +209,9 @@ export function LoginForm({
       <Card className="overflow-hidden p-0">
         <CardContent className="grid p-0 md:grid-cols-2">
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="p-6 md:p-8">
+            {/* method="post": if someone submits before the page's JavaScript has loaded, the
+                browser's fallback submit must not put the password in the URL */}
+            <form method="post" onSubmit={form.handleSubmit(onSubmit)} className="p-6 md:p-8">
               <div className="grid gap-6">
                 <div className="flex flex-col items-center gap-2 text-center">
                   <h1 className="text-2xl font-bold">Welcome back</h1>
@@ -224,7 +227,12 @@ export function LoginForm({
                     <FormItem>
                       <FormLabel>Student ID</FormLabel>
                       <FormControl>
-                        <Input placeholder="251000000" {...field} />
+                        <Input
+                          placeholder="251000000"
+                          inputMode="numeric"
+                          autoComplete="username"
+                          {...field}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -236,23 +244,22 @@ export function LoginForm({
                   name="password"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Password</FormLabel>
+                      <div className="flex items-center justify-between gap-2">
+                        <FormLabel>Password</FormLabel>
+                        <a
+                          href={Routes.forgotPassword}
+                          className="text-xs text-muted-foreground underline-offset-2 hover:text-purple-light hover:underline"
+                        >
+                          Forgot password?
+                        </a>
+                      </div>
                       <FormControl>
-                        <Input type="password" {...field} />
+                        <PasswordInput autoComplete="current-password" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
-
-                <div className="text-right">
-                  <a
-                    href={`${Routes.forgotPassword}`}
-                    className="text-sm underline-offset-2 hover:underline"
-                  >
-                    Forgot your password?
-                  </a>
-                </div>
 
                 <Button type="submit" disabled={isLoading}>
                   {isLoading ? 'Logging in...' : 'Login'}

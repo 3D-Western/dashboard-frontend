@@ -20,12 +20,12 @@ describe('ThemeToggle', () => {
     setTheme.mockClear();
   });
 
-  it('renders a default label for unknown themes', async () => {
+  it('treats an unknown theme as light', async () => {
     theme = 'unknown';
     render(<ThemeToggle />);
 
     await waitFor(() => {
-      expect(screen.getByRole('button', { name: /toggle theme/i })).toBeEnabled();
+      expect(screen.getByRole('button', { name: /light mode/i })).toBeEnabled();
     });
   });
 

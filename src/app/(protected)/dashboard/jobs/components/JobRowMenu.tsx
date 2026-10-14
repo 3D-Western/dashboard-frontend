@@ -17,6 +17,7 @@ import { DeleteJobDialog } from '@/components/PrintJobsTable/DeleteJobDialog';
 import { ReorderJobDialog } from '@/components/PrintJobsTable/ReorderJobDialog';
 import { PrintJob } from '@/types/jobs';
 import { DELETABLE_STATUSES } from '../lib/job-stages';
+import { copyToClipboard } from '@/lib/clipboard';
 
 type OpenDialog = 'reorder' | 'delete' | null;
 
@@ -37,7 +38,7 @@ export function JobRowMenu({ job, onDeleted }: JobRowMenuProps) {
 
   const handleCopyId = async () => {
     try {
-      await navigator.clipboard.writeText(job.id);
+      await copyToClipboard(job.id);
       toast.success('Job ID copied');
     } catch (error) {
       console.error('Failed to copy Job ID to clipboard', error);
