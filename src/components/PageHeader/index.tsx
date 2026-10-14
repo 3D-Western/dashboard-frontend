@@ -20,7 +20,8 @@ const pageTitles: Record<string, string> = {
 
 export function PageHeader() {
   const pathname = usePathname();
-  const title = pageTitles[pathname] || 'Dashboard';
+  const isJobDetail = pathname.startsWith(`${Routes.jobs.home}/`) && !pageTitles[pathname];
+  const title = pageTitles[pathname] || (isJobDetail ? 'Job Details' : 'Dashboard');
 
   return (
     <div className="flex items-center gap-2">

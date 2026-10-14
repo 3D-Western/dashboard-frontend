@@ -38,7 +38,7 @@ const buttonVariants = cva(
           'size-7 rounded-[min(var(--radius-md),12px)] in-data-[slot=button-group]:rounded-lg',
         'icon-lg': 'size-9',
         // Website (website-2.0) size
-        pill: 'rounded-lg px-5 py-2 font-semibold',
+        pill: 'gap-2 rounded-lg px-5 py-2 font-semibold',
       },
     },
     defaultVariants: {

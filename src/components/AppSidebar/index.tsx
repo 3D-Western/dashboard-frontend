@@ -16,16 +16,7 @@ import {
 import { SettingsPopover } from '@/components/SettingsPopover';
 import { User, hasPermission } from '@/types/user';
 import { PERMISSIONS } from '@/constants/permissions';
-import {
-  LayoutDashboard,
-  Printer,
-  Users,
-  Settings,
-  Shield,
-  FilePlus,
-  TicketPlus,
-  History,
-} from 'lucide-react';
+import { LayoutDashboard, Printer, Users, Settings, Shield, TicketPlus } from 'lucide-react';
 import Link from 'next/link';
 import { BrandLockup } from '@/components/BrandLogo';
 import { usePathname } from 'next/navigation';
@@ -41,22 +32,17 @@ const navigationItems = [
     url: Routes.dashboard,
     icon: LayoutDashboard,
   },
-  {
-    title: 'Print History',
-    url: Routes.dashboardSubmissionHistory,
-    icon: History,
-  },
+  // "My Jobs" also covers the old Print History and New Job pages (merged in the jobs redesign)
   {
     title: 'My Jobs',
     url: Routes.jobs.home,
     icon: Printer,
   },
-  {
-    title: 'New Job',
-    url: Routes.jobs.newJob,
-    icon: FilePlus,
-  },
 ];
+
+// Highlight "My Jobs" on every page under it (a job's details, the new job form)
+const isNavItemActive = (pathname: string, url: string) =>
+  pathname === url || (url === Routes.jobs.home && pathname.startsWith(`${url}/`));
 
 const adminNavigationItems = [
   {
@@ -109,7 +95,7 @@ export function AppSidebar({ user }: AppSidebarProps) {
             <SidebarMenu>
               {navigationItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild isActive={pathname === item.url}>
+                  <SidebarMenuButton asChild isActive={isNavItemActive(pathname, item.url)}>
                     <Link href={item.url}>
                       <item.icon className="h-4 w-4" />
                       <span>{item.title}</span>

@@ -4,7 +4,6 @@ export const Routes = {
   signup: '/signup',
   mfa: '/mfa',
   dashboardUserSettings: '/dashboard/settings',
-  dashboardSubmissionHistory: '/dashboard/jobs/print-submission-history',
   bookings: '/dashboard/bookings',
   forgotPassword: '/forgot-password',
   resetPassword: '/reset-password',
@@ -24,6 +23,7 @@ export const Routes = {
 
   jobs: {
     home: '/dashboard/jobs',
+    detail: (jobId: string) => `/dashboard/jobs/${jobId}`,
     newJob: '/dashboard/jobs/new',
     newCncJob: '/dashboard/jobs/cnc/new',
     newPrintJob: '/dashboard/jobs/print/new',

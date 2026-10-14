@@ -80,6 +80,12 @@
   --color-status-red: var(--status-red);
   --color-status-yellow: var(--status-yellow);
   --color-status-gray: var(--status-gray);
+  --color-status-purple-foreground: var(--status-purple-foreground);
+  --color-status-green-foreground: var(--status-green-foreground);
+  --color-status-blue-foreground: var(--status-blue-foreground);
+  --color-status-red-foreground: var(--status-red-foreground);
+  --color-status-yellow-foreground: var(--status-yellow-foreground);
+  --color-status-gray-foreground: var(--status-gray-foreground);
   --color-status-draft: var(--status-draft);
   --color-status-draft-foreground: var(--status-draft-foreground);
   --color-status-in-queue: var(--status-in-queue);
@@ -161,6 +167,14 @@
   --status-yellow: #d29922;
   --status-gray: #8b949e;
 
+  /* Readable text shade of each status colour (labels, small text) */
+  --status-purple-foreground: color-mix(in srgb, var(--status-purple) 65%, black);
+  --status-green-foreground: color-mix(in srgb, var(--status-green) 65%, black);
+  --status-blue-foreground: color-mix(in srgb, var(--status-blue) 65%, black);
+  --status-red-foreground: color-mix(in srgb, var(--status-red) 65%, black);
+  --status-yellow-foreground: color-mix(in srgb, var(--status-yellow) 65%, black);
+  --status-gray-foreground: color-mix(in srgb, var(--status-gray) 65%, black);
+
   /* Status badges: a light tint of the status colour, with text darkened for contrast on light */
   --status-draft: color-mix(in srgb, var(--status-gray) 14%, transparent);
   --status-draft-foreground: color-mix(in srgb, var(--status-gray) 65%, black);
@@ -215,6 +229,14 @@
   --sidebar-accent-foreground: #d29cf0;
   --sidebar-border: #29323b;
   --sidebar-ring: var(--purple-light);
+
+  /* Readable text shade of each status colour (labels, small text) */
+  --status-purple-foreground: color-mix(in srgb, var(--status-purple) 70%, white);
+  --status-green-foreground: color-mix(in srgb, var(--status-green) 70%, white);
+  --status-blue-foreground: color-mix(in srgb, var(--status-blue) 70%, white);
+  --status-red-foreground: color-mix(in srgb, var(--status-red) 70%, white);
+  --status-yellow-foreground: color-mix(in srgb, var(--status-yellow) 70%, white);
+  --status-gray-foreground: color-mix(in srgb, var(--status-gray) 70%, white);
 
   /* Status badges: a dark tint of the status colour, with text lightened for contrast on dark */
   --status-draft: color-mix(in srgb, var(--status-gray) 18%, transparent);
