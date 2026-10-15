@@ -1,14 +1,39 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Printer, Clock, LayoutDashboard } from 'lucide-react';
+import { Printer, Clock, Layers, type LucideIcon } from 'lucide-react';
 import { userApi } from '@/api/client/user';
+import { Skeleton } from '@/components/ui/skeleton';
+import { cn } from '@/lib/utils';
 
 interface DashboardCounts {
   total: number;
   active: number;
   pending: number;
 }
+
+// Tile colours follow the job status palette: green = printing, blue = in queue, purple = done
+const STATS: { key: keyof DashboardCounts; label: string; icon: LucideIcon; iconClass: string }[] =
+  [
+    {
+      key: 'active',
+      label: 'Active prints',
+      icon: Printer,
+      iconClass: 'bg-status-green/15 text-status-green-foreground',
+    },
+    {
+      key: 'pending',
+      label: 'Pending prints',
+      icon: Clock,
+      iconClass: 'bg-status-blue/15 text-status-blue-foreground',
+    },
+    {
+      key: 'total',
+      label: 'Total prints',
+      icon: Layers,
+      iconClass: 'bg-status-purple/15 text-status-purple-foreground',
+    },
+  ];
 
 export default function DashboardStats() {
   const [counts, setCounts] = useState<DashboardCounts>({ total: 0, active: 0, pending: 0 });
@@ -40,30 +65,36 @@ export default function DashboardStats() {
   }, []);
 
   return (
-    <div className="grid gap-4 md:grid-cols-3">
-      <div className="space-y-2 rounded-lg border p-6">
-        <div className="flex items-center gap-2 text-muted-foreground">
-          <Printer className="h-4 w-4" />
-          <span className="text-sm font-medium">Active Prints</span>
+    <dl className="grid gap-3 sm:grid-cols-3">
+      {STATS.map(({ key, label, icon: Icon, iconClass }) => (
+        // A compact row on phones; label over a big number from sm up
+        <div
+          key={key}
+          className="flex items-center gap-3 rounded-lg bg-muted/60 p-4 sm:block sm:space-y-3"
+        >
+          <div className="flex flex-1 items-center gap-2">
+            <span
+              className={cn(
+                'flex size-8 shrink-0 items-center justify-center rounded-md',
+                iconClass,
+              )}
+            >
+              <Icon className="size-4" aria-hidden="true" />
+            </span>
+            <dt className="text-sm text-muted-foreground">{label}</dt>
+          </div>
+          <dd className="text-2xl font-semibold tabular-nums sm:text-3xl">
+            {isLoading ? (
+              <Skeleton
+                className="h-8 w-10 sm:h-9 sm:w-12"
+                aria-label={`Loading ${label.toLowerCase()}`}
+              />
+            ) : (
+              counts[key]
+            )}
+          </dd>
         </div>
-        <div className="text-3xl font-bold">{isLoading ? '...' : counts.active}</div>
-      </div>
-
-      <div className="space-y-2 rounded-lg border p-6">
-        <div className="flex items-center gap-2 text-muted-foreground">
-          <Clock className="h-4 w-4" />
-          <span className="text-sm font-medium">Pending Prints</span>
-        </div>
-        <div className="text-3xl font-bold">{isLoading ? '...' : counts.pending}</div>
-      </div>
-
-      <div className="space-y-2 rounded-lg border p-6">
-        <div className="flex items-center gap-2 text-muted-foreground">
-          <LayoutDashboard className="h-4 w-4" />
-          <span className="text-sm font-medium">Total Prints</span>
-        </div>
-        <div className="text-3xl font-bold">{isLoading ? '...' : counts.total}</div>
-      </div>
-    </div>
+      ))}
+    </dl>
   );
 }
