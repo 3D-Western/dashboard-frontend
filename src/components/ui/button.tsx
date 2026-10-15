@@ -26,20 +26,22 @@ const buttonVariants = cva(
         gradient: 'btn text-white',
       },
       size: {
-        // Phones get taller buttons (easier to tap); from sm up they're the original sizes
+        // Phones get taller buttons (easier to tap); from sm up they're the original sizes.
+        // The two heights live in a CSS variable behind ONE height class, so a caller's own
+        // height (h-auto, h-6, ...) replaces it on every screen size instead of only on phones.
         default:
-          'h-10 gap-1.5 px-3 has-data-[icon=inline-end]:pr-2 has-data-[icon=inline-start]:pl-2 sm:h-8 sm:px-2.5',
+          'h-[var(--btn-h)] gap-1.5 px-2.5 [--btn-h:2.5rem] has-data-[icon=inline-end]:pr-2 has-data-[icon=inline-start]:pl-2 sm:[--btn-h:2rem]',
         xs: "h-6 gap-1 rounded-[min(var(--radius-md),10px)] px-2 text-xs in-data-[slot=button-group]:rounded-lg has-data-[icon=inline-end]:pr-1.5 has-data-[icon=inline-start]:pl-1.5 [&_svg:not([class*='size-'])]:size-3",
-        sm: "h-9 gap-1 rounded-[min(var(--radius-md),12px)] px-2.5 text-[0.8rem] sm:h-7 in-data-[slot=button-group]:rounded-lg has-data-[icon=inline-end]:pr-1.5 has-data-[icon=inline-start]:pl-1.5 [&_svg:not([class*='size-'])]:size-3.5",
-        lg: 'h-10 gap-1.5 px-2.5 has-data-[icon=inline-end]:pr-2 has-data-[icon=inline-start]:pl-2 sm:h-9',
-        icon: 'size-10 sm:size-8',
+        sm: "h-[var(--btn-h)] gap-1 rounded-[min(var(--radius-md),12px)] px-2.5 text-[0.8rem] [--btn-h:2.25rem] sm:[--btn-h:1.75rem] in-data-[slot=button-group]:rounded-lg has-data-[icon=inline-end]:pr-1.5 has-data-[icon=inline-start]:pl-1.5 [&_svg:not([class*='size-'])]:size-3.5",
+        lg: 'h-[var(--btn-h)] gap-1.5 px-2.5 [--btn-h:2.5rem] has-data-[icon=inline-end]:pr-2 has-data-[icon=inline-start]:pl-2 sm:[--btn-h:2.25rem]',
+        icon: 'size-[var(--btn-h)] [--btn-h:2.5rem] sm:[--btn-h:2rem]',
         'icon-xs':
           "size-6 rounded-[min(var(--radius-md),10px)] in-data-[slot=button-group]:rounded-lg [&_svg:not([class*='size-'])]:size-3",
         'icon-sm':
-          'size-9 rounded-[min(var(--radius-md),12px)] in-data-[slot=button-group]:rounded-lg sm:size-7',
-        'icon-lg': 'size-10 sm:size-9',
+          'size-[var(--btn-h)] rounded-[min(var(--radius-md),12px)] [--btn-h:2.25rem] in-data-[slot=button-group]:rounded-lg sm:[--btn-h:1.75rem]',
+        'icon-lg': 'size-[var(--btn-h)] [--btn-h:2.5rem] sm:[--btn-h:2.25rem]',
         // Website (website-2.0) size
-        pill: 'h-11 gap-2 rounded-lg px-5 font-semibold has-[>svg:first-child]:pl-4 sm:h-10',
+        pill: 'h-[var(--btn-h)] gap-2 rounded-lg px-5 font-semibold [--btn-h:2.75rem] has-[>svg:first-child]:pl-4 sm:[--btn-h:2.5rem]',
       },
     },
     defaultVariants: {

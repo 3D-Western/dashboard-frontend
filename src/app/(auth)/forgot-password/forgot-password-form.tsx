@@ -84,7 +84,7 @@ export function ForgotPasswordForm({ className, ...props }: React.ComponentProps
                 <Button onClick={() => router.push(Routes.login)}>Return to Login</Button>
               </div>
             </div>
-            <div className="relative hidden min-h-[500px] bg-muted md:block">
+            <div className="relative hidden min-h-[500px] md:block">
               <BrandMark className="p-12" />
             </div>
           </CardContent>
@@ -138,7 +138,7 @@ export function ForgotPasswordForm({ className, ...props }: React.ComponentProps
               </div>
             </form>
           </Form>
-          <div className="relative hidden min-h-[500px] bg-muted md:block">
+          <div className="relative hidden min-h-[500px] md:block">
             <BrandMark className="p-12" />
           </div>
         </CardContent>

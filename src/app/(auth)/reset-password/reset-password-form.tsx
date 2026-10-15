@@ -94,7 +94,7 @@ export function ResetPasswordForm({ className, ...props }: React.ComponentProps<
                 </FieldDescription>
               </div>
             </div>
-            <div className="relative hidden min-h-[500px] bg-muted md:block">
+            <div className="relative hidden min-h-[500px] md:block">
               <BrandMark className="p-12" />
             </div>
           </CardContent>
@@ -165,7 +165,7 @@ export function ResetPasswordForm({ className, ...props }: React.ComponentProps<
               </div>
             </form>
           </Form>
-          <div className="relative hidden min-h-[500px] bg-muted md:block">
+          <div className="relative hidden min-h-[500px] md:block">
             <BrandMark className="p-12" />
           </div>
         </CardContent>

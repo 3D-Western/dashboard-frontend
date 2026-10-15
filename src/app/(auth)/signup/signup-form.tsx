@@ -122,7 +122,7 @@ export function SignupForm({ className, ...props }: React.ComponentProps<'div'>)
             {/* method="post": if someone submits before the page's JavaScript has loaded, the
                 browser's fallback submit must not put the password in the URL */}
             <form method="post" onSubmit={form.handleSubmit(onSubmit)} className="p-6 md:p-8">
-              <div className="flex min-h-[600px] flex-col gap-6">
+              <div className="flex min-h-[600px] flex-col justify-center gap-6">
                 {/* Header */}
                 <div className="flex flex-col items-center gap-2 text-center">
                   <h1 className="text-2xl font-bold">Create your account</h1>
@@ -268,7 +268,7 @@ export function SignupForm({ className, ...props }: React.ComponentProps<'div'>)
           </Form>
 
           {/* Right side - Logo/Image */}
-          <div className="relative hidden min-h-[600px] bg-muted md:block">
+          <div className="relative hidden min-h-[600px] md:block">
             <BrandMark className="p-12" />
           </div>
         </CardContent>

@@ -211,7 +211,11 @@ export function LoginForm({
           <Form {...form}>
             {/* method="post": if someone submits before the page's JavaScript has loaded, the
                 browser's fallback submit must not put the password in the URL */}
-            <form method="post" onSubmit={form.handleSubmit(onSubmit)} className="p-6 md:p-8">
+            <form
+              method="post"
+              onSubmit={form.handleSubmit(onSubmit)}
+              className="flex flex-col justify-center p-6 md:p-8"
+            >
               <div className="grid gap-6">
                 <div className="flex flex-col items-center gap-2 text-center">
                   <h1 className="text-2xl font-bold">Welcome back</h1>
@@ -271,7 +275,7 @@ export function LoginForm({
               </div>
             </form>
           </Form>
-          <div className="relative hidden min-h-[500px] bg-muted md:block">
+          <div className="relative hidden min-h-[500px] md:block">
             <BrandMark className="p-12" />
           </div>
         </CardContent>

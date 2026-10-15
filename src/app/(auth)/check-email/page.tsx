@@ -42,7 +42,7 @@ export default function CheckEmailPage() {
                   </Button>
                 </div>
               </div>
-              <div className="relative hidden min-h-[500px] bg-muted md:block">
+              <div className="relative hidden min-h-[500px] md:block">
                 <BrandMark className="p-12" />
               </div>
             </CardContent>
