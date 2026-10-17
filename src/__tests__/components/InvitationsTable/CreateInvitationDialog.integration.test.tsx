@@ -193,6 +193,37 @@ describe('CreateInvitationDialog Integration', () => {
       });
     });
 
+    it('accepts an email with capital letters and submits it lowercased', async () => {
+      const user = userEvent.setup();
+      let submittedEmail: string | undefined;
+
+      mockServer.use(
+        http.post(`*${endpoints.invitations.create}`, async ({ request }) => {
+          submittedEmail = ((await request.json()) as { email: string }).email;
+          return HttpResponse.json({
+            success: true,
+            data: createMockInvitation(),
+          });
+        }),
+      );
+
+      render(
+        <CreateInvitationDialog
+          open={true}
+          onOpenChange={mockOnOpenChange}
+          onSuccess={mockOnSuccess}
+        />,
+      );
+
+      await user.type(screen.getByPlaceholderText('251123456'), '251000001');
+      await user.type(screen.getByPlaceholderText('jdoe123@uwo.ca'), 'JDoe123@UWO.ca');
+      await user.click(screen.getByRole('button', { name: /create invitation/i }));
+
+      await waitFor(() => {
+        expect(submittedEmail).toBe('jdoe123@uwo.ca');
+      });
+    });
+
     it('closes dialog on successful submission', async () => {
       const user = userEvent.setup();
       const mockInvitation = createMockInvitation();
