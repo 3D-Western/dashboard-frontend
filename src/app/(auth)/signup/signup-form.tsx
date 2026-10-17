@@ -23,7 +23,6 @@ import {
 import { Routes } from '@/lib/routes';
 import { cn } from '@/lib/utils';
 import { zodResolver } from '@hookform/resolvers/zod';
-import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
@@ -34,6 +33,7 @@ import { EXPERIENCE_LEVEL_OPTIONS } from '@/constants/experience-levels';
 import { FACULTY_OPTIONS } from '@/constants/faculties';
 import { transformFacultyToBackend } from '@/api/client/transformers';
 import type { UserFaculty } from '@/types/user';
+import { BrandMark } from '@/components/BrandLogo';
 
 const formSchema = z.object({
   studentId: z
@@ -268,12 +268,7 @@ export function SignupForm({ className, ...props }: React.ComponentProps<'div'>)
 
           {/* Right side - Logo/Image */}
           <div className="relative hidden min-h-[600px] bg-muted md:block">
-            <Image
-              src="/3dWesternLogo.png"
-              alt="3D Western Logo"
-              fill
-              className="object-contain p-8"
-            />
+            <BrandMark className="p-12" />
           </div>
         </CardContent>
       </Card>

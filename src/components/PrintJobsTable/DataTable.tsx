@@ -76,7 +76,7 @@ export function DataTable<TData, TValue>({
         {announcement}
       </div>
 
-      <div className="overflow-hidden rounded-md border">
+      <div className="overflow-hidden rounded-lg border bg-card">
         <Table aria-label="Print jobs table" aria-describedby="table-caption">
           <caption id="table-caption" className="sr-only">
             Your print jobs with status, dates, and file information. Sortable by print date.

@@ -1,6 +1,5 @@
 'use client';
 
-import Image from 'next/image';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -23,6 +22,7 @@ import { useRouter } from 'next/navigation';
 import { Routes } from '@/lib/routes';
 import { useState, useEffect } from 'react';
 import { ApiError, ErrorCodes } from '@/api/client/errors';
+import { BrandMark } from '@/components/BrandLogo';
 
 const formSchema = z.object({
   studentId: z
@@ -265,12 +265,7 @@ export function LoginForm({
             </form>
           </Form>
           <div className="relative hidden min-h-[500px] bg-muted md:block">
-            <Image
-              src="/3dWesternLogo.png"
-              alt="3D Western Logo"
-              fill
-              className="object-contain p-8"
-            />
+            <BrandMark className="p-12" />
           </div>
         </CardContent>
       </Card>
