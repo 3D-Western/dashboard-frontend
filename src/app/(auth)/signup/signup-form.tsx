@@ -46,6 +46,8 @@ const formSchema = z.object({
     }, 'Student ID must be between 251000000 and 251999999'),
   email: z
     .string()
+    .trim()
+    .toLowerCase()
     .min(1, 'Email is required')
     .regex(
       /^[a-z]+[0-9]*@uwo\.ca$/,

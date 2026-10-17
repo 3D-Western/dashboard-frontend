@@ -183,7 +183,7 @@ export const invitationHandlers = [
 
     if (!body.email) {
       errors.email = 'Email is required';
-    } else if (!/^[a-z]+\d*@uwo\.ca$/.test(body.email)) {
+    } else if (!/^[a-z]+\d*@uwo\.ca$/i.test(body.email)) {
       errors.email = 'Email must be a valid UWO email address';
     }
 
