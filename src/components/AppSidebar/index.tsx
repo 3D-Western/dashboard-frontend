@@ -10,9 +10,14 @@ import {
   SidebarGroupLabel,
   SidebarHeader,
   SidebarMenu,
+  SidebarMenuAction,
   SidebarMenuButton,
   SidebarMenuItem,
+  SidebarMenuSub,
+  SidebarMenuSubButton,
+  SidebarMenuSubItem,
 } from '@/components/ui/sidebar';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { SettingsPopover } from '@/components/SettingsPopover';
 import { User, hasPermission } from '@/types/user';
 import { PERMISSIONS } from '@/constants/permissions';
@@ -23,6 +28,7 @@ import {
   Settings,
   Shield,
   FilePlus,
+  ChevronDown,
   TicketPlus,
   History,
 } from 'lucide-react';
@@ -58,13 +64,14 @@ const navigationItems = [
   },
 ];
 
+// The admin pages all live under /admin, so they're nested under Admin Dashboard in the sidebar
+const adminDashboardItem = {
+  title: 'Admin Dashboard',
+  url: '/admin',
+  icon: Shield,
+};
+
 const adminNavigationItems = [
-  {
-    title: 'Admin Dashboard',
-    url: '/admin',
-    icon: Shield,
-    permission: null, // visible to all admins
-  },
   {
     title: 'User Management',
     url: Routes.adminUsersManagement,
@@ -94,11 +101,16 @@ interface AppSidebarProps {
 
 export function AppSidebar({ user }: AppSidebarProps) {
   const pathname = usePathname();
+  const visibleAdminItems = adminNavigationItems.filter((item) =>
+    hasPermission(user, item.permission),
+  );
 
   return (
     <Sidebar>
-      <SidebarHeader className="border-b p-4">
-        <Link href={Routes.dashboard} className="relative block h-12 w-full">
+      {/* Same height as the page header beside it, so their bottom borders line up */}
+      <SidebarHeader className="h-16 justify-center border-b px-4 py-0">
+        {/* At this height the "MAKERSPACES" letters match the page title's capitals */}
+        <Link href={Routes.dashboard} className="relative block h-11 w-full">
           <BrandLockup priority className="object-left" />
         </Link>
       </SidebarHeader>
@@ -121,27 +133,46 @@ export function AppSidebar({ user }: AppSidebarProps) {
           </SidebarGroupContent>
         </SidebarGroup>
 
-        {adminNavigationItems.some(
-          (item) => item.permission !== null && hasPermission(user, item.permission),
-        ) && (
+        {visibleAdminItems.length > 0 && (
           <SidebarGroup>
             <SidebarGroupLabel>Admin</SidebarGroupLabel>
             <SidebarGroupContent>
               <SidebarMenu>
-                {adminNavigationItems
-                  .filter(
-                    (item) => item.permission === null || hasPermission(user, item.permission),
-                  )
-                  .map((item) => (
-                    <SidebarMenuItem key={item.title}>
-                      <SidebarMenuButton asChild isActive={pathname === item.url}>
-                        <Link href={item.url}>
-                          <item.icon className="h-4 w-4" />
-                          <span>{item.title}</span>
-                        </Link>
-                      </SidebarMenuButton>
-                    </SidebarMenuItem>
-                  ))}
+                <Collapsible asChild defaultOpen>
+                  <SidebarMenuItem>
+                    <SidebarMenuButton asChild isActive={pathname === adminDashboardItem.url}>
+                      <Link href={adminDashboardItem.url}>
+                        <adminDashboardItem.icon className="h-4 w-4" />
+                        <span>{adminDashboardItem.title}</span>
+                      </Link>
+                    </SidebarMenuButton>
+                    <CollapsibleTrigger asChild>
+                      <SidebarMenuAction className="data-[state=open]:rotate-180">
+                        <ChevronDown />
+                        <span className="sr-only">Toggle admin pages</span>
+                      </SidebarMenuAction>
+                    </CollapsibleTrigger>
+                    <CollapsibleContent>
+                      <SidebarMenuSub>
+                        {visibleAdminItems.map((item) => (
+                          <SidebarMenuSubItem key={item.title}>
+                            <SidebarMenuSubButton
+                              asChild
+                              isActive={
+                                pathname === item.url || pathname.startsWith(`${item.url}/`)
+                              }
+                            >
+                              <Link href={item.url}>
+                                <item.icon />
+                                <span>{item.title}</span>
+                              </Link>
+                            </SidebarMenuSubButton>
+                          </SidebarMenuSubItem>
+                        ))}
+                      </SidebarMenuSub>
+                    </CollapsibleContent>
+                  </SidebarMenuItem>
+                </Collapsible>
               </SidebarMenu>
             </SidebarGroupContent>
           </SidebarGroup>

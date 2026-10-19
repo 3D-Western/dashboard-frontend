@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { screen } from '@testing-library/react';
-import { render } from '@test/utils/render';
+import { render, userEvent } from '@test/utils/render';
 import { SidebarProvider } from '@/components/ui/sidebar';
 import { AppSidebar } from './index';
 import { createMockUser, createMockAdmin, perm } from '@test/utils/mockFactories';
@@ -92,6 +92,19 @@ describe('AppSidebar', () => {
       expect(screen.getByRole('link', { name: /admin dashboard/i })).toBeInTheDocument();
       expect(screen.getByRole('link', { name: /job management/i })).toBeInTheDocument();
       expect(screen.getByRole('link', { name: /invitation management/i })).toBeInTheDocument();
+    });
+
+    it('nests the admin pages under Admin Dashboard and can collapse them', async () => {
+      const user = userEvent.setup();
+      const admin = createMockAdmin({ permissions: [perm(PERMISSIONS.USERS_LIST)] });
+      renderSidebar(admin);
+
+      expect(screen.getByRole('link', { name: /^user management$/i })).toBeInTheDocument();
+
+      await user.click(screen.getByRole('button', { name: /toggle admin pages/i }));
+
+      expect(screen.getByRole('link', { name: /admin dashboard/i })).toBeInTheDocument();
+      expect(screen.queryByRole('link', { name: /^user management$/i })).not.toBeInTheDocument();
     });
 
     it('does not show Job Management for a regular member permission set (regression: jobs:list is granted to members too, jobs:update_status is not)', () => {
