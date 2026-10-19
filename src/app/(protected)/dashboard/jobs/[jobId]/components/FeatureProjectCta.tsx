@@ -4,8 +4,8 @@ import { WEBSITE_PROJECTS_URL } from '@/constants/website';
 import { EmailUsButton } from './EmailUsButton';
 
 /**
- * Invites users with a finished print to have their project featured on the website's projects
- * page. There's no submission form yet, so "Submit project" helps them email the club.
+ * Invites users who've collected their print to have their project featured on the website's
+ * projects page. There's no submission form yet, so "Submit project" helps them email the club.
  */
 export function FeatureProjectCta({ jobName, jobId }: { jobName: string; jobId: string }) {
   const subject = `Project feature submission: ${jobName}`;

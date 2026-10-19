@@ -170,8 +170,8 @@ export function StagePanel({ job }: { job: JobDetail }) {
       );
       break;
     case 'Succeeded':
-      title = 'Completed';
-      content = <p>Your print is finished. Thanks for printing with 3D Western!</p>;
+      title = 'Collected';
+      content = <p>You picked up this print. Thanks for printing with 3D Western!</p>;
       break;
     case 'Flagged':
       title = 'Your job was declined';

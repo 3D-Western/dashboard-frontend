@@ -86,7 +86,7 @@ export function StatusStepper({ currentStatus, history = [], createdAt }: Status
           (step === 'PendingFile' && createdAt
             ? { status: step, changedAt: createdAt }
             : undefined);
-        // "Completed" is the end of the line, so it shows as done rather than in progress
+        // "Collected" is the end of the line, so it shows as done rather than in progress
         const isFinished = currentStatus === 'Succeeded';
         const isCurrent = step === currentStatus && !isFinished;
         const isDone = !isCurrent && (isException || isFinished || coreIndex > index);

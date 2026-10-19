@@ -46,3 +46,15 @@ export function isOverLimit(usage: UsageEntry[], limits: ProjectTypeLimit[]): bo
     (quota) => !quota.isUnlimited && quota.remaining <= 0,
   );
 }
+
+// When the current usage period ends, in local time. Assumes calendar periods (months start on the
+// 1st, weeks on Monday). Semester dates aren't known to the frontend, so they return null.
+// TODO: switch to a resetsAt from the usage endpoint once the backend returns one.
+export function getPeriodResetDate(period: UsagePeriod, now: Date = new Date()): Date | null {
+  if (period === 'month') return new Date(now.getFullYear(), now.getMonth() + 1, 1);
+  if (period === 'week') {
+    const daysUntilMonday = (8 - now.getDay()) % 7 || 7;
+    return new Date(now.getFullYear(), now.getMonth(), now.getDate() + daysUntilMonday);
+  }
+  return null;
+}

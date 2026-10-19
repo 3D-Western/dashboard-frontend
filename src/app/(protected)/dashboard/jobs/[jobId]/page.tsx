@@ -54,7 +54,8 @@ export default async function JobDetailPage({ params }: PageProps) {
   }
 
   const hasHistory = Boolean(job.statusHistory?.length);
-  const isFinished = job.status === 'Ready' || job.status === 'Succeeded';
+  // Ask to feature the project once they've actually picked it up, not while it's waiting
+  const isCollected = job.status === 'Succeeded';
 
   return (
     <div className="mx-auto w-full max-w-5xl space-y-6 p-6">
@@ -62,7 +63,7 @@ export default async function JobDetailPage({ params }: PageProps) {
 
       <StagePanel job={job} />
 
-      {isFinished && <FeatureProjectCta jobName={job.name} jobId={job.id} />}
+      {isCollected && <FeatureProjectCta jobName={job.name} jobId={job.id} />}
 
       {/* Phones: timeline first, then details. Desktop: details left, timeline right. */}
       <div className="grid gap-6 lg:grid-cols-3">

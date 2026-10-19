@@ -46,7 +46,7 @@ describe('JobList', () => {
     renderList([job]);
 
     const item = screen.getByRole('listitem');
-    expect(within(item).getByText('In queue')).toBeInTheDocument();
+    expect(within(item).getByText('Queued')).toBeInTheDocument();
     expect(within(item).getByRole('link', { name: 'Drone Propeller Guards' })).toHaveAttribute(
       'href',
       `/dashboard/jobs/${job.id}`,
@@ -88,7 +88,7 @@ describe('JobList', () => {
     };
     renderList([job]);
 
-    expect(screen.getByText('Declined')).toBeInTheDocument();
+    expect(screen.getByText('Issue')).toBeInTheDocument();
     expect(screen.getByText(/declined: over the size limit/i)).toBeInTheDocument();
   });
 
@@ -106,6 +106,6 @@ describe('JobList', () => {
       `/dashboard/jobs/${jobs[0].id}`,
     );
     expect(within(rows[1]).getByRole('progressbar')).toBeInTheDocument();
-    expect(within(rows[2]).getByText('Completed')).toBeInTheDocument();
+    expect(within(rows[2]).getByText('Collected')).toBeInTheDocument();
   });
 });

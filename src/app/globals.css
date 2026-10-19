@@ -80,12 +80,14 @@
   --color-status-red: var(--status-red);
   --color-status-yellow: var(--status-yellow);
   --color-status-gray: var(--status-gray);
+  --color-status-pink: var(--status-pink);
   --color-status-purple-foreground: var(--status-purple-foreground);
   --color-status-green-foreground: var(--status-green-foreground);
   --color-status-blue-foreground: var(--status-blue-foreground);
   --color-status-red-foreground: var(--status-red-foreground);
   --color-status-yellow-foreground: var(--status-yellow-foreground);
   --color-status-gray-foreground: var(--status-gray-foreground);
+  --color-status-pink-foreground: var(--status-pink-foreground);
   --color-status-draft: var(--status-draft);
   --color-status-draft-foreground: var(--status-draft-foreground);
   --color-status-in-queue: var(--status-in-queue);
@@ -166,6 +168,8 @@
   --status-red: #ef4444;
   --status-yellow: #d29922;
   --status-gray: #8b949e;
+  /* A clear pink, so Ready doesn't get mistaken for Collected (purple) or Issue (red) */
+  --status-pink: #ec4899;
 
   /* Readable text shade of each status colour (labels, small text) */
   --status-purple-foreground: color-mix(in srgb, var(--status-purple) 65%, black);
@@ -174,6 +178,7 @@
   --status-red-foreground: color-mix(in srgb, var(--status-red) 65%, black);
   --status-yellow-foreground: color-mix(in srgb, var(--status-yellow) 65%, black);
   --status-gray-foreground: color-mix(in srgb, var(--status-gray) 65%, black);
+  --status-pink-foreground: color-mix(in srgb, var(--status-pink) 65%, black);
 
   /* Status badges: a light tint of the status colour, with text darkened for contrast on light */
   --status-draft: color-mix(in srgb, var(--status-gray) 14%, transparent);
@@ -237,6 +242,7 @@
   --status-red-foreground: color-mix(in srgb, var(--status-red) 70%, white);
   --status-yellow-foreground: color-mix(in srgb, var(--status-yellow) 70%, white);
   --status-gray-foreground: color-mix(in srgb, var(--status-gray) 70%, white);
+  --status-pink-foreground: color-mix(in srgb, var(--status-pink) 70%, white);
 
   /* Status badges: a dark tint of the status colour, with text lightened for contrast on dark */
   --status-draft: color-mix(in srgb, var(--status-gray) 18%, transparent);

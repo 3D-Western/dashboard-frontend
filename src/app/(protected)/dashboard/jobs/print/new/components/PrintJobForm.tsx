@@ -18,26 +18,16 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { UnsavedChangesDialog } from '@/components/UnsavedChangesDialog';
-import { ProjectPurposeField } from '@/components/ProjectPurposeField';
 import { jobApi } from '@/api/client/job';
+import { ApiError, ErrorCodes } from '@/api/client/errors';
 import { calculateFileChecksum } from '@/lib/file-utils';
 import { Routes } from '@/lib/routes';
 import { toast } from 'sonner';
 import { CreateJobRequest } from '@/api/types';
-
-// Type definitions for form options
-type MaterialOption = {
-  readonly value: string;
-  readonly label: string;
-};
-
-const DESIGN_INTENT_OPTIONS: readonly MaterialOption[] = [
-  { value: 'functional', label: 'Optimized for standard fit, practical use, and assemblies' },
-  { value: 'visual', label: 'Optimized for appearance, aesthetics, and non-functional display' },
-  { value: 'structural', label: 'Optimized for load-bearing, high-stress, or tool-like use' },
-] as const;
+import { PurposeChips } from './PurposeChips';
+import { DesignIntentCards } from './DesignIntentCards';
+import { PrintAllowance } from './PrintAllowance';
 
 const formSchema = z.object({
   jobName: z.string().min(1, { message: 'Must have a name for the print request' }).max(30),
@@ -45,8 +35,8 @@ const formSchema = z.object({
     .string()
     .min(2, { message: 'Must have a description for the print request' })
     .max(200),
-  purpose: z.string().min(1, { message: 'Select a purpose' }),
-  design_intent: z.string().min(1, { message: 'Select a design intent' }),
+  purpose: z.string().min(1, { message: "Select what it's for" }),
+  design_intent: z.string().min(1, { message: 'Select how it will be used' }),
   file: z.any().refine((f) => f instanceof File, { message: 'Please upload an STL file' }),
 });
 
@@ -115,6 +105,12 @@ export default function NewPrintForm({ mockMode = false }: NewPrintFormProps = {
       router.push(Routes.jobs.home);
       router.refresh();
     } catch (err) {
+      if (err instanceof ApiError && err.code === ErrorCodes.RATE_LIMIT_EXCEEDED) {
+        toast.error(
+          "You've reached your print limit for now. You can submit again once it resets.",
+        );
+        return;
+      }
       toast.error(
         'Failed to submit print request. ' + (err instanceof Error ? err.message : 'Unknown error'),
       );
@@ -124,13 +120,14 @@ export default function NewPrintForm({ mockMode = false }: NewPrintFormProps = {
   return (
     <div className="w-full max-w-5xl">
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+          <PrintAllowance />
           <FormField
             control={form.control}
             name="jobName"
             render={({ field }) => (
               <FormItem>
-                <FormLabel className="text-lg">Project Title</FormLabel>
+                <FormLabel className="text-lg">Project title</FormLabel>
                 <FormControl>
                   <Input placeholder="e.g. Robot Arm Gear – Revision B" {...field} />
                 </FormControl>
@@ -143,7 +140,7 @@ export default function NewPrintForm({ mockMode = false }: NewPrintFormProps = {
             name="file"
             render={({ field }) => (
               <FormItem>
-                <FormLabel className="text-lg">Upload STL</FormLabel>
+                <FormLabel className="text-lg">STL file</FormLabel>
                 <FormControl>
                   <FileUploadDropzone
                     initialFile={field.value as File | undefined}
@@ -172,9 +169,8 @@ export default function NewPrintForm({ mockMode = false }: NewPrintFormProps = {
 
               return (
                 <FormItem>
-                  <FormLabel className="text-lg">Print Description</FormLabel>
-
-                  <FormDescription>Describe what you are making (1-2 sentences).*</FormDescription>
+                  <FormLabel className="text-lg">Description</FormLabel>
+                  <FormDescription>What are you making? One or two sentences.</FormDescription>
                   <FormControl>
                     <Textarea
                       placeholder="e.g. A replacement gear for a robot arm in my MME 4499 capstone project."
@@ -202,30 +198,8 @@ export default function NewPrintForm({ mockMode = false }: NewPrintFormProps = {
             }}
           />
 
-          <ProjectPurposeField />
-          <FormField
-            control={form.control}
-            name="design_intent"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel className="text-lg">Design Intent</FormLabel>
-                <FormDescription>How would you classify this object?*</FormDescription>
-                <FormControl>
-                  <RadioGroup onValueChange={field.onChange} value={field.value ?? 'grid'}>
-                    <div className="mt-2 flex flex-col space-y-2">
-                      {DESIGN_INTENT_OPTIONS.map((option) => (
-                        <div key={option.value} className="flex items-center space-x-2">
-                          <RadioGroupItem value={option.value} id={option.value} />
-                          <label htmlFor={option.value}>{option.label}</label>
-                        </div>
-                      ))}
-                    </div>
-                  </RadioGroup>
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+          <PurposeChips />
+          <DesignIntentCards />
           <div className="flex justify-end border-t pt-6">
             <Button
               type="submit"
@@ -241,7 +215,7 @@ export default function NewPrintForm({ mockMode = false }: NewPrintFormProps = {
                   Submitting...
                 </span>
               ) : (
-                'Submit'
+                'Submit job'
               )}
             </Button>
           </div>

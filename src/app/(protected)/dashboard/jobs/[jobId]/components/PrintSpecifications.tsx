@@ -1,4 +1,5 @@
 import { PURPOSE_OPTIONS } from '@/lib/job-purpose-options';
+import { DESIGN_INTENT_OPTIONS } from '@/lib/design-intent-options';
 
 export interface PrintSpec {
   label: string;
@@ -11,12 +12,6 @@ const HIDDEN_KEYS = new Set(['contentType']);
 const KEY_LABELS: Record<string, string> = {
   design_intent: 'Design intent',
   purpose: 'Purpose',
-};
-
-const DESIGN_INTENT_LABELS: Record<string, string> = {
-  functional: 'Functional',
-  visual: 'Visual',
-  structural: 'Structural',
 };
 
 // "infill_density" / "infillDensity" -> "Infill density"
@@ -33,7 +28,9 @@ const formatValue = (key: string, value: unknown) => {
   if (key === 'purpose') {
     return PURPOSE_OPTIONS.find((option) => option.value === text)?.label ?? text;
   }
-  if (key === 'design_intent') return DESIGN_INTENT_LABELS[text] ?? text;
+  if (key === 'design_intent') {
+    return DESIGN_INTENT_OPTIONS.find((option) => option.value === text)?.label ?? text;
+  }
   return text;
 };
 

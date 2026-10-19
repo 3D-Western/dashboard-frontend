@@ -3,8 +3,13 @@ import { PrintJobStatus } from '@/types/jobs';
 
 // How each backend job status is presented to users. This is the one place to update when the
 // backend adds the Draft / Submitted (in review) statuses we've asked for.
+//
+// Users see six one-word statuses, one colour each, in the order a job moves through them:
+// Draft → Queued → Printing → Ready → Collected, plus Issue. Issue covers every way a job can
+// stop (declined, print failed, error, cancelled by staff); the message and the job's details
+// page say which one it was. Admins still see all nine backend statuses.
 
-export type StageTone = 'purple' | 'green' | 'blue' | 'red' | 'yellow' | 'gray';
+export type StageTone = 'purple' | 'pink' | 'green' | 'blue' | 'red' | 'yellow' | 'gray';
 
 export interface JobStage {
   /** Short status label shown above the job name */
@@ -24,7 +29,7 @@ export const JOB_STAGES: Record<PrintJobStatus, JobStage> = {
     actionLabel: 'Upload file',
   },
   InQueue: {
-    label: 'In queue',
+    label: 'Queued',
     tone: 'blue',
     message: 'Waiting in the queue for a free printer.',
     actionLabel: 'View details',
@@ -36,39 +41,39 @@ export const JOB_STAGES: Record<PrintJobStatus, JobStage> = {
     actionLabel: 'View details',
   },
   Ready: {
-    label: 'Ready for pickup',
-    tone: 'purple',
-    message: 'Your print is done and ready to pick up.',
+    label: 'Ready',
+    tone: 'pink',
+    message: 'Your print is done and ready for pickup.',
     actionLabel: 'Pickup info',
   },
   Succeeded: {
-    label: 'Completed',
+    label: 'Collected',
     tone: 'purple',
-    message: 'This print is finished.',
+    message: 'You picked up this print.',
     actionLabel: 'View details',
   },
   Flagged: {
-    label: 'Declined',
+    label: 'Issue',
     tone: 'red',
     message: 'Your job was declined. Review why before submitting it again.',
     actionLabel: 'Review',
   },
   Failed: {
-    label: 'Print failed',
+    label: 'Issue',
     tone: 'red',
     message: 'The printer failed on this job. See the details for next steps.',
     actionLabel: 'View details',
   },
   Error: {
-    label: 'Error',
+    label: 'Issue',
     tone: 'red',
     message: 'Something went wrong with this job.',
     actionLabel: 'View details',
   },
   Cancelled: {
-    label: 'Cancelled',
-    tone: 'gray',
-    message: 'This job was cancelled.',
+    label: 'Issue',
+    tone: 'red',
+    message: "This job was cancelled and won't be printed.",
     actionLabel: 'View details',
   },
 };
@@ -80,6 +85,7 @@ export const TONE_CLASSES: Record<StageTone, { bar: string; text: string; tint: 
     text: 'text-status-purple-foreground',
     tint: 'bg-status-purple/10',
   },
+  pink: { bar: 'bg-status-pink', text: 'text-status-pink-foreground', tint: 'bg-status-pink/10' },
   green: {
     bar: 'bg-status-green',
     text: 'text-status-green-foreground',
@@ -95,19 +101,13 @@ export const TONE_CLASSES: Record<StageTone, { bar: string; text: string; tint: 
   gray: { bar: 'bg-status-gray', text: 'text-status-gray-foreground', tint: 'bg-status-gray/10' },
 };
 
-/** Status dropdown options on My Jobs, in the order a job moves through them. */
+/**
+ * Status dropdown options on My Jobs, in the order a job moves through them. Like main's
+ * JobPageFilters, each option filters by one backend status (the API takes a single status), so
+ * "Issue" finds Failed jobs only; declined, errored and cancelled jobs have no filter option.
+ */
 export const JOB_STATUS_FILTER_OPTIONS: StatusOption<PrintJobStatus>[] = (
-  [
-    'PendingFile',
-    'InQueue',
-    'Printing',
-    'Ready',
-    'Succeeded',
-    'Flagged',
-    'Failed',
-    'Error',
-    'Cancelled',
-  ] as const
+  ['PendingFile', 'InQueue', 'Printing', 'Ready', 'Succeeded', 'Failed'] as const
 ).map((status) => ({
   value: status,
   label: JOB_STAGES[status].label,

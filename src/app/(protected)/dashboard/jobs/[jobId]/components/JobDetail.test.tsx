@@ -98,10 +98,10 @@ describe('StatusStepper', () => {
     );
 
     const steps = screen.getAllByRole('listitem');
-    // Job created, then Declined; no queue/printing/pickup steps that will never happen
+    // Job created, then the issue; no queue/printing/pickup steps that will never happen
     expect(steps).toHaveLength(2);
-    expect(within(steps[1]).getByText('Declined')).toBeInTheDocument();
+    expect(within(steps[1]).getByText('Issue')).toBeInTheDocument();
     expect(screen.getByText('Over the size limit')).toBeInTheDocument();
-    expect(screen.queryByText('Ready for pickup')).not.toBeInTheDocument();
+    expect(screen.queryByText('Ready')).not.toBeInTheDocument();
   });
 });
