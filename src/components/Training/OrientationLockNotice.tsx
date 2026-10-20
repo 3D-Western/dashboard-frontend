@@ -1,3 +1,6 @@
+'use client';
+
+import { useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { Lock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -8,12 +11,33 @@ export const ORIENTATION_LOCK_TITLE = 'Finish Maker Orientation to submit prints
 /**
  * Shown in place of (or above) the print form while Maker Orientation is required and not done.
  * Orientation is short and fully online, so the message says that and leads straight to it.
+ *
+ * With `interrupt` the notice announces itself (role="alert"), scrolls into view and takes focus
+ * when it appears, for when it shows up after a submit and might otherwise be missed on a phone.
  */
-export function OrientationLockNotice({ className }: { className?: string }) {
+export function OrientationLockNotice({
+  className,
+  interrupt = false,
+}: {
+  className?: string;
+  interrupt?: boolean;
+}) {
+  const ref = useRef<HTMLElement>(null);
+
+  useEffect(() => {
+    if (!interrupt) return;
+    // scrollIntoView is missing in some environments (jsdom), so it is optional
+    ref.current?.scrollIntoView?.({ behavior: 'smooth', block: 'center' });
+    ref.current?.focus({ preventScroll: true });
+  }, [interrupt]);
+
   return (
     <section
+      ref={ref}
+      role={interrupt ? 'alert' : undefined}
+      tabIndex={interrupt ? -1 : undefined}
       aria-labelledby="orientation-lock-heading"
-      className={`flex flex-col gap-4 rounded-xl border border-purple-light/50 bg-purple-light/10 p-5 sm:flex-row sm:items-center sm:p-6 ${className ?? ''}`}
+      className={`flex flex-col gap-4 rounded-xl border border-purple-light/50 bg-purple-light/10 p-5 outline-none sm:flex-row sm:items-center sm:p-6 ${className ?? ''}`}
     >
       <Lock className="size-8 shrink-0 text-purple-light" aria-hidden="true" />
       <div className="min-w-0 flex-1 space-y-1">

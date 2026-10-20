@@ -26,6 +26,10 @@ vi.mock('@/components/FileUploadDropzone', () => ({
 }));
 
 const createJob = vi.mocked(jobApi.createJob);
+const scrollIntoView = vi.fn();
+beforeEach(() => {
+  Element.prototype.scrollIntoView = scrollIntoView;
+});
 
 async function fillAndSubmit() {
   const user = userEvent.setup();
@@ -58,6 +62,11 @@ describe('PrintJobForm: orientation refusal', () => {
       'href',
       '/dashboard/training',
     );
+    // It can't be missed on a phone: announced, scrolled to, and holding focus
+    const notice = screen.getByRole('alert');
+    expect(notice).toHaveTextContent('Finish Maker Orientation to submit prints');
+    expect(notice).toHaveFocus();
+    expect(scrollIntoView).toHaveBeenCalled();
     expect(toast.error).toHaveBeenCalledWith('Finish Maker Orientation to submit prints.');
     // Nothing was uploaded, and the form can't be submitted again until orientation is done
     expect(jobApi.uploadJobFile).not.toHaveBeenCalled();

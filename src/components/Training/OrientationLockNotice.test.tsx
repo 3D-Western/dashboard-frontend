@@ -14,4 +14,12 @@ describe('OrientationLockNotice', () => {
       '/dashboard/training',
     );
   });
+
+  it('is a plain section until told to interrupt, then an alert that takes focus', () => {
+    const { rerender } = render(<OrientationLockNotice />);
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+
+    rerender(<OrientationLockNotice interrupt />);
+    expect(screen.getByRole('alert')).toHaveFocus();
+  });
 });

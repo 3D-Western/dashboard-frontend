@@ -129,7 +129,7 @@ export default function NewPrintForm({ mockMode = false }: NewPrintFormProps = {
 
   return (
     <div className="w-full max-w-5xl">
-      {orientationRequired && <OrientationLockNotice className="mb-8" />}
+      {orientationRequired && <OrientationLockNotice interrupt className="mb-8" />}
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
           <PrintAllowance />
