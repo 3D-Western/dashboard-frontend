@@ -31,9 +31,6 @@ export const userApi = {
     if (params?.status !== undefined) {
       searchParams.append('status', params.status);
     }
-    if (params?.trainingLevel !== undefined) {
-      searchParams.append('trainingLevel', params.trainingLevel);
-    }
     if (params?.page !== undefined) {
       searchParams.append('page', params.page.toString());
     }
@@ -58,7 +55,7 @@ export const userApi = {
 
   /**
    * Lists users for the admin Users Management table. Deliberately separate from
-   * `listAllUsers` above: that function's `search`/`status`/`trainingLevel` params don't
+   * `listAllUsers` above: that function's `search`/`status` params don't
    * correspond to anything the real `GET /api/v1/users` endpoint supports (pre-existing drift,
    * see AdminUserListParams doc comment) — this one only sends params backend actually accepts.
    */

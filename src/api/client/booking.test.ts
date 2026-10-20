@@ -585,7 +585,7 @@ describe('bookingAPI', () => {
               violations: [
                 {
                   rule: 'TrainingRequired',
-                  message: 'Level 1 training is required to book this equipment.',
+                  message: 'Safety certification is required to book this equipment.',
                 },
               ],
             },

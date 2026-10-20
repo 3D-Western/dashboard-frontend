@@ -15,7 +15,6 @@ import {
   validateRestrictions,
   suggestAlternativeSlots,
 } from '@/utils/booking-validators';
-import { canAccessBooking } from '@/utils/usage-calculators';
 
 const apiUrl = process.env.API_URL;
 
@@ -50,7 +49,7 @@ function enrichPendingRequest(booking: Booking): PendingRequest {
     .getBookings({ equipmentId: booking.equipmentId })
     .filter((b) => b.id !== booking.id);
   const overlapping = checkOverlap(others, booking);
-  const violations = validateRestrictions(booking.equipmentId, booking.userInfo.studentId);
+  const violations = validateRestrictions();
 
   return {
     ...booking,
@@ -148,19 +147,9 @@ export const bookingHandlers = [
       return HttpResponse.json({ error: 'Equipment not found' }, { status: 404 });
     }
 
-    if (!canAccessBooking(user.trainingLevel)) {
-      return HttpResponse.json(
-        {
-          code: 'TRAINING_LEVEL_REQUIRED',
-          message: 'You must complete required training before booking equipment.',
-        },
-        { status: 403 },
-      );
-    }
-
     const settings = db.getCapacitySettings(body.equipmentId);
 
-    const violations = validateRestrictions(body.equipmentId, user.studentId);
+    const violations = validateRestrictions();
     if (violations.length > 0) {
       return HttpResponse.json(
         {

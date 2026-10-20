@@ -1,9 +1,4 @@
-import { TrainingLevel } from '@/types/training';
 import { UsageEntry, UsagePeriod, ProjectTypeLimit, RemainingQuota } from '@/types/usage';
-
-export function canAccessBooking(trainingLevel: TrainingLevel | null | undefined): boolean {
-  return trainingLevel === 'LEVEL_2';
-}
 
 // Placeholder aggregation: counts completed jobs per project type for the given
 // mock period. Real period-windowing (actual date-range filtering) is TBD —

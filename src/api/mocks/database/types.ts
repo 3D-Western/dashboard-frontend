@@ -1,4 +1,3 @@
-import { TrainingLevel } from '@/types/training';
 import { OnboardingAnswers } from '@/types/onboarding';
 import { AccountStatus } from '@/types/user';
 
@@ -11,7 +10,6 @@ export interface User {
   groups: string[]; // group keys, e.g. ['members'] or ['super_admins']
   experience: string;
   createdDate?: string;
-  trainingLevel?: TrainingLevel;
   // Mirrors backend's real AccountStatus enum/column. Absent/undefined is treated as 'Active'
   // (see db.ts) so existing seeded users, which never set this field, aren't retroactively locked.
   accountStatus?: AccountStatus;

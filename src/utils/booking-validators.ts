@@ -29,17 +29,10 @@ export function validateCapacity(
   };
 }
 
-export function validateRestrictions(equipmentId: string, userId: number): RestrictionViolation[] {
-  const settings = db.getCapacitySettings(equipmentId);
-  const user = db.getUserById(userId);
-  const violations: RestrictionViolation[] = [];
-  if (settings.restrictions.requiresTraining && user?.trainingLevel !== 'LEVEL_2') {
-    violations.push({
-      rule: 'TrainingRequired',
-      message: 'Level 1 training is required to book this equipment.',
-    });
-  }
-  return violations;
+// TODO(training UI): re-gate booking on real certifications. The training-level rule was removed
+// (D-16), so there are no restriction rules to apply until then.
+export function validateRestrictions(): RestrictionViolation[] {
+  return [];
 }
 
 export function suggestAlternativeSlots(

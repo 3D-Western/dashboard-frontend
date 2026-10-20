@@ -9,7 +9,6 @@ import { invitationHandlers } from './invitation-handlers';
 import { iamHandlers } from './iam-handlers';
 import { FileSystemUtils } from './utils/fileSystem';
 import { bookingHandlers } from './booking-handlers';
-import { trainingHandlers } from './training-handlers';
 import { usageHandlers } from './usage-handlers';
 import { onboardingHandlers } from './onboarding-handlers';
 
@@ -26,7 +25,6 @@ export const mockServer = setupServer(
   ...invitationHandlers,
   ...iamHandlers,
   ...bookingHandlers,
-  ...trainingHandlers,
   ...usageHandlers,
   ...onboardingHandlers,
 );

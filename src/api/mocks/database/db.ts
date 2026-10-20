@@ -339,18 +339,6 @@ export class Database {
     return this.users.get(userId) || null;
   }
 
-  public updateUserTrainingLevel(
-    userId: number,
-    trainingLevel: User['trainingLevel'],
-  ): User | null {
-    const user = this.users.get(userId);
-    if (!user) {
-      return null;
-    }
-    user.trainingLevel = trainingLevel;
-    return user;
-  }
-
   public updateAccountStatus(
     userId: number,
     status: NonNullable<User['accountStatus']>,

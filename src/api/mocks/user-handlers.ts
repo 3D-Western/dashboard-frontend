@@ -56,7 +56,6 @@ export const userHandlers = [
     const url = new URL(request.url);
     const searchTerm = url.searchParams.get('search');
     const statusFilter = url.searchParams.get('status');
-    const trainingLevelFilter = url.searchParams.get('trainingLevel');
     const page = parseInt(url.searchParams.get('page') || '1', 10);
     const pageSize = parseInt(url.searchParams.get('pageSize') || '10', 10);
     const snapshotCreatedBefore =
@@ -88,11 +87,6 @@ export const userHandlers = [
       users = users.filter((u) => u.groups.includes(statusFilter));
     }
 
-    // Apply training level filter
-    if (trainingLevelFilter) {
-      users = users.filter((u) => u.trainingLevel === trainingLevelFilter);
-    }
-
     // Map to API response format (with capitalized values to match backend)
     const userList = users.map((u) => ({
       studentId: u.studentId,
@@ -101,7 +95,6 @@ export const userHandlers = [
       lastName: u.lastName,
       createdDate: u.createdDate || new Date().toISOString(),
       groups: u.groups,
-      trainingLevel: u.trainingLevel,
       accountStatus: u.accountStatus ?? 'Active',
       accountStatusReason: u.accountStatusReason ?? null,
       experienceLevel: u.experienceLevel ?? null,
@@ -172,7 +165,6 @@ export const userHandlers = [
       generateSuccessResponse({
         createdDate: targetUser.createdDate || new Date().toISOString(),
         groups: targetUser.groups,
-        trainingLevel: targetUser.trainingLevel,
         ...mapToAdminUserProfile(targetUser),
       }),
     );
