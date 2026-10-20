@@ -112,7 +112,15 @@ describe('NewBookingForm', () => {
 
     // 2. Fill out the form
     fireEvent.change(equipmentSelect, { target: { value: 'laser-1' } });
-    fireEvent.change(dateInput, { target: { value: '2026-10-15' } });
+    // Always a future date: a hard-coded date started failing once it passed.
+    const future = new Date();
+    future.setDate(future.getDate() + 7);
+    const futureDate = [
+      future.getFullYear(),
+      String(future.getMonth() + 1).padStart(2, '0'),
+      String(future.getDate()).padStart(2, '0'),
+    ].join('-');
+    fireEvent.change(dateInput, { target: { value: futureDate } });
     fireEvent.change(timeSlotSelect, { target: { value: '10:00 AM - 12:00 PM' } });
     fireEvent.change(purposeInput, { target: { value: 'Capstone Prototyping' } });
 
