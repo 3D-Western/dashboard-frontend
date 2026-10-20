@@ -148,9 +148,41 @@ describe('SignoffDetail: rejecting', () => {
     expect(confirm).toBeEnabled();
     await userEvent.click(confirm);
 
-    expect(api.reject).toHaveBeenCalledWith(9, 'Could not find the emergency stop', ['vent']);
+    expect(api.reject).toHaveBeenCalledWith(
+      9,
+      'Could not find the emergency stop',
+      ['vent'],
+      false,
+    );
     expect(await screen.findByRole('heading', { name: 'Not approved' })).toBeInTheDocument();
-    expect(screen.getByText(/must retake the training/i)).toBeInTheDocument();
+    expect(screen.getByText(/stays in the queue/i)).toBeInTheDocument();
+    expect(screen.queryByText(/must redo the online training before/i)).not.toBeInTheDocument();
+  });
+
+  it('can also make the student redo the online training', async () => {
+    api.get.mockResolvedValue(createSignoff());
+    api.reject.mockResolvedValue(
+      createSignoff({
+        status: 'REJECTED',
+        decidedAt: '2026-10-20T16:29:00Z',
+        decidedBy: { studentId: 1, firstName: 'Sam', lastName: 'Lee' },
+        channel: 'DASHBOARD',
+        notes: 'Start again',
+      }),
+    );
+    renderDetail();
+    await screen.findByRole('heading', { name: 'Alex Smith' });
+
+    await userEvent.click(screen.getByRole('button', { name: /not ready: reject/i }));
+    const dialog = await screen.findByRole('dialog');
+    await userEvent.type(within(dialog).getByLabelText('Reason'), 'Start again');
+    await userEvent.click(within(dialog).getByLabelText(/must redo the online training/i));
+    await userEvent.click(within(dialog).getByRole('button', { name: /reject sign-off/i }));
+
+    expect(api.reject).toHaveBeenCalledWith(9, 'Start again', [], true);
+    expect(
+      await screen.findByText(/must redo the online training before asking again/i),
+    ).toBeInTheDocument();
   });
 
   it('keeps the request open when the supervisor cancels the dialog', async () => {

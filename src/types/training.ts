@@ -46,6 +46,18 @@ export interface TrainingSummary {
   retryAt: string | null;
   /** The error code the start endpoint would answer with, when `nextAction` is BLOCKED. */
   blockedReason: string | null;
+  /**
+   * Why a supervisor did not approve the in-person check, when that is the latest word. With
+   * `mustRedoOnline` false the student is still waiting for another check; true means they must
+   * retake the online training first.
+   */
+  signoffFeedback?: SignoffFeedback | null;
+}
+
+export interface SignoffFeedback {
+  reason: string;
+  decidedAt: string;
+  mustRedoOnline: boolean;
 }
 
 export interface MyTrainings {

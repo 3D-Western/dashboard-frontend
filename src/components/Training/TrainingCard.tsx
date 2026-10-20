@@ -7,7 +7,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { daysUntil, formatDate } from '@/lib/training-format';
 import { Routes } from '@/lib/routes';
-import type { TrainingSummary } from '@/types/training';
+import type { SignoffFeedback, TrainingSummary } from '@/types/training';
 import { CertificationBadge } from './CertificationBadge';
 
 interface TrainingCardProps {
@@ -61,6 +61,8 @@ export function TrainingCard({
       {training.summary && <p className="text-sm">{training.summary}</p>}
 
       <CertificationDetails training={training} now={now} />
+
+      {training.signoffFeedback && <SignoffFeedbackNote feedback={training.signoffFeedback} />}
 
       {errorMessage && (
         <Alert variant="destructive">
@@ -117,6 +119,27 @@ function CertificationDetails({ training, now }: { training: TrainingSummary; no
     );
   }
   return lines.length > 0 ? <ul className="space-y-1.5 text-sm">{lines}</ul> : null;
+}
+
+/** A supervisor wasn't satisfied in person: say why, and what happens next. */
+function SignoffFeedbackNote({ feedback }: { feedback: SignoffFeedback }) {
+  return (
+    <Alert>
+      <AlertDescription className="space-y-1">
+        <p className="font-medium">
+          {feedback.mustRedoOnline
+            ? 'A supervisor asked you to redo the online training'
+            : 'A supervisor was not ready to sign you off yet'}
+        </p>
+        <p>{feedback.reason}</p>
+        <p className="text-muted-foreground">
+          {feedback.mustRedoOnline
+            ? 'Retake the training, then ask for a sign-off again.'
+            : 'Practise, then find a supervisor for another in-person check. You do not need to retake the online part.'}
+        </p>
+      </AlertDescription>
+    </Alert>
+  );
 }
 
 function NextAction({

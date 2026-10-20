@@ -43,12 +43,18 @@ describe('signoffAPI', () => {
     expect(seen.body).toEqual({ checkedKeys: ['estop', 'vent'] });
   });
 
-  it('rejects with a reason and what was ticked', async () => {
+  it('rejects with a reason, what was ticked and whether to redo the online part', async () => {
     const seen = capture('post', '/api/v1/admin/training/signoffs/9/reject', { id: 9 });
 
     await signoffAPI.reject(9, 'Not ready', ['estop']);
+    expect(seen.body).toEqual({
+      reason: 'Not ready',
+      checkedKeys: ['estop'],
+      mustRedoOnline: false,
+    });
 
-    expect(seen.body).toEqual({ reason: 'Not ready', checkedKeys: ['estop'] });
+    await signoffAPI.reject(9, 'Start again', [], true);
+    expect(seen.body).toEqual({ reason: 'Start again', checkedKeys: [], mustRedoOnline: true });
   });
 
   it('turns an error envelope into an ApiError with the code', async () => {

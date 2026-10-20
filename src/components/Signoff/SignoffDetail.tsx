@@ -26,7 +26,8 @@ const CHANNEL_LABELS = { DASHBOARD: 'the dashboard', TEAMS: 'Teams', MANUAL: 'a 
 /**
  * One student's in-person sign-off. The supervisor stands next to the student and ticks each item as
  * they see it done; Approve stays disabled until every item is ticked. Rejecting needs a reason and
- * sends the student back to retake the training. Built phone-first: big tap targets, full-width buttons.
+ * means "not ready in person yet": the student stays in line for another check, unless the supervisor
+ * also ticks that they must redo the online training. Built phone-first: big tap targets, full-width buttons.
  */
 export function SignoffDetail({ signoffId, now = new Date() }: { signoffId: number; now?: Date }) {
   const [signoff, setSignoff] = useState<Signoff | null>(null);
@@ -36,7 +37,10 @@ export function SignoffDetail({ signoffId, now = new Date() }: { signoffId: numb
   const [actionError, setActionError] = useState<string | null>(null);
   const [rejectOpen, setRejectOpen] = useState(false);
   const [reason, setReason] = useState('');
+  const [mustRedo, setMustRedo] = useState(false);
   const [justDecided, setJustDecided] = useState(false);
+  // What a rejection just did to the student, for the message after it
+  const [followUp, setFollowUp] = useState<'again' | 'redo' | null>(null);
 
   const load = useCallback(async () => {
     setLoadError(null);
@@ -85,13 +89,14 @@ export function SignoffDetail({ signoffId, now = new Date() }: { signoffId: numb
       return next;
     });
 
-  const decide = async (action: () => Promise<Signoff>) => {
+  const decide = async (action: () => Promise<Signoff>, after: 'again' | 'redo' | null = null) => {
     setBusy(true);
     setActionError(null);
     try {
       setSignoff(await action());
       setRejectOpen(false);
       setJustDecided(true);
+      setFollowUp(after);
     } catch (err) {
       setActionError(signoffErrorMessage(err));
       setRejectOpen(false);
@@ -111,12 +116,15 @@ export function SignoffDetail({ signoffId, now = new Date() }: { signoffId: numb
     );
 
   const reject = () =>
-    decide(() =>
-      signoffAPI.reject(
-        signoff.id,
-        reason.trim(),
-        signoff.checklist.filter((item) => checked.has(item.key)).map((item) => item.key),
-      ),
+    decide(
+      () =>
+        signoffAPI.reject(
+          signoff.id,
+          reason.trim(),
+          signoff.checklist.filter((item) => checked.has(item.key)).map((item) => item.key),
+          mustRedo,
+        ),
+      mustRedo ? 'redo' : 'again',
     );
 
   return (
@@ -199,10 +207,12 @@ export function SignoffDetail({ signoffId, now = new Date() }: { signoffId: numb
           </div>
         </>
       ) : (
-        <DecisionSummary signoff={signoff} justDecided={justDecided} />
+        <DecisionSummary signoff={signoff} justDecided={justDecided} followUp={followUp} />
       )}
 
       <RejectDialog
+        mustRedo={mustRedo}
+        onMustRedoChange={setMustRedo}
         open={rejectOpen}
         onOpenChange={setRejectOpen}
         studentName={personName(signoff.student)}
@@ -255,7 +265,15 @@ function ChecklistRow({
   );
 }
 
-function DecisionSummary({ signoff, justDecided }: { signoff: Signoff; justDecided: boolean }) {
+function DecisionSummary({
+  signoff,
+  justDecided,
+  followUp,
+}: {
+  signoff: Signoff;
+  justDecided: boolean;
+  followUp: 'again' | 'redo' | null;
+}) {
   const approved = signoff.status === 'APPROVED';
   const decided = signoff.status === 'APPROVED' || signoff.status === 'REJECTED';
   const heading = approved
@@ -281,8 +299,17 @@ function DecisionSummary({ signoff, justDecided }: { signoff: Signoff; justDecid
             </p>
           )}
           {signoff.status === 'REJECTED' && (
+            <p className="text-sm">Reason: {signoff.notes ?? 'not recorded'}</p>
+          )}
+          {followUp === 'again' && (
             <p className="text-sm">
-              The student must retake the training. Reason: {signoff.notes ?? 'not recorded'}
+              {personName(signoff.student)} stays in the queue and can come back for another
+              in-person check.
+            </p>
+          )}
+          {followUp === 'redo' && (
+            <p className="text-sm">
+              {personName(signoff.student)} must redo the online training before asking again.
             </p>
           )}
           {approved && signoff.notes && <p className="text-sm">Note: {signoff.notes}</p>}
@@ -318,6 +345,8 @@ function DecisionSummary({ signoff, justDecided }: { signoff: Signoff; justDecid
 }
 
 function RejectDialog({
+  mustRedo,
+  onMustRedoChange,
   open,
   onOpenChange,
   studentName,
@@ -326,6 +355,8 @@ function RejectDialog({
   busy,
   onConfirm,
 }: {
+  mustRedo: boolean;
+  onMustRedoChange: (value: boolean) => void;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   studentName: string;
@@ -341,8 +372,8 @@ function RejectDialog({
         <DialogHeader>
           <DialogTitle>Reject this sign-off?</DialogTitle>
           <DialogDescription>
-            {studentName} will have to retake the whole training before asking for another sign-off.
-            Say what they need to work on.
+            {studentName} is not ready yet. They stay in the queue for another in-person check. Say
+            what they need to work on; they will see it on their training page.
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-2">
@@ -358,6 +389,16 @@ function RejectDialog({
             placeholder="For example: could not find the emergency stop"
           />
         </div>
+        <label className="flex min-h-12 cursor-pointer items-center gap-3 rounded-lg border px-3 py-2">
+          <input
+            type="checkbox"
+            checked={mustRedo}
+            onChange={(event) => onMustRedoChange(event.target.checked)}
+            disabled={busy}
+            className="size-5 shrink-0 accent-purple-light"
+          />
+          <span className="text-sm">They must redo the online training first</span>
+        </label>
         <DialogFooter className="gap-2">
           <Button
             type="button"

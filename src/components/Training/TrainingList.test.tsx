@@ -48,6 +48,48 @@ beforeEach(() => {
 });
 
 describe('TrainingCard', () => {
+  it('tells a student who is still waiting why the last in-person check did not pass', () => {
+    renderCard(
+      createTrainingSummary({
+        kind: 'EQUIPMENT',
+        requiresSignoff: true,
+        certification: cert({ status: 'AWAITING_SIGNOFF', activeSince: null }),
+        nextAction: 'AWAITING_SIGNOFF',
+        signoffFeedback: {
+          reason: 'Could not find the emergency stop',
+          decidedAt: '2026-10-20T11:00:00Z',
+          mustRedoOnline: false,
+        },
+      }),
+    );
+
+    expect(screen.getByText(/not ready to sign you off yet/i)).toBeInTheDocument();
+    expect(screen.getByText('Could not find the emergency stop')).toBeInTheDocument();
+    expect(screen.getByText(/do not need to retake the online part/i)).toBeInTheDocument();
+  });
+
+  it('tells a student who must redo the online part, with the reason', () => {
+    renderCard(
+      createTrainingSummary({
+        kind: 'EQUIPMENT',
+        certification: cert({ status: 'LAPSED', activeSince: null }),
+        signoffFeedback: {
+          reason: 'Start from the beginning',
+          decidedAt: '2026-10-20T11:00:00Z',
+          mustRedoOnline: true,
+        },
+      }),
+    );
+
+    expect(screen.getByText(/asked you to redo the online training/i)).toBeInTheDocument();
+    expect(screen.getByText('Start from the beginning')).toBeInTheDocument();
+  });
+
+  it('shows no note when there is no feedback', () => {
+    renderCard(createTrainingSummary());
+    expect(screen.queryByText(/supervisor/i)).not.toBeInTheDocument();
+  });
+
   it('offers to start a training not started yet', async () => {
     const { onStart } = renderCard(createTrainingSummary());
 

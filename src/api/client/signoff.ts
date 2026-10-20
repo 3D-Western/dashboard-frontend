@@ -25,7 +25,10 @@ export const signoffAPI = {
   approve: (signoffId: number, checkedKeys: string[], notes?: string) =>
     post<Signoff>(endpoints.signoff.approve(signoffId), { checkedKeys, notes }),
 
-  /** The reason is required. The student retakes the training. */
-  reject: (signoffId: number, reason: string, checkedKeys: string[] = []) =>
-    post<Signoff>(endpoints.signoff.reject(signoffId), { reason, checkedKeys }),
+  /**
+   * "Not ready in person yet": the reason is required and the student stays in line for another
+   * check. With `mustRedoOnline` they must also retake the online training.
+   */
+  reject: (signoffId: number, reason: string, checkedKeys: string[] = [], mustRedoOnline = false) =>
+    post<Signoff>(endpoints.signoff.reject(signoffId), { reason, checkedKeys, mustRedoOnline }),
 };
