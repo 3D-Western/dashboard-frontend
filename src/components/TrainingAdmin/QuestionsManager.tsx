@@ -24,6 +24,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import { useGuardedClose } from '@/hooks/useGuardedClose';
 import { useAdminResource } from '@/hooks/useAdminResource';
 import { adminErrorMessage, issuesFor, issuesFromError } from '@/lib/training-admin-errors';
 import { SLUG_HELP, SLUG_PATTERN, promptPreview, slugify } from '@/lib/training-admin-format';
@@ -406,8 +407,10 @@ function TopicDialog({
     }
   };
 
+  const { requestClose, guard } = useGuardedClose({ name, slug }, onClose);
+
   return (
-    <Dialog open onOpenChange={(open) => !open && onClose()}>
+    <Dialog open onOpenChange={(open) => !open && requestClose()}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>{topic ? 'Rename topic' : 'Add a topic'}</DialogTitle>
@@ -440,13 +443,14 @@ function TopicDialog({
           <ServerProblems issues={problems} failure={failure} claimedFields={['name', 'slug']} />
         </div>
         <DialogFooter>
-          <Button type="button" variant="outline" onClick={onClose}>
+          <Button type="button" variant="outline" onClick={requestClose}>
             Cancel
           </Button>
           <Button type="button" disabled={!canSave} onClick={() => void save()}>
             {saving ? 'Saving...' : 'Save topic'}
           </Button>
         </DialogFooter>
+        {guard}
       </DialogContent>
     </Dialog>
   );

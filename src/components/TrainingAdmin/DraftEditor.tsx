@@ -21,6 +21,7 @@ import type {
   ValidationIssue,
   VersionDetail,
 } from '@/types/training-admin';
+import { AuthorOnly } from './AuthorOnly';
 import { ChecklistEditor } from './ChecklistEditor';
 import { ErrorNote, IssueList, LoadState } from './feedback';
 import { PublishDialog } from './PublishDialog';
@@ -187,41 +188,43 @@ function DraftEditorBody({
             title="Not ready to publish"
           />
 
-          <StepList
-            versionId={draftId}
-            steps={data.version.steps}
-            issues={issues}
-            onEdit={(step) => setEditing({ step, type: step.type })}
-            onReordered={(version) => setData({ ...data, version })}
-            onDeleted={reload}
-          />
-
-          <div className="space-y-2">
-            <h3 className="text-sm font-medium">Add a step</h3>
-            <div className="flex flex-wrap gap-2">
-              {ADD_STEP_BUTTONS.map(({ type, icon: Icon }) => (
-                <Button
-                  key={type}
-                  type="button"
-                  variant="outline"
-                  onClick={() => setEditing({ step: null, type })}
-                >
-                  <Plus /> <Icon /> {STEP_TYPE_LABELS[type]}
-                </Button>
-              ))}
-            </div>
-          </div>
-
-          {training.requiresSignoff && (
-            <ChecklistEditor
-              key={data.version.signoffChecklist.map((i) => i.key).join('|')}
+          <AuthorOnly>
+            <StepList
               versionId={draftId}
-              items={data.version.signoffChecklist}
-              onSaved={(signoffChecklist) =>
-                setData({ ...data, version: { ...data.version, signoffChecklist } })
-              }
+              steps={data.version.steps}
+              issues={issues}
+              onEdit={(step) => setEditing({ step, type: step.type })}
+              onReordered={(version) => setData({ ...data, version })}
+              onDeleted={reload}
             />
-          )}
+
+            <div className="space-y-2">
+              <h3 className="text-sm font-medium">Add a step</h3>
+              <div className="flex flex-wrap gap-2">
+                {ADD_STEP_BUTTONS.map(({ type, icon: Icon }) => (
+                  <Button
+                    key={type}
+                    type="button"
+                    variant="outline"
+                    onClick={() => setEditing({ step: null, type })}
+                  >
+                    <Plus /> <Icon /> {STEP_TYPE_LABELS[type]}
+                  </Button>
+                ))}
+              </div>
+            </div>
+
+            {training.requiresSignoff && (
+              <ChecklistEditor
+                key={data.version.signoffChecklist.map((i) => i.key).join('|')}
+                versionId={draftId}
+                items={data.version.signoffChecklist}
+                onSaved={(signoffChecklist) =>
+                  setData({ ...data, version: { ...data.version, signoffChecklist } })
+                }
+              />
+            )}
+          </AuthorOnly>
 
           {editing && (
             <StepDialog

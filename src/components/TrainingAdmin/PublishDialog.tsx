@@ -50,7 +50,7 @@ export function PublishDialog({
 }: PublishDialogProps) {
   const [impact, setImpact] = useState<PublishImpact>('MINOR');
   const [reason, setReason] = useState('');
-  const [confirmRetake, setConfirmRetake] = useState(false);
+  const [acknowledged, setAcknowledged] = useState(false);
   const [check, setCheck] = useState<PublishCheck | null>(null);
   const [checkError, setCheckError] = useState<string | null>(null);
   const [publishing, setPublishing] = useState(false);
@@ -83,18 +83,18 @@ export function PublishDialog({
     setImpact(value);
     setCheck(null);
     setCheckError(null);
-    setConfirmRetake(false);
+    setAcknowledged(false);
     setServerIssues([]);
     setFailure(null);
   };
 
   const reasonTooLong = reason.length > MAX_REASON_LENGTH;
-  const needsConfirm = impact === 'FULL_RETAKE';
+  const needsConfirm = impact !== 'MINOR';
   const canPublish =
     !!check?.ready &&
     reason.trim() !== '' &&
     !reasonTooLong &&
-    (!needsConfirm || confirmRetake) &&
+    (!needsConfirm || acknowledged) &&
     !publishing;
 
   const publish = async () => {
@@ -244,11 +244,18 @@ export function PublishDialog({
           }
         />
 
-        {needsConfirm && (
+        {impact === 'ADDON' && (
+          <CheckField
+            label="I understand that everyone certified will be asked to finish the steps marked as part of the add-on, by a deadline, or lose access."
+            checked={acknowledged}
+            onCheckedChange={setAcknowledged}
+          />
+        )}
+        {impact === 'FULL_RETAKE' && (
           <CheckField
             label="I understand that everyone certified must take the whole training again."
-            checked={confirmRetake}
-            onCheckedChange={setConfirmRetake}
+            checked={acknowledged}
+            onCheckedChange={setAcknowledged}
           />
         )}
 

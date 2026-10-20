@@ -1,9 +1,20 @@
 'use client';
 
 import { useCallback, useState } from 'react';
-import { Plus } from 'lucide-react';
+import { Plus, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { trainingAdminAPI } from '@/api/client/training-admin';
+import { ApiError } from '@/api/client/errors';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -14,12 +25,18 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import { useGuardedClose } from '@/hooks/useGuardedClose';
 import { useAdminResource } from '@/hooks/useAdminResource';
 import { adminErrorMessage, issuesFor, issuesFromError } from '@/lib/training-admin-errors';
 import { SLUG_HELP, SLUG_PATTERN, slugify } from '@/lib/training-admin-format';
 import type { EquipmentGroup, Machine } from '@/types/training-admin';
 import { CheckField, SelectField, TextAreaField, TextField } from './fields';
 import { ErrorNote, LoadState, ServerProblems } from './feedback';
+
+/** Something the user asked to delete; `blocked` is set once the server says it is in use. */
+type Deleting =
+  | { kind: 'group'; group: EquipmentGroup; blocked: string | null }
+  | { kind: 'machine'; machine: Machine; blocked: string | null };
 
 type Editing =
   | { kind: 'group'; group: EquipmentGroup | null }
@@ -33,6 +50,7 @@ export function EquipmentManager() {
   const machines = useAdminResource(loadMachines);
   const [editing, setEditing] = useState<Editing | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState<Deleting | null>(null);
 
   const reloadAll = async () => {
     await Promise.all([groups.reload(), machines.reload()]);
@@ -67,6 +85,34 @@ export function EquipmentManager() {
     } catch (error) {
       setActionError(adminErrorMessage(error, "We couldn't change that machine."));
     }
+  };
+
+  const confirmDelete = async () => {
+    if (!deleting) return;
+    setActionError(null);
+    try {
+      if (deleting.kind === 'group') await trainingAdminAPI.deleteGroup(deleting.group.id);
+      else await trainingAdminAPI.deleteMachine(deleting.machine.id);
+      toast.success(deleting.kind === 'group' ? 'Group deleted.' : 'Machine deleted.');
+      setDeleting(null);
+      await reloadAll();
+    } catch (error) {
+      if (error instanceof ApiError && ['CONFLICT', 'DATA_CONFLICT'].includes(error.code)) {
+        // In use: deleting would break history, so offer to hide it instead.
+        setDeleting({ ...deleting, blocked: adminErrorMessage(error, 'It is still in use.') });
+      } else {
+        setDeleting(null);
+        setActionError(adminErrorMessage(error, "We couldn't delete that."));
+      }
+    }
+  };
+
+  const deactivateInstead = async () => {
+    if (!deleting) return;
+    const current = deleting;
+    setDeleting(null);
+    if (current.kind === 'group') await toggleGroup(current.group);
+    else await toggleMachine(current.machine);
   };
 
   return (
@@ -129,6 +175,15 @@ export function EquipmentManager() {
                     >
                       {group.active ? 'Deactivate' : 'Reactivate'}
                     </Button>
+                    <Button
+                      type="button"
+                      size="icon-sm"
+                      variant="ghost"
+                      aria-label={`Delete group ${group.name}`}
+                      onClick={() => setDeleting({ kind: 'group', group, blocked: null })}
+                    >
+                      <Trash2 />
+                    </Button>
                   </div>
                 </div>
 
@@ -171,6 +226,17 @@ export function EquipmentManager() {
                             >
                               {machine.active ? 'Deactivate' : 'Reactivate'}
                             </Button>
+                            <Button
+                              type="button"
+                              size="icon-sm"
+                              variant="ghost"
+                              aria-label={`Delete machine ${machine.name}`}
+                              onClick={() =>
+                                setDeleting({ kind: 'machine', machine, blocked: null })
+                              }
+                            >
+                              <Trash2 />
+                            </Button>
                           </div>
                         </li>
                       ))}
@@ -192,6 +258,49 @@ export function EquipmentManager() {
           })}
         </ul>
       </LoadState>
+
+      <AlertDialog open={deleting !== null} onOpenChange={(open) => !open && setDeleting(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {deleting?.blocked
+                ? `${deleting.kind === 'group' ? 'This group' : 'This machine'} is in use`
+                : `Delete ${deleting?.kind === 'group' ? deleting.group.name : deleting?.machine.name}?`}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {deleting?.blocked ? (
+                <>
+                  {deleting.blocked} It cannot be deleted while trainings or machines depend on it.
+                  Deactivate it instead: it is hidden from new trainings, and nothing is lost.
+                </>
+              ) : (
+                <>
+                  This removes {deleting?.kind === 'group' ? 'the group' : 'the machine'} for good.
+                  If anything uses it, it is kept and you can deactivate it instead.
+                </>
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{deleting?.blocked ? 'Close' : 'Keep it'}</AlertDialogCancel>
+            {deleting?.blocked ? (
+              <AlertDialogAction onClick={() => void deactivateInstead()}>
+                Deactivate instead
+              </AlertDialogAction>
+            ) : (
+              <AlertDialogAction
+                onClick={(event) => {
+                  // Stay open if the server says it is in use, so the choice can change.
+                  event.preventDefault();
+                  void confirmDelete();
+                }}
+              >
+                Delete
+              </AlertDialogAction>
+            )}
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {editing?.kind === 'group' && (
         <GroupDialog
@@ -263,8 +372,10 @@ function GroupDialog({
     }
   };
 
+  const { requestClose, guard } = useGuardedClose({ name, slug, description, active }, onClose);
+
   return (
-    <Dialog open onOpenChange={(open) => !open && onClose()}>
+    <Dialog open onOpenChange={(open) => !open && requestClose()}>
       <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-md">
         <DialogHeader>
           <DialogTitle>{group ? 'Edit group' : 'Add an equipment group'}</DialogTitle>
@@ -309,13 +420,14 @@ function GroupDialog({
           <ServerProblems issues={problems} failure={failure} claimedFields={['name', 'slug']} />
         </div>
         <DialogFooter>
-          <Button type="button" variant="outline" onClick={onClose}>
+          <Button type="button" variant="outline" onClick={requestClose}>
             Cancel
           </Button>
           <Button type="button" disabled={!canSave} onClick={() => void save()}>
             {saving ? 'Saving...' : 'Save group'}
           </Button>
         </DialogFooter>
+        {guard}
       </DialogContent>
     </Dialog>
   );
@@ -373,8 +485,13 @@ function MachineDialog({
     }
   };
 
+  const { requestClose, guard } = useGuardedClose(
+    { name, slug, groupId, location, active },
+    onClose,
+  );
+
   return (
-    <Dialog open onOpenChange={(open) => !open && onClose()}>
+    <Dialog open onOpenChange={(open) => !open && requestClose()}>
       <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-md">
         <DialogHeader>
           <DialogTitle>{machine ? 'Edit machine' : 'Add a machine'}</DialogTitle>
@@ -429,13 +546,14 @@ function MachineDialog({
           />
         </div>
         <DialogFooter>
-          <Button type="button" variant="outline" onClick={onClose}>
+          <Button type="button" variant="outline" onClick={requestClose}>
             Cancel
           </Button>
           <Button type="button" disabled={!canSave} onClick={() => void save()}>
             {saving ? 'Saving...' : 'Save machine'}
           </Button>
         </DialogFooter>
+        {guard}
       </DialogContent>
     </Dialog>
   );

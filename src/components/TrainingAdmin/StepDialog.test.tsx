@@ -357,3 +357,69 @@ describe('StepDialog attestation and quiz steps', () => {
     expect(screen.getByRole('button', { name: 'Done' })).toBeInTheDocument();
   });
 });
+
+describe('StepDialog unsaved changes', () => {
+  it('asks before discarding edits to a step', async () => {
+    const { onClose } = await open('READING');
+    await userEvent.type(title(), 'Half written');
+
+    await userEvent.click(screen.getByRole('button', { name: 'Cancel' }));
+
+    const ask = await screen.findByRole('alertdialog');
+    expect(onClose).not.toHaveBeenCalled();
+    await userEvent.click(within(ask).getByRole('button', { name: 'Keep editing' }));
+    expect(title()).toHaveValue('Half written');
+  });
+
+  it('closes at once when nothing was changed', async () => {
+    const { onClose } = await open('READING', { step: createAdminStep({ id: 12 }) });
+
+    await userEvent.click(screen.getByRole('button', { name: 'Cancel' }));
+
+    expect(onClose).toHaveBeenCalled();
+  });
+
+  it('does not ask to discard a quiz that was just saved', async () => {
+    const created = createAdminStep({
+      id: 77,
+      type: 'QUIZ',
+      title: 'Final quiz',
+      bodyMarkdown: null,
+    });
+    api.addStep.mockResolvedValue(created);
+    const { onClose } = await open('QUIZ');
+    await userEvent.type(title(), 'Final quiz');
+    await userEvent.click(screen.getByRole('button', { name: /^add step$/i }));
+    await screen.findByRole('region', { name: 'Quiz topics' });
+
+    await userEvent.click(screen.getByRole('button', { name: 'Done' }));
+
+    expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument();
+    expect(onClose).toHaveBeenCalled();
+  });
+});
+
+describe('StepDialog video preview', () => {
+  const uploaded = createAdminStep({
+    id: 11,
+    type: 'VIDEO',
+    title: 'Intro',
+    videoAssetKey: 'videos/a.mp4',
+    videoDurationSeconds: 120,
+    settings: { outcomes: ['watched'], checkpoints: [] },
+  });
+
+  it('offers to preview a video that is already uploaded', async () => {
+    await open('VIDEO', { step: uploaded });
+
+    expect(screen.getByRole('button', { name: /preview the uploaded video/i })).toBeInTheDocument();
+  });
+
+  it('offers no preview for a step without a file', async () => {
+    await open('VIDEO');
+
+    expect(
+      screen.queryByRole('button', { name: /preview the uploaded video/i }),
+    ).not.toBeInTheDocument();
+  });
+});

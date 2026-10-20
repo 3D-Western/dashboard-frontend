@@ -147,3 +147,13 @@ describe('StepList', () => {
     expect(screen.getByText(/no steps yet/i)).toBeInTheDocument();
   });
 });
+
+describe('StepList on a phone', () => {
+  it('gives the move and delete buttons a 44 px tap target', () => {
+    setup();
+
+    for (const name of ['Move step 2 up', 'Move step 2 down', 'Delete step 2']) {
+      expect(screen.getByRole('button', { name })).toHaveClass('size-11');
+    }
+  });
+});

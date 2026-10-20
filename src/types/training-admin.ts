@@ -186,6 +186,12 @@ export interface BlueprintRuleBody {
   drawCount?: number | null;
 }
 
+export interface StepVideoPlayback {
+  url: string;
+  expiresAt: string;
+  durationSeconds: number | null;
+}
+
 export interface VideoUploadUrlRequest {
   contentType: 'video/mp4';
   sizeBytes: number;
@@ -206,7 +212,13 @@ export interface Topic {
   trainingId: number;
   slug: string;
   name: string;
+  /** Active questions in the topic. */
   questionCount: number;
+  /**
+   * Of those, how many the quiz can draw from the draft: questions the draft asks inside a video or
+   * after a reading are left out. Equals `questionCount` when there is no draft.
+   */
+  eligibleCount: number;
 }
 
 export interface QuestionOptionBody {
@@ -253,6 +265,8 @@ export interface AdminQuestion {
   active: boolean;
   versionCount: number;
   latest: QuestionVersion;
+  /** The newest version was published or answered, so an edit adds a new version. */
+  inUse: boolean;
   /** Only the single-question endpoint fills this. */
   versions?: QuestionVersion[] | null;
 }

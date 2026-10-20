@@ -1,15 +1,8 @@
 import { describe, it, expect } from 'vitest';
-import {
-  createAdminQuestion,
-  createAdminStep,
-  createTopic,
-  createTrainingSummary,
-} from '@test/utils/trainingAdminFactories';
+import { createTrainingSummary } from '@test/utils/trainingAdminFactories';
 import {
   checklistKey,
-  clock,
   describeEffects,
-  eligibleCount,
   formatBytes,
   impactOption,
   promptPreview,
@@ -77,39 +70,13 @@ describe('trainingStatusLabels', () => {
   });
 });
 
-describe('eligibleCount', () => {
-  it('leaves out retired questions and those asked inside the material', () => {
-    const topic = createTopic({ id: 7 });
-    const q = (id: number, versionId: number, extra = {}) =>
-      createAdminQuestion({
-        id,
-        topicId: 7,
-        latest: { ...createAdminQuestion().latest, id: versionId },
-        ...extra,
-      });
-    const questions = [q(1, 101), q(2, 102), q(3, 103), q(4, 104, { active: false })];
-    const steps = [
-      createAdminStep({ gateQuestionVersionId: 101 }),
-      createAdminStep({
-        id: 12,
-        type: 'VIDEO',
-        settings: { checkpoints: [{ atSeconds: 5, questionVersionId: 102 }] },
-      }),
-    ];
-    expect(eligibleCount(topic, questions, steps)).toBe(1);
-    expect(eligibleCount(topic, questions, [])).toBe(3);
-  });
-});
-
 describe('small formatters', () => {
   it('shortens a prompt to one line', () => {
     expect(promptPreview('## Heading\n\nSome **bold** text')).toBe('Heading Some bold text');
     expect(promptPreview('x'.repeat(100), 10)).toBe('xxxxxxxxx…');
   });
 
-  it('formats clock and bytes', () => {
-    expect(clock(95)).toBe('1:35');
-    expect(clock(-1)).toBe('0:00');
+  it('formats bytes', () => {
     expect(formatBytes(500)).toBe('500 B');
     expect(formatBytes(2048)).toBe('2 KB');
     expect(formatBytes(5 * 1024 * 1024)).toBe('5.0 MB');

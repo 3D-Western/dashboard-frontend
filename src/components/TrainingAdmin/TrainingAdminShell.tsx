@@ -25,8 +25,8 @@ function isActive(pathname: string, href: string) {
 /**
  * The frame of every `/admin/training` page: who may see it, and the section links.
  *
- * Everyone who can open the editor needs `training:author`, because every list and read endpoint
- * asks for it. `training:publish` on its own gets a short explanation instead of empty screens.
+ * `training:author` or `training:publish` opens it (every read accepts either). Someone with only
+ * `training:publish` can look at everything and publish, but their editing controls are switched off.
  */
 export function TrainingAdminShell({ children }: { children: ReactNode }) {
   const { canAuthor, canSee } = useTrainingPermissions();
@@ -34,23 +34,24 @@ export function TrainingAdminShell({ children }: { children: ReactNode }) {
 
   if (!canSee) return <UnauthorizedPage title="the training editor" />;
 
-  if (!canAuthor) {
-    return (
-      <Alert>
-        <AlertTitle>You can publish trainings, but not open the editor</AlertTitle>
-        <AlertDescription>
-          Publishing and correcting questions are shown next to the draft or question they belong
-          to, and opening those needs the &ldquo;author trainings&rdquo; permission. Ask an admin to
-          add it to your role.
-        </AlertDescription>
-      </Alert>
-    );
-  }
+  const sections = canAuthor
+    ? SECTIONS
+    : SECTIONS.filter((s) => s.href !== TrainingAdminRoutes.import);
 
   return (
     <div className="space-y-6">
+      {!canAuthor && (
+        <Alert>
+          <AlertTitle>You can look and publish, but not edit</AlertTitle>
+          <AlertDescription>
+            Your role can publish trainings and correct questions. Changing trainings, questions and
+            equipment needs the &ldquo;author trainings&rdquo; permission; ask an admin to add it to
+            your role.
+          </AlertDescription>
+        </Alert>
+      )}
       <nav aria-label="Training editor sections" className="flex flex-wrap gap-2">
-        {SECTIONS.map((section) => {
+        {sections.map((section) => {
           const active = isActive(pathname, section.href);
           return (
             <Link

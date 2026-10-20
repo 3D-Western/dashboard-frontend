@@ -7,9 +7,8 @@ import { toast } from 'sonner';
 import { trainingAdminAPI } from '@/api/client/training-admin';
 import { Button } from '@/components/ui/button';
 import { adminErrorMessage, issuesFromError } from '@/lib/training-admin-errors';
-import { eligibleCount } from '@/lib/training-admin-format';
 import { TrainingAdminRoutes } from '@/lib/training-admin-routes';
-import type { AdminQuestion, AdminStep, Topic, ValidationIssue } from '@/types/training-admin';
+import type { AdminStep, Topic, ValidationIssue } from '@/types/training-admin';
 import { ErrorNote, IssueList } from './feedback';
 import { useTraining } from './TrainingContext';
 
@@ -25,10 +24,8 @@ let nextUid = 1;
 interface BlueprintEditorProps {
   versionId: number;
   step: AdminStep;
+  /** Topics as the server reports them, with the eligible count for the current draft. */
   topics: Topic[];
-  questions: AdminQuestion[];
-  /** All steps of the draft, to work out which questions are asked inside the material. */
-  steps: AdminStep[];
   onSaved: (step: AdminStep) => void;
 }
 
@@ -37,14 +34,7 @@ interface BlueprintEditorProps {
  * includes questions that the draft already asks inside a video or after a reading: those are
  * never part of the quiz.
  */
-export function BlueprintEditor({
-  versionId,
-  step,
-  topics,
-  questions,
-  steps,
-  onSaved,
-}: BlueprintEditorProps) {
+export function BlueprintEditor({ versionId, step, topics, onSaved }: BlueprintEditorProps) {
   const { training } = useTraining();
   const randomDraw = training.settings.randomDrawEnabled;
   const [rules, setRules] = useState<RuleDraft[]>(() =>
@@ -58,12 +48,8 @@ export function BlueprintEditor({
   const [issues, setIssues] = useState<ValidationIssue[]>([]);
   const [failure, setFailure] = useState<string | null>(null);
 
-  const eligible = (topicId: string): number => {
-    const saved = step.blueprint.find((rule) => String(rule.topicId) === topicId);
-    if (saved) return saved.poolSize;
-    const topic = topics.find((t) => String(t.id) === topicId);
-    return topic ? eligibleCount(topic, questions, steps) : 0;
-  };
+  const eligible = (topicId: string): number =>
+    topics.find((t) => String(t.id) === topicId)?.eligibleCount ?? 0;
 
   const usedTopics = new Set(rules.map((rule) => rule.topicId));
   const freeTopics = topics.filter((topic) => !usedTopics.has(String(topic.id)));

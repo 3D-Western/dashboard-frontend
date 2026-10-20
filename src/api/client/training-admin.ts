@@ -24,6 +24,7 @@ import type {
   QuestionReportRow,
   Rescore,
   StepBody,
+  StepVideoPlayback,
   Topic,
   TrainingSettings,
   UpdateTrainingBody,
@@ -57,6 +58,8 @@ export const trainingAdminPaths = {
     `${ADMIN}/versions/${versionId}/publish-check?impact=${impact}`,
   publish: (versionId: number) => `${ADMIN}/versions/${versionId}/publish`,
   videoUploadUrl: '/api/v1/training/admin/videos/upload-url',
+  stepPlayback: (versionId: number, stepId: number) =>
+    `${ADMIN}/versions/${versionId}/steps/${stepId}/playback-url`,
   topics: (trainingId: number) => `${ADMIN}/trainings/${trainingId}/topics`,
   topic: (topicId: number) => `${ADMIN}/topics/${topicId}`,
   questions: (trainingId: number) => `${ADMIN}/trainings/${trainingId}/questions`,
@@ -105,9 +108,11 @@ export const trainingAdminAPI = {
         ? trainingAdminPaths.machines
         : `${trainingAdminPaths.machines}?groupId=${groupId}`,
     ),
+  deleteGroup: (id: number) => del(trainingAdminPaths.group(id)),
   createMachine: (body: MachineBody) => post<Machine>(trainingAdminPaths.machines, body),
   updateMachine: (id: number, body: MachineBody) =>
     put<Machine>(trainingAdminPaths.machine(id), body),
+  deleteMachine: (id: number) => del(trainingAdminPaths.machine(id)),
 
   // ---- Trainings and settings ----
   listTrainings: () => get<AdminTrainingSummary[]>(trainingAdminPaths.trainings),
@@ -141,6 +146,10 @@ export const trainingAdminAPI = {
   /** A presigned PUT URL for a video file. The browser then uploads straight to storage. */
   getVideoUploadUrl: (body: VideoUploadUrlRequest) =>
     post<VideoUploadUrl>(trainingAdminPaths.videoUploadUrl, body),
+
+  /** A short-lived link to watch a step's uploaded video, in any version. */
+  getStepPlaybackUrl: (versionId: number, stepId: number) =>
+    get<StepVideoPlayback>(trainingAdminPaths.stepPlayback(versionId, stepId)),
 
   // ---- Question bank ----
   listTopics: (trainingId: number) => get<Topic[]>(trainingAdminPaths.topics(trainingId)),

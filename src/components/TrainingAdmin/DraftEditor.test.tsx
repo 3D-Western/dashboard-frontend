@@ -3,7 +3,12 @@ import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { ApiError } from '@/api/client/errors';
 import { trainingAdminAPI } from '@/api/client/training-admin';
-import { authorUser, publisherUser, renderInTraining } from '@test/utils/renderTrainingAdmin';
+import {
+  authorUser,
+  publisherUser,
+  renderInTraining,
+  trainingUser,
+} from '@test/utils/renderTrainingAdmin';
 import {
   createAdminStep,
   createAdminTraining,
@@ -208,5 +213,23 @@ describe('DraftEditor publishing and permissions', () => {
     await userEvent.click(await screen.findByRole('button', { name: 'Done' }));
 
     await waitFor(() => expect(push).toHaveBeenCalledWith('/admin/training/1'));
+  });
+});
+
+describe('DraftEditor for someone who can publish but not author', () => {
+  const reviewer = () => trainingUser('training:publish');
+
+  it('keeps publishing available and switches editing off', async () => {
+    api.publishCheck.mockResolvedValue({ ready: true, issues: [] });
+    await renderInTraining(<DraftEditor />, { training: withDraft(), user: reviewer() });
+    await screen.findByText('Draft version 2');
+
+    expect(screen.getByRole('button', { name: /publish\.\.\./i })).toBeEnabled();
+    expect(screen.getByRole('button', { name: /check before publishing/i })).toBeEnabled();
+    expect(screen.getByRole('button', { name: 'Edit step 1' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Move step 1 down' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Delete step 1' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: /^reading$/i })).toBeDisabled();
+    expect(screen.getByRole('button', { name: /save checklist/i })).toBeDisabled();
   });
 });

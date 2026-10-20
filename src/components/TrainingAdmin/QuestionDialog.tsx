@@ -14,6 +14,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import { useGuardedClose } from '@/hooks/useGuardedClose';
 import { adminErrorMessage, issuesFor, issuesFromError } from '@/lib/training-admin-errors';
 import { slugify } from '@/lib/training-admin-format';
 import {
@@ -147,8 +148,10 @@ export function QuestionDialog({
       ),
   );
 
+  const { requestClose, guard } = useGuardedClose({ values, newTopicName }, onClose);
+
   return (
-    <Dialog open onOpenChange={(open) => !open && onClose()}>
+    <Dialog open onOpenChange={(open) => !open && requestClose()}>
       <DialogContent className="max-h-[92vh] overflow-y-auto sm:max-w-2xl">
         <DialogHeader>
           <DialogTitle>{isEdit ? 'Edit question' : 'Add a question'}</DialogTitle>
@@ -161,11 +164,20 @@ export function QuestionDialog({
           <Alert>
             <Info />
             <AlertDescription>
-              If members have already been asked this question, saving creates a{' '}
-              <strong>new version</strong>: past attempts keep the wording they saw, and steps in
-              the current draft switch to the new version. A question nobody has seen yet is simply
-              edited. This question has {question.versionCount}{' '}
-              {question.versionCount === 1 ? 'version' : 'versions'} so far.
+              {question.inUse ? (
+                <>
+                  Members have been asked this question, or a published version holds it. Saving
+                  creates a <strong>new version</strong>: past attempts keep the wording they saw,
+                  and steps in the current draft switch to the new version.
+                </>
+              ) : (
+                <>
+                  Nobody has been asked this question yet, so saving changes it in place and creates
+                  no new version.
+                </>
+              )}{' '}
+              It has {question.versionCount} {question.versionCount === 1 ? 'version' : 'versions'}{' '}
+              so far.
             </AlertDescription>
           </Alert>
         )}
@@ -315,13 +327,14 @@ export function QuestionDialog({
         </div>
 
         <DialogFooter>
-          <Button type="button" variant="outline" onClick={onClose}>
+          <Button type="button" variant="outline" onClick={requestClose}>
             Cancel
           </Button>
           <Button type="button" disabled={saving} onClick={() => void save()}>
             {saving ? 'Saving...' : isEdit ? 'Save question' : 'Add question'}
           </Button>
         </DialogFooter>
+        {guard}
       </DialogContent>
     </Dialog>
   );

@@ -116,6 +116,40 @@ describe('PublishDialog reason and confirmation', () => {
     expect(publishButton()).toBeEnabled();
   });
 
+  it('makes an add-on update wait for an acknowledgement of what it asks of members', async () => {
+    open();
+    await userEvent.click(screen.getByRole('radio', { name: /add-on update/i }));
+    await screen.findByText(/ready to publish/i);
+    await userEvent.type(screen.getByLabelText(/why are you publishing/i), 'New fire procedure');
+    expect(publishButton()).toBeDisabled();
+
+    await userEvent.click(
+      screen.getByRole('checkbox', { name: /finish the steps marked as part of the add-on/i }),
+    );
+
+    expect(publishButton()).toBeEnabled();
+  });
+
+  it('asks for the acknowledgement again when the choice changes', async () => {
+    open();
+    await userEvent.click(screen.getByRole('radio', { name: /add-on update/i }));
+    await screen.findByText(/ready to publish/i);
+    await userEvent.click(screen.getByRole('checkbox'));
+
+    await userEvent.click(screen.getByRole('radio', { name: /full retake/i }));
+
+    expect(
+      screen.getByRole('checkbox', { name: /take the whole training again/i }),
+    ).not.toBeChecked();
+  });
+
+  it('needs no acknowledgement for a minor fix', async () => {
+    open();
+    await screen.findByText(/ready to publish/i);
+
+    expect(screen.queryByRole('checkbox')).not.toBeInTheDocument();
+  });
+
   it('makes a full retake wait for an explicit confirmation', async () => {
     open();
     await userEvent.click(screen.getByRole('radio', { name: /full retake/i }));
@@ -137,6 +171,9 @@ describe('PublishDialog publishing', () => {
     if (impact) await userEvent.click(screen.getByRole('radio', { name: impact }));
     await screen.findByText(/ready to publish/i);
     await userEvent.type(screen.getByLabelText(/why are you publishing/i), '  New fire procedure ');
+    // An add-on or a full retake asks for an explicit acknowledgement first.
+    const acknowledge = screen.queryByRole('checkbox');
+    if (acknowledge) await userEvent.click(acknowledge);
     await userEvent.click(publishButton());
   }
 

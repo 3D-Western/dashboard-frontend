@@ -16,6 +16,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import { useGuardedClose } from '@/hooks/useGuardedClose';
 import { useAdminResource } from '@/hooks/useAdminResource';
 import { adminErrorMessage, issuesFor, issuesFromError } from '@/lib/training-admin-errors';
 import {
@@ -166,8 +167,10 @@ function CreateTrainingDialog({ onClose }: { onClose: () => void }) {
 
   const activeGroups = (groups.data ?? []).filter((g) => g.active);
 
+  const { requestClose, guard } = useGuardedClose({ title, slug, summary, kind, groupId }, onClose);
+
   return (
-    <Dialog open onOpenChange={(open) => !open && onClose()}>
+    <Dialog open onOpenChange={(open) => !open && requestClose()}>
       <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-md">
         <DialogHeader>
           <DialogTitle>New training</DialogTitle>
@@ -236,13 +239,14 @@ function CreateTrainingDialog({ onClose }: { onClose: () => void }) {
           />
         </div>
         <DialogFooter>
-          <Button type="button" variant="outline" onClick={onClose}>
+          <Button type="button" variant="outline" onClick={requestClose}>
             Cancel
           </Button>
           <Button type="button" disabled={!canSave} onClick={() => void save()}>
             {saving ? 'Creating...' : 'Create training'}
           </Button>
         </DialogFooter>
+        {guard}
       </DialogContent>
     </Dialog>
   );

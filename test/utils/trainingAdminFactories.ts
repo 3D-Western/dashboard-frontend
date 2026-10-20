@@ -124,6 +124,7 @@ export const createAdminQuestion = (overrides: Partial<AdminQuestion> = {}): Adm
   active: true,
   versionCount: 1,
   latest: createQuestionVersion(),
+  inUse: false,
   ...overrides,
 });
 
@@ -133,6 +134,7 @@ export const createTopic = (overrides: Partial<Topic> = {}): Topic => ({
   slug: 'safety',
   name: 'Safety',
   questionCount: 2,
+  eligibleCount: 2,
   ...overrides,
 });
 

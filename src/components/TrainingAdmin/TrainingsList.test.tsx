@@ -161,3 +161,18 @@ describe('TrainingsList creating a training', () => {
     expect(push).not.toHaveBeenCalled();
   });
 });
+
+describe('TrainingsList unsaved changes', () => {
+  it('asks before throwing away a half-filled new training', async () => {
+    render(<TrainingsList />);
+    await screen.findByRole('heading', { name: 'Laser Cutter' });
+    await userEvent.click(screen.getByRole('button', { name: /new training/i }));
+    const dialog = await screen.findByRole('dialog');
+    await userEvent.type(within(dialog).getByRole('textbox', { name: 'Title' }), 'CNC');
+
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Cancel' }));
+
+    expect(await screen.findByRole('alertdialog')).toHaveTextContent(/discard your changes/i);
+    expect(api.createTraining).not.toHaveBeenCalled();
+  });
+});

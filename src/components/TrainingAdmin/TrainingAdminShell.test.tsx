@@ -62,14 +62,20 @@ describe('TrainingAdminShell permission-based visibility', () => {
     expect(screen.getByText(/access denied/i)).toBeInTheDocument();
   });
 
-  it('explains to a publisher without author access why there is nothing to open', () => {
+  it('lets a publisher without author access look around, with a note and no import', () => {
     renderShell(['training:publish']);
 
-    expect(
-      screen.getByText(/you can publish trainings, but not open the editor/i),
-    ).toBeInTheDocument();
-    expect(screen.queryByText('Editor content')).not.toBeInTheDocument();
-    expect(screen.queryByRole('navigation')).not.toBeInTheDocument();
+    expect(screen.getByText('Editor content')).toBeInTheDocument();
+    expect(screen.getByText(/you can look and publish, but not edit/i)).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Trainings' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Equipment' })).toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: 'Import' })).not.toBeInTheDocument();
+  });
+
+  it('does not show the note to an author', () => {
+    renderShell(['training:author']);
+
+    expect(screen.queryByText(/you can look and publish/i)).not.toBeInTheDocument();
   });
 
   it('marks the current section', () => {

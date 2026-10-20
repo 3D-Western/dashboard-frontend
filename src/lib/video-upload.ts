@@ -1,7 +1,17 @@
 import { trainingAdminAPI } from '@/api/client/training-admin';
+import { MAX_VIDEO_SECONDS } from '@/lib/training-step-form';
 
 /** Largest file the server will sign an upload URL for (1 GB). */
 export const MAX_VIDEO_BYTES = 1_073_741_824;
+
+/** How long to wait for a file to report its length before giving up on knowing it. */
+export const DURATION_PROBE_TIMEOUT_MS = 5000;
+
+/** Why a video of [seconds] cannot be used, or null when it is short enough. */
+export function videoLengthProblem(seconds: number | null): string | null {
+  if (seconds === null || seconds <= MAX_VIDEO_SECONDS) return null;
+  return `This video is ${Math.floor(seconds / 60)} min ${seconds % 60} s long. Videos must be 10 minutes (${MAX_VIDEO_SECONDS} seconds) or less; shorten it or split it into two steps.`;
+}
 
 export class VideoUploadError extends Error {
   constructor(
@@ -49,13 +59,12 @@ export function putToStorage(
         onProgress(1);
         resolve();
       } else {
-        reject(
-          new VideoUploadError(
-            `The storage service refused the upload (status ${xhr.status}).`,
-            'rejected',
-            xhr.status,
-          ),
-        );
+        // 403 is how storage says a presigned link is no longer valid.
+        const message =
+          xhr.status === 403
+            ? 'The upload link expired. Try the upload again to get a new one.'
+            : `The storage service refused the upload (status ${xhr.status}).`;
+        reject(new VideoUploadError(message, 'rejected', xhr.status));
       }
     };
     xhr.onerror = () =>
@@ -94,8 +103,14 @@ export async function uploadVideo(
   return target.assetKey;
 }
 
-/** The length of a local video in whole seconds (rounded up), read from the file itself. */
-export function readVideoDuration(file: Blob): Promise<number | null> {
+/**
+ * The length of a local video in whole seconds (rounded up), read from the file itself. Gives
+ * null if the browser cannot read it, or does not answer within [timeoutMs].
+ */
+export function readVideoDuration(
+  file: Blob,
+  timeoutMs: number = DURATION_PROBE_TIMEOUT_MS,
+): Promise<number | null> {
   return new Promise((resolve) => {
     if (typeof document === 'undefined' || typeof URL.createObjectURL !== 'function') {
       resolve(null);
@@ -103,7 +118,12 @@ export function readVideoDuration(file: Blob): Promise<number | null> {
     }
     const url = URL.createObjectURL(file);
     const video = document.createElement('video');
+    let done = false;
+    const timer = setTimeout(() => finish(null), timeoutMs);
     const finish = (seconds: number | null) => {
+      if (done) return;
+      done = true;
+      clearTimeout(timer);
       URL.revokeObjectURL(url);
       video.removeAttribute('src');
       resolve(seconds);

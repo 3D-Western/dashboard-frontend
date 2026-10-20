@@ -13,13 +13,14 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import { useGuardedClose } from '@/hooks/useGuardedClose';
 import { adminErrorMessage, issuesFromError } from '@/lib/training-admin-errors';
 import {
   IN_MATERIAL_TOPIC_SLUG,
   STEP_TYPE_HELP,
   STEP_TYPE_LABELS,
-  clock,
 } from '@/lib/training-admin-format';
+import { formatClock } from '@/lib/training-format';
 import {
   formFromStep,
   newCheckpointUid,
@@ -41,6 +42,7 @@ import { BlueprintEditor } from './BlueprintEditor';
 import { MarkdownEditor } from './MarkdownEditor';
 import { QuestionDialog } from './QuestionDialog';
 import { QuestionPicker } from './QuestionPicker';
+import { VideoPreview } from './VideoPreview';
 import { VideoUploader } from './VideoUploader';
 
 type NewQuestionFor = { kind: 'gate' } | { kind: 'checkpoint'; uid: number };
@@ -111,6 +113,7 @@ export function StepDialog({
       if (type === 'QUIZ' && !saved) {
         // The topics can only be chosen once the step exists, so stay and show them.
         setSaved(result);
+        markSaved();
         toast.success('Step added. Now choose which topics the quiz draws from.');
       } else {
         toast.success(saved ? 'Step saved.' : 'Step added.');
@@ -162,9 +165,11 @@ export function StepDialog({
     .map((row) => row.questionVersionId)
     .filter((id): id is number => id !== null);
 
+  const { requestClose, guard, markSaved } = useGuardedClose({ values }, onClose);
+
   return (
     <>
-      <Dialog open onOpenChange={(open) => !open && onClose()}>
+      <Dialog open onOpenChange={(open) => !open && requestClose()}>
         <DialogContent className="max-h-[92vh] overflow-y-auto sm:max-w-3xl">
           <DialogHeader>
             <DialogTitle>
@@ -194,6 +199,9 @@ export function StepDialog({
                     })
                   }
                 />
+                {liveStep && values.assetKey && values.assetKey === liveStep.videoAssetKey && (
+                  <VideoPreview versionId={versionId} stepId={liveStep.id} />
+                )}
                 <div className="grid gap-4 sm:grid-cols-2">
                   <TextField
                     label="Video length (seconds)"
@@ -202,7 +210,7 @@ export function StepDialog({
                     inputMode="numeric"
                     help={
                       /^\d+$/.test(values.duration) && Number(values.duration) > 0
-                        ? `That is ${clock(Number(values.duration))}. Filled in from the file when you upload; videos are 10 minutes or less.`
+                        ? `That is ${formatClock(Number(values.duration))}. Filled in from the file when you upload; videos are 10 minutes or less.`
                         : 'Filled in from the file when you upload. Videos are 10 minutes (600 seconds) or less.'
                     }
                     error={[errors.duration, issueAt('videoDurationSeconds')].filter(
@@ -369,8 +377,6 @@ export function StepDialog({
                   versionId={versionId}
                   step={liveStep}
                   topics={topics}
-                  questions={allQuestions}
-                  steps={steps}
                   onSaved={(result) => void onSaved(result)}
                 />
               ) : (
@@ -391,13 +397,14 @@ export function StepDialog({
           </div>
 
           <DialogFooter>
-            <Button type="button" variant="outline" onClick={onClose}>
+            <Button type="button" variant="outline" onClick={requestClose}>
               {saved && !step ? 'Done' : 'Cancel'}
             </Button>
             <Button type="button" disabled={saving} onClick={() => void save()}>
               {saving ? 'Saving...' : isNew ? 'Add step' : 'Save step'}
             </Button>
           </DialogFooter>
+          {guard}
         </DialogContent>
       </Dialog>
 

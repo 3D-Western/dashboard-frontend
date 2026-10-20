@@ -5,6 +5,8 @@ import { ArrowDown, ArrowUp, Plus, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { trainingAdminAPI } from '@/api/client/training-admin';
 import { Button } from '@/components/ui/button';
+import { UnsavedChangesDialog } from '@/components/UnsavedChangesDialog';
+
 import { adminErrorMessage, issuesFromError } from '@/lib/training-admin-errors';
 import { CHECKLIST_KEY_PATTERN, checklistKey } from '@/lib/training-admin-format';
 import type { ChecklistItem, ValidationIssue } from '@/types/training-admin';
@@ -120,6 +122,7 @@ export function ChecklistEditor({ versionId, items, onSaved }: ChecklistEditorPr
       className="space-y-3 rounded-xl border bg-card p-4"
       aria-labelledby="checklist-heading"
     >
+      <UnsavedChangesDialog isDirty={dirty} />
       <div>
         <h3 id="checklist-heading" className="text-lg font-semibold">
           In-person sign-off checklist
@@ -152,6 +155,7 @@ export function ChecklistEditor({ versionId, items, onSaved }: ChecklistEditorPr
                   type="button"
                   variant="ghost"
                   size="icon-sm"
+                  className="size-11 sm:size-8"
                   aria-label={`Move item ${index + 1} up`}
                   disabled={index === 0}
                   onClick={() => move(index, -1)}
@@ -162,6 +166,7 @@ export function ChecklistEditor({ versionId, items, onSaved }: ChecklistEditorPr
                   type="button"
                   variant="ghost"
                   size="icon-sm"
+                  className="size-11 sm:size-8"
                   aria-label={`Move item ${index + 1} down`}
                   disabled={index === rows.length - 1}
                   onClick={() => move(index, 1)}
@@ -172,6 +177,7 @@ export function ChecklistEditor({ versionId, items, onSaved }: ChecklistEditorPr
                   type="button"
                   variant="ghost"
                   size="icon-sm"
+                  className="size-11 sm:size-8"
                   aria-label={`Remove item ${index + 1}`}
                   onClick={() => update(rows.filter((r) => r.uid !== row.uid))}
                 >

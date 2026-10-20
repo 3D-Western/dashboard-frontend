@@ -2,6 +2,16 @@
 
 import { useEffect, useState } from 'react';
 import { trainingAdminAPI } from '@/api/client/training-admin';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -62,6 +72,7 @@ export function CorrectionDialog({ row, mode, onClose, onRecorded }: CorrectionD
   const [failure, setFailure] = useState<string | null>(null);
   const [rescore, setRescore] = useState<Rescore | null>(null);
   const [recorded, setRecorded] = useState(false);
+  const [confirming, setConfirming] = useState(false);
 
   useEffect(() => {
     let current = true;
@@ -96,7 +107,10 @@ export function CorrectionDialog({ row, mode, onClose, onRecorded }: CorrectionD
     (kind === 'DROP_QUESTION' || optionId !== '') &&
     !saving;
 
+  const chosenOption = (options ?? []).find((option) => String(option.id) === optionId);
+
   const save = async () => {
+    setConfirming(false);
     setSaving(true);
     setFailure(null);
     setIssues([]);
@@ -218,11 +232,32 @@ export function CorrectionDialog({ row, mode, onClose, onRecorded }: CorrectionD
             {showForm ? 'Cancel' : 'Close'}
           </Button>
           {showForm && (
-            <Button type="button" disabled={!canSave} onClick={() => void save()}>
+            <Button type="button" disabled={!canSave} onClick={() => setConfirming(true)}>
               {saving ? 'Recording...' : 'Record correction'}
             </Button>
           )}
         </DialogFooter>
+
+        <AlertDialog open={confirming} onOpenChange={setConfirming}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>
+                {kind === 'DROP_QUESTION' ? 'Drop this question?' : 'Accept another answer?'}
+              </AlertDialogTitle>
+              <AlertDialogDescription>
+                {kind === 'DROP_QUESTION'
+                  ? 'From now on this question no longer counts toward anyone\u2019s score, and it is left out of new quizzes. This applies to everyone who has been or will be asked it, and a correction cannot be undone.'
+                  : `From now on \u201c${chosenOption ? promptPreview(chosenOption.labelMarkdown, 80) : 'the chosen answer'}\u201d also counts as correct, for everyone who has been or will be asked this question. A correction cannot be undone.`}{' '}
+                No one&rsquo;s record, certification or access changes by itself; you will see which
+                past attempts would pass or fail differently and decide what to do.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Go back</AlertDialogCancel>
+              <AlertDialogAction onClick={() => void save()}>Record correction</AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </DialogContent>
     </Dialog>
   );

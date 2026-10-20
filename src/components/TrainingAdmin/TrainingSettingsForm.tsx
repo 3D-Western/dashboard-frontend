@@ -4,6 +4,8 @@ import { useCallback, useState } from 'react';
 import { toast } from 'sonner';
 import { trainingAdminAPI } from '@/api/client/training-admin';
 import { Button } from '@/components/ui/button';
+import { UnsavedChangesDialog } from '@/components/UnsavedChangesDialog';
+
 import { useAdminResource } from '@/hooks/useAdminResource';
 import { adminErrorMessage, issuesFor, issuesFromError } from '@/lib/training-admin-errors';
 import {
@@ -44,6 +46,8 @@ export function TrainingSettingsForm({ defaults }: { defaults: TrainingSettings 
   const [saving, setSaving] = useState(false);
   const [failure, setFailure] = useState<string | null>(null);
   const defaultValues = toFormValues(defaults);
+  const saved = toFormValues(training.settings);
+  const isDirty = JSON.stringify(values) !== JSON.stringify(saved);
 
   const set = <K extends keyof SettingsFormValues>(key: K, value: SettingsFormValues[K]) => {
     setValues((current) => ({ ...current, [key]: value }));
@@ -59,7 +63,9 @@ export function TrainingSettingsForm({ defaults }: { defaults: TrainingSettings 
 
     setSaving(true);
     try {
-      setTraining(await trainingAdminAPI.updateSettings(training.id, result.settings));
+      const updated = await trainingAdminAPI.updateSettings(training.id, result.settings);
+      setTraining(updated);
+      setValues(toFormValues(updated.settings));
       toast.success('Settings saved.');
     } catch (error) {
       const problems = issuesFromError(error);
@@ -87,6 +93,7 @@ export function TrainingSettingsForm({ defaults }: { defaults: TrainingSettings 
 
   return (
     <form onSubmit={save} noValidate className="space-y-6">
+      <UnsavedChangesDialog isDirty={isDirty} />
       <p className="max-w-prose text-sm text-muted-foreground">
         Each setting shows the standard default. Change a value to override it for this training
         only. Settings belong to the training as a whole, not to one version, so a change takes

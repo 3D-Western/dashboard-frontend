@@ -14,6 +14,8 @@ vi.mock('@/api/client/training-admin', () => ({
     updateGroup: vi.fn(),
     createMachine: vi.fn(),
     updateMachine: vi.fn(),
+    deleteGroup: vi.fn(),
+    deleteMachine: vi.fn(),
   },
 }));
 
@@ -234,5 +236,131 @@ describe('EquipmentManager machines', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Reactivate Old Epilog' }));
 
     expect(await screen.findByText('That group is inactive')).toBeInTheDocument();
+  });
+});
+
+describe('EquipmentManager deleting', () => {
+  it('deletes a group after confirmation', async () => {
+    api.deleteGroup.mockResolvedValue(null);
+    await open();
+
+    await userEvent.click(screen.getByRole('button', { name: 'Delete group Sewing' }));
+    expect(api.deleteGroup).not.toHaveBeenCalled();
+    const confirm = await screen.findByRole('alertdialog');
+    expect(confirm).toHaveTextContent(/delete sewing\?/i);
+    await userEvent.click(within(confirm).getByRole('button', { name: 'Delete' }));
+
+    await waitFor(() => expect(api.deleteGroup).toHaveBeenCalledWith(6));
+    await waitFor(() => expect(api.listGroups).toHaveBeenCalledTimes(2));
+  });
+
+  it('keeps it when the user changes their mind', async () => {
+    await open();
+
+    await userEvent.click(screen.getByRole('button', { name: 'Delete machine Epilog 1' }));
+    await userEvent.click(
+      within(await screen.findByRole('alertdialog')).getByRole('button', { name: 'Keep it' }),
+    );
+
+    expect(api.deleteMachine).not.toHaveBeenCalled();
+  });
+
+  it('explains that equipment in use cannot be deleted, and offers to deactivate it', async () => {
+    api.deleteGroup.mockRejectedValue(
+      new ApiError('CONFLICT', 'Laser cutters still has machines and trainings'),
+    );
+    api.updateGroup.mockResolvedValue(groups[0]);
+    await open();
+
+    await userEvent.click(screen.getByRole('button', { name: 'Delete group Laser cutters' }));
+    await userEvent.click(
+      within(await screen.findByRole('alertdialog')).getByRole('button', { name: 'Delete' }),
+    );
+
+    const blocked = await screen.findByText(/this group is in use/i);
+    const dialog = blocked.closest('[role="alertdialog"]') as HTMLElement;
+    expect(dialog).toHaveTextContent('Laser cutters still has machines and trainings');
+    expect(dialog).toHaveTextContent(/cannot be deleted while trainings or machines depend on it/i);
+
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Deactivate instead' }));
+
+    await waitFor(() =>
+      expect(api.updateGroup).toHaveBeenCalledWith(5, expect.objectContaining({ active: false })),
+    );
+  });
+
+  it('does the same for a machine, and shows other failures plainly', async () => {
+    api.deleteMachine.mockRejectedValueOnce(new ApiError('DATA_CONFLICT', 'x'));
+    api.updateMachine.mockResolvedValue(machines[0]);
+    await open();
+    await userEvent.click(screen.getByRole('button', { name: 'Delete machine Epilog 1' }));
+    await userEvent.click(
+      within(await screen.findByRole('alertdialog')).getByRole('button', { name: 'Delete' }),
+    );
+    expect(await screen.findByText(/this machine is in use/i)).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: 'Deactivate instead' }));
+    await waitFor(() =>
+      expect(api.updateMachine).toHaveBeenCalledWith(9, expect.objectContaining({ active: false })),
+    );
+
+    api.deleteMachine.mockRejectedValueOnce(new ApiError('REQUEST_FAILED', 'offline'));
+    await userEvent.click(screen.getByRole('button', { name: 'Delete machine Old Epilog' }));
+    await userEvent.click(
+      within(await screen.findByRole('alertdialog')).getByRole('button', { name: 'Delete' }),
+    );
+    expect(await screen.findByText(/reach the server/i)).toBeInTheDocument();
+  });
+});
+
+describe('EquipmentManager unsaved changes', () => {
+  it('closes a dialog straight away when nothing was typed', async () => {
+    await open();
+    await userEvent.click(screen.getByRole('button', { name: /add a group/i }));
+    const dialog = await screen.findByRole('dialog');
+
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Cancel' }));
+
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument();
+  });
+
+  it('asks before throwing away what was typed, and can keep editing', async () => {
+    await open();
+    await userEvent.click(screen.getByRole('button', { name: /add a group/i }));
+    const dialog = await screen.findByRole('dialog');
+    await userEvent.type(within(dialog).getByRole('textbox', { name: 'Name' }), 'Power tools');
+
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Cancel' }));
+    const ask = await screen.findByRole('alertdialog');
+    expect(ask).toHaveTextContent(/discard your changes/i);
+    await userEvent.click(within(ask).getByRole('button', { name: 'Keep editing' }));
+
+    expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument();
+    expect(within(screen.getByRole('dialog')).getByRole('textbox', { name: 'Name' })).toHaveValue(
+      'Power tools',
+    );
+
+    await userEvent.click(
+      within(screen.getByRole('dialog')).getByRole('button', { name: 'Cancel' }),
+    );
+    await userEvent.click(
+      within(await screen.findByRole('alertdialog')).getByRole('button', {
+        name: 'Discard changes',
+      }),
+    );
+
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+    expect(api.createGroup).not.toHaveBeenCalled();
+  });
+
+  it('asks the same way when a machine dialog is dismissed with Escape', async () => {
+    await open();
+    await userEvent.click(screen.getByRole('button', { name: 'Edit Epilog 1' }));
+    const dialog = await screen.findByRole('dialog');
+    await userEvent.type(within(dialog).getByRole('textbox', { name: /location/i }), ' room');
+
+    await userEvent.keyboard('{Escape}');
+
+    expect(await screen.findByRole('alertdialog')).toHaveTextContent(/discard your changes/i);
   });
 });

@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { CheckCircle2, Upload } from 'lucide-react';
 import { adminErrorMessage } from '@/lib/training-admin-errors';
 import { formatBytes } from '@/lib/training-admin-format';
@@ -9,6 +9,7 @@ import {
   readVideoDuration,
   uploadVideo,
   videoFileProblem,
+  videoLengthProblem,
 } from '@/lib/video-upload';
 import { Button } from '@/components/ui/button';
 import { ErrorNote } from './feedback';
@@ -16,7 +17,7 @@ import { ErrorNote } from './feedback';
 type UploadState =
   | { phase: 'idle' }
   | { phase: 'uploading'; file: File; fraction: number }
-  | { phase: 'failed'; file: File; message: string }
+  | { phase: 'failed'; file: File; message: string; retryable: boolean }
   | { phase: 'done'; file: File };
 
 interface VideoUploaderProps {
@@ -35,27 +36,38 @@ export function VideoUploader({ assetKey, onUploaded }: VideoUploaderProps) {
   const abort = useRef<AbortController | null>(null);
   const input = useRef<HTMLInputElement>(null);
 
+  // Leaving the screen must not leave a large upload running in the background.
+  useEffect(() => () => abort.current?.abort(), []);
+
   const start = async (file: File) => {
     const problem = videoFileProblem(file);
     if (problem) {
-      setState({ phase: 'failed', file, message: problem });
+      setState({ phase: 'failed', file, message: problem, retryable: false });
       return;
     }
     const controller = new AbortController();
     abort.current = controller;
     setState({ phase: 'uploading', file, fraction: 0 });
     try {
-      const [key, duration] = await Promise.all([
-        uploadVideo(
-          file,
-          (fraction) =>
-            setState((current) =>
-              current.phase === 'uploading' ? { ...current, fraction } : current,
-            ),
-          controller.signal,
-        ),
-        readVideoDuration(file),
-      ]);
+      // Read the length first: a video over ten minutes is refused before any of it is sent.
+      const duration = await readVideoDuration(file);
+      if (controller.signal.aborted) {
+        setState({ phase: 'idle' });
+        return;
+      }
+      const tooLong = videoLengthProblem(duration);
+      if (tooLong) {
+        setState({ phase: 'failed', file, message: tooLong, retryable: false });
+        return;
+      }
+      const key = await uploadVideo(
+        file,
+        (fraction) =>
+          setState((current) =>
+            current.phase === 'uploading' ? { ...current, fraction } : current,
+          ),
+        controller.signal,
+      );
       setState({ phase: 'done', file });
       onUploaded(key, duration);
     } catch (error) {
@@ -67,7 +79,7 @@ export function VideoUploader({ assetKey, onUploaded }: VideoUploaderProps) {
         error instanceof VideoUploadError
           ? error.message
           : adminErrorMessage(error, "We couldn't start the upload. Try again.");
-      setState({ phase: 'failed', file, message });
+      setState({ phase: 'failed', file, message, retryable: true });
     }
   };
 
@@ -148,7 +160,7 @@ export function VideoUploader({ assetKey, onUploaded }: VideoUploaderProps) {
       {state.phase === 'failed' && (
         <div className="space-y-2">
           <ErrorNote message={state.message} />
-          {!videoFileProblem(state.file) && (
+          {state.retryable && (
             <Button
               type="button"
               size="sm"

@@ -145,7 +145,7 @@ describe('QuestionsManager', () => {
     expect(
       within(dialog).getByRole('option', { name: 'Step 2: Safe operation' }),
     ).toBeInTheDocument();
-    expect(within(dialog).getByText(/this question has 3 versions so far/i)).toBeInTheDocument();
+    expect(within(dialog).getByText(/it has 3 versions? so far/i)).toBeInTheDocument();
   });
 
   it('adds a question to the topic being filtered', async () => {

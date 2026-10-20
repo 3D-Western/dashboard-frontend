@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, type Mock } from 'vitest';
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { toast } from 'sonner';
 import { ApiError } from '@/api/client/errors';
@@ -251,16 +251,25 @@ describe('QuestionDialog editing', () => {
     }),
   });
 
-  it('starts from the current version and says that editing a used question makes a new version', () => {
+  it('says an unused question is edited in place', () => {
     open(existing);
+
+    expect(screen.getByText(/nobody has been asked this question yet/i)).toHaveTextContent(
+      /changes it in place and creates no new version/i,
+    );
+    expect(screen.queryByText(/saving creates a/i)).not.toBeInTheDocument();
+  });
+
+  it('starts from the current version and says that editing a used question makes a new version', () => {
+    open({ ...existing, inUse: true });
 
     expect(prompt()).toHaveValue('Where is the emergency stop?');
     expect(optionText(1)).toHaveValue('On the front panel');
     expect(screen.getByRole('radio', { name: 'Option 1 is correct' })).toBeChecked();
     expect(screen.getByRole('checkbox', { name: /critical question/i })).toBeChecked();
     expect(screen.getByLabelText(/send the member back to/i)).toHaveValue('2');
-    expect(screen.getByText(/saving creates a/i)).toHaveTextContent(/new version/i);
-    expect(screen.getByText(/this question has 2 versions so far/i)).toBeInTheDocument();
+    expect(screen.getByText(/saving\s+creates a/i)).toHaveTextContent(/new version/i);
+    expect(screen.getByText(/it has 2 versions? so far/i)).toBeInTheDocument();
   });
 
   it('sends the option ids back so an unused question keeps them', async () => {
@@ -307,5 +316,28 @@ describe('QuestionDialog editing', () => {
     expect(
       await screen.findByText('A published question cannot move to another topic'),
     ).toBeInTheDocument();
+  });
+});
+
+describe('QuestionDialog unsaved changes', () => {
+  it('closes at once when nothing changed', async () => {
+    const { onClose } = open();
+
+    await userEvent.click(screen.getByRole('button', { name: 'Cancel' }));
+
+    expect(onClose).toHaveBeenCalled();
+    expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument();
+  });
+
+  it('asks before discarding a typed question', async () => {
+    const { onClose } = open();
+    await userEvent.type(prompt(), 'Half a question');
+
+    await userEvent.click(screen.getByRole('button', { name: 'Cancel' }));
+
+    const ask = await screen.findByRole('alertdialog');
+    expect(onClose).not.toHaveBeenCalled();
+    await userEvent.click(within(ask).getByRole('button', { name: 'Discard changes' }));
+    expect(onClose).toHaveBeenCalled();
   });
 });

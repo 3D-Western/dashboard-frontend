@@ -1,11 +1,4 @@
-import type {
-  AdminQuestion,
-  AdminStep,
-  AdminTrainingSummary,
-  PublishImpact,
-  StepType,
-  Topic,
-} from '@/types/training-admin';
+import type { AdminTrainingSummary, PublishImpact, StepType } from '@/types/training-admin';
 
 export const STEP_TYPE_LABELS: Record<StepType, string> = {
   VIDEO: 'Video',
@@ -117,29 +110,6 @@ export function trainingStatusLabels(training: AdminTrainingSummary): string[] {
   return labels;
 }
 
-/**
- * How many questions of a topic the quiz can draw: active ones, minus those the draft already asks
- * inside its material (a video checkpoint or a reading gate). The server decides at save and
- * publish; this mirrors its rule so the editor can show the number before saving.
- */
-export function eligibleCount(
-  topic: Topic,
-  questions: AdminQuestion[],
-  steps: AdminStep[],
-): number {
-  const inMaterial = new Set<number>();
-  for (const step of steps) {
-    if (step.gateQuestionVersionId !== null) inMaterial.add(step.gateQuestionVersionId);
-    for (const checkpoint of step.settings?.checkpoints ?? []) {
-      inMaterial.add(checkpoint.questionVersionId);
-    }
-  }
-  return questions.filter(
-    (question) =>
-      question.topicId === topic.id && question.active && !inMaterial.has(question.latest.id),
-  ).length;
-}
-
 /** A question's prompt on one line, for lists and pickers. */
 export function promptPreview(markdown: string, max = 90): string {
   const flat = markdown
@@ -147,12 +117,6 @@ export function promptPreview(markdown: string, max = 90): string {
     .replace(/\s+/g, ' ')
     .trim();
   return flat.length > max ? `${flat.slice(0, max - 1)}…` : flat;
-}
-
-/** "420 s" as "7:00". */
-export function clock(totalSeconds: number): string {
-  const safe = Number.isFinite(totalSeconds) && totalSeconds > 0 ? Math.floor(totalSeconds) : 0;
-  return `${Math.floor(safe / 60)}:${String(safe % 60).padStart(2, '0')}`;
 }
 
 /** Bytes as "12.3 MB". */

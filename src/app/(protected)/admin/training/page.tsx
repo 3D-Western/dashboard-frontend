@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { AuthorOnly } from '@/components/TrainingAdmin/AuthorOnly';
 import { TrainingsList } from '@/components/TrainingAdmin/TrainingsList';
 
 export const metadata: Metadata = {
@@ -7,5 +8,9 @@ export const metadata: Metadata = {
 };
 
 export default function AdminTrainingPage() {
-  return <TrainingsList />;
+  return (
+    <AuthorOnly>
+      <TrainingsList />
+    </AuthorOnly>
+  );
 }

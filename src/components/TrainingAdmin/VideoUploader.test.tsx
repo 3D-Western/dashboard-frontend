@@ -1,7 +1,12 @@
 import { describe, it, expect, vi, type Mock } from 'vitest';
 import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { VideoUploadError, readVideoDuration, uploadVideo } from '@/lib/video-upload';
+import {
+  VideoUploadError,
+  readVideoDuration,
+  uploadVideo,
+  videoLengthProblem,
+} from '@/lib/video-upload';
 import { VideoUploader } from './VideoUploader';
 
 vi.mock('@/lib/video-upload', async (importOriginal) => {
@@ -127,5 +132,60 @@ describe('VideoUploader', () => {
 
     await waitFor(() => expect(screen.queryByRole('progressbar')).not.toBeInTheDocument());
     expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+  });
+});
+
+describe('VideoUploader safeguards', () => {
+  it('stops a video over ten minutes before sending any of it', async () => {
+    duration.mockResolvedValue(725);
+    const onUploaded = vi.fn();
+    render(<VideoUploader assetKey={null} onUploaded={onUploaded} />);
+
+    await userEvent.upload(screen.getByLabelText(/choose a video file/i), mp4);
+
+    expect(await screen.findByText(/12 min 5 s long/i)).toBeInTheDocument();
+    expect(upload).not.toHaveBeenCalled();
+    expect(onUploaded).not.toHaveBeenCalled();
+    expect(screen.queryByRole('button', { name: /try the upload again/i })).not.toBeInTheDocument();
+  });
+
+  it('uses the real wording for the length check', () => {
+    expect(videoLengthProblem(601)).toMatch(/shorten it or split it/i);
+  });
+
+  it('abandons the upload when the screen is closed', async () => {
+    let signal: AbortSignal | undefined;
+    upload.mockImplementation(
+      (_file: File, _progress: unknown, s: AbortSignal) =>
+        new Promise(() => {
+          signal = s;
+        }),
+    );
+    duration.mockResolvedValue(60);
+    const { unmount } = render(<VideoUploader assetKey={null} onUploaded={vi.fn()} />);
+    await userEvent.upload(screen.getByLabelText(/choose a video file/i), mp4);
+    await screen.findByRole('progressbar');
+    expect(signal?.aborted).toBe(false);
+
+    unmount();
+
+    expect(signal?.aborted).toBe(true);
+  });
+
+  it('shows the expired-link message and offers another try', async () => {
+    upload.mockRejectedValueOnce(
+      new VideoUploadError(
+        'The upload link expired. Try the upload again to get a new one.',
+        'rejected',
+        403,
+      ),
+    );
+    duration.mockResolvedValue(60);
+    render(<VideoUploader assetKey={null} onUploaded={vi.fn()} />);
+
+    await userEvent.upload(screen.getByLabelText(/choose a video file/i), mp4);
+
+    expect(await screen.findByText(/upload link expired/i)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /try the upload again/i })).toBeInTheDocument();
   });
 });

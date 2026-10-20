@@ -166,6 +166,13 @@ describe('QuestionReport table', () => {
 });
 
 describe('QuestionReport corrections', () => {
+  /** Presses "Record correction" and then confirms in the dialog that states the effect. */
+  async function recordAndConfirm(dialog: HTMLElement) {
+    await userEvent.click(within(dialog).getByRole('button', { name: /record correction/i }));
+    const confirm = await screen.findByRole('alertdialog');
+    await userEvent.click(within(confirm).getByRole('button', { name: /record correction/i }));
+  }
+
   async function openCorrection() {
     await renderInTraining(<QuestionReport />, { user: publisherUser() });
     await userEvent.click(await screen.findByRole('button', { name: /^correct: hard question/i }));
@@ -185,7 +192,7 @@ describe('QuestionReport corrections', () => {
       '22',
     );
     await userEvent.type(within(dialog).getByLabelText('Reason'), '  Both are defensible ');
-    await userEvent.click(within(dialog).getByRole('button', { name: /record correction/i }));
+    await recordAndConfirm(dialog);
 
     await waitFor(() =>
       expect(api.addCorrection).toHaveBeenCalledWith(502, {
@@ -220,7 +227,7 @@ describe('QuestionReport corrections', () => {
     expect(within(dialog).getByRole('button', { name: /record correction/i })).toBeDisabled();
 
     await userEvent.type(within(dialog).getByLabelText('Reason'), 'The question was wrong');
-    await userEvent.click(within(dialog).getByRole('button', { name: /record correction/i }));
+    await recordAndConfirm(dialog);
 
     await waitFor(() =>
       expect(api.addCorrection).toHaveBeenCalledWith(502, {
@@ -267,11 +274,58 @@ describe('QuestionReport corrections', () => {
     );
     await userEvent.type(within(dialog).getByLabelText('Reason'), 'Because');
 
-    await userEvent.click(within(dialog).getByRole('button', { name: /record correction/i }));
+    await recordAndConfirm(dialog);
 
     expect(
       await within(dialog).findByText('That option does not belong to this question'),
     ).toBeInTheDocument();
+  });
+});
+
+describe('QuestionReport correction confirmation', () => {
+  async function ready(kind: 'ACCEPT_OPTION' | 'DROP_QUESTION') {
+    await renderInTraining(<QuestionReport />, { user: publisherUser() });
+    await userEvent.click(await screen.findByRole('button', { name: /^correct: hard question/i }));
+    const dialog = await screen.findByRole('dialog', { name: /correct this question/i });
+    await within(dialog).findByRole('option', { name: 'On the side panel' });
+    if (kind === 'DROP_QUESTION') {
+      await userEvent.click(within(dialog).getByRole('radio', { name: /drop the question/i }));
+    } else {
+      await userEvent.selectOptions(
+        within(dialog).getByLabelText(/which answer should also count/i),
+        '22',
+      );
+    }
+    await userEvent.type(within(dialog).getByLabelText('Reason'), 'Because');
+    await userEvent.click(within(dialog).getByRole('button', { name: /record correction/i }));
+    return screen.findByRole('alertdialog');
+  }
+
+  it('states the effect of accepting another answer, and records nothing until confirmed', async () => {
+    const confirm = await ready('ACCEPT_OPTION');
+
+    expect(confirm).toHaveTextContent(/“On the side panel” also counts as correct/);
+    expect(confirm).toHaveTextContent(/cannot be undone/i);
+    expect(confirm).toHaveTextContent(
+      /no one.s record, certification or access changes by itself/i,
+    );
+    expect(api.addCorrection).not.toHaveBeenCalled();
+  });
+
+  it('states the effect of dropping a question', async () => {
+    const confirm = await ready('DROP_QUESTION');
+
+    expect(confirm).toHaveTextContent(/no longer counts toward anyone.s score/i);
+    expect(confirm).toHaveTextContent(/left out of new quizzes/i);
+  });
+
+  it('records nothing when the user goes back', async () => {
+    const confirm = await ready('DROP_QUESTION');
+
+    await userEvent.click(within(confirm).getByRole('button', { name: /go back/i }));
+
+    expect(api.addCorrection).not.toHaveBeenCalled();
+    expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument();
   });
 });
 

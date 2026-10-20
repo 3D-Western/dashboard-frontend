@@ -7,6 +7,7 @@ import {
   readVideoDuration,
   uploadVideo,
   videoFileProblem,
+  videoLengthProblem,
 } from './video-upload';
 
 vi.mock('@/api/client/training-admin', () => ({
@@ -104,12 +105,21 @@ describe('putToStorage', () => {
 
   it('rejects with the storage status when the service refuses the upload', async () => {
     const done = putToStorage('https://storage.test/x', {}, mp4(), vi.fn());
-    FakeXhr.last.finish(403);
+    FakeXhr.last.finish(500);
 
     const error = await done.catch((e) => e);
     expect(error).toBeInstanceOf(VideoUploadError);
+    expect(error).toMatchObject({ kind: 'rejected', status: 500 });
+    expect(error.message).toMatch(/refused the upload \(status 500\)/);
+  });
+
+  it('says the link expired when storage answers 403', async () => {
+    const done = putToStorage('https://storage.test/x', {}, mp4(), vi.fn());
+    FakeXhr.last.finish(403);
+
+    const error = await done.catch((e) => e);
     expect(error).toMatchObject({ kind: 'rejected', status: 403 });
-    expect(error.message).toMatch(/refused the upload \(status 403\)/);
+    expect(error.message).toMatch(/upload link expired.*try the upload again/i);
   });
 
   it('rejects with a connection message on a network error', async () => {
@@ -168,7 +178,41 @@ describe('uploadVideo', () => {
   });
 });
 
+describe('videoLengthProblem', () => {
+  it('lets a video of ten minutes or less through, or one of unknown length', () => {
+    expect(videoLengthProblem(null)).toBeNull();
+    expect(videoLengthProblem(600)).toBeNull();
+  });
+
+  it('says how long a longer video is', () => {
+    expect(videoLengthProblem(601)).toMatch(/10 min 1 s long/);
+    expect(videoLengthProblem(725)).toMatch(/12 min 5 s/);
+  });
+});
+
 describe('readVideoDuration', () => {
+  it('gives up after the timeout when the file never reports a length', async () => {
+    vi.useFakeTimers();
+    try {
+      vi.stubGlobal('URL', { createObjectURL: vi.fn(() => 'blob:x'), revokeObjectURL: vi.fn() });
+      const video = { removeAttribute: vi.fn() };
+      vi.spyOn(document, 'createElement').mockReturnValue(video as unknown as HTMLElement);
+
+      const pending = readVideoDuration(mp4());
+      await vi.advanceTimersByTimeAsync(4_999);
+      let settled = false;
+      void pending.then(() => (settled = true));
+      await Promise.resolve();
+      expect(settled).toBe(false);
+
+      await vi.advanceTimersByTimeAsync(2);
+      await expect(pending).resolves.toBeNull();
+      expect(URL.revokeObjectURL).toHaveBeenCalledWith('blob:x');
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it('rounds the length of the file up to whole seconds', async () => {
     vi.stubGlobal('URL', {
       createObjectURL: vi.fn(() => 'blob:x'),

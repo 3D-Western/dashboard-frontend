@@ -15,6 +15,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import { UnsavedChangesDialog } from '@/components/UnsavedChangesDialog';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { formatDate } from '@/lib/training-format';
@@ -107,6 +108,7 @@ export function TrainingOverview() {
 
   return (
     <div className="space-y-6">
+      <UnsavedChangesDialog isDirty={detailsChanged} />
       <ErrorNote message={error} />
 
       <section className="space-y-3 rounded-xl border bg-card p-4" aria-labelledby="draft-heading">
