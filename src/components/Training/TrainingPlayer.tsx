@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { Check } from 'lucide-react';
 import { trainingAPI } from '@/api/client/training';
@@ -65,6 +65,16 @@ export function TrainingPlayer({ attemptId }: { attemptId: number }) {
     };
     runLoad();
   }, [load]);
+
+  // Move keyboard and screen-reader focus to the new step's heading whenever the step changes
+  const stepHeadingRef = useRef<HTMLHeadingElement>(null);
+  const currentStepId =
+    attempt && attempt.status === 'IN_PROGRESS' && !attempt.pledgeRequired
+      ? attempt.steps.find((s) => s.status === 'AVAILABLE')?.stepId
+      : undefined;
+  useEffect(() => {
+    if (currentStepId !== undefined) stepHeadingRef.current?.focus();
+  }, [currentStepId]);
 
   // A finished step changes what the attempt looks like (next step unlocked, or the attempt is over)
   const handleStepCompleted = useCallback(() => {
@@ -147,7 +157,7 @@ export function TrainingPlayer({ attemptId }: { attemptId: number }) {
             className="h-2 w-full overflow-hidden rounded-full bg-muted"
           >
             <div
-              className="h-full bg-linear-to-r from-purple-dark to-purple-light transition-all"
+              className="h-full bg-linear-to-r from-purple-dark to-purple-light transition-all motion-reduce:transition-none"
               style={{ width: `${total ? (doneCount / total) * 100 : 0}%` }}
             />
           </div>
@@ -185,7 +195,12 @@ export function TrainingPlayer({ attemptId }: { attemptId: number }) {
 
       {current ? (
         <section aria-labelledby="step-heading" className="space-y-4">
-          <h3 id="step-heading" className="text-lg font-semibold">
+          <h3
+            id="step-heading"
+            ref={stepHeadingRef}
+            tabIndex={-1}
+            className="text-lg font-semibold outline-none"
+          >
             {current.title}
           </h3>
           <StepBody
@@ -212,7 +227,12 @@ export function TrainingPlayer({ attemptId }: { attemptId: number }) {
 
       {loadError && (
         <Alert variant="destructive">
-          <AlertDescription>{loadError}</AlertDescription>
+          <AlertDescription className="space-y-2">
+            <span>{loadError}</span>
+            <Button type="button" variant="outline" size="sm" onClick={() => void load()}>
+              Try again
+            </Button>
+          </AlertDescription>
         </Alert>
       )}
 

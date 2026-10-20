@@ -27,6 +27,7 @@ export function QuestionCard({
   heading,
 }: QuestionCardProps) {
   const groupId = useId();
+  const promptId = `${groupId}-prompt`;
   const multiple = question.selection === 'MULTIPLE' || question.type === 'MULTI';
 
   if (question.type === 'HOTSPOT') {
@@ -51,16 +52,13 @@ export function QuestionCard({
   };
 
   return (
-    <fieldset className="space-y-3" disabled={disabled}>
-      <legend className="w-full space-y-1">
-        {heading && (
-          <span className="block text-xs font-medium text-muted-foreground">{heading}</span>
-        )}
+    <div role="group" aria-labelledby={promptId} className="space-y-3">
+      {/* A plain div, not a legend: a legend may only hold phrasing content */}
+      <div id={promptId} className="w-full space-y-1">
+        {heading && <p className="text-xs font-medium text-muted-foreground">{heading}</p>}
         <Markdown className="font-medium">{question.promptMarkdown}</Markdown>
-        {multiple && (
-          <span className="block text-sm text-muted-foreground">Select all that apply.</span>
-        )}
-      </legend>
+        {multiple && <p className="text-sm text-muted-foreground">Select all that apply.</p>}
+      </div>
       <div className="space-y-2">
         {question.options.map((option) => {
           const checked = selected.includes(option.optionId);
@@ -70,7 +68,7 @@ export function QuestionCard({
               key={option.optionId}
               htmlFor={inputId}
               className={cn(
-                'flex min-h-12 cursor-pointer items-center gap-3 rounded-lg border px-3 py-2 text-base transition-colors',
+                'flex min-h-12 cursor-pointer items-center gap-3 rounded-lg border px-3 py-2 text-base transition-colors motion-reduce:transition-none',
                 checked ? 'border-purple-light bg-purple-light/10' : 'hover:border-purple-light/60',
                 disabled && 'cursor-not-allowed opacity-60',
               )}
@@ -89,6 +87,6 @@ export function QuestionCard({
           );
         })}
       </div>
-    </fieldset>
+    </div>
   );
 }

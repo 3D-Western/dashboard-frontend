@@ -135,14 +135,15 @@ export function QuizStep({ attemptId, step, onSubmitted }: QuizStepProps) {
       await saveChain.current.catch(() => undefined);
       const result = await trainingAPI.submitQuiz(attemptId, stepId, toList(answers));
       onSubmitted(result);
+      // Stay locked after a successful submit: the player reloads the attempt and replaces this
+      // screen, and until it has, a second tap must not submit again.
     } catch (error) {
+      setSubmitting(false);
       setSubmitError(trainingErrorMessage(error));
       if (error instanceof ApiError && error.code === 'QUIZ_INCOMPLETE') {
         const firstBlank = questions.findIndex((q) => !answers[q.questionVersionId]);
         if (firstBlank !== -1) setIndex(firstBlank);
       }
-    } finally {
-      setSubmitting(false);
     }
   };
 
@@ -170,7 +171,7 @@ export function QuizStep({ attemptId, step, onSubmitted }: QuizStepProps) {
                   aria-label={`Question ${i + 1}${done ? ', answered' : ', not answered'}`}
                   aria-current={i === index ? 'step' : undefined}
                   className={cn(
-                    'flex size-9 items-center justify-center rounded-md border text-sm tabular-nums',
+                    'flex size-11 items-center justify-center rounded-md border text-sm tabular-nums',
                     done && 'border-purple-light bg-purple-light/15',
                     i === index && 'ring-2 ring-purple-light',
                   )}

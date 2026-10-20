@@ -29,7 +29,9 @@ const components: Components = {
   ),
   hr: () => <hr className="border-border" />,
   pre: ({ children }) => (
-    <pre className="overflow-x-auto rounded-lg bg-muted p-3 font-mono text-sm">{children}</pre>
+    <pre className="overflow-x-auto rounded-lg bg-muted p-3 font-mono text-sm [&_code]:bg-transparent [&_code]:p-0">
+      {children}
+    </pre>
   ),
   code: ({ children, className }) => (
     <code

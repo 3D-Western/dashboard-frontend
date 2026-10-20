@@ -195,6 +195,66 @@ describe('TrainingPlayer', () => {
     expect(screen.getByText(/your score: 100%/i)).toBeInTheDocument();
   });
 
+  it('moves focus to the new step heading when the step changes', async () => {
+    api.getAttempt
+      .mockResolvedValueOnce(attemptAt(['AVAILABLE', 'LOCKED', 'LOCKED', 'LOCKED']))
+      .mockResolvedValue(attemptAt(['COMPLETED', 'AVAILABLE', 'LOCKED', 'LOCKED']));
+    render(<TrainingPlayer attemptId={42} />);
+
+    const first = await screen.findByRole('heading', { name: 'Welcome video' });
+    expect(first).toHaveFocus();
+    expect(first).toHaveAttribute('tabindex', '-1');
+
+    await userEvent.click(screen.getByRole('button', { name: /finish the video/i }));
+
+    const second = await screen.findByRole('heading', { name: 'Safety reading' });
+    await waitFor(() => expect(second).toHaveFocus());
+  });
+
+  it('offers a retry when reloading after a finished step fails', async () => {
+    api.getAttempt
+      .mockResolvedValueOnce(attemptAt(['AVAILABLE', 'LOCKED', 'LOCKED', 'LOCKED']))
+      .mockRejectedValueOnce(new ApiError('REQUEST_FAILED'))
+      .mockResolvedValue(attemptAt(['COMPLETED', 'AVAILABLE', 'LOCKED', 'LOCKED']));
+    render(<TrainingPlayer attemptId={42} />);
+
+    await userEvent.click(await screen.findByRole('button', { name: /finish the video/i }));
+
+    expect(await screen.findByText(/couldn't reach the server/i)).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: /try again/i }));
+
+    expect(await screen.findByRole('heading', { name: 'Safety reading' })).toBeInTheDocument();
+    expect(screen.queryByText(/couldn't reach the server/i)).not.toBeInTheDocument();
+  });
+
+  it('keeps the quiz locked after submitting until the attempt has reloaded', async () => {
+    api.getAttempt
+      .mockResolvedValueOnce(attemptAt(['COMPLETED', 'COMPLETED', 'COMPLETED', 'AVAILABLE']))
+      .mockReturnValue(new Promise(() => undefined)); // the reload is still on its way
+    api.openQuiz.mockResolvedValue({ stepId: 4, questions: [createQuestion()] });
+    api.saveQuizAnswers.mockResolvedValue({ stepId: 4, questions: [createQuestion()] });
+    api.submitQuiz.mockResolvedValue({
+      passed: true,
+      scorePercent: 100,
+      criticalAllCorrect: true,
+      passMarkPercent: 90,
+      attemptStatus: 'PASSED',
+      reviewSteps: [],
+      certificationStatus: 'ACTIVE',
+      retryAt: null,
+    });
+    render(<TrainingPlayer attemptId={42} />);
+    await userEvent.click(await screen.findByLabelText('On the front panel'));
+    const submit = screen.getByRole('button', { name: /submit quiz/i });
+
+    await userEvent.click(submit);
+    await waitFor(() => expect(api.submitQuiz).toHaveBeenCalledTimes(1));
+
+    expect(screen.getByRole('button', { name: /submitting/i })).toBeDisabled();
+    await userEvent.click(screen.getByRole('button', { name: /submitting/i }));
+    expect(api.submitQuiz).toHaveBeenCalledTimes(1);
+  });
+
   it('marks finished steps in the step list', async () => {
     api.getAttempt.mockResolvedValue(attemptAt(['COMPLETED', 'AVAILABLE', 'LOCKED', 'LOCKED']));
     render(<TrainingPlayer attemptId={42} />);

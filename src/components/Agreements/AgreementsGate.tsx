@@ -137,7 +137,10 @@ function AgreementItem({
       >
         {open ? 'Hide the full text' : 'Read the full text'}
         <ChevronDown
-          className={cn('size-4 shrink-0 transition-transform', open && 'rotate-180')}
+          className={cn(
+            'size-4 shrink-0 transition-transform motion-reduce:transition-none',
+            open && 'rotate-180',
+          )}
           aria-hidden="true"
         />
       </button>
