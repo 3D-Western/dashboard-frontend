@@ -2,6 +2,7 @@ import { describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import { PageHeader } from './index';
 import { Routes } from '@/lib/routes';
+import { TrainingAdminRoutes } from '@/lib/training-admin-routes';
 
 // Mock usePathname from next/navigation
 vi.mock('next/navigation', () => ({
@@ -62,6 +63,29 @@ describe('PageHeader', () => {
     expect(screen.getByRole('link', { name: 'Training' })).toHaveAttribute(
       'href',
       Routes.training.home,
+    );
+  });
+
+  it('renders the training editor pages under Admin Dashboard', () => {
+    mockUsePathname.mockReturnValue(TrainingAdminRoutes.home);
+    const { unmount } = render(<PageHeader />);
+    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Training Editor');
+    expect(screen.getByRole('link', { name: 'Admin Dashboard' })).toHaveAttribute('href', '/admin');
+    unmount();
+
+    mockUsePathname.mockReturnValue(TrainingAdminRoutes.import);
+    render(<PageHeader />);
+    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Import a Training');
+  });
+
+  it('renders a training being edited under the Training Editor', () => {
+    mockUsePathname.mockReturnValue(TrainingAdminRoutes.draft(12));
+    render(<PageHeader />);
+
+    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Edit Training');
+    expect(screen.getByRole('link', { name: 'Training Editor' })).toHaveAttribute(
+      'href',
+      TrainingAdminRoutes.home,
     );
   });
 

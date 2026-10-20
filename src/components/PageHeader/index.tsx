@@ -3,6 +3,7 @@
 import { Fragment } from 'react';
 import Link from 'next/link';
 import { Routes } from '@/lib/routes';
+import { TrainingAdminRoutes } from '@/lib/training-admin-routes';
 import { usePathname } from 'next/navigation';
 import {
   Breadcrumb,
@@ -26,6 +27,9 @@ const pageTitles: Record<string, string> = {
   [Routes.adminUsersManagement]: 'User Management',
   [Routes.adminJobsManagement]: 'Job Management',
   [Routes.adminInvitationManagement]: 'Invitation Management',
+  [TrainingAdminRoutes.home]: 'Training Editor',
+  [TrainingAdminRoutes.equipment]: 'Training Equipment',
+  [TrainingAdminRoutes.import]: 'Import a Training',
 };
 
 // The titled pages above this one in the URL, e.g. /admin/users → [Admin Dashboard]
@@ -43,12 +47,23 @@ export function PageHeader() {
   const isJobDetail = pathname.startsWith(`${Routes.jobs.home}/`) && !pageTitles[pathname];
   const isTrainingSession =
     pathname.startsWith(`${Routes.training.home}/`) && !pageTitles[pathname];
+  // A training being edited, e.g. /admin/training/12/draft
+  const isTrainingEdit =
+    pathname.startsWith(`${TrainingAdminRoutes.home}/`) && !pageTitles[pathname];
   const title =
     pageTitles[pathname] ||
-    (isJobDetail ? 'Job Details' : isTrainingSession ? 'Training Session' : 'Dashboard');
+    (isJobDetail
+      ? 'Job Details'
+      : isTrainingSession
+        ? 'Training Session'
+        : isTrainingEdit
+          ? 'Edit Training'
+          : 'Dashboard');
   // A job's details page (or a training session) has no fixed title, but still sits under its list
   const parents =
-    pageTitles[pathname] || isJobDetail || isTrainingSession ? getParentPages(pathname) : [];
+    pageTitles[pathname] || isJobDetail || isTrainingSession || isTrainingEdit
+      ? getParentPages(pathname)
+      : [];
 
   return (
     <Breadcrumb className="min-w-0">

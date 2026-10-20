@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { ClipboardCheck, Printer, TicketPlus, Users } from 'lucide-react';
+import { ClipboardCheck, PenSquare, Printer, TicketPlus, Users } from 'lucide-react';
 import Link from 'next/link';
 import PageTitle from '@/components/PageTitle';
 import { Routes } from '@/lib/routes';
@@ -98,6 +98,28 @@ export default async function AdminDashboardPage() {
             </Card>
           </Link>
         )}
+
+        {user &&
+          (hasPermission(user, PERMISSIONS.TRAINING_AUTHOR) ||
+            hasPermission(user, PERMISSIONS.TRAINING_PUBLISH)) && (
+            <Link href="/admin/training">
+              <Card className="cursor-pointer transition-colors hover:bg-accent">
+                <CardHeader>
+                  <div className="flex items-center gap-2">
+                    <PenSquare className="h-5 w-5 text-muted-foreground" />
+                    <CardTitle>Training Editor</CardTitle>
+                  </div>
+                  <CardDescription>Create, edit and publish trainings</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-sm text-muted-foreground">
+                    Edit videos, readings and quizzes, manage equipment, import a training and
+                    correct questions.
+                  </p>
+                </CardContent>
+              </Card>
+            </Link>
+          )}
       </div>
     </div>
   );
