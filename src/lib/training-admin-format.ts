@@ -1,4 +1,10 @@
-import type { AdminTrainingSummary, PublishImpact, StepType } from '@/types/training-admin';
+import type {
+  AdminTrainingSummary,
+  CorrectionPreview,
+  PublishEffects,
+  PublishImpact,
+  StepType,
+} from '@/types/training-admin';
 
 export const STEP_TYPE_LABELS: Record<StepType, string> = {
   VIDEO: 'Video',
@@ -125,4 +131,41 @@ export function formatBytes(bytes: number): string {
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)} KB`;
   if (bytes < 1024 * 1024 * 1024) return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
   return `${(bytes / (1024 * 1024 * 1024)).toFixed(2)} GB`;
+}
+
+export const peopleCount = (n: number) => `${n} ${n === 1 ? 'person' : 'people'}`;
+
+/**
+ * What publishing with [impact] will do to real people, from the counts the server worked out for
+ * this draft right now. Said plainly, because this is the sentence the author confirms.
+ */
+export function describeImpactNow(
+  impact: PublishImpact,
+  effects: PublishEffects,
+  formatDate: (iso: string) => string,
+): string {
+  if (impact === 'ADDON') {
+    const n = effects.addonRequired;
+    if (n === 0) return 'No one is certified right now, so no one has anything to complete.';
+    const by = effects.addonDueAt ? ` by ${formatDate(effects.addonDueAt)}` : '';
+    return `Everyone currently certified (${peopleCount(n)}) keeps access but must complete the new section${by}.`;
+  }
+  if (impact === 'FULL_RETAKE') {
+    const n = effects.lapsed;
+    if (n === 0) return 'No one is certified right now, so no one loses access.';
+    return `${peopleCount(n)} lose access now until they redo the training.`;
+  }
+  return 'Nobody who is certified is affected. They keep their access and are asked to do nothing.';
+}
+
+/** What recording a correction will do to past attempts, in one or two sentences. */
+export function describeCorrectionPreview(preview: CorrectionPreview): string {
+  if (preview.attemptsAsked === 0) {
+    return 'No one has been asked this question yet, so no past attempt changes.';
+  }
+  const attempts = (n: number) => `${n} past ${n === 1 ? 'attempt' : 'attempts'}`;
+  const main = `This changes the score of ${attempts(preview.scoreChanged)}; ${preview.failToPass} would change from fail to pass.`;
+  return preview.passToFail > 0
+    ? `${main} ${preview.passToFail} would change from pass to fail.`
+    : main;
 }

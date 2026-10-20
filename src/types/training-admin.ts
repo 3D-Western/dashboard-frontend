@@ -193,7 +193,7 @@ export interface StepVideoPlayback {
 }
 
 export interface VideoUploadUrlRequest {
-  contentType: 'video/mp4';
+  contentType: 'video/mp4' | 'video/quicktime' | 'video/webm';
   sizeBytes: number;
 }
 
@@ -285,20 +285,29 @@ export interface ValidationIssue {
   column?: number | null;
 }
 
+export interface PublishEffects {
+  /** People certified now who would owe the add-on (ADDON). */
+  addonRequired: number;
+  /** People who would lose access until they retake it (FULL_RETAKE). */
+  lapsed: number;
+  addonDueAt: string | null;
+}
+
 export interface PublishCheck {
   ready: boolean;
   issues: ValidationIssue[];
+  /** Worth a second look, but never blocking (for example a video over 10 minutes). */
+  warnings: ValidationIssue[];
+  /** What publishing with the asked-about impact would do to people right now. */
+  effects: PublishEffects;
 }
 
 export interface PublishResult {
   version: VersionSummary;
   retiredVersionId: number | null;
   poolSize: number;
-  effects: {
-    addonRequired: number;
-    lapsed: number;
-    addonDueAt: string | null;
-  };
+  effects: PublishEffects;
+  warnings: ValidationIssue[];
 }
 
 // ---- Corrections, re-scoring, report ----
@@ -324,6 +333,15 @@ export interface Rescore {
   passMarkPercent: number;
   attemptsRescored: number;
   changedOutcomes: AttemptOutcomeChange[];
+  skippedAnswers: number;
+}
+
+/** What a correction would do to finished attempts, before it is recorded. */
+export interface CorrectionPreview {
+  attemptsAsked: number;
+  scoreChanged: number;
+  failToPass: number;
+  passToFail: number;
   skippedAnswers: number;
 }
 

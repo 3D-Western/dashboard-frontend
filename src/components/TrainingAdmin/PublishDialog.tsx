@@ -15,7 +15,12 @@ import {
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { adminErrorMessage, issuesFromError } from '@/lib/training-admin-errors';
-import { IMPACT_OPTIONS, describeEffects, impactOption } from '@/lib/training-admin-format';
+import {
+  IMPACT_OPTIONS,
+  describeEffects,
+  describeImpactNow,
+  impactOption,
+} from '@/lib/training-admin-format';
 import { formatDate } from '@/lib/training-format';
 import type {
   PublishCheck,
@@ -24,7 +29,7 @@ import type {
   ValidationIssue,
 } from '@/types/training-admin';
 import { CheckField, TextAreaField } from './fields';
-import { ErrorNote, IssueList } from './feedback';
+import { ErrorNote, IssueList, WarningList } from './feedback';
 
 export const MAX_REASON_LENGTH = 2000;
 
@@ -126,6 +131,7 @@ export function PublishDialog({
               {describeEffects(impact, result.effects, formatDate)}
             </DialogDescription>
           </DialogHeader>
+          <WarningList issues={result.warnings} />
           <p className="text-sm text-muted-foreground">
             The quiz pool is frozen at {result.poolSize}{' '}
             {result.poolSize === 1 ? 'question' : 'questions'}.
@@ -197,6 +203,11 @@ export function PublishDialog({
         >
           <p className="font-medium">What this does to people already certified</p>
           <p className="mt-1 text-muted-foreground">{selected.effect}</p>
+          {check && (
+            <p className="mt-2 font-medium" data-testid="impact-now">
+              {describeImpactNow(impact, check.effects, formatDate)}
+            </p>
+          )}
         </div>
 
         <div aria-live="polite" className="space-y-2">
@@ -213,6 +224,7 @@ export function PublishDialog({
           {check && !check.ready && (
             <IssueList issues={check.issues} title="Fix these before publishing" />
           )}
+          <WarningList issues={check?.warnings ?? []} />
           {checkError && (
             <div className="space-y-2">
               <ErrorNote message={checkError} />

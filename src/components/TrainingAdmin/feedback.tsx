@@ -41,6 +41,34 @@ export function IssueList({
   );
 }
 
+/** Things worth a second look that do not stop anything. */
+export function WarningList({
+  issues,
+  title = 'Worth a look (this does not stop you publishing)',
+  className,
+}: {
+  issues: ValidationIssue[];
+  title?: string;
+  className?: string;
+}) {
+  if (issues.length === 0) return null;
+  return (
+    <Alert variant="warning" className={className} role="note">
+      <AlertTitle>{title}</AlertTitle>
+      <AlertDescription>
+        <ul className="list-disc space-y-1 pl-5">
+          {issues.map((issue, index) => (
+            <li key={`${issue.path}-${index}`}>
+              {issue.path && <span className="font-medium">{issue.path}: </span>}
+              {issue.message}
+            </li>
+          ))}
+        </ul>
+      </AlertDescription>
+    </Alert>
+  );
+}
+
 /** One sentence about a failed request. */
 export function ErrorNote({ message, className }: { message: string | null; className?: string }) {
   if (!message) return null;

@@ -36,6 +36,7 @@ import type {
   Topic,
   ValidationIssue,
 } from '@/types/training-admin';
+import { cn } from '@/lib/utils';
 import { CheckField, TextField } from './fields';
 import { ErrorNote, IssueList } from './feedback';
 import { BlueprintEditor } from './BlueprintEditor';
@@ -43,6 +44,7 @@ import { MarkdownEditor } from './MarkdownEditor';
 import { QuestionDialog } from './QuestionDialog';
 import { QuestionPicker } from './QuestionPicker';
 import { VideoPreview } from './VideoPreview';
+import { VideoScrubber } from './VideoScrubber';
 import { VideoUploader } from './VideoUploader';
 
 type NewQuestionFor = { kind: 'gate' } | { kind: 'checkpoint'; uid: number };
@@ -83,6 +85,10 @@ export function StepDialog({
   const [saving, setSaving] = useState(false);
   const [newQuestionFor, setNewQuestionFor] = useState<NewQuestionFor | null>(null);
   const [created, setCreated] = useState<AdminQuestion[]>([]);
+  // Where the video can be watched from: the chosen file (before it is uploaded) or the stored one.
+  const [localUrl, setLocalUrl] = useState<string | null>(null);
+  const [storedUrl, setStoredUrl] = useState<string | null>(null);
+  const [selectedCheckpoint, setSelectedCheckpoint] = useState<number | null>(null);
 
   const known = new Set(questions.map((q) => q.id));
   const allQuestions = [...questions, ...created.filter((q) => !known.has(q.id))];
@@ -192,6 +198,10 @@ export function StepDialog({
               <>
                 <VideoUploader
                   assetKey={values.assetKey}
+                  onLocalPreview={(url) => {
+                    setLocalUrl(url);
+                    setStoredUrl(null);
+                  }}
                   onUploaded={(assetKey, seconds) =>
                     patch({
                       assetKey,
@@ -199,8 +209,43 @@ export function StepDialog({
                     })
                   }
                 />
-                {liveStep && values.assetKey && values.assetKey === liveStep.videoAssetKey && (
-                  <VideoPreview versionId={versionId} stepId={liveStep.id} />
+                {liveStep &&
+                  !localUrl &&
+                  values.assetKey &&
+                  values.assetKey === liveStep.videoAssetKey && (
+                    <VideoPreview
+                      versionId={versionId}
+                      stepId={liveStep.id}
+                      onUrl={setStoredUrl}
+                      loaded={!!storedUrl}
+                    />
+                  )}
+                {(localUrl ?? storedUrl) && (
+                  <VideoScrubber
+                    key={localUrl ?? storedUrl}
+                    src={(localUrl ?? storedUrl)!}
+                    markers={values.checkpoints.map((row) => ({
+                      uid: row.uid,
+                      at: /^\d+$/.test(row.at.trim()) ? Number(row.at) : null,
+                    }))}
+                    selectedUid={selectedCheckpoint}
+                    onSelect={setSelectedCheckpoint}
+                    onAddHere={(seconds) => {
+                      const row = {
+                        uid: newCheckpointUid(),
+                        at: String(seconds),
+                        questionVersionId: null,
+                      };
+                      patch({ checkpoints: [...values.checkpoints, row] });
+                      setSelectedCheckpoint(row.uid);
+                    }}
+                    onRemove={(uid) =>
+                      patch({ checkpoints: values.checkpoints.filter((r) => r.uid !== uid) })
+                    }
+                    onDuration={(seconds) => {
+                      if (values.duration.trim() === '') patch({ duration: String(seconds) });
+                    }}
+                  />
                 )}
                 <div className="grid gap-4 sm:grid-cols-2">
                   <TextField
@@ -210,8 +255,8 @@ export function StepDialog({
                     inputMode="numeric"
                     help={
                       /^\d+$/.test(values.duration) && Number(values.duration) > 0
-                        ? `That is ${formatClock(Number(values.duration))}. Filled in from the file when you upload; videos are 10 minutes or less.`
-                        : 'Filled in from the file when you upload. Videos are 10 minutes (600 seconds) or less.'
+                        ? `That is ${formatClock(Number(values.duration))}. Filled in from the file when you upload. Aim for 10 minutes or less.`
+                        : 'Filled in from the file when you upload. Aim for 10 minutes (600 seconds) or less.'
                     }
                     error={[errors.duration, issueAt('videoDurationSeconds')].filter(
                       (m): m is string => !!m,
@@ -242,7 +287,13 @@ export function StepDialog({
                     </p>
                   </div>
                   {values.checkpoints.map((row, index) => (
-                    <div key={row.uid} className="space-y-2 rounded-lg bg-muted/40 p-3">
+                    <div
+                      key={row.uid}
+                      className={cn(
+                        'space-y-2 rounded-lg bg-muted/40 p-3',
+                        row.uid === selectedCheckpoint && 'ring-2 ring-primary',
+                      )}
+                    >
                       <div className="flex flex-wrap items-start gap-2">
                         <div className="w-32">
                           <TextField

@@ -13,13 +13,19 @@ vi.mock('@/api/client/training-admin', () => ({
 
 const api = trainingAdminAPI as unknown as { publishCheck: Mock; publish: Mock };
 
-const ready = { ready: true, issues: [] };
+const ready = {
+  ready: true,
+  issues: [],
+  warnings: [],
+  effects: { addonRequired: 0, lapsed: 0, addonDueAt: null },
+};
 
 const result = (effects: Partial<PublishResult['effects']> = {}): PublishResult => ({
   version: createVersionSummary({ versionNo: 4, status: 'PUBLISHED' }),
   retiredVersionId: 90,
   poolSize: 12,
   effects: { addonRequired: 0, lapsed: 0, addonDueAt: null, ...effects },
+  warnings: [],
 });
 
 function open(props: { hasPublished?: boolean } = {}) {
@@ -78,6 +84,8 @@ describe('PublishDialog impact choices', () => {
   it('shows what is missing and will not publish until it is fixed', async () => {
     api.publishCheck.mockResolvedValue({
       ready: false,
+      warnings: [],
+      effects: { addonRequired: 0, lapsed: 0, addonDueAt: null },
       issues: [
         { path: 'steps', message: 'A training needs a quiz step' },
         { path: 'signoffChecklist', message: 'Add the in-person checklist' },
@@ -262,5 +270,107 @@ describe('PublishDialog publishing', () => {
     await userEvent.click(screen.getByRole('button', { name: /check again/i }));
 
     expect(await screen.findByText(/ready to publish/i)).toBeInTheDocument();
+  });
+});
+
+describe('PublishDialog says plainly what will happen to people', () => {
+  const checkWith = (effects: object, extra: object = {}) => ({
+    ...ready,
+    effects: { addonRequired: 0, lapsed: 0, addonDueAt: null, ...effects },
+    ...extra,
+  });
+
+  it('for an add-on: how many people, and by when', async () => {
+    api.publishCheck.mockImplementation(async (_id: number, impact: string) =>
+      impact === 'ADDON'
+        ? checkWith({ addonRequired: 14, addonDueAt: '2026-11-19T12:00:00Z' })
+        : checkWith({}),
+    );
+    open();
+    await screen.findByTestId('impact-now');
+
+    await userEvent.click(screen.getByRole('radio', { name: /add-on update/i }));
+
+    await waitFor(() =>
+      expect(screen.getByTestId('impact-now')).toHaveTextContent(
+        /Everyone currently certified \(14 people\) keeps access but must complete the new section by .*2026/,
+      ),
+    );
+  });
+
+  it('for a full retake: how many people lose access now', async () => {
+    api.publishCheck.mockImplementation(async (_id: number, impact: string) =>
+      impact === 'FULL_RETAKE' ? checkWith({ lapsed: 1 }) : checkWith({}),
+    );
+    open();
+    await screen.findByTestId('impact-now');
+
+    await userEvent.click(screen.getByRole('radio', { name: /full retake/i }));
+
+    await waitFor(() =>
+      expect(screen.getByTestId('impact-now')).toHaveTextContent(
+        '1 person lose access now until they redo the training.',
+      ),
+    );
+  });
+
+  it('for a minor fix: that nobody is affected', async () => {
+    open();
+
+    expect(await screen.findByTestId('impact-now')).toHaveTextContent(
+      'Nobody who is certified is affected.',
+    );
+  });
+
+  it('says when no one is certified, so an add-on or retake changes nothing', async () => {
+    api.publishCheck.mockResolvedValue(checkWith({}));
+    open();
+    await screen.findByTestId('impact-now');
+
+    await userEvent.click(screen.getByRole('radio', { name: /add-on update/i }));
+    await waitFor(() =>
+      expect(screen.getByTestId('impact-now')).toHaveTextContent(/no one is certified right now/i),
+    );
+    await userEvent.click(screen.getByRole('radio', { name: /full retake/i }));
+    await waitFor(() =>
+      expect(screen.getByTestId('impact-now')).toHaveTextContent(/no one loses access/i),
+    );
+  });
+
+  it('shows no number until the server has counted', () => {
+    api.publishCheck.mockReturnValue(new Promise(() => {}));
+    open();
+
+    expect(screen.queryByTestId('impact-now')).not.toBeInTheDocument();
+  });
+});
+
+describe('PublishDialog warnings', () => {
+  const warning = {
+    path: 'steps[1] "Long intro"',
+    message: 'This video is 15 min 0 s long, longer than the 10 minutes we aim for.',
+  };
+
+  it('lists warnings without blocking the publish', async () => {
+    api.publishCheck.mockResolvedValue({ ...ready, warnings: [warning] });
+    open();
+
+    expect(await screen.findByText(/worth a look/i)).toBeInTheDocument();
+    expect(screen.getByText(/15 min 0 s long/)).toBeInTheDocument();
+    expect(screen.getByText(/ready to publish/i)).toBeInTheDocument();
+    await userEvent.type(screen.getByLabelText(/why are you publishing/i), 'Long on purpose');
+    expect(publishButton()).toBeEnabled();
+  });
+
+  it('repeats the warnings once the version is live', async () => {
+    api.publishCheck.mockResolvedValue({ ...ready, warnings: [warning] });
+    api.publish.mockResolvedValue({ ...result(), warnings: [warning] });
+    open();
+    await screen.findByText(/ready to publish/i);
+    await userEvent.type(screen.getByLabelText(/why are you publishing/i), 'Long on purpose');
+    await userEvent.click(publishButton());
+
+    expect(await screen.findByText(/version 4 is live/i)).toBeInTheDocument();
+    expect(screen.getByText(/15 min 0 s long/)).toBeInTheDocument();
   });
 });

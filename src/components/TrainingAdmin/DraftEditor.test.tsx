@@ -139,6 +139,8 @@ describe('DraftEditor publish check', () => {
   it('puts each problem under the step it is about and lists the rest at the top', async () => {
     api.publishCheck.mockResolvedValue({
       ready: false,
+      warnings: [],
+      effects: { addonRequired: 0, lapsed: 0, addonDueAt: null },
       issues: [
         { path: 'steps[1] "Meet the machine"', message: 'The video has no uploaded file yet' },
         { path: 'steps', message: 'A training needs a quiz step' },
@@ -159,7 +161,12 @@ describe('DraftEditor publish check', () => {
   });
 
   it('says when the draft is ready', async () => {
-    api.publishCheck.mockResolvedValue({ ready: true, issues: [] });
+    api.publishCheck.mockResolvedValue({
+      ready: true,
+      issues: [],
+      warnings: [],
+      effects: { addonRequired: 0, lapsed: 0, addonDueAt: null },
+    });
     await renderInTraining(<DraftEditor />, { training: withDraft() });
     await screen.findByText('Draft version 2');
 
@@ -171,7 +178,12 @@ describe('DraftEditor publish check', () => {
 
 describe('DraftEditor publishing and permissions', () => {
   it('lets someone who can publish open the publish dialog', async () => {
-    api.publishCheck.mockResolvedValue({ ready: true, issues: [] });
+    api.publishCheck.mockResolvedValue({
+      ready: true,
+      issues: [],
+      warnings: [],
+      effects: { addonRequired: 0, lapsed: 0, addonDueAt: null },
+    });
     await renderInTraining(<DraftEditor />, { training: withDraft(), user: publisherUser() });
     await screen.findByText('Draft version 2');
 
@@ -196,12 +208,18 @@ describe('DraftEditor publishing and permissions', () => {
   });
 
   it('goes back to the training once the published dialog is closed', async () => {
-    api.publishCheck.mockResolvedValue({ ready: true, issues: [] });
+    api.publishCheck.mockResolvedValue({
+      ready: true,
+      issues: [],
+      warnings: [],
+      effects: { addonRequired: 0, lapsed: 0, addonDueAt: null },
+    });
     api.publish.mockResolvedValue({
       version: createVersionSummary({ versionNo: 2, status: 'PUBLISHED' }),
       retiredVersionId: 90,
       poolSize: 4,
       effects: { addonRequired: 0, lapsed: 0, addonDueAt: null },
+      warnings: [],
     });
     await renderInTraining(<DraftEditor />, { training: withDraft(), user: publisherUser() });
     await screen.findByText('Draft version 2');
@@ -220,7 +238,12 @@ describe('DraftEditor for someone who can publish but not author', () => {
   const reviewer = () => trainingUser('training:publish');
 
   it('keeps publishing available and switches editing off', async () => {
-    api.publishCheck.mockResolvedValue({ ready: true, issues: [] });
+    api.publishCheck.mockResolvedValue({
+      ready: true,
+      issues: [],
+      warnings: [],
+      effects: { addonRequired: 0, lapsed: 0, addonDueAt: null },
+    });
     await renderInTraining(<DraftEditor />, { training: withDraft(), user: reviewer() });
     await screen.findByText('Draft version 2');
 
@@ -231,5 +254,29 @@ describe('DraftEditor for someone who can publish but not author', () => {
     expect(screen.getByRole('button', { name: 'Delete step 1' })).toBeDisabled();
     expect(screen.getByRole('button', { name: /^reading$/i })).toBeDisabled();
     expect(screen.getByRole('button', { name: /save checklist/i })).toBeDisabled();
+  });
+});
+
+describe('DraftEditor warnings', () => {
+  it('shows a long-video warning under its step in amber, not as a problem', async () => {
+    api.publishCheck.mockResolvedValue({
+      ready: true,
+      issues: [],
+      warnings: [
+        { path: 'steps[1] "Meet the machine"', message: 'This video is 15 min 0 s long' },
+        { path: 'steps', message: 'Something general worth a look' },
+      ],
+      effects: { addonRequired: 0, lapsed: 0, addonDueAt: null },
+    });
+    await renderInTraining(<DraftEditor />, { training: withDraft(), user: publisherUser() });
+    await screen.findByText('Draft version 2');
+
+    await userEvent.click(screen.getByRole('button', { name: /check before publishing/i }));
+
+    const first = await screen.findByRole('listitem', { name: /step 1/i });
+    expect(within(first).getByLabelText('Warnings')).toHaveTextContent('15 min 0 s long');
+    expect(screen.getByText('Something general worth a look')).toBeInTheDocument();
+    expect(screen.queryByText('Not ready to publish')).not.toBeInTheDocument();
+    expect(await screen.findByText(/found nothing missing/i)).toBeInTheDocument();
   });
 });

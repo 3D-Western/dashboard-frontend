@@ -24,11 +24,13 @@ import {
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { adminErrorMessage, issuesFromError } from '@/lib/training-admin-errors';
-import { promptPreview } from '@/lib/training-admin-format';
+import { describeCorrectionPreview, promptPreview } from '@/lib/training-admin-format';
 import { formatDate } from '@/lib/training-format';
 import type {
   Correction,
+  CorrectionBody,
   CorrectionKind,
+  CorrectionPreview,
   QuestionOption,
   QuestionReportRow,
   Rescore,
@@ -73,6 +75,8 @@ export function CorrectionDialog({ row, mode, onClose, onRecorded }: CorrectionD
   const [rescore, setRescore] = useState<Rescore | null>(null);
   const [recorded, setRecorded] = useState(false);
   const [confirming, setConfirming] = useState(false);
+  const [preview, setPreview] = useState<CorrectionPreview | null>(null);
+  const [previewError, setPreviewError] = useState<string | null>(null);
 
   useEffect(() => {
     let current = true;
@@ -107,6 +111,24 @@ export function CorrectionDialog({ row, mode, onClose, onRecorded }: CorrectionD
     (kind === 'DROP_QUESTION' || optionId !== '') &&
     !saving;
 
+  const correctionBody = (): CorrectionBody => ({
+    kind,
+    ...(kind === 'ACCEPT_OPTION' ? { optionId: Number(optionId) } : {}),
+    reason: reason.trim(),
+  });
+
+  /** Works out, with the server, what this correction would do before the user is asked to confirm. */
+  const askToConfirm = async () => {
+    setConfirming(true);
+    setPreview(null);
+    setPreviewError(null);
+    try {
+      setPreview(await trainingAdminAPI.previewCorrection(row.questionVersionId, correctionBody()));
+    } catch (error) {
+      setPreviewError(adminErrorMessage(error, "We couldn't work out what this would change."));
+    }
+  };
+
   const chosenOption = (options ?? []).find((option) => String(option.id) === optionId);
 
   const save = async () => {
@@ -115,11 +137,10 @@ export function CorrectionDialog({ row, mode, onClose, onRecorded }: CorrectionD
     setFailure(null);
     setIssues([]);
     try {
-      const correction = await trainingAdminAPI.addCorrection(row.questionVersionId, {
-        kind,
-        ...(kind === 'ACCEPT_OPTION' ? { optionId: Number(optionId) } : {}),
-        reason: reason.trim(),
-      });
+      const correction = await trainingAdminAPI.addCorrection(
+        row.questionVersionId,
+        correctionBody(),
+      );
       setRecorded(true);
       setHistory((current) => [...current, correction]);
       setRescore(correction.rescore ?? null);
@@ -232,7 +253,7 @@ export function CorrectionDialog({ row, mode, onClose, onRecorded }: CorrectionD
             {showForm ? 'Cancel' : 'Close'}
           </Button>
           {showForm && (
-            <Button type="button" disabled={!canSave} onClick={() => setConfirming(true)}>
+            <Button type="button" disabled={!canSave} onClick={() => void askToConfirm()}>
               {saving ? 'Recording...' : 'Record correction'}
             </Button>
           )}
@@ -251,10 +272,30 @@ export function CorrectionDialog({ row, mode, onClose, onRecorded }: CorrectionD
                 No one&rsquo;s record, certification or access changes by itself; you will see which
                 past attempts would pass or fail differently and decide what to do.
               </AlertDialogDescription>
+              <p className="text-sm font-medium" data-testid="correction-effect" aria-live="polite">
+                {preview
+                  ? describeCorrectionPreview(preview)
+                  : previewError
+                    ? previewError
+                    : 'Working out how many past attempts this changes...'}
+              </p>
             </AlertDialogHeader>
             <AlertDialogFooter>
               <AlertDialogCancel>Go back</AlertDialogCancel>
-              <AlertDialogAction onClick={() => void save()}>Record correction</AlertDialogAction>
+              <AlertDialogAction
+                disabled={!preview}
+                onClick={(event) => {
+                  if (!preview) event.preventDefault();
+                  else void save();
+                }}
+              >
+                Record correction
+              </AlertDialogAction>
+              {previewError && (
+                <Button type="button" variant="outline" onClick={() => void askToConfirm()}>
+                  Try again
+                </Button>
+              )}
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>

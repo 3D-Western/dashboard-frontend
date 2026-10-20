@@ -5,9 +5,9 @@ import {
   VideoUploadError,
   putToStorage,
   readVideoDuration,
+  readVideoInfo,
   uploadVideo,
   videoFileProblem,
-  videoLengthProblem,
 } from './video-upload';
 
 vi.mock('@/api/client/training-admin', () => ({
@@ -68,12 +68,17 @@ afterEach(() => {
 });
 
 describe('videoFileProblem', () => {
-  it('accepts an MP4 of reasonable size', () => {
+  it('accepts an MP4 of reasonable size, and the other formats the server stores', () => {
     expect(videoFileProblem({ type: 'video/mp4', size: 1000 })).toBeNull();
+    expect(videoFileProblem({ type: 'video/quicktime', size: 1000 })).toBeNull();
+    expect(videoFileProblem({ type: 'video/webm', size: 1000 })).toBeNull();
   });
 
   it('explains why a file cannot be uploaded', () => {
-    expect(videoFileProblem({ type: 'video/quicktime', size: 1000 })).toMatch(/MP4/);
+    expect(videoFileProblem({ type: 'video/x-matroska', size: 1000 })).toMatch(
+      /encode-training-video\.sh/,
+    );
+    expect(videoFileProblem({ type: '', size: 1000 })).toMatch(/unknown type/);
     expect(videoFileProblem({ type: 'video/mp4', size: 0 })).toMatch(/empty/);
     expect(videoFileProblem({ type: 'video/mp4', size: MAX_VIDEO_BYTES + 1 })).toMatch(/1 GB/);
   });
@@ -170,23 +175,32 @@ describe('uploadVideo', () => {
     });
   });
 
-  it('refuses a file of the wrong type without calling the server', async () => {
-    const file = new File(['x'], 'clip.mov', { type: 'video/quicktime' });
+  it('asks for an upload URL of the file’s own format', async () => {
+    api.getVideoUploadUrl.mockResolvedValue({
+      assetKey: 'videos/abc.mov',
+      method: 'PUT',
+      uploadUrl: 'https://storage.test/videos/abc.mov',
+      requiredHeaders: {},
+      expiresAt: '2026-10-20T13:00:00Z',
+    });
+    const file = new File([new Uint8Array(50)], 'clip.mov', { type: 'video/quicktime' });
+
+    const pending = uploadVideo(file, vi.fn());
+    await vi.waitFor(() => expect(FakeXhr.last?.url).toBe('https://storage.test/videos/abc.mov'));
+    FakeXhr.last.finish(200);
+
+    await expect(pending).resolves.toBe('videos/abc.mov');
+    expect(api.getVideoUploadUrl).toHaveBeenCalledWith({
+      contentType: 'video/quicktime',
+      sizeBytes: 50,
+    });
+  });
+
+  it('refuses a file of an unsupported type without calling the server', async () => {
+    const file = new File(['x'], 'clip.mkv', { type: 'video/x-matroska' });
 
     await expect(uploadVideo(file, vi.fn())).rejects.toMatchObject({ kind: 'rejected' });
     expect(api.getVideoUploadUrl).not.toHaveBeenCalled();
-  });
-});
-
-describe('videoLengthProblem', () => {
-  it('lets a video of ten minutes or less through, or one of unknown length', () => {
-    expect(videoLengthProblem(null)).toBeNull();
-    expect(videoLengthProblem(600)).toBeNull();
-  });
-
-  it('says how long a longer video is', () => {
-    expect(videoLengthProblem(601)).toMatch(/10 min 1 s long/);
-    expect(videoLengthProblem(725)).toMatch(/12 min 5 s/);
   });
 });
 
@@ -242,5 +256,43 @@ describe('readVideoDuration', () => {
     video.onerror();
 
     await expect(pending).resolves.toBeNull();
+  });
+});
+
+describe('readVideoInfo', () => {
+  it('reads length and picture size from the file', async () => {
+    vi.stubGlobal('URL', { createObjectURL: vi.fn(() => 'blob:x'), revokeObjectURL: vi.fn() });
+    const video = {
+      preload: '',
+      src: '',
+      duration: 61.2,
+      videoWidth: 1920,
+      videoHeight: 1080,
+      removeAttribute: vi.fn(),
+    } as unknown as { onloadedmetadata: () => void };
+    vi.spyOn(document, 'createElement').mockReturnValue(video as unknown as HTMLElement);
+
+    const pending = readVideoInfo(mp4());
+    video.onloadedmetadata();
+
+    await expect(pending).resolves.toEqual({ durationSeconds: 62, width: 1920, height: 1080 });
+  });
+
+  it('has unknowns when the browser reports none', async () => {
+    vi.stubGlobal('URL', { createObjectURL: vi.fn(() => 'blob:x'), revokeObjectURL: vi.fn() });
+    const video = {
+      duration: NaN,
+      videoWidth: 0,
+      videoHeight: 0,
+      removeAttribute: vi.fn(),
+    } as unknown as {
+      onloadedmetadata: () => void;
+    };
+    vi.spyOn(document, 'createElement').mockReturnValue(video as unknown as HTMLElement);
+
+    const pending = readVideoInfo(mp4());
+    video.onloadedmetadata();
+
+    await expect(pending).resolves.toEqual({ durationSeconds: null, width: null, height: null });
   });
 });

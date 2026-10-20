@@ -9,6 +9,7 @@ import type {
   ChecklistItem,
   Correction,
   CorrectionBody,
+  CorrectionPreview,
   CreateTrainingBody,
   EquipmentGroup,
   EquipmentGroupBody,
@@ -68,6 +69,8 @@ export const trainingAdminPaths = {
   corrections: (questionVersionId: number) =>
     `${ADMIN}/question-versions/${questionVersionId}/corrections`,
   rescore: (questionVersionId: number) => `${ADMIN}/question-versions/${questionVersionId}/rescore`,
+  previewCorrection: (questionVersionId: number) =>
+    `${ADMIN}/question-versions/${questionVersionId}/corrections/preview`,
   questionReport: (trainingId: number) => `${ADMIN}/trainings/${trainingId}/question-report`,
   importPreview: `${ADMIN}/import/preview`,
   importFile: `${ADMIN}/import`,
@@ -185,6 +188,9 @@ export const trainingAdminAPI = {
     get<Correction[]>(trainingAdminPaths.corrections(questionVersionId)),
   addCorrection: (questionVersionId: number, body: CorrectionBody) =>
     post<Correction>(trainingAdminPaths.corrections(questionVersionId), body),
+  /** What a correction would do to past attempts, without recording it. */
+  previewCorrection: (questionVersionId: number, body: CorrectionBody) =>
+    post<CorrectionPreview>(trainingAdminPaths.previewCorrection(questionVersionId), body),
   rescore: (questionVersionId: number) =>
     post<Rescore>(trainingAdminPaths.rescore(questionVersionId)),
   getQuestionReport: (trainingId: number) =>

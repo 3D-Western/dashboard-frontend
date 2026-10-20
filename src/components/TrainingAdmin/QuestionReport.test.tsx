@@ -19,6 +19,7 @@ vi.mock('@/api/client/training-admin', () => ({
     getQuestion: vi.fn(),
     listCorrections: vi.fn(),
     addCorrection: vi.fn(),
+    previewCorrection: vi.fn(),
     rescore: vi.fn(),
   },
 }));
@@ -98,6 +99,13 @@ const correction = (overrides: Partial<Correction> = {}): Correction => ({
 });
 
 beforeEach(() => {
+  api.previewCorrection.mockResolvedValue({
+    attemptsAsked: 12,
+    scoreChanged: 5,
+    failToPass: 3,
+    passToFail: 0,
+    skippedAnswers: 0,
+  });
   api.getQuestionReport.mockResolvedValue(rows);
   api.getQuestion.mockResolvedValue(
     createAdminQuestion({
@@ -170,6 +178,7 @@ describe('QuestionReport corrections', () => {
   async function recordAndConfirm(dialog: HTMLElement) {
     await userEvent.click(within(dialog).getByRole('button', { name: /record correction/i }));
     const confirm = await screen.findByRole('alertdialog');
+    await within(confirm).findByText(/this changes the score/i);
     await userEvent.click(within(confirm).getByRole('button', { name: /record correction/i }));
   }
 
@@ -298,7 +307,9 @@ describe('QuestionReport correction confirmation', () => {
     }
     await userEvent.type(within(dialog).getByLabelText('Reason'), 'Because');
     await userEvent.click(within(dialog).getByRole('button', { name: /record correction/i }));
-    return screen.findByRole('alertdialog');
+    const confirm = await screen.findByRole('alertdialog');
+    await within(confirm).findByTestId('correction-effect');
+    return confirm;
   }
 
   it('states the effect of accepting another answer, and records nothing until confirmed', async () => {
@@ -317,6 +328,62 @@ describe('QuestionReport correction confirmation', () => {
 
     expect(confirm).toHaveTextContent(/no longer counts toward anyone.s score/i);
     expect(confirm).toHaveTextContent(/left out of new quizzes/i);
+  });
+
+  it('says how many past attempts it changes and how many would flip to a pass', async () => {
+    const confirm = await ready('ACCEPT_OPTION');
+
+    await within(confirm).findByText(
+      'This changes the score of 5 past attempts; 3 would change from fail to pass.',
+    );
+    expect(api.previewCorrection).toHaveBeenCalledWith(502, {
+      kind: 'ACCEPT_OPTION',
+      optionId: 22,
+      reason: 'Because',
+    });
+  });
+
+  it('also says when some would change from pass to fail', async () => {
+    api.previewCorrection.mockResolvedValue({
+      attemptsAsked: 4,
+      scoreChanged: 4,
+      failToPass: 1,
+      passToFail: 2,
+      skippedAnswers: 0,
+    });
+    const confirm = await ready('DROP_QUESTION');
+
+    await within(confirm).findByText(/2 would change from pass to fail/);
+    expect(api.previewCorrection).toHaveBeenCalledWith(502, {
+      kind: 'DROP_QUESTION',
+      reason: 'Because',
+    });
+  });
+
+  it('says when nobody has been asked the question yet', async () => {
+    api.previewCorrection.mockResolvedValue({
+      attemptsAsked: 0,
+      scoreChanged: 0,
+      failToPass: 0,
+      passToFail: 0,
+      skippedAnswers: 0,
+    });
+    const confirm = await ready('DROP_QUESTION');
+
+    await within(confirm).findByText(/no one has been asked this question yet/i);
+  });
+
+  it('will not record until the numbers are known, and offers another try if they fail', async () => {
+    api.previewCorrection.mockRejectedValueOnce(new ApiError('REQUEST_FAILED', 'offline'));
+    const confirm = await ready('DROP_QUESTION');
+
+    await within(confirm).findByText(/couldn.t work out what this would change|reach the server/i);
+    expect(within(confirm).getByRole('button', { name: /record correction/i })).toBeDisabled();
+    await userEvent.click(within(confirm).getByRole('button', { name: /try again/i }));
+
+    await within(confirm).findByText(/this changes the score of 5/i);
+    expect(within(confirm).getByRole('button', { name: /record correction/i })).toBeEnabled();
+    expect(api.addCorrection).not.toHaveBeenCalled();
   });
 
   it('records nothing when the user goes back', async () => {

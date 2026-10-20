@@ -26,8 +26,11 @@ describe('validateStep', () => {
     expect(validateStep('VIDEO', videoForm({ duration: '' }))).toBeNull();
   });
 
-  it('keeps the video length to 1..600 whole seconds', () => {
-    expect(validateStep('VIDEO', videoForm({ duration: '601' }))?.duration).toMatch(/10 minutes/);
+  it('accepts a video over ten minutes, and refuses only an absurd length or a non-number', () => {
+    expect(validateStep('VIDEO', videoForm({ duration: '900' }))).toBeNull();
+    expect(validateStep('VIDEO', videoForm({ duration: '86401' }))?.duration).toMatch(
+      /longer than a day/,
+    );
     expect(validateStep('VIDEO', videoForm({ duration: '0' }))?.duration).toBeTruthy();
     expect(validateStep('VIDEO', videoForm({ duration: '4.5' }))?.duration).toBeTruthy();
   });

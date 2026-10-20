@@ -1,9 +1,9 @@
 import { describe, it, expect, vi, beforeEach, type Mock } from 'vitest';
-import { screen, waitFor, within } from '@testing-library/react';
+import { fireEvent, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { ApiError } from '@/api/client/errors';
 import { trainingAdminAPI } from '@/api/client/training-admin';
-import { uploadVideo, readVideoDuration } from '@/lib/video-upload';
+import { uploadVideo, readVideoInfo } from '@/lib/video-upload';
 import { renderInTraining } from '@test/utils/renderTrainingAdmin';
 import {
   createAdminQuestion,
@@ -14,10 +14,17 @@ import {
 import type { AdminStep, StepType } from '@/types/training-admin';
 import { StepDialog } from './StepDialog';
 
+const videoInfo = (durationSeconds: number | null) => ({
+  durationSeconds,
+  width: 1280,
+  height: 720,
+});
+
 vi.mock('@/api/client/training-admin', () => ({
   trainingAdminAPI: {
     getTraining: vi.fn(),
     addStep: vi.fn(),
+    getStepPlaybackUrl: vi.fn(),
     updateStep: vi.fn(),
     setBlueprint: vi.fn(),
     createTopic: vi.fn(),
@@ -27,10 +34,11 @@ vi.mock('@/api/client/training-admin', () => ({
 
 vi.mock('@/lib/video-upload', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@/lib/video-upload')>();
-  return { ...actual, uploadVideo: vi.fn(), readVideoDuration: vi.fn() };
+  return { ...actual, uploadVideo: vi.fn(), readVideoInfo: vi.fn() };
 });
 
 const api = trainingAdminAPI as unknown as {
+  getStepPlaybackUrl: Mock;
   addStep: Mock;
   updateStep: Mock;
   setBlueprint: Mock;
@@ -88,7 +96,7 @@ beforeEach(() => {
 describe('StepDialog video steps', () => {
   it('uploads a file, fills in its length, and saves the step with its checkpoints', async () => {
     (uploadVideo as unknown as Mock).mockResolvedValue('videos/intro.mp4');
-    (readVideoDuration as unknown as Mock).mockResolvedValue(180);
+    (readVideoInfo as unknown as Mock).mockResolvedValue(videoInfo(180));
     const { onClose, onSaved } = await open('VIDEO');
 
     await userEvent.type(title(), 'Meet the machine');
@@ -421,5 +429,170 @@ describe('StepDialog video preview', () => {
     expect(
       screen.queryByRole('button', { name: /preview the uploaded video/i }),
     ).not.toBeInTheDocument();
+  });
+});
+
+/** happy-dom does not play media, so the video element's state is driven from the test. */
+function controlVideo(video: HTMLVideoElement, duration = 180) {
+  const state = { currentTime: 0 };
+  Object.defineProperty(video, 'duration', { configurable: true, get: () => duration });
+  Object.defineProperty(video, 'currentTime', {
+    configurable: true,
+    get: () => state.currentTime,
+    set: (value: number) => {
+      state.currentTime = value;
+    },
+  });
+  return {
+    state,
+    loaded: () => fireEvent.loadedMetadata(video),
+    at: (seconds: number) => {
+      state.currentTime = seconds;
+      fireEvent.timeUpdate(video);
+    },
+  };
+}
+
+describe('StepDialog placing questions on the video', () => {
+  const mp4 = new File([new Uint8Array(10)], 'intro.mp4', { type: 'video/mp4' });
+
+  async function chooseAndLoad(finishUpload = false) {
+    (uploadVideo as unknown as Mock).mockReturnValue(
+      finishUpload ? Promise.resolve('videos/intro.mp4') : new Promise(() => {}),
+    );
+    (readVideoInfo as unknown as Mock).mockResolvedValue(videoInfo(180));
+    Object.assign(URL, { createObjectURL: vi.fn(() => 'blob:local'), revokeObjectURL: vi.fn() });
+    const view = await open('VIDEO');
+    await userEvent.type(title(), 'Intro');
+    await userEvent.upload(screen.getByLabelText(/choose a video file/i), mp4);
+    const video = (await screen.findByLabelText('Video preview')) as HTMLVideoElement;
+    const control = controlVideo(video);
+    control.loaded();
+    return { ...view, video, control };
+  }
+
+  it('plays the chosen file in the dialog while it is still uploading', async () => {
+    const { video } = await chooseAndLoad();
+
+    expect(video).toHaveAttribute('src', 'blob:local');
+    expect(screen.getByRole('progressbar')).toBeInTheDocument();
+    expect(screen.getByText('0:00 / 3:00')).toBeInTheDocument();
+  });
+
+  it('adds a question at the moment you stopped at, as a row and a marker', async () => {
+    const { control } = await chooseAndLoad();
+    control.at(95);
+
+    await userEvent.click(screen.getByRole('button', { name: /add question here/i }));
+
+    expect(screen.getByRole('textbox', { name: /question 1 appears at/i })).toHaveValue('95');
+    expect(screen.getByRole('button', { name: 'Question at 1:35' })).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    );
+  });
+
+  it('saves the checkpoint at the second it was placed', async () => {
+    const { control } = await chooseAndLoad(true);
+    await screen.findByText(/uploaded intro\.mp4/i);
+    control.at(40.9);
+    await userEvent.click(screen.getByRole('button', { name: /add question here/i }));
+    await userEvent.selectOptions(screen.getByLabelText('Question 1'), '501');
+
+    await userEvent.click(screen.getByRole('button', { name: /^add step$/i }));
+
+    await waitFor(() => expect(api.addStep).toHaveBeenCalled());
+    expect(api.addStep.mock.calls[0][1].settings.checkpoints).toEqual([
+      { atSeconds: 40, questionVersionId: 501 },
+    ]);
+  });
+
+  it('typing a time still works, and moves the marker', async () => {
+    const { control } = await chooseAndLoad();
+    control.at(20);
+    await userEvent.click(screen.getByRole('button', { name: /add question here/i }));
+
+    const time = screen.getByRole('textbox', { name: /question 1 appears at/i });
+    await userEvent.clear(time);
+    await userEvent.type(time, '75');
+
+    expect(screen.getByRole('button', { name: 'Question at 1:15' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Question at 0:20' })).not.toBeInTheDocument();
+  });
+
+  it('typed questions show on the timeline even before there is a preview', async () => {
+    await open('VIDEO');
+    await userEvent.click(screen.getByRole('button', { name: /^add a question$/i }));
+    await userEvent.type(screen.getByRole('textbox', { name: /question 1 appears at/i }), '30');
+
+    // no player yet: nothing to scrub, but the row is there to be filled in
+    expect(screen.queryByLabelText('Video preview')).not.toBeInTheDocument();
+    expect(screen.getByRole('textbox', { name: /question 1 appears at/i })).toHaveValue('30');
+  });
+
+  it('a marker is removed from the timeline or from its row', async () => {
+    const { control } = await chooseAndLoad();
+    control.at(20);
+    await userEvent.click(screen.getByRole('button', { name: /add question here/i }));
+    control.at(100);
+    await userEvent.click(screen.getByRole('button', { name: /add question here/i }));
+    expect(screen.getAllByRole('button', { name: /^Question at/ })).toHaveLength(2);
+
+    // the second one is selected: remove it from the timeline
+    await userEvent.click(screen.getByRole('button', { name: /remove it/i }));
+    expect(screen.queryByRole('button', { name: 'Question at 1:40' })).not.toBeInTheDocument();
+
+    // the first is removed from its row
+    await userEvent.click(screen.getByRole('button', { name: 'Remove question 1' }));
+    expect(screen.queryByRole('button', { name: /^Question at/ })).not.toBeInTheDocument();
+  });
+
+  it('fills in the length from the player when it is still empty', async () => {
+    (uploadVideo as unknown as Mock).mockReturnValue(new Promise(() => {}));
+    (readVideoInfo as unknown as Mock).mockResolvedValue(videoInfo(null));
+    Object.assign(URL, { createObjectURL: vi.fn(() => 'blob:local'), revokeObjectURL: vi.fn() });
+    await open('VIDEO');
+    await userEvent.upload(screen.getByLabelText(/choose a video file/i), mp4);
+    const video = (await screen.findByLabelText('Video preview')) as HTMLVideoElement;
+
+    controlVideo(video, 242.3).loaded();
+
+    expect(screen.getByRole('textbox', { name: /video length/i })).toHaveValue('243');
+  });
+
+  it('plays the stored video in the same player, with the questions marked', async () => {
+    api.getStepPlaybackUrl.mockResolvedValue({
+      url: 'https://storage.test/videos/a.mp4?sig=1',
+      expiresAt: 'x',
+      durationSeconds: 120,
+    });
+    const step = createAdminStep({
+      id: 11,
+      type: 'VIDEO',
+      title: 'Intro',
+      videoAssetKey: 'videos/a.mp4',
+      videoDurationSeconds: 120,
+      settings: { outcomes: ['watched'], checkpoints: [{ atSeconds: 30, questionVersionId: 501 }] },
+    });
+    await open('VIDEO', { step });
+
+    await userEvent.click(screen.getByRole('button', { name: /preview the uploaded video/i }));
+
+    const video = (await screen.findByLabelText('Video preview')) as HTMLVideoElement;
+    expect(video).toHaveAttribute('src', 'https://storage.test/videos/a.mp4?sig=1');
+    controlVideo(video, 120).loaded();
+    expect(screen.getByRole('button', { name: 'Question at 0:30' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /fresh link/i })).toBeInTheDocument();
+  });
+
+  it('accepts a video over ten minutes in the form', async () => {
+    await open('VIDEO');
+    await userEvent.type(title(), 'Long one');
+    await userEvent.type(screen.getByRole('textbox', { name: /video length/i }), '900');
+
+    await userEvent.click(screen.getByRole('button', { name: /^add step$/i }));
+
+    await waitFor(() => expect(api.addStep).toHaveBeenCalled());
+    expect(api.addStep.mock.calls[0][1].videoDurationSeconds).toBe(900);
   });
 });

@@ -10,14 +10,17 @@ import { ErrorNote } from './feedback';
 interface VideoPreviewProps {
   versionId: number;
   stepId: number;
+  /** Receives the short-lived link to the stored video. */
+  onUrl: (url: string) => void;
+  /** True once a link has been loaded; the button then offers a fresh one. */
+  loaded?: boolean;
 }
 
 /**
- * Lets staff watch the video that is stored for a step. The link comes from the server when asked
- * for and lasts a short while; asking again gives a fresh one.
+ * Asks the server for a link to watch the video that is already stored for a step. The link lasts
+ * a short while; asking again gives a fresh one. Playing it is up to the caller.
  */
-export function VideoPreview({ versionId, stepId }: VideoPreviewProps) {
-  const [url, setUrl] = useState<string | null>(null);
+export function VideoPreview({ versionId, stepId, onUrl, loaded = false }: VideoPreviewProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -25,9 +28,8 @@ export function VideoPreview({ versionId, stepId }: VideoPreviewProps) {
     setLoading(true);
     setError(null);
     try {
-      setUrl((await trainingAdminAPI.getStepPlaybackUrl(versionId, stepId)).url);
+      onUrl((await trainingAdminAPI.getStepPlaybackUrl(versionId, stepId)).url);
     } catch (err) {
-      setUrl(null);
       setError(adminErrorMessage(err, "We couldn't load the video."));
     } finally {
       setLoading(false);
@@ -36,26 +38,16 @@ export function VideoPreview({ versionId, stepId }: VideoPreviewProps) {
 
   return (
     <div className="space-y-2">
-      {url ? (
-        <>
-          <video
-            src={url}
-            controls
-            playsInline
-            preload="metadata"
-            aria-label="Video preview"
-            className="aspect-video w-full rounded-lg bg-black"
-            onError={() => setError('The video could not be played. The link may have expired.')}
-          />
-          <Button type="button" variant="ghost" size="sm" onClick={() => void load()}>
-            Load a fresh link
-          </Button>
-        </>
-      ) : (
-        <Button type="button" variant="outline" disabled={loading} onClick={() => void load()}>
-          <Play /> {loading ? 'Loading...' : 'Preview the uploaded video'}
-        </Button>
-      )}
+      <Button
+        type="button"
+        variant={loaded ? 'ghost' : 'outline'}
+        size={loaded ? 'sm' : 'default'}
+        disabled={loading}
+        onClick={() => void load()}
+      >
+        {!loaded && <Play />}{' '}
+        {loading ? 'Loading...' : loaded ? 'Load a fresh link' : 'Preview the uploaded video'}
+      </Button>
       <ErrorNote message={error} />
     </div>
   );

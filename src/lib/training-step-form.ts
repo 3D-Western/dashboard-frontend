@@ -34,7 +34,8 @@ export interface StepFormErrors {
   rows: Record<number, { at?: string; question?: string }>;
 }
 
-export const MAX_VIDEO_SECONDS = 600;
+/** A typo guard (a whole day), not a policy: videos over 10 minutes only draw a warning. */
+export const LONGEST_VIDEO_SECONDS = 86_400;
 export const MAX_CHECKPOINTS = 20;
 export const OUTCOME_NAME = /^[A-Za-z][A-Za-z0-9_.:-]*$/;
 
@@ -86,8 +87,8 @@ export function validateStep(type: StepType, values: StepFormValues): StepFormEr
       if (!/^\d+$/.test(durationText) || Number(durationText) < 1) {
         errors.duration = 'Enter the length in whole seconds.';
         fail();
-      } else if (Number(durationText) > MAX_VIDEO_SECONDS) {
-        errors.duration = 'Videos are 10 minutes (600 seconds) or less.';
+      } else if (Number(durationText) > LONGEST_VIDEO_SECONDS) {
+        errors.duration = 'That is longer than a day. Enter the length in seconds.';
         fail();
       } else {
         duration = Number(durationText);

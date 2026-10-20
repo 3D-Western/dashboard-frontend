@@ -1,5 +1,4 @@
 import { trainingAdminAPI } from '@/api/client/training-admin';
-import { MAX_VIDEO_SECONDS } from '@/lib/training-step-form';
 
 /** Largest file the server will sign an upload URL for (1 GB). */
 export const MAX_VIDEO_BYTES = 1_073_741_824;
@@ -7,11 +6,9 @@ export const MAX_VIDEO_BYTES = 1_073_741_824;
 /** How long to wait for a file to report its length before giving up on knowing it. */
 export const DURATION_PROBE_TIMEOUT_MS = 5000;
 
-/** Why a video of [seconds] cannot be used, or null when it is short enough. */
-export function videoLengthProblem(seconds: number | null): string | null {
-  if (seconds === null || seconds <= MAX_VIDEO_SECONDS) return null;
-  return `This video is ${Math.floor(seconds / 60)} min ${seconds % 60} s long. Videos must be 10 minutes (${MAX_VIDEO_SECONDS} seconds) or less; shorten it or split it into two steps.`;
-}
+/** Formats the server will take. MP4 is the one we want; the others only draw a warning. */
+export const UPLOADABLE_TYPES = ['video/mp4', 'video/quicktime', 'video/webm'] as const;
+export type UploadableType = (typeof UPLOADABLE_TYPES)[number];
 
 export class VideoUploadError extends Error {
   constructor(
@@ -27,10 +24,10 @@ export class VideoUploadError extends Error {
 /** Headers a browser sets itself; trying to set them throws or is ignored. */
 const BROWSER_SET_HEADERS = new Set(['host', 'content-length']);
 
-/** Why this file cannot be uploaded, or null if it can. */
+/** Why this file cannot be uploaded, or null if it can. A format that is merely not ideal is a warning, not a problem. */
 export function videoFileProblem(file: { type: string; size: number }): string | null {
-  if (file.type !== 'video/mp4') {
-    return 'Only MP4 videos can be uploaded. Encode the video as MP4 (H.264) first.';
+  if (!(UPLOADABLE_TYPES as readonly string[]).includes(file.type)) {
+    return `This kind of file (${file.type || 'unknown type'}) cannot be uploaded. Run scripts/encode-training-video.sh on it to make an MP4, then upload that.`;
   }
   if (file.size < 1) return 'That file is empty.';
   if (file.size > MAX_VIDEO_BYTES) return 'That video is larger than 1 GB.';
@@ -96,44 +93,65 @@ export async function uploadVideo(
   const problem = videoFileProblem(file);
   if (problem) throw new VideoUploadError(problem, 'rejected');
   const target = await trainingAdminAPI.getVideoUploadUrl({
-    contentType: 'video/mp4',
+    contentType: file.type as UploadableType,
     sizeBytes: file.size,
   });
   await putToStorage(target.uploadUrl, target.requiredHeaders ?? {}, file, onProgress, signal);
   return target.assetKey;
 }
 
+/** What the browser can tell about a local video without uploading it. */
+export interface VideoInfo {
+  /** Whole seconds, rounded up; null when unknown. */
+  durationSeconds: number | null;
+  width: number | null;
+  height: number | null;
+}
+
+const UNKNOWN_VIDEO: VideoInfo = { durationSeconds: null, width: null, height: null };
+
 /**
- * The length of a local video in whole seconds (rounded up), read from the file itself. Gives
- * null if the browser cannot read it, or does not answer within [timeoutMs].
+ * Reads the length and picture size of a local video from the file itself. Gives unknowns if the
+ * browser cannot read it, or does not answer within [timeoutMs].
  */
-export function readVideoDuration(
+export function readVideoInfo(
   file: Blob,
   timeoutMs: number = DURATION_PROBE_TIMEOUT_MS,
-): Promise<number | null> {
+): Promise<VideoInfo> {
   return new Promise((resolve) => {
     if (typeof document === 'undefined' || typeof URL.createObjectURL !== 'function') {
-      resolve(null);
+      resolve(UNKNOWN_VIDEO);
       return;
     }
     const url = URL.createObjectURL(file);
     const video = document.createElement('video');
     let done = false;
-    const timer = setTimeout(() => finish(null), timeoutMs);
-    const finish = (seconds: number | null) => {
+    const timer = setTimeout(() => finish(UNKNOWN_VIDEO), timeoutMs);
+    const finish = (info: VideoInfo) => {
       if (done) return;
       done = true;
       clearTimeout(timer);
       URL.revokeObjectURL(url);
       video.removeAttribute('src');
-      resolve(seconds);
+      resolve(info);
     };
     video.preload = 'metadata';
     video.onloadedmetadata = () =>
-      finish(
-        Number.isFinite(video.duration) && video.duration > 0 ? Math.ceil(video.duration) : null,
-      );
-    video.onerror = () => finish(null);
+      finish({
+        durationSeconds:
+          Number.isFinite(video.duration) && video.duration > 0 ? Math.ceil(video.duration) : null,
+        width: video.videoWidth > 0 ? video.videoWidth : null,
+        height: video.videoHeight > 0 ? video.videoHeight : null,
+      });
+    video.onerror = () => finish(UNKNOWN_VIDEO);
     video.src = url;
   });
+}
+
+/** Just the length, in whole seconds (rounded up). */
+export async function readVideoDuration(
+  file: Blob,
+  timeoutMs: number = DURATION_PROBE_TIMEOUT_MS,
+): Promise<number | null> {
+  return (await readVideoInfo(file, timeoutMs)).durationSeconds;
 }

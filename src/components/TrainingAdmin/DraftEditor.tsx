@@ -23,7 +23,7 @@ import type {
 } from '@/types/training-admin';
 import { AuthorOnly } from './AuthorOnly';
 import { ChecklistEditor } from './ChecklistEditor';
-import { ErrorNote, IssueList, LoadState } from './feedback';
+import { ErrorNote, IssueList, LoadState, WarningList } from './feedback';
 import { PublishDialog } from './PublishDialog';
 import { StepDialog } from './StepDialog';
 import { StepList } from './StepList';
@@ -121,6 +121,7 @@ function DraftEditorBody({
   const [published, setPublished] = useState(false);
   const [checking, setChecking] = useState(false);
   const [issues, setIssues] = useState<ValidationIssue[]>([]);
+  const [warnings, setWarnings] = useState<ValidationIssue[]>([]);
   const [checked, setChecked] = useState<boolean | null>(null);
   const [checkError, setCheckError] = useState<string | null>(null);
 
@@ -130,6 +131,7 @@ function DraftEditorBody({
     try {
       const result = await trainingAdminAPI.publishCheck(draftId, 'MINOR');
       setIssues(result.issues);
+      setWarnings(result.warnings ?? []);
       setChecked(result.ready);
       if (result.ready) toast.success('The draft is ready to publish.');
     } catch (err) {
@@ -187,12 +189,17 @@ function DraftEditorBody({
             issues={issues.filter((issue) => stepPositionOfIssue(issue) === null)}
             title="Not ready to publish"
           />
+          <WarningList
+            issues={warnings.filter((issue) => stepPositionOfIssue(issue) === null)}
+            title="Worth a look (this does not stop you publishing)"
+          />
 
           <AuthorOnly>
             <StepList
               versionId={draftId}
               steps={data.version.steps}
               issues={issues}
+              warnings={warnings}
               onEdit={(step) => setEditing({ step, type: step.type })}
               onReordered={(version) => setData({ ...data, version })}
               onDeleted={reload}

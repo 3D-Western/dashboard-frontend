@@ -26,6 +26,8 @@ interface StepListProps {
   steps: AdminStep[];
   /** Problems from the publish check; those for a step are shown under it. */
   issues: ValidationIssue[];
+  /** Warnings from the publish check, shown under their step in amber. */
+  warnings?: ValidationIssue[];
   onEdit: (step: AdminStep) => void;
   /** The server returned the whole draft after a reorder. */
   onReordered: (version: VersionDetail) => void;
@@ -38,6 +40,7 @@ export function StepList({
   versionId,
   steps,
   issues,
+  warnings = [],
   onEdit,
   onReordered,
   onDeleted,
@@ -92,6 +95,9 @@ export function StepList({
       <ol className="space-y-3">
         {steps.map((step, index) => {
           const stepIssues = issues.filter((issue) => stepPositionOfIssue(issue) === step.position);
+          const stepWarnings = warnings.filter(
+            (issue) => stepPositionOfIssue(issue) === step.position,
+          );
           return (
             <li
               key={step.id}
@@ -153,6 +159,16 @@ export function StepList({
                   </Button>
                 </div>
               </div>
+              {stepWarnings.length > 0 && (
+                <ul
+                  aria-label="Warnings"
+                  className="mt-3 space-y-1 rounded-lg border border-yellow-600/40 bg-yellow-500/5 p-3 text-sm text-yellow-800 dark:text-yellow-500"
+                >
+                  {stepWarnings.map((issue) => (
+                    <li key={issue.message}>{issue.message}</li>
+                  ))}
+                </ul>
+              )}
               {stepIssues.length > 0 && (
                 <ul className="mt-3 space-y-1 rounded-lg border border-destructive/40 bg-destructive/5 p-3 text-sm text-destructive">
                   {stepIssues.map((issue) => (
