@@ -37,7 +37,7 @@ describe('ThemeToggle', () => {
     expect(output).toContain('disabled');
   });
 
-  it('cycles through light -> dark -> system -> light', async () => {
+  it('switches straight between light and dark', async () => {
     const user = userEvent.setup();
     render(<ThemeToggle />);
 
@@ -47,10 +47,6 @@ describe('ThemeToggle', () => {
 
     const darkButton = await screen.findByLabelText(/dark mode/i);
     await user.click(darkButton);
-    expect(setThemeSpy).toHaveBeenLastCalledWith('system');
-
-    const systemButton = await screen.findByLabelText(/system mode/i);
-    await user.click(systemButton);
     expect(setThemeSpy).toHaveBeenLastCalledWith('light');
   });
 

@@ -103,6 +103,7 @@ export function MFAForm({
         <CardContent className="grid flex-1 p-0 md:grid-cols-2">
           <Form {...form}>
             <form
+              method="post"
               onSubmit={form.handleSubmit(onSubmit)}
               className="flex flex-col items-center justify-center p-6 md:p-8"
             >
@@ -155,7 +156,7 @@ export function MFAForm({
               </div>
             </form>
           </Form>
-          <div className="relative hidden min-h-[500px] bg-muted md:block">
+          <div className="relative hidden min-h-[500px] md:block">
             <BrandMark className="p-12" />
           </div>
         </CardContent>

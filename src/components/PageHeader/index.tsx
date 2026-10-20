@@ -39,8 +39,10 @@ function getParentPages(pathname: string) {
 
 export function PageHeader() {
   const pathname = usePathname();
-  const title = pageTitles[pathname] || 'Dashboard';
-  const parents = pageTitles[pathname] ? getParentPages(pathname) : [];
+  const isJobDetail = pathname.startsWith(`${Routes.jobs.home}/`) && !pageTitles[pathname];
+  const title = pageTitles[pathname] || (isJobDetail ? 'Job Details' : 'Dashboard');
+  // A job's details page has no fixed title, but still sits under My Jobs
+  const parents = pageTitles[pathname] || isJobDetail ? getParentPages(pathname) : [];
 
   return (
     <Breadcrumb className="min-w-0">

@@ -17,14 +17,21 @@ function renderSidebar(user: User) {
 
 describe('AppSidebar', () => {
   describe('navigation items visible to all users', () => {
-    it('shows Dashboard, Print History, My Jobs, and New Job links', () => {
+    it('shows Dashboard and My Jobs links', () => {
       const user = createMockUser();
       renderSidebar(user);
 
       expect(screen.getByRole('link', { name: /dashboard/i })).toBeInTheDocument();
-      expect(screen.getByRole('link', { name: /print history/i })).toBeInTheDocument();
       expect(screen.getByRole('link', { name: /my jobs/i })).toBeInTheDocument();
-      expect(screen.getByRole('link', { name: /new job/i })).toBeInTheDocument();
+    });
+
+    // Print History and New Job were merged into My Jobs
+    it('no longer shows separate Print History or New Job links', () => {
+      const user = createMockUser();
+      renderSidebar(user);
+
+      expect(screen.queryByRole('link', { name: /print history/i })).not.toBeInTheDocument();
+      expect(screen.queryByRole('link', { name: /new job/i })).not.toBeInTheDocument();
     });
 
     // Launch-scope regression: Equipment Booking exists in the codebase but isn't part of the

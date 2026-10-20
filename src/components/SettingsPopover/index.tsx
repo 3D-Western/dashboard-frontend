@@ -2,14 +2,14 @@
 
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { logout } from '@/lib/auth';
-import { LogOut, Settings, Moon, Sun, Monitor } from 'lucide-react';
+import { LogOut, Settings, Moon, Sun } from 'lucide-react';
 import { useTheme } from 'next-themes';
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
 
 export function SettingsPopover() {
   const [open, setOpen] = useState(false);
-  const { theme, setTheme } = useTheme();
+  const { theme, resolvedTheme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -22,42 +22,18 @@ export function SettingsPopover() {
     window.location.href = '/login';
   };
 
-  const cycleTheme = () => {
-    if (theme === 'light') {
-      setTheme('dark');
-    } else if (theme === 'dark') {
-      setTheme('system');
-    } else {
-      setTheme('light');
-    }
-  };
+  // Light <-> dark, based on what's on screen (same behaviour as ThemeToggle)
+  const isDark = (resolvedTheme ?? theme) === 'dark';
+  const cycleTheme = () => setTheme(isDark ? 'light' : 'dark');
 
   const getThemeIcon = () => {
     if (!mounted) return <Sun className="h-4 w-4" />;
-    switch (theme) {
-      case 'light':
-        return <Sun className="h-4 w-4" />;
-      case 'dark':
-        return <Moon className="h-4 w-4" />;
-      case 'system':
-        return <Monitor className="h-4 w-4" />;
-      default:
-        return <Sun className="h-4 w-4" />;
-    }
+    return isDark ? <Moon className="h-4 w-4" /> : <Sun className="h-4 w-4" />;
   };
 
   const getThemeLabel = () => {
     if (!mounted) return 'Theme';
-    switch (theme) {
-      case 'light':
-        return 'Light';
-      case 'dark':
-        return 'Dark';
-      case 'system':
-        return 'System';
-      default:
-        return 'Theme';
-    }
+    return isDark ? 'Dark' : 'Light';
   };
 
   return (

@@ -337,9 +337,8 @@ describe('LoginForm Integration', () => {
     it('displays "Forgot password" link', () => {
       render(<LoginForm />);
 
-      const forgotPasswordLink = screen.getByText(/forgot your password/i);
-      expect(forgotPasswordLink).toBeInTheDocument();
-      expect(forgotPasswordLink.closest('a')).toHaveAttribute('href', '/forgot-password');
+      const forgotPasswordLink = screen.getByRole('link', { name: /forgot password/i });
+      expect(forgotPasswordLink).toHaveAttribute('href', '/forgot-password');
     });
 
     it('displays "Sign up" link', () => {

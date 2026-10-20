@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Copy, Eye, EyeOff } from 'lucide-react';
 import { memo, useState } from 'react';
 import { toast } from 'sonner';
+import { copyToClipboard } from '@/lib/clipboard';
 
 interface InvitationCodeCellProps {
   code: string;
@@ -16,7 +17,7 @@ export const InvitationCodeCell = memo(function InvitationCodeCell({
 
   const handleCopy = async () => {
     try {
-      await navigator.clipboard.writeText(code);
+      await copyToClipboard(code);
       toast.success('Invitation code copied to clipboard');
     } catch (error) {
       console.error('Failed to copy invitation code:', error);

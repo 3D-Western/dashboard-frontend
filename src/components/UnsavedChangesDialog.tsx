@@ -63,13 +63,23 @@ export function UnsavedChangesDialog({ isDirty }: { isDirty: boolean }) {
         <AlertDialogHeader>
           <AlertDialogTitle>Leave this page?</AlertDialogTitle>
           <AlertDialogDescription>
-            You have unsaved changes. Leaving will discard them.
+            Your changes haven&apos;t been saved. If you leave now, they&apos;ll be lost.
           </AlertDialogDescription>
         </AlertDialogHeader>
 
-        <AlertDialogFooter>
-          <AlertDialogCancel>Stay</AlertDialogCancel>
-          <AlertDialogAction onClick={() => closeDialog(nextUrl.current)}>Leave</AlertDialogAction>
+        {/* Two equal, full-width buttons, with staying (the safe choice) as the main one */}
+        <AlertDialogFooter className="grid grid-cols-2 gap-3 sm:grid sm:gap-3">
+          <AlertDialogAction
+            variant="outline"
+            size="pill"
+            className="w-full"
+            onClick={() => closeDialog(nextUrl.current)}
+          >
+            Leave page
+          </AlertDialogAction>
+          <AlertDialogCancel variant="default" size="pill" className="w-full">
+            Keep editing
+          </AlertDialogCancel>
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>

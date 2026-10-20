@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { render, screen, waitFor, within } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import NewPrintForm from '@/app/(protected)/dashboard/jobs/print/new/components/PrintJobForm';
 import { jobApi } from '@/api/client/job';
@@ -51,10 +51,10 @@ describe('NewPrintForm Integration', () => {
     it('renders all fields correctly', () => {
       render(<NewPrintForm />);
       expect(screen.getByLabelText(/Project Title/i)).toBeInTheDocument();
-      expect(screen.getByLabelText(/Print Description/i)).toBeInTheDocument();
-      expect(screen.getByText(/Project Purpose/i)).toBeInTheDocument();
-      expect(screen.getByText(/Design Intent/i)).toBeInTheDocument();
-      expect(screen.getByText(/Upload STL/i)).toBeInTheDocument();
+      expect(screen.getByLabelText(/^Description$/i)).toBeInTheDocument();
+      expect(screen.getByRole('radiogroup', { name: /what's it for/i })).toBeInTheDocument();
+      expect(screen.getByRole('radiogroup', { name: /how will it be used/i })).toBeInTheDocument();
+      expect(screen.getByText(/STL file/i)).toBeInTheDocument();
     });
 
     it('has submit button', () => {
@@ -90,7 +90,7 @@ describe('NewPrintForm Integration', () => {
     it('shows error for short description', async () => {
       const user = setupUser();
       render(<NewPrintForm />);
-      const descriptionField = screen.getByLabelText(/Print Description/i);
+      const descriptionField = screen.getByLabelText(/^Description$/i);
       await user.type(descriptionField, 'A');
       const submitButton = screen.getByRole('button', { name: /Submit/i });
       await user.click(submitButton);
@@ -101,26 +101,23 @@ describe('NewPrintForm Integration', () => {
       });
     });
 
-    it('shows error when Project Purpose is not selected', async () => {
+    it("shows error when what it's for is not selected", async () => {
       const user = setupUser();
       render(<NewPrintForm />);
       const submitButton = screen.getByRole('button', { name: /Submit/i });
       await user.click(submitButton);
       await waitFor(() => {
-        // Look for error message specifically, not placeholder text
-        const errorMessages = screen.getAllByText(/Select a purpose/i);
-        const errorMessage = errorMessages.find((el) => el.closest('[data-slot="form-message"]'));
-        expect(errorMessage).toBeInTheDocument();
+        expect(screen.getByText(/Select what it's for/i)).toBeInTheDocument();
       });
     });
 
-    it('shows error when Design Intent is not selected', async () => {
+    it('shows error when how it will be used is not selected', async () => {
       const user = setupUser();
       render(<NewPrintForm />);
       const submitButton = screen.getByRole('button', { name: /Submit/i });
       await user.click(submitButton);
       await waitFor(() => {
-        expect(screen.getByText(/Select a design intent/i)).toBeInTheDocument();
+        expect(screen.getByText(/Select how it will be used/i)).toBeInTheDocument();
       });
     });
 
@@ -147,26 +144,28 @@ describe('NewPrintForm Integration', () => {
     it('accepts valid description input', async () => {
       const user = setupUser();
       render(<NewPrintForm />);
-      const descriptionField = screen.getByLabelText(/Print Description/i);
+      const descriptionField = screen.getByLabelText(/^Description$/i);
       await user.type(descriptionField, 'This is a test description for my print job');
       expect(descriptionField).toHaveValue('This is a test description for my print job');
     });
 
-    it('purpose select is interactive', async () => {
-      render(<NewPrintForm />);
-      // Get the first combobox which should be the purpose select
-      const allComboboxes = screen.getAllByRole('combobox');
-      const purposeCombobox = allComboboxes[0];
-      const purposeSpan = within(purposeCombobox).getByText('Select a purpose');
-      expect(purposeSpan).toBeInTheDocument();
-    });
-
-    it('design intent radio buttons work', async () => {
+    it('picking a purpose chip selects only that one', async () => {
       const user = setupUser();
       render(<NewPrintForm />);
-      const functionalRadio = screen.getByLabelText(/Optimized for standard fit/i);
-      await user.click(functionalRadio);
-      expect(functionalRadio).toBeChecked();
+      const school = screen.getByRole('radio', { name: 'School Project' });
+      const casual = screen.getByRole('radio', { name: 'Casual / Recreation' });
+      await user.click(casual);
+      await user.click(school);
+      expect(school).toBeChecked();
+      expect(casual).not.toBeChecked();
+    });
+
+    it('picking a design intent card selects it', async () => {
+      const user = setupUser();
+      render(<NewPrintForm />);
+      const functional = screen.getByRole('radio', { name: 'Functional' });
+      await user.click(functional);
+      expect(functional).toBeChecked();
     });
   });
 
@@ -174,15 +173,10 @@ describe('NewPrintForm Integration', () => {
     const fillRequiredFields = async (user: ReturnType<typeof setupUser>) => {
       const nameField = screen.getByLabelText(/Project Title/i);
       await user.type(nameField, 'Test Print Job');
-      const descriptionField = screen.getByLabelText(/Print Description/i);
+      const descriptionField = screen.getByLabelText(/^Description$/i);
       await user.type(descriptionField, 'This is a test description');
-      // Use role-based query for combobox instead of label text
-      const purposeTrigger = screen.getAllByRole('combobox')[0];
-      await user.click(purposeTrigger);
-      const purposeOption = await screen.findByRole('option', { name: /Casual \/ Recreation/i });
-      await user.click(purposeOption);
-      const designIntentRadio = screen.getByLabelText(/Optimized for standard fit/i);
-      await user.click(designIntentRadio);
+      await user.click(screen.getByRole('radio', { name: 'Casual / Recreation' }));
+      await user.click(screen.getByRole('radio', { name: 'Functional' }));
       const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
       const file = new File(['dummy'], 'model.stl', { type: 'model/stl' });
       await user.upload(fileInput, file);
@@ -230,7 +224,7 @@ describe('NewPrintForm Integration', () => {
       render(<NewPrintForm />);
       const nameField = screen.getByLabelText(/Project Title/i);
       await user.type(nameField, 'Test');
-      const descriptionField = screen.getByLabelText(/Print Description/i);
+      const descriptionField = screen.getByLabelText(/^Description$/i);
       await user.type(descriptionField, 'Test description');
       const submitButton = screen.getByRole('button', { name: /Submit/i });
       expect(submitButton).toBeInTheDocument();
@@ -259,6 +253,9 @@ describe('NewPrintForm Integration', () => {
       await user.click(submitButton);
       await waitFor(() => {
         expect(jobApi.createJob).toHaveBeenCalledTimes(1);
+        expect(
+          JSON.parse(vi.mocked(jobApi.createJob).mock.calls[0][0].formAnswerJson),
+        ).toMatchObject({ purpose: 'casual', design_intent: 'functional' });
         expect(jobApi.uploadJobFile).toHaveBeenCalledTimes(1);
         expect(jobApi.completeUpload).toHaveBeenCalledTimes(1);
         expect(mockPush).toHaveBeenCalledWith('/dashboard/jobs');

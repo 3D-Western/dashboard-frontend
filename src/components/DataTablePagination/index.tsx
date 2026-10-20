@@ -15,7 +15,8 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { useCallback } from 'react';
 
 interface DataTablePaginationProps<TData> {
-  table: Table<TData>;
+  // Only needed for the selection count; list views without a table can leave it out
+  table?: Table<TData>;
   // Accept either the full PaginationMetadata or a lightweight partial
   // shape (used by some tests) for compatibility.
   pagination: PaginationMetadata | Partial<PaginationMetadata>;
@@ -57,7 +58,7 @@ export function DataTablePagination<TData>({
         Page {currentPage} of {totalPages}
       </div>
 
-      {showSelectionCount && (
+      {showSelectionCount && table && (
         <div className="text-sm text-muted-foreground">
           {table.getFilteredSelectedRowModel().rows.length} of{' '}
           {table.getFilteredRowModel().rows.length} row(s) selected.

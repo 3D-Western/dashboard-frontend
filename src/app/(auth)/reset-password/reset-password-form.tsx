@@ -4,7 +4,7 @@ import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { FieldDescription } from '@/components/ui/field';
-import { Input } from '@/components/ui/input';
+import { PasswordInput } from '@/components/ui/password-input';
 import {
   Form,
   FormControl,
@@ -94,7 +94,7 @@ export function ResetPasswordForm({ className, ...props }: React.ComponentProps<
                 </FieldDescription>
               </div>
             </div>
-            <div className="relative hidden min-h-[500px] bg-muted md:block">
+            <div className="relative hidden min-h-[500px] md:block">
               <BrandMark className="p-12" />
             </div>
           </CardContent>
@@ -108,7 +108,10 @@ export function ResetPasswordForm({ className, ...props }: React.ComponentProps<
       <Card className="overflow-hidden p-0">
         <CardContent className="grid p-0 md:grid-cols-2">
           <Form {...form}>
+            {/* method="post": if someone submits before the page's JavaScript has loaded, the
+                browser's fallback submit must not put the password in the URL */}
             <form
+              method="post"
               onSubmit={form.handleSubmit(onSubmit)}
               className="flex min-h-[500px] items-center p-6 md:p-8"
             >
@@ -127,7 +130,7 @@ export function ResetPasswordForm({ className, ...props }: React.ComponentProps<
                     <FormItem>
                       <FormLabel>New Password</FormLabel>
                       <FormControl>
-                        <Input type="password" {...field} />
+                        <PasswordInput autoComplete="new-password" {...field} />
                       </FormControl>
                       <FormMessage />
                       <FieldDescription>Must be at least 10 characters</FieldDescription>
@@ -142,7 +145,7 @@ export function ResetPasswordForm({ className, ...props }: React.ComponentProps<
                     <FormItem>
                       <FormLabel>Confirm Password</FormLabel>
                       <FormControl>
-                        <Input type="password" {...field} />
+                        <PasswordInput autoComplete="new-password" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -162,7 +165,7 @@ export function ResetPasswordForm({ className, ...props }: React.ComponentProps<
               </div>
             </form>
           </Form>
-          <div className="relative hidden min-h-[500px] bg-muted md:block">
+          <div className="relative hidden min-h-[500px] md:block">
             <BrandMark className="p-12" />
           </div>
         </CardContent>
