@@ -29,6 +29,7 @@ export const TrainingErrorCodes = {
   QUIZ_INCOMPLETE: 'QUIZ_INCOMPLETE',
   ATTESTATION_NOT_ACCEPTED: 'ATTESTATION_NOT_ACCEPTED',
   VALIDATION_FAILED: 'VALIDATION_FAILED',
+  ORIENTATION_REQUIRED: 'ORIENTATION_REQUIRED',
 } as const;
 
 function detailsOf(error: ApiError): Record<string, unknown> {
@@ -121,6 +122,8 @@ export function trainingErrorMessage(
       return 'Tick the box to confirm before continuing.';
     case TrainingErrorCodes.WRONG_STEP_TYPE:
       return 'That action does not match this step. Reload the page and try again.';
+    case TrainingErrorCodes.ORIENTATION_REQUIRED:
+      return 'Finish Maker Orientation to submit prints.';
     case TrainingErrorCodes.VALIDATION_FAILED:
       return 'Something in that request was not valid. Reload the page and try again.';
     case TrainingErrorCodes.AGREEMENT_SUPERSEDED:

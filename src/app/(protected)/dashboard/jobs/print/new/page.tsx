@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import PrintJobForm from './components/PrintJobForm';
+import { PrintSubmissionGate } from './components/PrintSubmissionGate';
 import PageTitle from '@/components/PageTitle';
 
 export const metadata: Metadata = {
@@ -17,7 +17,7 @@ export default function NewPrintJobPage() {
         description="Upload your 3D model and specify your printing requirements"
       />
 
-      <PrintJobForm mockMode={mockMode} />
+      <PrintSubmissionGate mockMode={mockMode} />
     </div>
   );
 }

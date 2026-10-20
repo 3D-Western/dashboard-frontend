@@ -32,7 +32,11 @@ beforeEach(() => push.mockClear());
 describe('OrientationPrompt', () => {
   it('leads a new member to Maker Orientation, and starts it in one tap', async () => {
     api.startAttempt.mockResolvedValue(createAttempt({ attemptId: 5 }));
-    renderPrompt({ orientationComplete: false, trainings: [createTrainingSummary()] });
+    renderPrompt({
+      orientationComplete: false,
+      orientationRequired: true,
+      trainings: [createTrainingSummary()],
+    });
 
     expect(
       await screen.findByRole('heading', { name: /start with maker orientation/i }),
@@ -46,6 +50,7 @@ describe('OrientationPrompt', () => {
   it('continues an orientation that is already under way', async () => {
     renderPrompt({
       orientationComplete: false,
+      orientationRequired: true,
       trainings: [createTrainingSummary({ nextAction: 'RESUME', inProgressAttemptId: 9 })],
     });
 
@@ -61,6 +66,7 @@ describe('OrientationPrompt', () => {
   it('links to the training page when orientation cannot be started right now', async () => {
     renderPrompt({
       orientationComplete: false,
+      orientationRequired: true,
       trainings: [
         createTrainingSummary({ nextAction: 'BLOCKED', blockedReason: 'RETRY_COOLDOWN' }),
       ],
@@ -85,6 +91,7 @@ describe('OrientationPrompt', () => {
       api.startAttempt.mockResolvedValue(createAttempt({ attemptId: 8 }));
       renderPrompt({
         orientationComplete: false,
+        orientationRequired: true,
         trainings: [createTrainingSummary({ certification: started, nextAction: 'START' })],
       });
 
@@ -99,6 +106,7 @@ describe('OrientationPrompt', () => {
     it('shows the retry time during the cooldown, with a link instead of a start button', async () => {
       renderPrompt({
         orientationComplete: false,
+        orientationRequired: true,
         trainings: [
           createTrainingSummary({
             certification: started,
@@ -121,6 +129,7 @@ describe('OrientationPrompt', () => {
     it('offers Try again once the cooldown has run out', async () => {
       renderPrompt({
         orientationComplete: false,
+        orientationRequired: true,
         trainings: [
           createTrainingSummary({
             certification: started,
@@ -138,6 +147,7 @@ describe('OrientationPrompt', () => {
   it('shows nothing once orientation is complete', async () => {
     const { container } = renderPrompt({
       orientationComplete: true,
+      orientationRequired: true,
       trainings: [createTrainingSummary({ nextAction: 'NONE' })],
     });
 
@@ -148,6 +158,7 @@ describe('OrientationPrompt', () => {
   it('shows nothing when there is no orientation to lead to', async () => {
     const { container } = renderPrompt({
       orientationComplete: false,
+      orientationRequired: true,
       trainings: [createTrainingSummary({ kind: 'EQUIPMENT', slug: 'laser' })],
     });
 
@@ -156,7 +167,11 @@ describe('OrientationPrompt', () => {
   });
 
   it('does not lock anything: it only offers a way in', async () => {
-    renderPrompt({ orientationComplete: false, trainings: [createTrainingSummary()] });
+    renderPrompt({
+      orientationComplete: false,
+      orientationRequired: true,
+      trainings: [createTrainingSummary()],
+    });
     await screen.findByRole('heading', { name: /maker orientation/i });
 
     expect(screen.queryByText(/locked|blocked|unavailable|cannot use/i)).not.toBeInTheDocument();
@@ -165,7 +180,11 @@ describe('OrientationPrompt', () => {
   it('shows why starting failed', async () => {
     const { ApiError } = await import('@/api/client/errors');
     api.startAttempt.mockRejectedValue(new ApiError('TRAINING_NOT_AVAILABLE'));
-    renderPrompt({ orientationComplete: false, trainings: [createTrainingSummary()] });
+    renderPrompt({
+      orientationComplete: false,
+      orientationRequired: true,
+      trainings: [createTrainingSummary()],
+    });
 
     await userEvent.click(await screen.findByRole('button', { name: /start orientation/i }));
 

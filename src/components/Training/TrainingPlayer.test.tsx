@@ -90,6 +90,7 @@ const attemptAt = (statuses: Parameters<typeof steps>[0], overrides: Partial<Att
 beforeEach(() => {
   api.getMyTrainings.mockResolvedValue({
     orientationComplete: false,
+    orientationRequired: true,
     trainings: [createTrainingSummary({ nextAction: 'NONE' })],
   });
 });

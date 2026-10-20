@@ -36,6 +36,7 @@ describe('TrainingSummary (dashboard home)', () => {
   it('shows a loading state, then real certification data', async () => {
     renderSummary({
       orientationComplete: true,
+      orientationRequired: true,
       trainings: [
         createTrainingSummary({ certification: cert(), nextAction: 'NONE' }),
         createTrainingSummary({
@@ -58,7 +59,11 @@ describe('TrainingSummary (dashboard home)', () => {
   });
 
   it('links to the training page', async () => {
-    renderSummary({ orientationComplete: false, trainings: [createTrainingSummary()] });
+    renderSummary({
+      orientationComplete: false,
+      orientationRequired: true,
+      trainings: [createTrainingSummary()],
+    });
 
     expect(await screen.findByRole('link', { name: /go to training/i })).toHaveAttribute(
       'href',
@@ -67,7 +72,11 @@ describe('TrainingSummary (dashboard home)', () => {
   });
 
   it('nudges to start something when nothing is certified yet', async () => {
-    renderSummary({ orientationComplete: false, trainings: [createTrainingSummary()] });
+    renderSummary({
+      orientationComplete: false,
+      orientationRequired: true,
+      trainings: [createTrainingSummary()],
+    });
 
     expect(await screen.findByText(/aren't certified in anything yet/i)).toBeInTheDocument();
     expect(screen.getByText(/start maker orientation/i)).toBeInTheDocument();
@@ -77,6 +86,7 @@ describe('TrainingSummary (dashboard home)', () => {
   it('nudges to carry on with a training in progress', async () => {
     renderSummary({
       orientationComplete: false,
+      orientationRequired: true,
       trainings: [
         createTrainingSummary({
           certification: cert('IN_PROGRESS'),
@@ -94,6 +104,7 @@ describe('TrainingSummary (dashboard home)', () => {
   it('shows "Not passed yet" (not "In progress") after a failed attempt', async () => {
     renderSummary({
       orientationComplete: false,
+      orientationRequired: true,
       trainings: [
         createTrainingSummary({ certification: cert('IN_PROGRESS'), nextAction: 'START' }),
       ],
@@ -109,6 +120,7 @@ describe('TrainingSummary (dashboard home)', () => {
   it('nudges about a refresher', async () => {
     renderSummary({
       orientationComplete: true,
+      orientationRequired: true,
       trainings: [
         createTrainingSummary({
           certification: cert('REFRESHER_DUE'),
@@ -122,7 +134,7 @@ describe('TrainingSummary (dashboard home)', () => {
   });
 
   it('has an empty state', async () => {
-    renderSummary({ orientationComplete: false, trainings: [] });
+    renderSummary({ orientationComplete: false, orientationRequired: true, trainings: [] });
 
     expect(await screen.findByText(/no trainings to take yet/i)).toBeInTheDocument();
   });
@@ -136,7 +148,11 @@ describe('TrainingSummary (dashboard home)', () => {
     );
 
     expect(await screen.findByText(/couldn't load your training/i)).toBeInTheDocument();
-    getMyTrainings.mockResolvedValue({ orientationComplete: false, trainings: [] });
+    getMyTrainings.mockResolvedValue({
+      orientationComplete: false,
+      orientationRequired: true,
+      trainings: [],
+    });
     await userEvent.click(screen.getByRole('button', { name: /try again/i }));
     expect(await screen.findByText(/no trainings to take yet/i)).toBeInTheDocument();
   });

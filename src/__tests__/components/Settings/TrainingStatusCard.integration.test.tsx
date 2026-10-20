@@ -41,7 +41,11 @@ describe('TrainingStatusCard (certifications)', () => {
 
     expect(await screen.findByText(/unable to load your training status/i)).toBeInTheDocument();
 
-    getMyTrainings.mockResolvedValue({ orientationComplete: true, trainings: [] });
+    getMyTrainings.mockResolvedValue({
+      orientationComplete: true,
+      orientationRequired: true,
+      trainings: [],
+    });
     await userEvent.click(screen.getByRole('button', { name: /try again|retry/i }));
     expect(await screen.findByText('No certifications yet')).toBeInTheDocument();
   });
@@ -49,6 +53,7 @@ describe('TrainingStatusCard (certifications)', () => {
   it('renders an empty state with a link to training when nothing is started', async () => {
     getMyTrainings.mockResolvedValue({
       orientationComplete: false,
+      orientationRequired: true,
       trainings: [createTrainingSummary()],
     });
 
@@ -64,6 +69,7 @@ describe('TrainingStatusCard (certifications)', () => {
   it('lists each certification with its status and when it is valid', async () => {
     getMyTrainings.mockResolvedValue({
       orientationComplete: true,
+      orientationRequired: true,
       trainings: [
         createTrainingSummary({
           slug: 'orientation',
@@ -102,6 +108,7 @@ describe('TrainingStatusCard (certifications)', () => {
   it('shows an add-on deadline', async () => {
     getMyTrainings.mockResolvedValue({
       orientationComplete: true,
+      orientationRequired: true,
       trainings: [
         createTrainingSummary({
           certification: cert({ addonRequired: true, addonDueAt: '2099-02-01T00:00:00Z' }),
@@ -117,6 +124,7 @@ describe('TrainingStatusCard (certifications)', () => {
   it('no longer has the test-only level toggle', async () => {
     getMyTrainings.mockResolvedValue({
       orientationComplete: true,
+      orientationRequired: true,
       trainings: [createTrainingSummary({ certification: cert() })],
     });
 
