@@ -1,4 +1,6 @@
+import { AgreementsGate } from '@/components/Agreements/AgreementsGate';
 import { AppSidebar } from '@/components/AppSidebar';
+import { loadPendingAgreements } from '@/lib/agreements';
 import { PageHeader } from '@/components/PageHeader';
 import { SidebarInset, SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
 import { validateSession } from '@/lib/auth';
@@ -28,6 +30,12 @@ export default async function ProtectedLayout({ children }: { children: React.Re
     if (!onboardingCompleted) {
       redirect(Routes.onboarding);
     }
+  }
+
+  // Agreements (terms, waiver, ...) must be accepted before anything else in the dashboard.
+  const pendingAgreements = await loadPendingAgreements();
+  if (pendingAgreements.length > 0) {
+    return <AgreementsGate agreements={pendingAgreements} />;
   }
 
   return (

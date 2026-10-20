@@ -1,78 +1,93 @@
 'use client';
 
-import { Check } from 'lucide-react';
+import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { useTrainingLevel } from '@/hooks/useTraining';
-import { cn } from '@/lib/utils';
-import { TrainingLevel } from '@/types/training';
+import { CertificationBadge } from '@/components/Training/CertificationBadge';
+import { isCertified } from '@/lib/training-format';
+import { Routes } from '@/lib/routes';
+import { useTrainings } from '@/providers/trainings-provider';
+import type { TrainingSummary as Training } from '@/types/training';
 import { DashboardSection } from './DashboardSection';
 
-const LEVELS: { level: TrainingLevel; label: string }[] = [
-  { level: 'LEVEL_1', label: 'Level 1' },
-  { level: 'LEVEL_2', label: 'Level 2' },
-];
+/** The one thing worth nudging a member about: finish something, or start something. */
+function nextStepFor(trainings: Training[]): string | null {
+  const resume = trainings.find((t) => t.nextAction === 'RESUME');
+  if (resume) return `Pick up ${resume.title} where you left off.`;
+  const due = trainings.find(
+    (t) => t.nextAction === 'START_REFRESHER' || t.nextAction === 'START_ADDON',
+  );
+  if (due) {
+    return due.nextAction === 'START_REFRESHER'
+      ? `${due.title} needs a quick refresher.`
+      : `${due.title} has new material to complete.`;
+  }
+  const waiting = trainings.find((t) => t.nextAction === 'AWAITING_SIGNOFF');
+  if (waiting) return `${waiting.title}: find a supervisor for your in-person sign-off.`;
+  const fresh = trainings.find((t) => t.nextAction === 'START');
+  if (fresh) return `Start ${fresh.title}.`;
+  return null;
+}
 
-// Only the user's training level exists in the API for now. Per-certification badges and a
-// "Go to training" button come with the training page.
 export function TrainingSummary() {
-  const { trainingLevel, isLoading, error, refetch } = useTrainingLevel();
-  const completed = trainingLevel ? LEVELS.findIndex((l) => l.level === trainingLevel) + 1 : 0;
+  const { data, isLoading, error, refetch } = useTrainings();
 
   return (
     <DashboardSection id="training" title="Training">
       {isLoading ? (
         <div className="space-y-3" role="status" aria-label="Loading training">
           <Skeleton className="h-4 w-40" />
-          <div className="flex gap-3">
-            <Skeleton className="size-14 rounded-lg" />
-            <Skeleton className="size-14 rounded-lg" />
-          </div>
+          <Skeleton className="h-8 w-full" />
+          <Skeleton className="h-8 w-full" />
         </div>
-      ) : error ? (
+      ) : error || !data ? (
         <div className="space-y-3">
           <p className="text-sm text-muted-foreground">We couldn&apos;t load your training.</p>
-          <Button variant="outline" size="sm" onClick={refetch}>
+          <Button variant="outline" size="sm" onClick={() => void refetch()}>
             Try again
           </Button>
         </div>
       ) : (
-        <div className="space-y-4">
-          <p className="text-sm text-muted-foreground">
-            {completed === 0
-              ? "You haven't started training yet. Talk to makerspace staff to get started."
-              : completed === LEVELS.length
-                ? "You've completed every training level."
-                : `You've completed Level ${completed}. Level ${completed + 1} is next.`}
-          </p>
-          <ol
-            className="flex gap-3"
-            aria-label={`${completed} of ${LEVELS.length} levels complete`}
-          >
-            {LEVELS.map(({ level, label }, i) => {
-              const done = i < completed;
-              return (
-                <li key={level} className="flex flex-col items-center gap-1.5">
-                  <span
-                    className={cn(
-                      'flex size-14 items-center justify-center rounded-lg',
-                      done
-                        ? 'bg-linear-to-br from-purple-dark to-purple-light text-white'
-                        : 'border border-dashed border-border bg-muted',
-                    )}
-                  >
-                    {done && <Check className="size-5" aria-hidden="true" />}
-                  </span>
-                  <span className={cn('text-xs', !done && 'text-muted-foreground')}>
-                    {label}
-                    <span className="sr-only">{done ? ' (complete)' : ' (not complete)'}</span>
-                  </span>
-                </li>
-              );
-            })}
-          </ol>
-        </div>
+        <TrainingSummaryBody trainings={data.trainings} />
       )}
     </DashboardSection>
+  );
+}
+
+function TrainingSummaryBody({ trainings }: { trainings: Training[] }) {
+  if (trainings.length === 0) {
+    return (
+      <p className="text-sm text-muted-foreground">
+        There are no trainings to take yet. Check back soon.
+      </p>
+    );
+  }
+
+  const certified = trainings.filter(isCertified).length;
+  const next = nextStepFor(trainings);
+
+  return (
+    <div className="space-y-4">
+      <p className="text-sm text-muted-foreground">
+        {certified === 0
+          ? "You aren't certified in anything yet."
+          : `You're certified in ${certified} of ${trainings.length} ${trainings.length === 1 ? 'training' : 'trainings'}.`}
+        {next && ` ${next}`}
+      </p>
+      <ul className="divide-y rounded-lg border">
+        {trainings.map((training) => (
+          <li
+            key={training.slug}
+            className="flex items-center justify-between gap-3 px-3 py-2.5 text-sm"
+          >
+            <span className="min-w-0 truncate">{training.title}</span>
+            <CertificationBadge status={training.certification?.status} />
+          </li>
+        ))}
+      </ul>
+      <Button asChild variant="outline" className="w-full">
+        <Link href={Routes.training.home}>Go to training</Link>
+      </Button>
+    </div>
   );
 }

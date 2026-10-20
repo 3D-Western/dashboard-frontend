@@ -47,6 +47,24 @@ describe('PageHeader', () => {
     expect(screen.getByText('Job Management')).toBeInTheDocument();
   });
 
+  it('renders Training title for the training route', () => {
+    mockUsePathname.mockReturnValue(Routes.training.home);
+    render(<PageHeader />);
+
+    expect(screen.getByText('Training')).toBeInTheDocument();
+  });
+
+  it('renders a training session under Training', () => {
+    mockUsePathname.mockReturnValue(Routes.training.attempt(42));
+    render(<PageHeader />);
+
+    expect(screen.getByText('Training Session')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Training' })).toHaveAttribute(
+      'href',
+      Routes.training.home,
+    );
+  });
+
   it('renders Dashboard as default title for unknown route', () => {
     mockUsePathname.mockReturnValue('/unknown-route');
     render(<PageHeader />);
