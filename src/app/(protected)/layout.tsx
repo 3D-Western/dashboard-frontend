@@ -14,7 +14,12 @@ import { redirect } from 'next/navigation';
 export const dynamic = 'force-dynamic';
 
 export default async function ProtectedLayout({ children }: { children: React.ReactNode }) {
-  const currentUser = await validateSession();
+  // The agreements check runs alongside the session check (it needs the same cookies), so it adds
+  // no extra wait. It never throws: see loadPendingAgreements.
+  const [currentUser, pendingAgreements] = await Promise.all([
+    validateSession(),
+    loadPendingAgreements(),
+  ]);
 
   if (!currentUser) {
     redirect('/login?error=unauthenticated');
@@ -33,7 +38,6 @@ export default async function ProtectedLayout({ children }: { children: React.Re
   }
 
   // Agreements (terms, waiver, ...) must be accepted before anything else in the dashboard.
-  const pendingAgreements = await loadPendingAgreements();
   if (pendingAgreements.length > 0) {
     return <AgreementsGate agreements={pendingAgreements} />;
   }

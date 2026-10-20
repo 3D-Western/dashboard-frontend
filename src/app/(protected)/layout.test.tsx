@@ -45,7 +45,8 @@ describe('ProtectedLayout onboarding gate', () => {
 
     expect(redirect).toHaveBeenCalledWith('/login?error=unauthenticated');
     expect(onboardingAPI.getStatus).not.toHaveBeenCalled();
-    expect(pending).not.toHaveBeenCalled();
+    // The agreements check runs in parallel with the session check, so it has been asked too
+    expect(pending).toHaveBeenCalledTimes(1);
   });
 
   it('does not check onboarding status while the check is disabled (TEMP toggle)', async () => {
