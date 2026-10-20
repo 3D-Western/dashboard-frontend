@@ -1,7 +1,11 @@
 import { Badge } from '@/components/ui/badge';
-import { CERTIFICATION_LABELS, CERTIFICATION_TONES, type StatusTone } from '@/lib/training-format';
+import {
+  CERTIFICATION_LABELS,
+  CERTIFICATION_TONES,
+  type DisplayStatus,
+  type StatusTone,
+} from '@/lib/training-format';
 import { cn } from '@/lib/utils';
-import type { CertificationStatus } from '@/types/training';
 
 const TONE_CLASS: Record<StatusTone, string> = {
   success: 'bg-status-green/15 text-status-green-foreground',
@@ -13,7 +17,7 @@ const TONE_CLASS: Record<StatusTone, string> = {
 
 interface CertificationBadgeProps {
   /** Null means the member has not started this training. */
-  status: CertificationStatus | null | undefined;
+  status: DisplayStatus | null | undefined;
   className?: string;
 }
 

@@ -49,7 +49,9 @@ export function MFAForm({
     setIsLoading(true);
     try {
       await sessionApi.verifyMfa(challengeId, values.otp);
-      toast.success('OTP verified successfully! Redirecting...');
+      // Short on purpose: the toast outlives the navigation (the Toaster is in the root layout) and
+      // used to linger over the next screen.
+      toast.success('OTP verified successfully! Redirecting...', { duration: 1500 });
       router.refresh();
       router.push(Routes.dashboard);
     } catch (error) {

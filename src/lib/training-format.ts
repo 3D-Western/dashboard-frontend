@@ -41,8 +41,15 @@ export function formatClock(totalSeconds: number): string {
   return `${minutes}:${seconds.toString().padStart(2, '0')}`;
 }
 
-export const CERTIFICATION_LABELS: Record<CertificationStatus, string> = {
+/**
+ * What to show for a training. The backend leaves the certification at IN_PROGRESS after a failed
+ * (or cancelled) attempt, so IN_PROGRESS with no attempt actually open means "not passed yet".
+ */
+export type DisplayStatus = CertificationStatus | 'NOT_PASSED';
+
+export const CERTIFICATION_LABELS: Record<DisplayStatus, string> = {
   IN_PROGRESS: 'In progress',
+  NOT_PASSED: 'Not passed yet',
   AWAITING_SIGNOFF: 'Awaiting sign-off',
   ACTIVE: 'Certified',
   REFRESHER_DUE: 'Refresher due',
@@ -52,8 +59,9 @@ export const CERTIFICATION_LABELS: Record<CertificationStatus, string> = {
 
 export type StatusTone = 'success' | 'warning' | 'danger' | 'neutral' | 'info';
 
-export const CERTIFICATION_TONES: Record<CertificationStatus, StatusTone> = {
+export const CERTIFICATION_TONES: Record<DisplayStatus, StatusTone> = {
   IN_PROGRESS: 'info',
+  NOT_PASSED: 'warning',
   AWAITING_SIGNOFF: 'warning',
   ACTIVE: 'success',
   REFRESHER_DUE: 'warning',
@@ -61,11 +69,23 @@ export const CERTIFICATION_TONES: Record<CertificationStatus, StatusTone> = {
   REVOKED: 'danger',
 };
 
+/** The status to show for a training row, or null if the member has not started it. */
+export function displayStatus(training: TrainingSummary): DisplayStatus | null {
+  const status = training.certification?.status;
+  if (!status) return null;
+  if (status === 'IN_PROGRESS' && training.nextAction !== 'RESUME') return 'NOT_PASSED';
+  return status;
+}
+
+/** Started before, nothing open now, not certified: they have not passed yet. */
+export function isNotPassed(training: TrainingSummary): boolean {
+  return displayStatus(training) === 'NOT_PASSED';
+}
+
 /** The status line for a training row, in plain words. */
 export function statusLabel(training: TrainingSummary): string {
-  return training.certification
-    ? CERTIFICATION_LABELS[training.certification.status]
-    : 'Not started';
+  const status = displayStatus(training);
+  return status ? CERTIFICATION_LABELS[status] : 'Not started';
 }
 
 /** True when a training counts as "done" for the dashboard summary (certified, even if a refresher is due). */

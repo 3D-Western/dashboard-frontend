@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { CertificationBadge } from '@/components/Training/CertificationBadge';
-import { isCertified } from '@/lib/training-format';
+import { displayStatus, isCertified, isNotPassed } from '@/lib/training-format';
 import { Routes } from '@/lib/routes';
 import { useTrainings } from '@/providers/trainings-provider';
 import type { TrainingSummary as Training } from '@/types/training';
@@ -24,6 +24,10 @@ function nextStepFor(trainings: Training[]): string | null {
   }
   const waiting = trainings.find((t) => t.nextAction === 'AWAITING_SIGNOFF');
   if (waiting) return `${waiting.title}: find a supervisor for your in-person sign-off.`;
+  const retry = trainings.find((t) => isNotPassed(t) && t.nextAction === 'START');
+  if (retry) return `You haven't passed ${retry.title} yet. Try it again when you're ready.`;
+  const waitingToRetry = trainings.find((t) => isNotPassed(t) && t.nextAction === 'BLOCKED');
+  if (waitingToRetry) return `You haven't passed ${waitingToRetry.title} yet.`;
   const fresh = trainings.find((t) => t.nextAction === 'START');
   if (fresh) return `Start ${fresh.title}.`;
   return null;
@@ -81,7 +85,7 @@ function TrainingSummaryBody({ trainings }: { trainings: Training[] }) {
             className="flex items-center justify-between gap-3 px-3 py-2.5 text-sm"
           >
             <span className="min-w-0 truncate">{training.title}</span>
-            <CertificationBadge status={training.certification?.status} />
+            <CertificationBadge status={displayStatus(training)} />
           </li>
         ))}
       </ul>

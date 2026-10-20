@@ -5,7 +5,7 @@ import { Clock, Hourglass, ShieldCheck } from 'lucide-react';
 import { blockedMessage } from '@/api/client/training-errors';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
-import { daysUntil, formatDate } from '@/lib/training-format';
+import { daysUntil, displayStatus, formatDate, isNotPassed } from '@/lib/training-format';
 import { Routes } from '@/lib/routes';
 import type { SignoffFeedback, TrainingSummary } from '@/types/training';
 import { CertificationBadge } from './CertificationBadge';
@@ -27,7 +27,6 @@ export function TrainingCard({
   onStart,
   now = new Date(),
 }: TrainingCardProps) {
-  const { certification } = training;
   const cooldownOver =
     training.nextAction === 'BLOCKED' &&
     training.blockedReason === 'RETRY_COOLDOWN' &&
@@ -35,7 +34,7 @@ export function TrainingCard({
     new Date(training.retryAt).getTime() <= now.getTime();
 
   const startLabel: Record<string, string> = {
-    START: 'Start training',
+    START: isNotPassed(training) ? 'Try again' : 'Start training',
     START_ADDON: 'Complete the new material',
     START_REFRESHER: 'Start refresher',
   };
@@ -55,7 +54,7 @@ export function TrainingCard({
             {training.stepCount} {training.stepCount === 1 ? 'step' : 'steps'}
           </p>
         </div>
-        <CertificationBadge status={certification?.status} />
+        <CertificationBadge status={displayStatus(training)} />
       </div>
 
       {training.summary && <p className="text-sm">{training.summary}</p>}
@@ -63,6 +62,12 @@ export function TrainingCard({
       <CertificationDetails training={training} now={now} />
 
       {training.signoffFeedback && <SignoffFeedbackNote feedback={training.signoffFeedback} />}
+
+      {isNotPassed(training) && (
+        <p className="text-sm font-medium text-status-yellow-foreground">
+          You haven&apos;t passed this training yet.
+        </p>
+      )}
 
       {errorMessage && (
         <Alert variant="destructive">

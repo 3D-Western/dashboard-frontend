@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { CertificationBadge } from '@/components/Training/CertificationBadge';
-import { daysUntil, formatDate } from '@/lib/training-format';
+import { daysUntil, displayStatus, formatDate } from '@/lib/training-format';
 import { Routes } from '@/lib/routes';
 import { TrainingsProvider, useTrainings } from '@/providers/trainings-provider';
 import type { TrainingSummary } from '@/types/training';
@@ -74,7 +74,7 @@ function TrainingStatusCardContent() {
                       <p className="font-medium">{training.title}</p>
                       {note && <p className="text-xs text-muted-foreground">{note}</p>}
                     </div>
-                    <CertificationBadge status={training.certification?.status} />
+                    <CertificationBadge status={displayStatus(training)} />
                   </li>
                 );
               })}

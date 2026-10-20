@@ -91,6 +91,21 @@ describe('TrainingSummary (dashboard home)', () => {
     ).toBeInTheDocument();
   });
 
+  it('shows "Not passed yet" (not "In progress") after a failed attempt', async () => {
+    renderSummary({
+      orientationComplete: false,
+      trainings: [
+        createTrainingSummary({ certification: cert('IN_PROGRESS'), nextAction: 'START' }),
+      ],
+    });
+
+    const list = await screen.findByRole('list');
+    expect(within(list).getByText('Not passed yet')).toBeInTheDocument();
+    expect(within(list).queryByText('In progress')).not.toBeInTheDocument();
+    expect(screen.getByText(/haven't passed maker orientation yet/i)).toBeInTheDocument();
+    expect(screen.queryByText(/start maker orientation/i)).not.toBeInTheDocument();
+  });
+
   it('nudges about a refresher', async () => {
     renderSummary({
       orientationComplete: true,
