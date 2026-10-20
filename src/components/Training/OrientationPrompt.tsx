@@ -11,8 +11,8 @@ import { Routes } from '@/lib/routes';
 import { useTrainings } from '@/providers/trainings-provider';
 
 /**
- * Shown until Maker Orientation is done. It leads to the orientation and nothing else: no
- * feature is locked behind it yet (which features to lock is still an open question).
+ * Shown until Maker Orientation is done. It leads to the orientation. Print submission is locked
+ * behind it separately (OrientationLockNotice, `orientationRequired`); this prompt shows either way.
  */
 export function OrientationPrompt({ now = new Date() }: { now?: Date }) {
   const { data, refetch } = useTrainings();

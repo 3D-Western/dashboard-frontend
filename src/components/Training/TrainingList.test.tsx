@@ -277,6 +277,7 @@ describe('TrainingList', () => {
   it('lists orientation first, then equipment trainings by name', async () => {
     api.getMyTrainings.mockResolvedValue({
       orientationComplete: false,
+      orientationRequired: true,
       trainings: [
         createTrainingSummary({ slug: 'laser', title: 'Laser Cutter', kind: 'EQUIPMENT' }),
         createTrainingSummary({ slug: 'cnc', title: 'CNC Router', kind: 'EQUIPMENT' }),
@@ -296,6 +297,7 @@ describe('TrainingList', () => {
   it('starts a training and opens the player', async () => {
     api.getMyTrainings.mockResolvedValue({
       orientationComplete: false,
+      orientationRequired: true,
       trainings: [createTrainingSummary()],
     });
     api.startAttempt.mockResolvedValue(createAttempt({ attemptId: 88 }));
@@ -310,6 +312,7 @@ describe('TrainingList', () => {
   it('resumes the attempt the server says is already in progress', async () => {
     api.getMyTrainings.mockResolvedValue({
       orientationComplete: false,
+      orientationRequired: true,
       trainings: [createTrainingSummary()],
     });
     api.startAttempt.mockRejectedValue(
@@ -325,6 +328,7 @@ describe('TrainingList', () => {
   it('shows the reason on the card and reloads the list when starting is refused', async () => {
     api.getMyTrainings.mockResolvedValue({
       orientationComplete: false,
+      orientationRequired: true,
       trainings: [createTrainingSummary()],
     });
     api.startAttempt.mockRejectedValue(new ApiError('ATTEMPT_LIMIT_REACHED'));
@@ -338,7 +342,11 @@ describe('TrainingList', () => {
   });
 
   it('has an empty state', async () => {
-    api.getMyTrainings.mockResolvedValue({ orientationComplete: false, trainings: [] });
+    api.getMyTrainings.mockResolvedValue({
+      orientationComplete: false,
+      orientationRequired: true,
+      trainings: [],
+    });
     renderList();
 
     expect(await screen.findByText(/no trainings to take yet/i)).toBeInTheDocument();
@@ -351,6 +359,7 @@ describe('TrainingList', () => {
     expect(await screen.findByText(/couldn't load your training/i)).toBeInTheDocument();
     api.getMyTrainings.mockResolvedValue({
       orientationComplete: false,
+      orientationRequired: true,
       trainings: [createTrainingSummary()],
     });
     await userEvent.click(screen.getByRole('button', { name: /try again/i }));

@@ -38,6 +38,7 @@ beforeEach(() => {
   push.mockClear();
   api.getMyTrainings.mockResolvedValue({
     orientationComplete: false,
+    orientationRequired: true,
     trainings: [createTrainingSummary({ nextAction: 'START' })],
   });
 });
@@ -118,6 +119,7 @@ describe('AttemptResults: fail', () => {
     const retryAt = new Date(Date.now() + 30 * 60_000).toISOString();
     api.getMyTrainings.mockResolvedValue({
       orientationComplete: false,
+      orientationRequired: true,
       trainings: [
         createTrainingSummary({ nextAction: 'BLOCKED', blockedReason: 'RETRY_COOLDOWN', retryAt }),
       ],
@@ -133,6 +135,7 @@ describe('AttemptResults: fail', () => {
   it('explains the attempt limit', async () => {
     api.getMyTrainings.mockResolvedValue({
       orientationComplete: false,
+      orientationRequired: true,
       trainings: [
         createTrainingSummary({ nextAction: 'BLOCKED', blockedReason: 'ATTEMPT_LIMIT_REACHED' }),
       ],
@@ -147,6 +150,7 @@ describe('AttemptResults: pass', () => {
   it('tells an orientation graduate they are certified', async () => {
     api.getMyTrainings.mockResolvedValue({
       orientationComplete: true,
+      orientationRequired: true,
       trainings: [
         createTrainingSummary({
           nextAction: 'NONE',

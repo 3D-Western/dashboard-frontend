@@ -28,10 +28,12 @@ describe('trainingAPI (learner contract)', () => {
   it('lists my trainings', async () => {
     const seen = capture('get', '/api/v1/training/trainings', {
       orientationComplete: false,
+      orientationRequired: true,
       trainings: [],
     });
     expect(await trainingAPI.getMyTrainings()).toEqual({
       orientationComplete: false,
+      orientationRequired: true,
       trainings: [],
     });
     expect(seen.method).toBe('GET');

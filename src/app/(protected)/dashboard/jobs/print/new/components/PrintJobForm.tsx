@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { z } from 'zod';
@@ -28,6 +29,8 @@ import { CreateJobRequest } from '@/api/types';
 import { PurposeChips } from './PurposeChips';
 import { DesignIntentCards } from './DesignIntentCards';
 import { PrintAllowance } from './PrintAllowance';
+import { OrientationLockNotice } from '@/components/Training/OrientationLockNotice';
+import { TrainingErrorCodes } from '@/api/client/training-errors';
 
 const formSchema = z.object({
   jobName: z.string().min(1, { message: 'Must have a name for the print request' }).max(30),
@@ -46,6 +49,8 @@ type NewPrintFormProps = {
 
 export default function NewPrintForm({ mockMode = false }: NewPrintFormProps = {}) {
   const router = useRouter();
+  // Set when the server refuses the submit because Maker Orientation isn't done
+  const [orientationRequired, setOrientationRequired] = useState(false);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -105,6 +110,11 @@ export default function NewPrintForm({ mockMode = false }: NewPrintFormProps = {
       router.push(Routes.jobs.home);
       router.refresh();
     } catch (err) {
+      if (err instanceof ApiError && err.code === TrainingErrorCodes.ORIENTATION_REQUIRED) {
+        setOrientationRequired(true);
+        toast.error('Finish Maker Orientation to submit prints.');
+        return;
+      }
       if (err instanceof ApiError && err.code === ErrorCodes.RATE_LIMIT_EXCEEDED) {
         toast.error(
           "You've reached your print limit for now. You can submit again once it resets.",
@@ -119,6 +129,7 @@ export default function NewPrintForm({ mockMode = false }: NewPrintFormProps = {
 
   return (
     <div className="w-full max-w-5xl">
+      {orientationRequired && <OrientationLockNotice interrupt className="mb-8" />}
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
           <PrintAllowance />
@@ -205,7 +216,7 @@ export default function NewPrintForm({ mockMode = false }: NewPrintFormProps = {
               type="submit"
               size="default"
               variant="default"
-              disabled={form.formState.isSubmitting}
+              disabled={form.formState.isSubmitting || orientationRequired}
               aria-busy={form.formState.isSubmitting}
               className="min-w-[120px]"
             >

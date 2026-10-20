@@ -62,6 +62,12 @@ export interface SignoffFeedback {
 
 export interface MyTrainings {
   orientationComplete: boolean;
+  /**
+   * Printing is locked behind orientation for me: the setting is on, an orientation is published
+   * and I'm not exempt staff. Unlike `orientationComplete` this is false when there is nothing to
+   * complete, so lock only on `orientationRequired && !orientationComplete`.
+   */
+  orientationRequired: boolean;
   trainings: TrainingSummary[];
 }
 

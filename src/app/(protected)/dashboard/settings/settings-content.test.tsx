@@ -17,6 +17,7 @@ describe('SettingsContent', () => {
     vi.clearAllMocks();
     vi.mocked(trainingAPI.getMyTrainings).mockResolvedValue({
       orientationComplete: false,
+      orientationRequired: true,
       trainings: [],
     });
   });
