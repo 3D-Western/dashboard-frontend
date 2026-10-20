@@ -3,7 +3,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Maximize2, Pause, Play } from 'lucide-react';
 import { trainingAPI } from '@/api/client/training';
-import { trainingErrorMessage } from '@/api/client/training-errors';
+import { ApiError, ErrorCodes } from '@/api/client/errors';
+import { TrainingErrorCodes, trainingErrorMessage } from '@/api/client/training-errors';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -27,6 +28,14 @@ const CAPPED_RETRY_MS = 10_000;
 const CAPPED_RETRY_LIMIT = 6;
 /** No automatic re-fetching of the URL more often than this when the video keeps failing. */
 const ERROR_REFRESH_GAP_MS = 15_000;
+
+/** Heartbeat failures that are worth quietly retrying. Anything else means the attempt moved on. */
+const TRANSIENT_HEARTBEAT_ERRORS = new Set<string>([
+  ErrorCodes.REQUEST_FAILED,
+  ErrorCodes.INTERNAL_SERVER_ERROR,
+  ErrorCodes.RATE_LIMIT_EXCEEDED,
+  'UNKNOWN_ERROR',
+]);
 
 export const PLAYBACK_RATES = [0.5, 0.75, 1, 1.25, 1.5, 1.75, 2, 3, 4];
 
@@ -65,6 +74,9 @@ export function VideoStep({ attemptId, step, onStepCompleted }: VideoStepProps) 
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const lastErrorRefreshRef = useRef(0);
   const rateRef = useRef(1);
+  const blockedRef = useRef(false);
+  const playingRef = useRef(false);
+  const lastTimeRef = useRef<number | null>(null);
 
   const [playback, setPlayback] = useState<VideoPlayback | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -79,6 +91,7 @@ export function VideoStep({ attemptId, step, onStepCompleted }: VideoStepProps) 
   const [checkpointMessage, setCheckpointMessage] = useState<string | null>(null);
   const [checkpointError, setCheckpointError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
+  const [heartbeatError, setHeartbeatError] = useState<string | null>(null);
   // This component only ever renders in the browser (after the attempt has loaded), so no hydration concern
   const canFullscreen = typeof document !== 'undefined' && !!document.fullscreenEnabled;
 
@@ -91,12 +104,15 @@ export function VideoStep({ attemptId, step, onStepCompleted }: VideoStepProps) 
 
   // ---- Heartbeat ----------------------------------------------------------------------------
 
-  const sendHeartbeatRef = useRef<(force?: boolean) => Promise<void>>(async () => undefined);
+  const sendHeartbeatRef = useRef<(force?: boolean, keepalive?: boolean) => Promise<void>>(
+    async () => undefined,
+  );
 
   const sendHeartbeat = useCallback(
-    async (force = false) => {
-      if (completedRef.current) return;
-      if (inFlightRef.current) {
+    async (force = false, keepalive = false) => {
+      if (completedRef.current || blockedRef.current) return;
+      // A keepalive send is the last chance (the page is going away), so it never waits its turn
+      if (inFlightRef.current && !keepalive) {
         queuedRef.current = true;
         return;
       }
@@ -110,10 +126,10 @@ export function VideoStep({ attemptId, step, onStepCompleted }: VideoStepProps) 
 
       inFlightRef.current = true;
       try {
-        const result = await trainingAPI.sendHeartbeat(attemptId, stepId, {
-          ranges,
-          focusLossCount,
-        });
+        const body = { ranges, focusLossCount };
+        const result = keepalive
+          ? await trainingAPI.sendHeartbeat(attemptId, stepId, body, { keepalive: true })
+          : await trainingAPI.sendHeartbeat(attemptId, stepId, body);
         lastSentRef.current = key;
         pendingFocusLossRef.current = Math.max(0, pendingFocusLossRef.current - focusLossCount);
         setWatchedPercent(Number(result.watchedPercent) || 0);
@@ -136,8 +152,23 @@ export function VideoStep({ attemptId, step, onStepCompleted }: VideoStepProps) 
         } else {
           cappedRetriesRef.current = 0;
         }
-      } catch {
-        // Keep the counts: the next heartbeat carries them. The learner does not need to know.
+      } catch (error) {
+        if (error instanceof ApiError && error.code === TrainingErrorCodes.STEP_ALREADY_COMPLETED) {
+          // Credit was already complete (another tab, or an earlier heartbeat): move on.
+          completedRef.current = true;
+          onStepCompleted();
+        } else if (error instanceof ApiError && !TRANSIENT_HEARTBEAT_ERRORS.has(error.code)) {
+          // The attempt moved on without us (finished, locked, signed out): sending more won't help.
+          blockedRef.current = true;
+          if (retryTimerRef.current) clearTimeout(retryTimerRef.current);
+          if (intervalRef.current) {
+            clearInterval(intervalRef.current);
+            intervalRef.current = null;
+          }
+          videoRef.current?.pause();
+          setHeartbeatError(trainingErrorMessage(error));
+        }
+        // Otherwise (offline, a server hiccup) keep the counts: the next heartbeat carries them.
       } finally {
         inFlightRef.current = false;
         if (queuedRef.current) {
@@ -193,16 +224,34 @@ export function VideoStep({ attemptId, step, onStepCompleted }: VideoStepProps) 
     run();
   }, [loadPlayback]);
 
-  // Final heartbeat and timers on the way out
+  // Counts the seconds played since the last timeupdate (they fire only a few times a second), so
+  // the tail of a pause, the end of the video or a closing page is not lost.
+  const sampleNow = useCallback(() => {
+    const video = videoRef.current;
+    const time = video ? video.currentTime : lastTimeRef.current;
+    if (time === null || !Number.isFinite(time)) return;
+    if (video?.seeking) return;
+    trackerRef.current.sample(time, video?.playbackRate || rateRef.current);
+    if (time > furthestRef.current) furthestRef.current = time;
+  }, []);
+
+  // Last chance to report: the page is closing (or this step is going away). `keepalive` lets
+  // the request finish after the page is gone.
+  const flush = useCallback(() => {
+    if (playingRef.current) sampleNow();
+    trackerRef.current.breakSegment();
+    void sendHeartbeatRef.current(false, true);
+  }, [sampleNow]);
+
   useEffect(() => {
-    const tracker = trackerRef.current;
+    window.addEventListener('pagehide', flush);
     return () => {
+      window.removeEventListener('pagehide', flush);
       stopInterval();
       if (retryTimerRef.current) clearTimeout(retryTimerRef.current);
-      tracker.breakSegment();
-      void sendHeartbeatRef.current();
+      flush();
     };
-  }, [stopInterval]);
+  }, [flush, stopInterval]);
 
   // ---- Pause when the tab or window loses focus ----------------------------------------------
 
@@ -253,6 +302,8 @@ export function VideoStep({ attemptId, step, onStepCompleted }: VideoStepProps) 
     const video = videoRef.current;
     if (!video) return;
     if (Number.isFinite(video.duration) && video.duration > 0) setDuration(video.duration);
+    // A new source (after a URL refresh) resets the speed; put back what the learner chose
+    if (video.playbackRate !== rateRef.current) video.playbackRate = rateRef.current;
     const resume = resumeRef.current;
     if (resume) {
       resumeRef.current = null;
@@ -271,6 +322,7 @@ export function VideoStep({ attemptId, step, onStepCompleted }: VideoStepProps) 
     const video = videoRef.current;
     if (!video) return;
     const time = video.currentTime;
+    lastTimeRef.current = time;
     setCurrentTime(time);
     if (!video.seeking && !video.paused) {
       trackerRef.current.sample(time, video.playbackRate || rateRef.current);
@@ -292,12 +344,16 @@ export function VideoStep({ attemptId, step, onStepCompleted }: VideoStepProps) 
   };
 
   const handlePlay = () => {
+    playingRef.current = true;
     setPlaying(true);
     setNotice(null);
     startInterval();
   };
 
   const handlePause = () => {
+    // Count up to the exact pause point before closing the range, so the tail is credited
+    if (playingRef.current) sampleNow();
+    playingRef.current = false;
     setPlaying(false);
     stopInterval();
     trackerRef.current.breakSegment();
@@ -305,6 +361,8 @@ export function VideoStep({ attemptId, step, onStepCompleted }: VideoStepProps) 
   };
 
   const handleEnded = () => {
+    if (playingRef.current) sampleNow();
+    playingRef.current = false;
     setPlaying(false);
     stopInterval();
     trackerRef.current.breakSegment();
@@ -329,7 +387,10 @@ export function VideoStep({ attemptId, step, onStepCompleted }: VideoStepProps) 
     }
     lastErrorRefreshRef.current = now;
     const video = videoRef.current;
-    void loadPlayback({ time: video?.currentTime ?? 0, play: false });
+    // If it never got as far as loading, treat the retry as a first load (resumes the saved spot)
+    void loadPlayback(
+      firstLoadRef.current ? undefined : { time: video?.currentTime ?? 0, play: false },
+    );
   };
 
   // ---- Controls -------------------------------------------------------------------------------
@@ -459,6 +520,7 @@ export function VideoStep({ attemptId, step, onStepCompleted }: VideoStepProps) 
             <Button
               type="button"
               size="icon"
+              className="size-11"
               onClick={() => void togglePlay()}
               disabled={!playback || controlsLocked}
               aria-label={playing ? 'Pause' : 'Play'}
@@ -476,7 +538,7 @@ export function VideoStep({ attemptId, step, onStepCompleted }: VideoStepProps) 
                 id={`rate-${stepId}`}
                 value={rate}
                 onChange={(event) => handleRate(Number(event.target.value))}
-                className="h-10 rounded-lg border bg-background px-2 text-sm sm:h-8"
+                className="h-11 rounded-lg border bg-background px-2 text-sm sm:h-8"
               >
                 {PLAYBACK_RATES.map((value) => (
                   <option key={value} value={value}>
@@ -489,6 +551,7 @@ export function VideoStep({ attemptId, step, onStepCompleted }: VideoStepProps) 
                   type="button"
                   variant="outline"
                   size="icon"
+                  className="size-11"
                   onClick={handleFullscreen}
                   aria-label="Full screen"
                 >
@@ -508,7 +571,7 @@ export function VideoStep({ attemptId, step, onStepCompleted }: VideoStepProps) 
             disabled={!playback || controlsLocked}
             aria-label="Video position"
             aria-valuetext={`${formatClock(currentTime)} of ${formatClock(duration)}`}
-            className="h-6 w-full accent-purple-light"
+            className="h-11 w-full accent-purple-light disabled:opacity-50"
           />
 
           {activeCheckpoint && (
@@ -561,9 +624,29 @@ export function VideoStep({ attemptId, step, onStepCompleted }: VideoStepProps) 
               type="button"
               variant="outline"
               size="sm"
-              onClick={() => void loadPlayback({ time: currentTime, play: false })}
+              onClick={() =>
+                // Before the first load there is nothing to resume: load as a fresh start, so the
+                // saved position is picked up. After that, carry on from where the video was.
+                void loadPlayback(playback ? { time: currentTime, play: false } : undefined)
+              }
             >
               Try again
+            </Button>
+          </AlertDescription>
+        </Alert>
+      )}
+
+      {heartbeatError && (
+        <Alert variant="destructive">
+          <AlertDescription className="space-y-2">
+            <span>{heartbeatError}</span>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => window.location.reload()}
+            >
+              Reload the page
             </Button>
           </AlertDescription>
         </Alert>
@@ -579,7 +662,7 @@ export function VideoStep({ attemptId, step, onStepCompleted }: VideoStepProps) 
           className="h-2 w-full overflow-hidden rounded-full bg-muted"
         >
           <div
-            className="h-full bg-linear-to-r from-purple-dark to-purple-light transition-all"
+            className="h-full bg-linear-to-r from-purple-dark to-purple-light transition-all motion-reduce:transition-none"
             style={{ width: `${Math.min(100, Math.max(0, watchedPercent))}%` }}
           />
         </div>

@@ -80,11 +80,13 @@ export const trainingAPI = {
   getPlaybackUrl: (attemptId: number, stepId: number) =>
     send<VideoPlayback>('POST', `${endpoints.training.step(attemptId, stepId)}/video/playback-url`),
 
-  sendHeartbeat: (attemptId: number, stepId: number, body: HeartbeatBody) =>
+  /** Pass `{ keepalive: true }` when the page may be closing, so the request survives it. */
+  sendHeartbeat: (attemptId: number, stepId: number, body: HeartbeatBody, options?: RequestInit) =>
     send<HeartbeatResult>(
       'POST',
       `${endpoints.training.step(attemptId, stepId)}/video/heartbeat`,
       body,
+      options,
     ),
 
   answerCheckpoint: (

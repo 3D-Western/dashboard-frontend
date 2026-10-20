@@ -94,6 +94,14 @@ async function setup(step: AttemptStep = createVideoStep(), onStepCompleted = vi
   return { video, ...control, onStepCompleted };
 }
 
+async function setupWithUnmount(step: AttemptStep = createVideoStep(), onStepCompleted = vi.fn()) {
+  const { unmount } = render(
+    <VideoStep attemptId={1} step={step} onStepCompleted={onStepCompleted} />,
+  );
+  const video = (await screen.findByLabelText(step.title)) as HTMLVideoElement;
+  return { unmount, video, ...controlVideo(video) };
+}
+
 beforeEach(() => {
   api.getPlaybackUrl.mockResolvedValue({
     url: 'https://video.test/a.mp4',
@@ -430,6 +438,124 @@ describe('VideoStep', () => {
     });
   });
 
+  describe('not losing progress', () => {
+    it('flushes a keepalive heartbeat when the page is hidden or closed (pagehide)', async () => {
+      const { playTo } = await setup();
+      playTo(4);
+
+      fireEvent(window, new Event('pagehide'));
+
+      await waitFor(() => expect(api.sendHeartbeat).toHaveBeenCalledTimes(1));
+      expect(api.sendHeartbeat).toHaveBeenCalledWith(
+        1,
+        7,
+        { ranges: [{ start: 1, end: 4 }], focusLossCount: 0 },
+        { keepalive: true },
+      );
+    });
+
+    it('counts the playing time since the last timeupdate on pagehide', async () => {
+      const { state, playTo } = await setup();
+      playTo(4);
+      state.currentTime = 4.2; // played on, but no timeupdate yet
+
+      fireEvent(window, new Event('pagehide'));
+
+      await waitFor(() => expect(api.sendHeartbeat).toHaveBeenCalled());
+      expect(api.sendHeartbeat.mock.calls[0][2].ranges).toEqual([{ start: 1, end: 4.2 }]);
+    });
+
+    it('flushes with keepalive when the step goes away mid-play', async () => {
+      const { unmount, playTo } = await setupWithUnmount();
+      playTo(3);
+
+      unmount();
+
+      expect(api.sendHeartbeat).toHaveBeenCalledWith(
+        1,
+        7,
+        { ranges: [{ start: 1, end: 3 }], focusLossCount: 0 },
+        { keepalive: true },
+      );
+    });
+
+    it('credits the tail on pause: the exact pause point, not the last timeupdate', async () => {
+      const { video, state, playTo } = await setup();
+      playTo(4);
+      state.currentTime = 4.6;
+
+      fireEvent.pause(video);
+
+      await waitFor(() => expect(api.sendHeartbeat).toHaveBeenCalled());
+      expect(api.sendHeartbeat.mock.calls[0][2].ranges).toEqual([{ start: 1, end: 4.6 }]);
+    });
+
+    it('credits the tail when the video ends', async () => {
+      const { video, state, playTo } = await setup();
+      playTo(4);
+      state.currentTime = 120;
+      state.ended = true;
+      // the last second played without a timeupdate in between
+      state.currentTime = 5;
+
+      fireEvent.ended(video);
+
+      await waitFor(() => expect(api.sendHeartbeat).toHaveBeenCalled());
+      expect(api.sendHeartbeat.mock.calls.at(-1)![2].ranges).toEqual([{ start: 1, end: 5 }]);
+    });
+  });
+
+  describe('heartbeat errors', () => {
+    it('moves on when the server says the step is already complete', async () => {
+      const { ApiError } = await import('@/api/client/errors');
+      api.sendHeartbeat.mockRejectedValueOnce(new ApiError('STEP_ALREADY_COMPLETED'));
+      const { video, playTo, onStepCompleted } = await setup();
+      playTo(4);
+
+      fireEvent.pause(video);
+
+      await waitFor(() => expect(onStepCompleted).toHaveBeenCalledTimes(1));
+    });
+
+    it.each([
+      ['ATTEMPT_NOT_IN_PROGRESS', /attempt has already finished/i],
+      ['STEP_LOCKED', /finish the earlier steps first/i],
+      ['SESSION_EXPIRED', /sign in again/i],
+    ])('stops sending and says why on %s', async (code, message) => {
+      const { ApiError } = await import('@/api/client/errors');
+      api.sendHeartbeat.mockRejectedValue(new ApiError(code));
+      const { video, playTo, pause } = await setup();
+      playTo(4);
+
+      fireEvent.pause(video);
+
+      expect(await screen.findByText(message)).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /reload the page/i })).toBeInTheDocument();
+      expect(pause).toHaveBeenCalled();
+      const calls = api.sendHeartbeat.mock.calls.length;
+      playTo(8);
+      fireEvent.pause(video);
+      fireEvent(window, new Event('pagehide'));
+      await new Promise((resolve) => setTimeout(resolve, 20));
+      expect(api.sendHeartbeat).toHaveBeenCalledTimes(calls);
+    });
+
+    it('stays quiet and keeps trying on a network error', async () => {
+      const { ApiError } = await import('@/api/client/errors');
+      api.sendHeartbeat.mockRejectedValueOnce(new ApiError('REQUEST_FAILED'));
+      const { video, playTo } = await setup();
+      playTo(4);
+
+      fireEvent.pause(video);
+      await waitFor(() => expect(api.sendHeartbeat).toHaveBeenCalledTimes(1));
+
+      expect(screen.queryByRole('button', { name: /reload the page/i })).not.toBeInTheDocument();
+      playTo(8);
+      fireEvent.pause(video);
+      await waitFor(() => expect(api.sendHeartbeat).toHaveBeenCalledTimes(2));
+    });
+  });
+
   describe('questions during the video', () => {
     const checkpointStep = () =>
       createVideoStep({
@@ -603,6 +729,56 @@ describe('VideoStep', () => {
       fireEvent.loadedMetadata(video);
       expect(state.currentTime).toBe(40);
       expect(play).toHaveBeenCalled();
+    });
+
+    it('keeps the chosen playback speed after the URL is refreshed', async () => {
+      api.getPlaybackUrl
+        .mockResolvedValueOnce({
+          url: 'https://video.test/old.mp4',
+          expiresAt: new Date(Date.now() + 10_000).toISOString(),
+          durationSeconds: 120,
+        })
+        .mockResolvedValueOnce({
+          url: 'https://video.test/new.mp4',
+          expiresAt: inAnHour(),
+          durationSeconds: 120,
+        });
+      const { video, state } = await setup();
+      await userEvent.selectOptions(screen.getByLabelText(/playback speed/i), '2');
+      expect(state.playbackRate).toBe(2);
+
+      await userEvent.click(screen.getByRole('button', { name: 'Play' }));
+      await waitFor(() => expect(video).toHaveAttribute('src', 'https://video.test/new.mp4'));
+      // the browser resets the speed when the source changes
+      state.playbackRate = 1;
+      fireEvent.loadedMetadata(video);
+
+      expect(state.playbackRate).toBe(2);
+    });
+
+    it('resumes the saved spot when "Try again" follows a failed first load', async () => {
+      const { ApiError } = await import('@/api/client/errors');
+      api.getPlaybackUrl.mockReset();
+      api.getPlaybackUrl
+        .mockRejectedValueOnce(new ApiError('REQUEST_FAILED'))
+        .mockResolvedValueOnce({
+          url: 'https://video.test/a.mp4',
+          expiresAt: inAnHour(),
+          durationSeconds: 120,
+        });
+      const step = createVideoStep({
+        video: createVideoBlock({ watchedRanges: [{ start: 0, end: 50 }], watchedPercent: 40 }),
+      });
+      render(<VideoStep attemptId={1} step={step} onStepCompleted={vi.fn()} />);
+
+      await userEvent.click(await screen.findByRole('button', { name: /try again/i }));
+      const video = (await screen.findByLabelText(step.title)) as HTMLVideoElement;
+      const { state, play } = controlVideo(video);
+      fireEvent.loadedMetadata(video);
+
+      // picks up where they got to, and does not start playing by itself
+      expect(state.currentTime).toBe(50);
+      expect(play).not.toHaveBeenCalled();
     });
 
     it('gets a fresh URL when the video fails to load', async () => {
