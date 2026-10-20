@@ -21,6 +21,11 @@ export const Routes = {
   adminBookingRequests: '/admin/requests',
   adminEquipmentManagement: '/admin/equipment',
 
+  training: {
+    home: '/dashboard/training',
+    attempt: (attemptId: number) => `/dashboard/training/attempt/${attemptId}`,
+  },
+
   jobs: {
     home: '/dashboard/jobs',
     detail: (jobId: string) => `/dashboard/jobs/${jobId}`,

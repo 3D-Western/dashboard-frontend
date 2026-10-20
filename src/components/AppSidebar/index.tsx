@@ -22,6 +22,7 @@ import { SettingsPopover } from '@/components/SettingsPopover';
 import { User, hasPermission } from '@/types/user';
 import { PERMISSIONS } from '@/constants/permissions';
 import {
+  GraduationCap,
   LayoutDashboard,
   Printer,
   Users,
@@ -51,6 +52,11 @@ const navigationItems = [
     url: Routes.jobs.home,
     icon: Printer,
   },
+  {
+    title: 'Training',
+    url: Routes.training.home,
+    icon: GraduationCap,
+  },
 ];
 
 // The admin pages all live under /admin, so they're nested under Admin Dashboard in the sidebar
@@ -60,9 +66,11 @@ const adminDashboardItem = {
   icon: Shield,
 };
 
-// Highlight "My Jobs" on every page under it (a job's details, the new job form)
+// Highlight "My Jobs" on every page under it (a job's details, the new job form), and
+// "Training" while working through a training
 const isNavItemActive = (pathname: string, url: string) =>
-  pathname === url || (url === Routes.jobs.home && pathname.startsWith(`${url}/`));
+  pathname === url ||
+  ((url === Routes.jobs.home || url === Routes.training.home) && pathname.startsWith(`${url}/`));
 
 const adminNavigationItems = [
   {

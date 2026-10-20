@@ -25,6 +25,16 @@ describe('AppSidebar', () => {
       expect(screen.getByRole('link', { name: /my jobs/i })).toBeInTheDocument();
     });
 
+    it('shows a Training link to the training page', () => {
+      const user = createMockUser();
+      renderSidebar(user);
+
+      expect(screen.getByRole('link', { name: /^training$/i })).toHaveAttribute(
+        'href',
+        '/dashboard/training',
+      );
+    });
+
     // Print History and New Job were merged into My Jobs
     it('no longer shows separate Print History or New Job links', () => {
       const user = createMockUser();

@@ -1,4 +1,6 @@
+import { AgreementsGate } from '@/components/Agreements/AgreementsGate';
 import { AppSidebar } from '@/components/AppSidebar';
+import { loadPendingAgreements } from '@/lib/agreements';
 import { PageHeader } from '@/components/PageHeader';
 import { SidebarInset, SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
 import { validateSession } from '@/lib/auth';
@@ -12,7 +14,12 @@ import { redirect } from 'next/navigation';
 export const dynamic = 'force-dynamic';
 
 export default async function ProtectedLayout({ children }: { children: React.ReactNode }) {
-  const currentUser = await validateSession();
+  // The agreements check runs alongside the session check (it needs the same cookies), so it adds
+  // no extra wait. It never throws: see loadPendingAgreements.
+  const [currentUser, pendingAgreements] = await Promise.all([
+    validateSession(),
+    loadPendingAgreements(),
+  ]);
 
   if (!currentUser) {
     redirect('/login?error=unauthenticated');
@@ -28,6 +35,11 @@ export default async function ProtectedLayout({ children }: { children: React.Re
     if (!onboardingCompleted) {
       redirect(Routes.onboarding);
     }
+  }
+
+  // Agreements (terms, waiver, ...) must be accepted before anything else in the dashboard.
+  if (pendingAgreements.length > 0) {
+    return <AgreementsGate agreements={pendingAgreements} />;
   }
 
   return (
