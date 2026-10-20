@@ -48,6 +48,8 @@ const formSchema = z.object({
     ),
   email: z
     .string()
+    .trim()
+    .toLowerCase()
     .min(1, 'Email is required')
     .regex(/^[a-z]+\d*@uwo\.ca$/, 'Email must be a valid UWO email (e.g., jdoe123@uwo.ca)'),
   expiresInDays: z
