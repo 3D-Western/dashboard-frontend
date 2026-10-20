@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Printer, TicketPlus, Users } from 'lucide-react';
+import { ClipboardCheck, Printer, TicketPlus, Users } from 'lucide-react';
 import Link from 'next/link';
 import PageTitle from '@/components/PageTitle';
 import { Routes } from '@/lib/routes';
@@ -75,6 +75,24 @@ export default async function AdminDashboardPage() {
               <CardContent>
                 <p className="text-sm text-muted-foreground">
                   Create, view, and revoke invitations for new users.
+                </p>
+              </CardContent>
+            </Card>
+          </Link>
+        )}
+        {user && hasPermission(user, PERMISSIONS.TRAINING_SIGNOFF) && (
+          <Link href={Routes.adminSignoffs}>
+            <Card className="cursor-pointer transition-colors hover:bg-accent">
+              <CardHeader>
+                <div className="flex items-center gap-2">
+                  <ClipboardCheck className="h-5 w-5 text-muted-foreground" />
+                  <CardTitle>Training Sign-offs</CardTitle>
+                </div>
+                <CardDescription>Check students off in person</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-muted-foreground">
+                  See who passed a machine training online and approve their in-person sign-off.
                 </p>
               </CardContent>
             </Card>

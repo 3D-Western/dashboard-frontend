@@ -36,6 +36,7 @@ export const PERMISSIONS = {
   IAM_ASSIGN_ROLES: 'iam:assign_roles',
   IAM_MANAGE_GROUPS: 'iam:manage_groups',
   AUDIT_READ: 'audit:read',
+  TRAINING_SIGNOFF: 'training:signoff',
 } as const;
 
 export type PermissionKey = (typeof PERMISSIONS)[keyof typeof PERMISSIONS];
@@ -224,6 +225,12 @@ export const PERMISSION_CATALOG: PermissionDefinition[] = [
     action: 'read',
     description: 'Read the audit log',
   },
+  {
+    key: PERMISSIONS.TRAINING_SIGNOFF,
+    resource: 'training',
+    action: 'signoff',
+    description: 'Approve in-person training sign-offs',
+  },
 
   {
     key: PERMISSIONS.BOOKINGS_LIST,
@@ -285,4 +292,6 @@ export const ADMIN_SECTION_PERMISSIONS: PermissionKey[] = [
   PERMISSIONS.BOOKINGS_UPDATE_STATUS,
   PERMISSIONS.BOOKINGS_CREATE,
   PERMISSIONS.BOOKINGS_CANCEL,
+  // Supervisors who only sign students off still need to get into /admin
+  PERMISSIONS.TRAINING_SIGNOFF,
 ];

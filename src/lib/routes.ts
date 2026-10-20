@@ -20,6 +20,8 @@ export const Routes = {
   adminBookingsManagement: '/admin/bookings',
   adminBookingRequests: '/admin/requests',
   adminEquipmentManagement: '/admin/equipment',
+  adminSignoffs: '/admin/signoffs',
+  adminSignoff: (signoffId: number) => `/admin/signoffs/${signoffId}`,
 
   training: {
     home: '/dashboard/training',

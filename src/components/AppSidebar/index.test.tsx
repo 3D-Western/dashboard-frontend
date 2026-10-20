@@ -100,6 +100,25 @@ describe('AppSidebar', () => {
       expect(screen.queryByRole('link', { name: /job management/i })).not.toBeInTheDocument();
     });
 
+    it('shows Training Sign-offs only when user has training:signoff', () => {
+      const supervisor = createMockAdmin({ permissions: [perm(PERMISSIONS.TRAINING_SIGNOFF)] });
+      renderSidebar(supervisor);
+
+      expect(screen.getByRole('link', { name: /training sign-offs/i })).toHaveAttribute(
+        'href',
+        '/admin/signoffs',
+      );
+      expect(screen.getByRole('link', { name: /admin dashboard/i })).toBeInTheDocument();
+      expect(screen.queryByRole('link', { name: /job management/i })).not.toBeInTheDocument();
+    });
+
+    it('hides Training Sign-offs from admins who lack training:signoff', () => {
+      const admin = createMockAdmin({ permissions: [perm(PERMISSIONS.USERS_LIST)] });
+      renderSidebar(admin);
+
+      expect(screen.queryByRole('link', { name: /training sign-offs/i })).not.toBeInTheDocument();
+    });
+
     it('shows all admin items when user has all relevant permissions', () => {
       const admin = createMockAdmin({
         permissions: [perm(PERMISSIONS.JOBS_UPDATE_STATUS), perm(PERMISSIONS.INVITATIONS_LIST)],

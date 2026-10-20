@@ -22,6 +22,7 @@ import { SettingsPopover } from '@/components/SettingsPopover';
 import { User, hasPermission } from '@/types/user';
 import { PERMISSIONS } from '@/constants/permissions';
 import {
+  ClipboardCheck,
   GraduationCap,
   LayoutDashboard,
   Printer,
@@ -93,6 +94,12 @@ const adminNavigationItems = [
     url: Routes.adminInvitationManagement,
     icon: TicketPlus,
     permission: PERMISSIONS.INVITATIONS_LIST,
+  },
+  {
+    title: 'Training Sign-offs',
+    url: Routes.adminSignoffs,
+    icon: ClipboardCheck,
+    permission: PERMISSIONS.TRAINING_SIGNOFF,
   },
 ];
 

@@ -87,6 +87,13 @@ export const endpoints = {
     adminRestrictions: (equipmentId: string) =>
       `/api/v1/admin/equipment/${equipmentId}/restrictions`,
   },
+  signoff: {
+    // Supervisor sign-off (docs/plans/training-v1.md, "Sign-off API"); needs training:signoff
+    list: '/api/v1/admin/training/signoffs',
+    byId: (signoffId: number) => `/api/v1/admin/training/signoffs/${signoffId}`,
+    approve: (signoffId: number) => `/api/v1/admin/training/signoffs/${signoffId}/approve`,
+    reject: (signoffId: number) => `/api/v1/admin/training/signoffs/${signoffId}/reject`,
+  },
   training: {
     // Learner training API (docs/plans/training-v1.md, "Learner API")
     list: '/api/v1/training/trainings',
