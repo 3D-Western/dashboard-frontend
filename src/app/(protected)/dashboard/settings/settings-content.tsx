@@ -22,8 +22,6 @@ import { userApi } from '@/api/client/user';
 import { ApiError } from '@/api/client/errors';
 import { useRouter } from 'next/navigation';
 import { Routes } from '@/lib/routes';
-import { UsageSummaryCard } from './components/UsageSummaryCard';
-import { LimitCard } from './components/LimitCard';
 import { TrainingStatusCard } from './components/TrainingStatusCard';
 
 // Password change form schema
@@ -172,8 +170,8 @@ export function SettingsContent() {
           </CardContent>
         </Card>
 
-        <UsageSummaryCard />
-        <LimitCard />
+        {/* The Usage and Limits cards are hidden until GET /users/{id}/usage and /limits exist in the
+            backend (roadmap, usage limits): they only ever showed errors. Components are kept. */}
         <TrainingStatusCard />
       </div>
     </div>
