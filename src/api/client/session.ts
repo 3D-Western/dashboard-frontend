@@ -9,15 +9,18 @@ import {
 import { apiRequest } from './base';
 import { endpoints } from './endpoints';
 import { getBaseUrl } from './utils';
-import { ApiError, ErrorCodes } from './errors';
+import { ApiError } from './errors';
 import { transformUserResponse } from './transformers';
 import { User } from '@/types/user';
 
 export const sessionApi = {
   /**
    * Get current authenticated user
-   * Note: This API call suppresses UNAUTHORIZED, SESSION_INVALID, and SESSION_EXPIRED errors
-   * since those are expected states when checking if a user is logged in. Other errors are still thrown.
+   * Note: This check must never crash the app — any ApiError (an expected auth state like
+   * UNAUTHORIZED/SESSION_INVALID/SESSION_EXPIRED, an unexpected backend error, or a network
+   * failure) means we can't confirm a valid session, so the safe fallback is always to treat
+   * the caller as logged out rather than throw. A non-ApiError (a genuine bug elsewhere, e.g.
+   * in transformUserResponse) still propagates normally.
    */
   current: async (options?: RequestInit): Promise<{ user: User | null }> => {
     const serverUrl = getBaseUrl();
@@ -38,13 +41,11 @@ export const sessionApi = {
           : null,
       };
     } catch (error) {
-      // Auth/session errors mean no valid session — expected when checking login state
-      if (
-        error instanceof ApiError &&
-        [ErrorCodes.UNAUTHORIZED, ErrorCodes.SESSION_INVALID, ErrorCodes.SESSION_EXPIRED].includes(
-          error.code,
-        )
-      ) {
+      if (error instanceof ApiError) {
+        console.error('[sessionApi.current] Treating as logged out due to error:', {
+          code: error.code,
+          message: error.message,
+        });
         return { user: null };
       }
       throw error;
