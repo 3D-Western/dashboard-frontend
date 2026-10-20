@@ -5,3 +5,7 @@ export const WEBSITE_PROJECTS_URL = `${WEBSITE_URL}/projects`;
 // Public contact address listed on the website. Used for project-feature submissions until there's
 // a submission form (see the backend asks doc).
 export const CONTACT_EMAIL = 'contact@3dwestern.ca';
+
+// The club's events calendar (workshops, socials, closures). The dashboard links here until the
+// calendar is embedded as a shared component.
+export const WEBSITE_EVENTS_URL = `${WEBSITE_URL}/events`;

@@ -1,11 +1,11 @@
 import type { Metadata } from 'next';
-import { Button } from '@/components/ui/button';
-import { Printer, AlertCircle } from 'lucide-react';
-import Link from 'next/link';
+import { AlertCircle } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import PageTitle from '@/components/PageTitle';
-import { Routes } from '@/lib/routes';
 import DashboardStats from '@/components/DashboardStats';
+import { DashboardGreeting } from './components/DashboardGreeting';
+import { DashboardSection } from './components/DashboardSection';
+import { QuickActions } from './components/QuickActions';
+import { TrainingSummary } from './components/TrainingSummary';
 
 export const metadata: Metadata = {
   title: 'Dashboard',
@@ -27,8 +27,7 @@ export default async function DashboardPage({
   const { error } = await searchParams;
 
   return (
-    <div className="container space-y-6 p-6">
-      {/* Error Alert */}
+    <div className="mx-auto w-full max-w-6xl space-y-6 p-6">
       {error && ERROR_MESSAGES[error] && (
         <Alert variant="destructive">
           <AlertCircle className="h-4 w-4" />
@@ -37,22 +36,19 @@ export default async function DashboardPage({
         </Alert>
       )}
 
-      <PageTitle title="Dashboard" description="Welcome to Western 3D Print Club Dashboard" />
+      <DashboardGreeting />
 
-      {/* Dashboard Stats*/}
-      <DashboardStats />
-
-      {/* Quick Actions */}
-      <div className="space-y-4">
-        <h2 className="text-lg font-semibold">Quick Actions</h2>
-        <div className="flex gap-4">
-          <Button asChild>
-            <Link href={Routes.jobs.home}>
-              <Printer className="mr-2 h-4 w-4" />
-              View All Jobs
-            </Link>
-          </Button>
+      {/* Two columns on desktop (prints + actions | training), stacked on phones */}
+      <div className="grid items-start gap-6 lg:grid-cols-3">
+        <div className="space-y-6 lg:col-span-2">
+          <DashboardSection id="prints" title="Your prints">
+            <DashboardStats />
+          </DashboardSection>
+          <DashboardSection id="quick-actions" title="Quick actions">
+            <QuickActions />
+          </DashboardSection>
         </div>
+        <TrainingSummary />
       </div>
     </div>
   );
