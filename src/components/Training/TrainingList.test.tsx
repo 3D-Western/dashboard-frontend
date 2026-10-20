@@ -166,6 +166,57 @@ describe('TrainingCard', () => {
     expect(screen.queryByRole('button')).not.toBeInTheDocument();
   });
 
+  describe('after a failed attempt (backend leaves the certification at IN_PROGRESS)', () => {
+    const started = cert({ status: 'IN_PROGRESS', activeSince: null });
+
+    it('says "Not passed yet" instead of "In progress" and offers Try again', async () => {
+      const { onStart } = renderCard(
+        createTrainingSummary({ certification: started, nextAction: 'START' }),
+      );
+
+      expect(screen.getByText('Not passed yet')).toBeInTheDocument();
+      expect(screen.queryByText('In progress')).not.toBeInTheDocument();
+      expect(screen.getByText(/haven't passed this training yet/i)).toBeInTheDocument();
+      await userEvent.click(screen.getByRole('button', { name: 'Try again' }));
+      expect(onStart).toHaveBeenCalledWith('maker-orientation');
+      expect(screen.queryByRole('button', { name: /start training/i })).not.toBeInTheDocument();
+    });
+
+    it('shows the retry time during the cooldown', () => {
+      renderCard(
+        createTrainingSummary({
+          certification: started,
+          nextAction: 'BLOCKED',
+          blockedReason: 'RETRY_COOLDOWN',
+          retryAt: '2026-10-20T12:40:00Z',
+        }),
+      );
+
+      expect(screen.getByText('Not passed yet')).toBeInTheDocument();
+      expect(screen.getByText(/try this training again in 40 minutes/i)).toBeInTheDocument();
+    });
+
+    it('still says "In progress" while an attempt is actually open', () => {
+      renderCard(
+        createTrainingSummary({
+          certification: started,
+          nextAction: 'RESUME',
+          inProgressAttemptId: 4,
+        }),
+      );
+
+      expect(screen.getByText('In progress')).toBeInTheDocument();
+      expect(screen.queryByText('Not passed yet')).not.toBeInTheDocument();
+    });
+
+    it('a training never started still says "Start training"', () => {
+      renderCard(createTrainingSummary());
+
+      expect(screen.getByText('Not started')).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /start training/i })).toBeInTheDocument();
+    });
+  });
+
   it('disables the button while starting', () => {
     renderCard(createTrainingSummary(), { starting: true });
 

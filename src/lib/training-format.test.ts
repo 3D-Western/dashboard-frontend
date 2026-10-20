@@ -1,10 +1,12 @@
 import { describe, it, expect } from 'vitest';
 import {
   daysUntil,
+  displayStatus,
   formatClock,
   formatDate,
   formatWhen,
   isCertified,
+  isNotPassed,
   statusLabel,
 } from './training-format';
 import { createTrainingSummary } from '@test/utils/trainingFactories';
@@ -59,6 +61,28 @@ describe('status helpers', () => {
     expect(statusLabel(createTrainingSummary())).toBe('Not started');
     expect(statusLabel(certified('ACTIVE'))).toBe('Certified');
     expect(statusLabel(certified('LAPSED'))).toBe('Lapsed');
+  });
+
+  it('treats IN_PROGRESS with no open attempt as "Not passed yet"', () => {
+    const started = (nextAction: 'START' | 'BLOCKED' | 'RESUME') =>
+      createTrainingSummary({
+        nextAction,
+        certification: {
+          status: 'IN_PROGRESS',
+          activeSince: null,
+          expiresAt: null,
+          addonRequired: false,
+          addonDueAt: null,
+        },
+      });
+
+    expect(displayStatus(started('START'))).toBe('NOT_PASSED');
+    expect(displayStatus(started('BLOCKED'))).toBe('NOT_PASSED');
+    expect(statusLabel(started('BLOCKED'))).toBe('Not passed yet');
+    expect(isNotPassed(started('START'))).toBe(true);
+    expect(displayStatus(started('RESUME'))).toBe('IN_PROGRESS');
+    expect(isNotPassed(createTrainingSummary())).toBe(false);
+    expect(displayStatus(createTrainingSummary())).toBeNull();
   });
 
   it('counts active and refresher-due as certified, lapsed as not', () => {

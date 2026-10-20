@@ -72,6 +72,69 @@ describe('OrientationPrompt', () => {
     );
   });
 
+  describe('after a failed orientation quiz', () => {
+    const started = {
+      status: 'IN_PROGRESS' as const,
+      activeSince: null,
+      expiresAt: null,
+      addonRequired: false,
+      addonDueAt: null,
+    };
+
+    it('no longer says "Start with Maker Orientation": it says not passed yet, and offers Try again', async () => {
+      api.startAttempt.mockResolvedValue(createAttempt({ attemptId: 8 }));
+      renderPrompt({
+        orientationComplete: false,
+        trainings: [createTrainingSummary({ certification: started, nextAction: 'START' })],
+      });
+
+      expect(
+        await screen.findByRole('heading', { name: /haven't passed maker orientation yet/i }),
+      ).toBeInTheDocument();
+      expect(screen.queryByText(/start with maker orientation/i)).not.toBeInTheDocument();
+      await userEvent.click(screen.getByRole('button', { name: 'Try again' }));
+      await waitFor(() => expect(push).toHaveBeenCalledWith('/dashboard/training/attempt/8'));
+    });
+
+    it('shows the retry time during the cooldown, with a link instead of a start button', async () => {
+      renderPrompt({
+        orientationComplete: false,
+        trainings: [
+          createTrainingSummary({
+            certification: started,
+            nextAction: 'BLOCKED',
+            blockedReason: 'RETRY_COOLDOWN',
+            retryAt: new Date(Date.now() + 30 * 60_000).toISOString(),
+          }),
+        ],
+      });
+
+      expect(
+        await screen.findByText(/try this training again in \d+ minutes/i),
+      ).toBeInTheDocument();
+      expect(
+        screen.queryByRole('button', { name: /try again|start orientation/i }),
+      ).not.toBeInTheDocument();
+      expect(screen.getByRole('link', { name: /see your training/i })).toBeInTheDocument();
+    });
+
+    it('offers Try again once the cooldown has run out', async () => {
+      renderPrompt({
+        orientationComplete: false,
+        trainings: [
+          createTrainingSummary({
+            certification: started,
+            nextAction: 'BLOCKED',
+            blockedReason: 'RETRY_COOLDOWN',
+            retryAt: new Date(Date.now() - 60_000).toISOString(),
+          }),
+        ],
+      });
+
+      expect(await screen.findByRole('button', { name: 'Try again' })).toBeInTheDocument();
+    });
+  });
+
   it('shows nothing once orientation is complete', async () => {
     const { container } = renderPrompt({
       orientationComplete: true,
