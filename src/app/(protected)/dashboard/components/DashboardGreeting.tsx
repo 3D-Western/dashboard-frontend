@@ -8,9 +8,7 @@ export function DashboardGreeting() {
   return (
     <div>
       <h1 className="text-3xl font-bold">{user ? `Hi, ${user.firstName}.` : 'Welcome back.'}</h1>
-      <p className="mt-2 text-muted-foreground">
-        Here&apos;s where your prints and training stand.
-      </p>
+      <p className="mt-2 text-muted-foreground">Here&apos;s where your prints stand.</p>
     </div>
   );
 }

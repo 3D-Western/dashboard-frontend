@@ -1,5 +1,5 @@
 import db from '@/api/mocks/database/db';
-import { Booking, RestrictionViolation, AlternativeSlot } from '@/types/booking';
+import { Booking, AlternativeSlot } from '@/types/booking';
 
 type BookingWindow = { startTime: string; endTime: string };
 
@@ -27,12 +27,6 @@ export function validateCapacity(
     remaining,
     capacity,
   };
-}
-
-// TODO(training UI): re-gate booking on real certifications. The training-level rule was removed
-// (D-16), so there are no restriction rules to apply until then.
-export function validateRestrictions(): RestrictionViolation[] {
-  return [];
 }
 
 export function suggestAlternativeSlots(
