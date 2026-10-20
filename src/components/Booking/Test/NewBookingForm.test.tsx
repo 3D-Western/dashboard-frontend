@@ -5,7 +5,7 @@ import { useTrainingLevel } from '@/hooks/useTraining';
 
 // Import the hooks so we can mock their return values dynamically
 import { useRouter } from 'next/navigation';
-import { useCreateBooking } from '@/hooks/useBookings';
+import { useCreateBooking, useAvailability } from '@/hooks/useBookings';
 import { useUser } from '@/providers/user-provider';
 import { apiRequest } from '@/api/client/base';
 
@@ -20,6 +20,7 @@ vi.mock('@/providers/user-provider', () => ({
 
 vi.mock('@/hooks/useBookings', () => ({
   useCreateBooking: vi.fn(),
+  useAvailability: vi.fn(),
 }));
 
 vi.mock('@/api/client/base', () => ({
@@ -56,6 +57,12 @@ describe('NewBookingForm', () => {
       error: null,
     });
 
+    (useAvailability as Mock).mockReturnValue({
+      slots: [],
+      isLoading: false,
+      error: null,
+    });
+
     // Equipment settings fetch fired on equipment-select. No approval required so
     // the submit button stays "Confirm Booking" rather than "Loading Rules...".
     (apiRequest as Mock).mockResolvedValue({
@@ -77,14 +84,12 @@ describe('NewBookingForm', () => {
   });
 
   it('renders all required form fields', () => {
-    // We extract 'container' to query the DOM explicitly by ID
-    const { container } = render(<NewBookingForm />);
+    render(<NewBookingForm />);
 
-    // Check inputs directly by their ID to bypass label accessibility strictness
-    expect(container.querySelector('#equipmentId')).toBeInTheDocument();
-    expect(container.querySelector('#date')).toBeInTheDocument();
-    expect(container.querySelector('#timeSlot')).toBeInTheDocument();
-    expect(container.querySelector('#purpose')).toBeInTheDocument();
+    expect(screen.getByLabelText(/^equipment$/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/^date$/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/^time slot$/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/^purpose$/i)).toBeInTheDocument();
 
     // Check that the submit button renders
     expect(screen.getByRole('button', { name: /Confirm Booking/i })).toBeInTheDocument();
@@ -137,6 +142,33 @@ describe('NewBookingForm', () => {
     // 5. Verify the user was redirected to the overview page
     await waitFor(() => {
       expect(mockPush).toHaveBeenCalledWith('/dashboard/bookings');
+    });
+  });
+
+  it('disables a time slot that already overlaps an existing booking', async () => {
+    // Occupied window computed the same way the component derives slot times, so
+    // the overlap check is independent of the test runner's local timezone.
+    (useAvailability as Mock).mockReturnValue({
+      slots: [
+        {
+          startTime: new Date('2026-10-15T14:00:00').toISOString(),
+          endTime: new Date('2026-10-15T16:00:00').toISOString(),
+        },
+      ],
+      isLoading: false,
+      error: null,
+    });
+
+    const { container } = render(<NewBookingForm />);
+
+    const equipmentSelect = container.querySelector('#equipmentId') as HTMLSelectElement;
+    const dateInput = container.querySelector('#date') as HTMLInputElement;
+    fireEvent.change(equipmentSelect, { target: { value: 'laser-1' } });
+    fireEvent.change(dateInput, { target: { value: '2026-10-15' } });
+
+    await waitFor(() => {
+      const bookedOption = screen.getByText('2:00 PM - 4:00 PM (Unavailable)');
+      expect(bookedOption).toBeDisabled();
     });
   });
 });

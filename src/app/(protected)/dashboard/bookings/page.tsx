@@ -53,7 +53,7 @@ export default function BookingsPage() {
           </Button>
           <Button
             onClick={() => router.push('/dashboard/bookings/new')}
-            className="w-full bg-green-600 text-white hover:bg-green-700 sm:w-auto"
+            className="w-full sm:w-auto"
           >
             + New Booking
           </Button>
@@ -114,7 +114,7 @@ export default function BookingsPage() {
             ) : !bookings || bookings.length === 0 ? (
               <p className="text-sm text-muted-foreground">You have no upcoming bookings.</p>
             ) : (
-              <BookingList bookings={bookings} />
+              <BookingList bookings={bookings} onCancelled={refetch} />
             )}
           </div>
         </div>

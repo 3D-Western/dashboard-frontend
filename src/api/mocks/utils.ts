@@ -67,6 +67,7 @@ const MEMBER_PERMISSIONS: UserPermission[] = [
   { key: PERMISSIONS.FILES_READ_METADATA, scopeKey: 'own' },
   { key: PERMISSIONS.FILES_DOWNLOAD, scopeKey: 'own' },
   { key: PERMISSIONS.USERS_UPDATE_PROFILE, scopeKey: 'own' },
+  { key: PERMISSIONS.BOOKINGS_CANCEL, scopeKey: 'own' },
   { key: PERMISSIONS.BOOKINGS_READ, scopeKey: 'any' },
 ];
 

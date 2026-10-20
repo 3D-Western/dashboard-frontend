@@ -9,6 +9,7 @@ import { EventClickArg } from '@fullcalendar/core';
 import { Booking, ConflictResponse } from '@/types/booking';
 import BookingDetailModal from './BookingDetailModal';
 import { Loader2 } from 'lucide-react';
+import { BOOKING_CALENDAR_EVENT_COLORS } from '@/constants/booking-status';
 
 interface BookingCalendarProps {
   bookings: Booking[] | { data?: Booking[] };
@@ -24,17 +25,9 @@ export default function BookingCalendar({ bookings, isLoading }: BookingCalendar
   const rawList: Booking[] = Array.isArray(bookings) ? bookings : (bookings?.data ?? []);
 
   const calendarEvents = rawList.map((booking) => {
-    // PENDING (Yellow)
-    let backgroundColor = '#facc15';
-    let borderColor = '#eab308';
-
-    if (booking.status === 'APPROVED') {
-      backgroundColor = '#22c55e';
-      borderColor = '#16a34a';
-    } else if (booking.status === 'REJECTED' || booking.status === 'CANCELLED') {
-      backgroundColor = '#ef4444';
-      borderColor = '#dc2626';
-    }
+    const { background: backgroundColor, border: initialBorderColor } =
+      BOOKING_CALENDAR_EVENT_COLORS[booking.status];
+    let borderColor = initialBorderColor;
 
     const hasConflict = booking.waitlistPosition && booking.waitlistPosition > 0;
     if (hasConflict) {

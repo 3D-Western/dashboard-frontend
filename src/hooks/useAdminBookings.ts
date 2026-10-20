@@ -27,12 +27,13 @@ export function useAdminBookings(params?: BookingsListParams) {
   const startTime = params?.startTime;
   const endTime = params?.endTime;
   const equipmentId = params?.equipmentId;
+  const hasConflict = params?.hasConflict;
 
   const fetchBookings = useCallback(async () => {
     setIsLoading(true);
     setError(null);
     try {
-      const requestParams = { status, page, pageSize, startTime, endTime, equipmentId };
+      const requestParams = { status, page, pageSize, startTime, endTime, equipmentId, hasConflict };
 
       const response = (await bookingAPI.listAllBookings(requestParams)) as
         | AdminListResponse
@@ -51,7 +52,7 @@ export function useAdminBookings(params?: BookingsListParams) {
     } finally {
       setIsLoading(false);
     }
-  }, [status, page, pageSize, startTime, endTime, equipmentId]);
+  }, [status, page, pageSize, startTime, endTime, equipmentId, hasConflict]);
 
   useEffect(() => {
     const runFetch = async () => {

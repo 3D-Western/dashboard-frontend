@@ -47,6 +47,40 @@ export function useBookings(params?: BookingsListParams) {
   return { bookings, pagination, isLoading, error, refetch: fetchBookings };
 }
 
+// hook for fetching a single booking's details by id
+export function useBooking(bookingId?: string) {
+  const [booking, setBooking] = useState<Booking | null>(null);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const fetchBooking = useCallback(async () => {
+    if (!bookingId) return;
+    setIsLoading(true);
+    setError(null);
+    try {
+      const response = await bookingAPI.getBookingById(bookingId);
+      const typedResponse = response as { data?: Booking } | Booking;
+      const data =
+        typedResponse && 'data' in typedResponse && typedResponse.data
+          ? typedResponse.data
+          : (typedResponse as Booking);
+      setBooking(data);
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to fetch booking';
+      setError(errorMessage);
+      console.error('Error fetching booking:', err);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [bookingId]);
+
+  useEffect(() => {
+    fetchBooking();
+  }, [fetchBooking]);
+
+  return { booking, isLoading, error, refetch: fetchBooking };
+}
+
 // hook for checking availability @ time for equipment x
 export function useAvailability(equipmentId?: string, from?: string, to?: string) {
   const [slots, setSlots] = useState<AvailabilitySlot[]>([]);
@@ -152,4 +186,29 @@ export function useCreateBooking() {
   };
 
   return { mutate, isPending, error };
+}
+
+// hook for a user cancelling their own booking
+export function useCancelBooking() {
+  const [isPending, setIsPending] = useState<boolean>(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const cancel = async (bookingId: string) => {
+    setIsPending(true);
+    setError(null);
+
+    try {
+      const response = await bookingAPI.cancelBooking(bookingId);
+      return response;
+    } catch (err: unknown) {
+      const errorMessage =
+        err instanceof Error ? err.message : 'An error occurred while cancelling the booking.';
+      setError(errorMessage);
+      throw err;
+    } finally {
+      setIsPending(false);
+    }
+  };
+
+  return { cancel, isPending, error };
 }

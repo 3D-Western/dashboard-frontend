@@ -2,6 +2,7 @@ import { http, HttpResponse } from 'msw';
 import { endpoints } from '../client/endpoints';
 import {
   createInvalidSessionResponse,
+  generateErrorResponse,
   generateSuccessResponse,
   mockUserHasPermission,
 } from './utils';
@@ -44,18 +45,22 @@ function countConflicts(bookings: Booking[]): number {
   return count;
 }
 
-function enrichPendingRequest(booking: Booking): PendingRequest {
+function bookingHasConflict(booking: Booking): boolean {
   const settings = db.getCapacitySettings(booking.equipmentId);
   const others = db
     .getBookings({ equipmentId: booking.equipmentId })
     .filter((b) => b.id !== booking.id);
   const overlapping = checkOverlap(others, booking);
+  return overlapping.length >= settings.maxSimultaneousBookings;
+}
+
+function enrichPendingRequest(booking: Booking): PendingRequest {
   const violations = validateRestrictions(booking.equipmentId, booking.userInfo.studentId);
 
   return {
     ...booking,
     urgencyLevel: computeUrgency(booking.startTime),
-    hasConflict: overlapping.length >= settings.maxSimultaneousBookings,
+    hasConflict: bookingHasConflict(booking),
     meetsRestrictions: violations.length === 0,
   };
 }
@@ -75,6 +80,7 @@ export const bookingHandlers = [
     const statusFilter = statusParam ? statusParam.toUpperCase() : undefined;
     const from = url.searchParams.get('from') || undefined;
     const to = url.searchParams.get('to') || undefined;
+    const hasConflictFilter = url.searchParams.get('hasConflict') === 'true';
     const page = parseInt(url.searchParams.get('page') || '1', 10);
     const pageSize = parseInt(url.searchParams.get('pageSize') || '10', 10);
 
@@ -95,6 +101,10 @@ export const bookingHandlers = [
 
     if (statusFilter) {
       bookings = bookings.filter((b) => b.status === statusFilter);
+    }
+
+    if (hasConflictFilter) {
+      bookings = bookings.filter((b) => activeOnly(b) && bookingHasConflict(b));
     }
 
     const summary = {
@@ -145,15 +155,28 @@ export const bookingHandlers = [
 
     const selectedEquipment = mockEquipment.find((e) => e.id === body.equipmentId);
     if (!selectedEquipment) {
-      return HttpResponse.json({ error: 'Equipment not found' }, { status: 404 });
+      return HttpResponse.json(
+        generateErrorResponse({ code: 'EQUIPMENT_NOT_FOUND', message: 'Equipment not found.' }),
+        { status: 404 },
+      );
+    }
+
+    if (Date.parse(body.startTime) < Date.now()) {
+      return HttpResponse.json(
+        generateErrorResponse({
+          code: 'BOOKING_IN_PAST',
+          message: 'You cannot book a time slot that has already started.',
+        }),
+        { status: 400 },
+      );
     }
 
     if (!canAccessBooking(user.trainingLevel)) {
       return HttpResponse.json(
-        {
+        generateErrorResponse({
           code: 'TRAINING_LEVEL_REQUIRED',
           message: 'You must complete required training before booking equipment.',
-        },
+        }),
         { status: 403 },
       );
     }
@@ -163,11 +186,11 @@ export const bookingHandlers = [
     const violations = validateRestrictions(body.equipmentId, user.studentId);
     if (violations.length > 0) {
       return HttpResponse.json(
-        {
+        generateErrorResponse({
           code: 'RESTRICTION_VIOLATED',
           message: 'You do not meet the requirements to book this equipment.',
-          violations,
-        },
+          details: { violations },
+        }),
         { status: 403 },
       );
     }
@@ -222,12 +245,11 @@ export const bookingHandlers = [
         body.endTime,
       );
       return HttpResponse.json(
-        {
+        generateErrorResponse({
           code: settings.maxSimultaneousBookings > 1 ? 'CAPACITY_EXCEEDED' : 'BOOKING_CONFLICT',
           message: 'Maximum capacity reached for this time slot.',
-          conflictingBookings: overlapping,
-          alternativeSlots,
-        },
+          details: { conflictingBookings: overlapping, alternativeSlots },
+        }),
         { status: 409 },
       );
     }
@@ -240,7 +262,37 @@ export const bookingHandlers = [
     return HttpResponse.json(generateSuccessResponse({ data: newBooking }), { status: 201 });
   }),
 
-  // PATCH /bookings/:id used for cancelling a booking
+  // GET /bookings/:id - fetch a single booking's details (owner or admin)
+  http.get(`${apiUrl}${endpoints.bookings.byId(':id')}`, ({ cookies, params }) => {
+    const sessionId = cookies['sessionToken'] || '';
+    const user = db.validateSession(sessionId);
+    if (!user) {
+      return createInvalidSessionResponse();
+    }
+
+    const { id } = params;
+    const booking = db.getBookings().find((b) => b.id === id);
+    if (!booking) {
+      return HttpResponse.json(
+        generateErrorResponse({ code: 'BOOKING_NOT_FOUND', message: 'Booking not found.' }),
+        { status: 404 },
+      );
+    }
+
+    const isOwner = booking.userInfo.studentId === user.studentId;
+    const isAdmin = mockUserHasPermission(user, PERMISSIONS.BOOKINGS_LIST);
+    if (!isOwner && !isAdmin) {
+      return HttpResponse.json(
+        generateErrorResponse({ code: 'FORBIDDEN', message: 'Insufficient permissions.' }),
+        { status: 403 },
+      );
+    }
+
+    return HttpResponse.json(generateSuccessResponse({ data: booking }));
+  }),
+
+  // PATCH /bookings/:id used for a user cancelling their own booking
+  // (admins force-cancelling any booking go through the /admin/bookings/:id/override route)
   http.patch(`${apiUrl}${endpoints.bookings.update(':id')}`, async ({ cookies, params }) => {
     const sessionId = cookies['sessionToken'] || '';
     const user = db.validateSession(sessionId);
@@ -248,18 +300,33 @@ export const bookingHandlers = [
       return createInvalidSessionResponse();
     }
 
-    if (!mockUserHasPermission(user, PERMISSIONS.BOOKINGS_UPDATE_STATUS)) {
+    const { id } = params;
+    const booking = db.getBookings().find((b) => b.id === id);
+    if (!booking) {
       return HttpResponse.json(
-        { success: false, error: 'Insufficient permissions' },
+        generateErrorResponse({ code: 'BOOKING_NOT_FOUND', message: 'Booking not found.' }),
+        { status: 404 },
+      );
+    }
+
+    const isAdminOverride = mockUserHasPermission(user, PERMISSIONS.BOOKINGS_UPDATE_STATUS);
+    const canCancelOwnBooking =
+      mockUserHasPermission(user, PERMISSIONS.BOOKINGS_CANCEL) &&
+      booking.userInfo.studentId === user.studentId;
+
+    if (!isAdminOverride && !canCancelOwnBooking) {
+      return HttpResponse.json(
+        generateErrorResponse({ code: 'FORBIDDEN', message: 'Insufficient permissions.' }),
         { status: 403 },
       );
     }
 
-    const { id } = params;
-
     const cancelledBooking = db.cancelBooking(id as string);
     if (!cancelledBooking) {
-      return HttpResponse.json({ success: false, error: 'Booking not found' }, { status: 404 });
+      return HttpResponse.json(
+        generateErrorResponse({ code: 'BOOKING_NOT_FOUND', message: 'Booking not found.' }),
+        { status: 404 },
+      );
     }
 
     return HttpResponse.json(

@@ -23,13 +23,14 @@ export function AdminBookingsDashboard() {
       ? undefined
       : (activeTab.toUpperCase() as BookingStatus);
 
-  const { bookings, pagination, isLoading, error, refetch } = useAdminBookings({
+  const { bookings, pagination, summary, isLoading, error, refetch } = useAdminBookings({
     status: queryStatus,
     page,
     pageSize,
     startTime: startTime || undefined,
     endTime: endTime || undefined,
     equipmentId: equipmentId || undefined,
+    hasConflict: activeTab === 'Conflicts' ? true : undefined,
   });
 
   const { run: runBulkAction, isPending: isBulkPending } = useBulkAction();
@@ -69,6 +70,25 @@ export function AdminBookingsDashboard() {
 
   return (
     <div className="mx-auto max-w-7xl pb-24">
+      <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
+        <div className="rounded-lg border border-border bg-card p-4">
+          <p className="text-xs text-muted-foreground">Pending</p>
+          <p className="text-2xl font-semibold text-foreground">{summary?.totalPending ?? '—'}</p>
+        </div>
+        <div className="rounded-lg border border-border bg-card p-4">
+          <p className="text-xs text-muted-foreground">Approved</p>
+          <p className="text-2xl font-semibold text-foreground">
+            {summary?.totalApproved ?? '—'}
+          </p>
+        </div>
+        <div className="rounded-lg border border-border bg-card p-4">
+          <p className="text-xs text-muted-foreground">Conflicts</p>
+          <p className="text-2xl font-semibold text-destructive">
+            {summary?.totalConflicts ?? '—'}
+          </p>
+        </div>
+      </div>
+
       <div className="mb-6 flex space-x-1 border-b border-border">
         {tabs.map((tab) => (
           <button
