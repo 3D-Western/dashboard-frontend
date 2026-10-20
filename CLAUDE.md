@@ -19,6 +19,7 @@ Part of the monorepo. Read the root `CLAUDE.md` first; it has the workflow, docs
 
 - Routes: `/admin/signoffs` (queue) and `/admin/signoffs/[id]` (checklist, approve, reject). Components in `src/components/Signoff/`, client in `src/api/client/signoff.ts`, plain-language errors in `signoff-errors.ts`. Visible only with `training:signoff` (sidebar, admin home, and the page itself); that permission is also in `ADMIN_SECTION_PERMISSIONS`.
 - Approve is disabled until every checklist item is ticked and sends every key; the server enforces it too. Reject means "not ready in person yet" (the student stays in line, with a fresh request); the optional "must redo the online training" tick lapses them instead. The student's card (`TrainingCard`) shows `signoffFeedback`, the reason. Contract: `docs/plans/training-v1.md`, "Sign-off API".
+
 ## Training (admin editor)
 
 - Routes under `/admin/training`: trainings list, `equipment`, `import`, and per training `[id]` (overview and versions), `draft`, `questions`, `settings`, `report`. Components are in `src/components/TrainingAdmin/`. Every read accepts `training:author` or `training:publish`; changes need `training:author`; publishing, corrections and re-scoring need `training:publish` (`useTrainingPermissions`). The sidebar and admin dashboard show it for either permission.
