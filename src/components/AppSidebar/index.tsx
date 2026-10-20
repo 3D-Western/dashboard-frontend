@@ -30,6 +30,8 @@ import {
   Shield,
   ChevronDown,
   TicketPlus,
+  PenSquare,
+  type LucideIcon,
 } from 'lucide-react';
 import Link from 'next/link';
 import { BrandLockup } from '@/components/BrandLogo';
@@ -72,7 +74,16 @@ const isNavItemActive = (pathname: string, url: string) =>
   pathname === url ||
   ((url === Routes.jobs.home || url === Routes.training.home) && pathname.startsWith(`${url}/`));
 
-const adminNavigationItems = [
+interface AdminNavItem {
+  title: string;
+  url: string;
+  icon: LucideIcon;
+  permission: string;
+  /** A second permission that also shows the entry. */
+  alsoPermission?: string;
+}
+
+const adminNavigationItems: AdminNavItem[] = [
   {
     title: 'User Management',
     url: Routes.adminUsersManagement,
@@ -94,6 +105,14 @@ const adminNavigationItems = [
     icon: TicketPlus,
     permission: PERMISSIONS.INVITATIONS_LIST,
   },
+  {
+    title: 'Training Editor',
+    url: '/admin/training',
+    icon: PenSquare,
+    // Either permission opens the editor (publishing alone gets an explanation inside).
+    permission: PERMISSIONS.TRAINING_AUTHOR,
+    alsoPermission: PERMISSIONS.TRAINING_PUBLISH,
+  },
 ];
 
 // Larger text and tap area than the shadcn default, especially on phones
@@ -105,8 +124,10 @@ interface AppSidebarProps {
 
 export function AppSidebar({ user }: AppSidebarProps) {
   const pathname = usePathname();
-  const visibleAdminItems = adminNavigationItems.filter((item) =>
-    hasPermission(user, item.permission),
+  const visibleAdminItems = adminNavigationItems.filter(
+    (item) =>
+      hasPermission(user, item.permission) ||
+      (item.alsoPermission !== undefined && hasPermission(user, item.alsoPermission)),
   );
 
   return (

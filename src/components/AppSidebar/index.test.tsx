@@ -92,6 +92,31 @@ describe('AppSidebar', () => {
       expect(screen.queryByRole('link', { name: /job management/i })).not.toBeInTheDocument();
     });
 
+    it('shows Training Editor to someone who can author trainings', () => {
+      const admin = createMockAdmin({ permissions: [perm(PERMISSIONS.TRAINING_AUTHOR)] });
+      renderSidebar(admin);
+
+      expect(screen.getByRole('link', { name: /training editor/i })).toHaveAttribute(
+        'href',
+        '/admin/training',
+      );
+      expect(screen.queryByRole('link', { name: /job management/i })).not.toBeInTheDocument();
+    });
+
+    it('shows Training Editor to someone who can only publish trainings', () => {
+      const admin = createMockAdmin({ permissions: [perm(PERMISSIONS.TRAINING_PUBLISH)] });
+      renderSidebar(admin);
+
+      expect(screen.getByRole('link', { name: /training editor/i })).toBeInTheDocument();
+    });
+
+    it('hides Training Editor from admins with other permissions only', () => {
+      const admin = createMockAdmin({ permissions: [perm(PERMISSIONS.USERS_LIST)] });
+      renderSidebar(admin);
+
+      expect(screen.queryByRole('link', { name: /training editor/i })).not.toBeInTheDocument();
+    });
+
     it('shows User Management only when user has users:list', () => {
       const admin = createMockAdmin({ permissions: [perm(PERMISSIONS.USERS_LIST)] });
       renderSidebar(admin);
