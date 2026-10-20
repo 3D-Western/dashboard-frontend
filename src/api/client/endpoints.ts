@@ -89,6 +89,17 @@ export const endpoints = {
   },
   training: {
     level: '/api/v1/users/me/training-level', //get users level
+    // Learner training API (docs/plans/training-v1.md, "Learner API")
+    list: '/api/v1/training/trainings',
+    detail: (slug: string) => `/api/v1/training/trainings/${slug}`,
+    start: (slug: string) => `/api/v1/training/trainings/${slug}/attempts`,
+    attempt: (attemptId: number) => `/api/v1/training/attempts/${attemptId}`,
+    pledge: (attemptId: number) => `/api/v1/training/attempts/${attemptId}/pledge`,
+    abandon: (attemptId: number) => `/api/v1/training/attempts/${attemptId}/abandon`,
+    step: (attemptId: number, stepId: number) =>
+      `/api/v1/training/attempts/${attemptId}/steps/${stepId}`,
+    pendingAgreements: '/api/v1/training/agreements/pending',
+    acceptAgreement: (agreementId: number) => `/api/v1/training/agreements/${agreementId}/accept`,
   },
   onboarding: {
     status: '/api/v1/users/me/onboarding',
