@@ -78,7 +78,11 @@ export function AgreementsGate({ agreements }: AgreementsGateProps) {
             ? 'All done. Thank you.'
             : `${remaining} ${remaining === 1 ? 'agreement' : 'agreements'} left to accept.`}
         </p>
-        <div className="flex items-center gap-3">
+        {/* Stacked on phones (a full-width Continue beside Logout overflowed 390 px), a row from sm up */}
+        <div
+          data-testid="agreements-actions"
+          className="flex min-w-0 flex-col gap-3 sm:flex-row sm:items-center [&>button]:w-full sm:[&>button]:w-auto"
+        >
           {remaining > 0 && <LogoutButton />}
           <Button
             type="button"

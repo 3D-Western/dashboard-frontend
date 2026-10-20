@@ -124,6 +124,20 @@ describe('AgreementsGate', () => {
     expect(refresh).toHaveBeenCalled();
   });
 
+  it('stacks Logout and Continue on phones instead of overflowing 390 px', () => {
+    render(<AgreementsGate agreements={agreements} />);
+
+    const actions = screen.getByTestId('agreements-actions');
+    // column on phones, row from sm up; buttons fill the width only on phones
+    expect(actions).toHaveClass('flex-col', 'sm:flex-row');
+    expect(actions.className).toContain('[&>button]:w-full');
+    expect(actions.className).toContain('sm:[&>button]:w-auto');
+    expect(actions).toContainElement(screen.getByRole('button', { name: 'Logout' }));
+    expect(actions).toContainElement(
+      screen.getByRole('button', { name: /continue to the dashboard/i }),
+    );
+  });
+
   it('offers to sign out instead', () => {
     render(<AgreementsGate agreements={agreements} />);
 
