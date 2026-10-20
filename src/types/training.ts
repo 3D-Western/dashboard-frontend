@@ -1,5 +1,3 @@
-export type TrainingLevel = 'LEVEL_1' | 'LEVEL_2';
-
 // ---------------------------------------------------------------------------------------------
 // Learner training API (/api/v1/training). Shapes follow the "Learner API" section of
 // docs/plans/training-v1.md. No response ever carries correct answers, a question's critical flag
