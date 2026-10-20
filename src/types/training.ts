@@ -119,7 +119,7 @@ export interface AttemptStep {
   type: StepType;
   title: string;
   status: StepStatus;
-  isAddonScope: boolean;
+  addonScope: boolean;
   video?: VideoBlock | null;
   reading?: ReadingBlock | null;
   attestation?: AttestationBlock | null;

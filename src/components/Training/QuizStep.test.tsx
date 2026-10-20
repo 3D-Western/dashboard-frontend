@@ -23,7 +23,7 @@ const quizStep: AttemptStep = {
   type: 'QUIZ',
   title: 'Final quiz',
   status: 'AVAILABLE',
-  isAddonScope: false,
+  addonScope: false,
   quiz: { opened: false, questionCount: 3, answeredCount: 0 },
 };
 

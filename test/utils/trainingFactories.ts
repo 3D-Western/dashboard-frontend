@@ -47,7 +47,7 @@ export const createVideoStep = (overrides: Partial<AttemptStep> = {}): AttemptSt
   type: 'VIDEO',
   title: 'Welcome video',
   status: 'AVAILABLE',
-  isAddonScope: false,
+  addonScope: false,
   video: createVideoBlock(),
   ...overrides,
 });

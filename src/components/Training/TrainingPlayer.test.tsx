@@ -49,7 +49,7 @@ function steps(statuses: [StepStatus, StepStatus, StepStatus, StepStatus]): Atte
       type: 'VIDEO',
       title: 'Welcome video',
       status: video,
-      isAddonScope: false,
+      addonScope: false,
       video: visible(video) ? createVideoBlock() : null,
     },
     {
@@ -58,7 +58,7 @@ function steps(statuses: [StepStatus, StepStatus, StepStatus, StepStatus]): Atte
       type: 'READING',
       title: 'Safety reading',
       status: reading,
-      isAddonScope: false,
+      addonScope: false,
       reading: visible(reading)
         ? { bodyMarkdown: '## Wear your glasses\n\nAlways.', dwellSeconds: 0, gateQuestion: null }
         : null,
@@ -69,7 +69,7 @@ function steps(statuses: [StepStatus, StepStatus, StepStatus, StepStatus]): Atte
       type: 'ATTESTATION',
       title: 'Confirm',
       status: attestation,
-      isAddonScope: false,
+      addonScope: false,
       attestation: visible(attestation) ? { text: 'I will follow the rules.' } : null,
     },
     {
@@ -78,7 +78,7 @@ function steps(statuses: [StepStatus, StepStatus, StepStatus, StepStatus]): Atte
       type: 'QUIZ',
       title: 'Final quiz',
       status: quiz,
-      isAddonScope: false,
+      addonScope: false,
       quiz: visible(quiz) ? { opened: false, questionCount: 1, answeredCount: 0 } : null,
     },
   ];
