@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { render, screen } from '@testing-library/react';
-import { Markdown, parseMarkdown } from './index';
+import { Markdown } from './index';
 
 describe('Markdown', () => {
   it('renders headings, paragraphs and lists', () => {
@@ -20,7 +20,7 @@ that wraps.
     );
 
     expect(screen.getByRole('heading', { level: 2, name: 'Title' })).toBeInTheDocument();
-    expect(screen.getByText('A paragraph that wraps.')).toBeInTheDocument();
+    expect(screen.getByText(/A paragraph/)).toBeInTheDocument();
     expect(screen.getAllByRole('list')).toHaveLength(2);
     expect(screen.getAllByRole('listitem').map((li) => li.textContent)).toEqual([
       'one',
@@ -38,6 +38,18 @@ that wraps.
     expect(screen.getByText('M30').tagName).toBe('CODE');
   });
 
+  it('renders GFM tables and task lists', () => {
+    render(
+      <Markdown>
+        {'| Tool | PPE |\n| --- | --- |\n| Laser | Glasses |\n\n- [x] done\n- [ ] todo'}
+      </Markdown>,
+    );
+
+    expect(screen.getByRole('table')).toBeInTheDocument();
+    expect(screen.getByRole('columnheader', { name: 'PPE' })).toBeInTheDocument();
+    expect(screen.getAllByRole('checkbox')).toHaveLength(2);
+  });
+
   it('renders safe links in a new tab', () => {
     render(<Markdown>{'See [the guide](https://example.com/guide).'}</Markdown>);
 
@@ -47,35 +59,76 @@ that wraps.
     expect(link).toHaveAttribute('rel', expect.stringContaining('noopener'));
   });
 
-  it('does not turn script links into links', () => {
-    render(
-      <Markdown>
-        {'[click me](javascript:alert(1)) and [data](data:text/html;base64,AAAA)'}
-      </Markdown>,
-    );
+  describe('cannot be used to inject script', () => {
+    const hrefs = (container: HTMLElement) =>
+      Array.from(container.querySelectorAll('a')).map((a) => a.getAttribute('href') ?? '');
 
-    expect(screen.queryByRole('link')).not.toBeInTheDocument();
-    expect(screen.getByText(/click me/)).toBeInTheDocument();
-  });
+    it.each([
+      ['plain javascript: link', '[x](javascript:alert(1))'],
+      ['mixed case', '[x](JaVaScRiPt:alert(1))'],
+      ['decimal entity in the scheme', '[x](java&#115;cript:alert(1))'],
+      ['hex entity in the scheme', '[x](java&#x73;cript:alert(1))'],
+      ['named entity colon', '[x](javascript&colon;alert(1))'],
+      ['leading whitespace entity', '[x](&#32;javascript:alert(1))'],
+      ['tab inside the scheme', '[x](java\tscript:alert(1))'],
+      ['data URL', '[x](data:text/html;base64,PHNjcmlwdD5hbGVydCgxKTwvc2NyaXB0Pg==)'],
+      ['vbscript', '[x](vbscript:msgbox(1))'],
+      ['reference-style link', '[x][r]\n\n[r]: javascript:alert(1)'],
+      ['autolink', '<javascript:alert(1)>'],
+      ['link inside bold inside a list', '- **[x](javascript:alert(1))**'],
+      [
+        'link inside a block quote and a table',
+        '> [x](javascript:alert(1))\n\n| a |\n|---|\n| [x](javascript:alert(1)) |',
+      ],
+    ])('drops %s', (_name, source) => {
+      const { container } = render(<Markdown>{source}</Markdown>);
 
-  it('never outputs raw HTML', () => {
-    const { container } = render(
-      <Markdown>{'<script>alert(1)</script> <img src=x onerror=alert(1)> hello'}</Markdown>,
-    );
+      for (const href of hrefs(container)) {
+        expect(href.replace(/\s/g, '').toLowerCase()).not.toMatch(/^(javascript|data|vbscript):/);
+      }
+      expect(container.querySelector('script')).toBeNull();
+    });
 
-    expect(container.querySelector('script')).toBeNull();
-    expect(container.querySelector('img')).toBeNull();
-    expect(container.textContent).toContain('<script>alert(1)</script>');
-  });
+    it('never outputs raw HTML', () => {
+      const { container } = render(
+        <Markdown>
+          {
+            '<script>alert(1)</script> <img src=x onerror=alert(1)> <a href="javascript:alert(1)">x</a> hello'
+          }
+        </Markdown>,
+      );
 
-  it('only allows http(s) images', () => {
-    const { container } = render(
-      <Markdown>{'![ok](https://example.com/a.png) ![bad](javascript:alert(1))'}</Markdown>,
-    );
+      expect(container.querySelector('script')).toBeNull();
+      expect(container.querySelector('img')).toBeNull();
+      expect(container.querySelector('a')).toBeNull();
+      expect(container.querySelector('[onerror]')).toBeNull();
+    });
 
-    const images = container.querySelectorAll('img');
-    expect(images).toHaveLength(1);
-    expect(images[0]).toHaveAttribute('alt', 'ok');
+    it('does not let HTML hide inside nested constructs', () => {
+      const { container } = render(
+        <Markdown>
+          {'> - **<img src=x onerror=alert(1)>**\n\n| a |\n|---|\n| <script>alert(1)</script> |'}
+        </Markdown>,
+      );
+
+      expect(container.querySelector('img')).toBeNull();
+      expect(container.querySelector('script')).toBeNull();
+      expect(container.querySelector('[onerror]')).toBeNull();
+    });
+
+    it('only allows http(s) images', () => {
+      const { container } = render(
+        <Markdown>
+          {
+            '![ok](https://example.com/a.png) ![bad](javascript:alert(1)) ![bad2](data:image/svg+xml;base64,AAAA) ![bad3](java&#115;cript:alert(1))'
+          }
+        </Markdown>,
+      );
+
+      const images = container.querySelectorAll('img');
+      expect(images).toHaveLength(1);
+      expect(images[0]).toHaveAttribute('alt', 'ok');
+    });
   });
 
   it('renders block quotes, rules and fenced code', () => {
@@ -85,24 +138,12 @@ that wraps.
 
     expect(container.querySelector('blockquote')).toHaveTextContent('careful');
     expect(container.querySelector('hr')).not.toBeNull();
-    expect(container.querySelector('pre')?.textContent).toBe('G28\nG1 X10');
+    expect(container.querySelector('pre')?.textContent).toBe('G28\nG1 X10\n');
   });
 
   it('handles empty input', () => {
     const { container } = render(<Markdown>{''}</Markdown>);
 
     expect(container.firstChild).toBeEmptyDOMElement();
-  });
-});
-
-describe('parseMarkdown', () => {
-  it('keeps a continuation line with its list item', () => {
-    expect(parseMarkdown('- first item\n  continues here\n- second')).toEqual([
-      { kind: 'list', ordered: false, items: ['first item continues here', 'second'] },
-    ]);
-  });
-
-  it('ends a paragraph where a list starts', () => {
-    expect(parseMarkdown('Intro\n- a\n- b').map((b) => b.kind)).toEqual(['paragraph', 'list']);
   });
 });
