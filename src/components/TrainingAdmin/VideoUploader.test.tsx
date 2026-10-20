@@ -251,6 +251,19 @@ describe('VideoUploader warnings', () => {
   });
 });
 
+describe('VideoUploader and files the browser could not name', () => {
+  it('uploads an untyped .mov, with the format warning', async () => {
+    upload.mockResolvedValue('videos/clip.mov');
+    const onUploaded = vi.fn();
+    render(<VideoUploader assetKey={null} onUploaded={onUploaded} />);
+
+    await choose(new File([new Uint8Array(100)], 'clip.mov', { type: '' }));
+
+    expect(await screen.findByLabelText('Video warnings')).toHaveTextContent('QuickTime');
+    await waitFor(() => expect(onUploaded).toHaveBeenCalledWith('videos/clip.mov', 60));
+  });
+});
+
 describe('VideoUploader safeguards', () => {
   it('abandons the upload when the screen is closed', async () => {
     let signal: AbortSignal | undefined;

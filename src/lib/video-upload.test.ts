@@ -8,6 +8,7 @@ import {
   readVideoInfo,
   uploadVideo,
   videoFileProblem,
+  videoTypeOf,
 } from './video-upload';
 
 vi.mock('@/api/client/training-admin', () => ({
@@ -294,5 +295,49 @@ describe('readVideoInfo', () => {
     video.onloadedmetadata();
 
     await expect(pending).resolves.toEqual({ durationSeconds: null, width: null, height: null });
+  });
+});
+
+describe('videoTypeOf: a file the browser could not name', () => {
+  it('uses the type when there is one', () => {
+    expect(videoTypeOf({ type: 'video/webm', name: 'a.mp4' })).toBe('video/webm');
+  });
+
+  it('falls back to the extension when the type is empty, whatever its case', () => {
+    expect(videoTypeOf({ type: '', name: 'Clip.MOV' })).toBe('video/quicktime');
+    expect(videoTypeOf({ type: '', name: 'talk.mp4' })).toBe('video/mp4');
+    expect(videoTypeOf({ type: '', name: 'a.b.webm' })).toBe('video/webm');
+  });
+
+  it('stays unknown for an unrecognised extension or no name', () => {
+    expect(videoTypeOf({ type: '', name: 'clip.avi' })).toBe('');
+    expect(videoTypeOf({ type: '', name: 'noextension' })).toBe('');
+    expect(videoTypeOf({ type: '' })).toBe('');
+  });
+
+  it('lets an untyped .mov be uploaded, and refuses an untyped unknown file', () => {
+    expect(videoFileProblem({ type: '', name: 'clip.mov', size: 1000 })).toBeNull();
+    expect(videoFileProblem({ type: '', name: 'clip.avi', size: 1000 })).toMatch(/unknown type/);
+  });
+
+  it('asks for an upload URL of the type found from the extension', async () => {
+    api.getVideoUploadUrl.mockResolvedValue({
+      assetKey: 'videos/abc.mov',
+      method: 'PUT',
+      uploadUrl: 'https://storage.test/videos/abc.mov',
+      requiredHeaders: {},
+      expiresAt: '2026-10-20T13:00:00Z',
+    });
+    const file = new File([new Uint8Array(50)], 'clip.mov', { type: '' });
+
+    const pending = uploadVideo(file, vi.fn());
+    await vi.waitFor(() => expect(FakeXhr.last?.url).toBe('https://storage.test/videos/abc.mov'));
+    FakeXhr.last.finish(200);
+
+    await pending;
+    expect(api.getVideoUploadUrl).toHaveBeenCalledWith({
+      contentType: 'video/quicktime',
+      sizeBytes: 50,
+    });
   });
 });

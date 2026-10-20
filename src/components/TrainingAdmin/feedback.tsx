@@ -59,6 +59,12 @@ export function WarningList({
         <ul className="list-disc space-y-1 pl-5">
           {issues.map((issue, index) => (
             <li key={`${issue.path}-${index}`}>
+              {issue.line ? (
+                <span className="font-mono text-xs">
+                  Line {issue.line}
+                  {issue.column ? `:${issue.column}` : ''}{' '}
+                </span>
+              ) : null}
               {issue.path && <span className="font-medium">{issue.path}: </span>}
               {issue.message}
             </li>

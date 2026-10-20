@@ -24,10 +24,31 @@ export class VideoUploadError extends Error {
 /** Headers a browser sets itself; trying to set them throws or is ignored. */
 const BROWSER_SET_HEADERS = new Set(['host', 'content-length']);
 
+const TYPE_BY_EXTENSION: Record<string, UploadableType> = {
+  mp4: 'video/mp4',
+  mov: 'video/quicktime',
+  webm: 'video/webm',
+};
+
+/**
+ * The type of a chosen file. Browsers often leave `type` empty (a .mov on Windows, for one), so
+ * then the file name's extension decides.
+ */
+export function videoTypeOf(file: { type: string; name?: string }): string {
+  if (file.type) return file.type;
+  const extension = file.name?.toLowerCase().split('.').pop() ?? '';
+  return TYPE_BY_EXTENSION[extension] ?? '';
+}
+
 /** Why this file cannot be uploaded, or null if it can. A format that is merely not ideal is a warning, not a problem. */
-export function videoFileProblem(file: { type: string; size: number }): string | null {
-  if (!(UPLOADABLE_TYPES as readonly string[]).includes(file.type)) {
-    return `This kind of file (${file.type || 'unknown type'}) cannot be uploaded. Run scripts/encode-training-video.sh on it to make an MP4, then upload that.`;
+export function videoFileProblem(file: {
+  type: string;
+  size: number;
+  name?: string;
+}): string | null {
+  const type = videoTypeOf(file);
+  if (!(UPLOADABLE_TYPES as readonly string[]).includes(type)) {
+    return `This kind of file (${type || 'unknown type'}) cannot be uploaded. Run scripts/encode-training-video.sh on it to make an MP4, then upload that.`;
   }
   if (file.size < 1) return 'That file is empty.';
   if (file.size > MAX_VIDEO_BYTES) return 'That video is larger than 1 GB.';
@@ -93,7 +114,7 @@ export async function uploadVideo(
   const problem = videoFileProblem(file);
   if (problem) throw new VideoUploadError(problem, 'rejected');
   const target = await trainingAdminAPI.getVideoUploadUrl({
-    contentType: file.type as UploadableType,
+    contentType: videoTypeOf(file) as UploadableType,
     sizeBytes: file.size,
   });
   await putToStorage(target.uploadUrl, target.requiredHeaders ?? {}, file, onProgress, signal);

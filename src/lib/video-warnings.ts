@@ -1,5 +1,5 @@
 import { formatClock } from '@/lib/training-format';
-import type { VideoInfo } from '@/lib/video-upload';
+import { videoTypeOf, type VideoInfo } from '@/lib/video-upload';
 
 /** Training videos should be this long or shorter (D-16). Longer ones are allowed, with a warning. */
 export const MAX_VIDEO_SECONDS = 600;
@@ -24,10 +24,11 @@ export interface VideoWarning {
  * the author decides. Each says what to do, because the fix is always the same script.
  */
 export function videoWarnings(
-  file: { type: string; size: number },
+  file: { type: string; size: number; name?: string },
   info: VideoInfo,
 ): VideoWarning[] {
   const warnings: VideoWarning[] = [];
+  const type = videoTypeOf(file);
   const seconds = info.durationSeconds;
 
   if (seconds !== null && seconds > MAX_VIDEO_SECONDS) {
@@ -60,12 +61,12 @@ export function videoWarnings(
     }
   }
 
-  if (file.type !== 'video/mp4') {
+  if (type !== 'video/mp4') {
     warnings.push({
       id: 'format',
       severity: 'normal',
-      message: `This file is ${file.type === 'video/quicktime' ? 'a QuickTime (.mov) file' : file.type === 'video/webm' ? 'a WebM file' : `not an MP4 (${file.type || 'unknown type'})`}. Some phones and browsers will not play it, or will be slow to start.`,
-      action: `Run ${ENCODE_SCRIPT} on it to make an MP4, then upload that.`,
+      message: `This file is ${type === 'video/quicktime' ? 'a QuickTime (.mov) file' : type === 'video/webm' ? 'a WebM file' : `not an MP4 (${type || 'unknown type'})`}. Some phones and browsers will not play it, or will be slow to start.`,
+      action: `Run ${ENCODE_SCRIPT} on it to make an MP4, then upload that. A video that is not an MP4 can be uploaded, but it cannot be published.`,
     });
   }
 

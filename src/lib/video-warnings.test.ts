@@ -70,3 +70,17 @@ describe('videoWarnings', () => {
     expect(videoWarnings(mp4(900_000_000), info(null, null, null))).toEqual([]);
   });
 });
+
+describe('videoWarnings for a file whose type the browser left empty', () => {
+  it('judges an untyped .mp4 by its name: no format warning', () => {
+    expect(videoWarnings({ type: '', name: 'talk.mp4', size: 1000 }, info(60))).toEqual([]);
+  });
+
+  it('warns about an untyped .mov as a QuickTime file', () => {
+    const [warning] = videoWarnings({ type: '', name: 'talk.MOV', size: 1000 }, info(60));
+
+    expect(warning.id).toBe('format');
+    expect(warning.message).toContain('QuickTime');
+    expect(warning.action).toMatch(/cannot be published/i);
+  });
+});

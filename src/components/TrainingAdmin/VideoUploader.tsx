@@ -166,7 +166,7 @@ export function VideoUploader({ assetKey, onUploaded, onLocalPreview }: VideoUpl
           <input
             ref={input}
             type="file"
-            accept="video/mp4,video/quicktime,video/webm"
+            accept="video/mp4,video/quicktime,video/webm,.mp4,.mov,.webm"
             aria-label="Choose a video file"
             onChange={choose}
             className="sr-only"

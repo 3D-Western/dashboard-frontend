@@ -186,6 +186,60 @@ describe('ImportScreen checking', () => {
   });
 });
 
+describe('ImportScreen warnings', () => {
+  const warnings = [
+    {
+      line: 8,
+      column: null,
+      path: 'steps[0]',
+      message: 'This video is 12 min 5 s long, longer than the 10 minutes we aim for.',
+    },
+    {
+      line: 8,
+      column: null,
+      path: 'steps[0]',
+      message:
+        'The video file is a .mov file, not an MP4. Re-encode it with scripts/encode-training-video.sh',
+    },
+  ];
+
+  it('shows the long-video and format warnings with their line, and the file can still be imported', async () => {
+    api.previewImport.mockResolvedValue({ valid: true, errors: [], summary: summary(), warnings });
+    render(<ImportScreen />);
+    await paste();
+    await check();
+
+    const note = await screen.findByText(/worth a look/i);
+    const box = note.closest('[role="note"]') as HTMLElement;
+    expect(box).toHaveTextContent('Line 8');
+    expect(box).toHaveTextContent('12 min 5 s long');
+    expect(box).toHaveTextContent('scripts/encode-training-video.sh');
+    expect(importButton()).toBeEnabled();
+  });
+
+  it('shows no warning box when there are none, or when the server sends none', async () => {
+    api.previewImport.mockResolvedValue({ valid: true, errors: [], summary: summary() });
+    render(<ImportScreen />);
+    await paste();
+    await check();
+
+    await screen.findByText(/the file is valid/i);
+    expect(screen.queryByText(/worth a look/i)).not.toBeInTheDocument();
+  });
+
+  it('clears the warnings as soon as the text changes', async () => {
+    api.previewImport.mockResolvedValue({ valid: true, errors: [], summary: summary(), warnings });
+    render(<ImportScreen />);
+    await paste();
+    await check();
+    await screen.findByText(/worth a look/i);
+
+    await userEvent.type(screen.getByRole('textbox', { name: /training file/i }), ' ');
+
+    expect(screen.queryByText(/worth a look/i)).not.toBeInTheDocument();
+  });
+});
+
 describe('ImportScreen importing', () => {
   async function checkedValid() {
     api.previewImport.mockResolvedValue({ valid: true, errors: [], summary: summary() });

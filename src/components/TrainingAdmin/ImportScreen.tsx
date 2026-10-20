@@ -11,7 +11,7 @@ import { adminErrorMessage, importErrorsFromError } from '@/lib/training-admin-e
 import { STEP_TYPE_LABELS } from '@/lib/training-admin-format';
 import { TrainingAdminRoutes } from '@/lib/training-admin-routes';
 import type { ImportError, ImportResult, ImportSummary } from '@/types/training-admin';
-import { ErrorNote } from './feedback';
+import { ErrorNote, WarningList } from './feedback';
 
 export const MAX_IMPORT_BYTES = 512 * 1024;
 
@@ -53,6 +53,7 @@ export function ImportScreen() {
   const [text, setText] = useState('');
   const [errors, setErrors] = useState<ImportError[]>([]);
   const [summary, setSummary] = useState<ImportSummary | null>(null);
+  const [warnings, setWarnings] = useState<ImportError[]>([]);
   /** The exact text that passed the check; the import button only works for that text. */
   const [validText, setValidText] = useState<string | null>(null);
   const [checked, setChecked] = useState(false);
@@ -65,6 +66,7 @@ export function ImportScreen() {
   const tooLarge = byteLength(text) > MAX_IMPORT_BYTES;
   const reset = () => {
     setErrors([]);
+    setWarnings([]);
     setSummary(null);
     setValidText(null);
     setChecked(false);
@@ -96,6 +98,7 @@ export function ImportScreen() {
       const preview = await trainingAdminAPI.previewImport(text);
       setChecked(true);
       setErrors(preview.errors);
+      setWarnings(preview.warnings ?? []);
       setSummary(preview.valid ? preview.summary : null);
       setValidText(preview.valid ? text : null);
     } catch (error) {
@@ -228,6 +231,10 @@ export function ImportScreen() {
       <ErrorNote message={failure} />
 
       {checked && errors.length === 0 && summary && <ImportSummaryCard summary={summary} />}
+
+      {checked && (
+        <WarningList issues={warnings} title="Worth a look (the file can still be imported)" />
+      )}
 
       {errors.length > 0 && (
         <div className="space-y-3">

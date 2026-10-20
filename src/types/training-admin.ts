@@ -401,6 +401,8 @@ export interface ImportSummary {
 export interface ImportPreview {
   valid: boolean;
   errors: ImportError[];
+  /** Advice that never makes the file invalid (a long video, a video that is not an MP4). */
+  warnings?: ImportError[];
   summary: ImportSummary | null;
 }
 
