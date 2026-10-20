@@ -62,7 +62,7 @@ describe('ThemeProvider', () => {
     expect(provider).toHaveAttribute('data-attribute', 'class');
   });
 
-  it('sets default theme to system', () => {
+  it('sets default theme to dark', () => {
     render(
       <ThemeProvider>
         <div>Test</div>
@@ -70,7 +70,7 @@ describe('ThemeProvider', () => {
     );
 
     const provider = screen.getByTestId('theme-provider');
-    expect(provider).toHaveAttribute('data-default-theme', 'system');
+    expect(provider).toHaveAttribute('data-default-theme', 'dark');
   });
 
   it('enables system theme detection', () => {

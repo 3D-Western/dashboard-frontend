@@ -63,12 +63,19 @@ describe('PageHeader', () => {
     expect(heading).toHaveClass('text-lg', 'font-semibold');
   });
 
-  it('renders container with correct styling', () => {
-    mockUsePathname.mockReturnValue(Routes.dashboard);
-    const { container } = render(<PageHeader />);
+  it('links to the parent page for nested routes', () => {
+    mockUsePathname.mockReturnValue(Routes.adminUsersManagement);
+    render(<PageHeader />);
 
-    const wrapper = container.firstChild;
-    expect(wrapper).toHaveClass('flex', 'items-center', 'gap-2');
+    expect(screen.getByRole('link', { name: 'Admin Dashboard' })).toHaveAttribute('href', '/admin');
+    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('User Management');
+  });
+
+  it('shows no parent links on top-level pages', () => {
+    mockUsePathname.mockReturnValue(Routes.dashboard);
+    render(<PageHeader />);
+
+    expect(screen.queryByRole('link')).not.toBeInTheDocument();
   });
 
   it('updates title when pathname changes', () => {

@@ -442,8 +442,8 @@ describe('VerifyEmailContent Integration', () => {
 
       render(<VerifyEmailContent />);
 
-      const logo = screen.getByAltText(/3d western logo/i);
-      expect(logo).toBeInTheDocument();
+      // Light- and dark-theme copies of the badge are both rendered; CSS shows the matching one
+      expect(screen.getAllByAltText('3D Western').length).toBeGreaterThan(0);
     });
 
     it('uses singular "second" when countdown is 1', async () => {

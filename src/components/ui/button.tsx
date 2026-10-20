@@ -9,16 +9,21 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
-        default: 'bg-primary text-primary-foreground [a&]:hover:bg-primary/80',
+        // Primary = the website's gradient button; secondary/outline = the website's outlined button
+        default: 'btn text-white',
         outline:
-          'border-border bg-background hover:bg-muted hover:text-foreground aria-expanded:bg-muted aria-expanded:text-foreground dark:border-input dark:bg-input/30 dark:hover:bg-input/50',
+          'border-primary-text/18 text-primary-text hover:border-purple-light hover:bg-purple-light/10 aria-expanded:border-purple-light aria-expanded:bg-purple-light/10',
         secondary:
-          'bg-secondary text-secondary-foreground hover:bg-secondary/80 aria-expanded:bg-secondary aria-expanded:text-secondary-foreground',
+          'border-primary-text/18 text-primary-text hover:border-purple-light hover:bg-purple-light/10 aria-expanded:border-purple-light aria-expanded:bg-purple-light/10',
         ghost:
           'hover:bg-muted hover:text-foreground aria-expanded:bg-muted aria-expanded:text-foreground dark:hover:bg-muted/50',
         destructive:
           'bg-destructive/10 text-destructive hover:bg-destructive/20 focus-visible:border-destructive/40 focus-visible:ring-destructive/20 dark:bg-destructive/20 dark:hover:bg-destructive/30 dark:focus-visible:ring-destructive/40',
         link: 'text-primary underline-offset-4 hover:underline',
+        // Website (website-2.0) variants
+        outlined:
+          'border-primary-text/18 text-primary-text hover:border-purple-light hover:bg-purple-light/10',
+        gradient: 'btn text-white',
       },
       size: {
         default:
@@ -32,6 +37,8 @@ const buttonVariants = cva(
         'icon-sm':
           'size-7 rounded-[min(var(--radius-md),12px)] in-data-[slot=button-group]:rounded-lg',
         'icon-lg': 'size-9',
+        // Website (website-2.0) size
+        pill: 'rounded-lg px-5 py-2 font-semibold',
       },
     },
     defaultVariants: {

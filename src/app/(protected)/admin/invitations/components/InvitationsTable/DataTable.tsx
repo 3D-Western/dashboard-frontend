@@ -54,7 +54,7 @@ export function DataTable<TData, TValue>({
 
   return (
     <div className="space-y-4">
-      <div className="overflow-hidden rounded-md border">
+      <div className="overflow-hidden rounded-lg border bg-card">
         <Table aria-label="Invitations table" aria-describedby="invitations-table-caption">
           <caption id="invitations-table-caption" className="sr-only">
             Invitations with status, email, student ID, and creation information. Sortable by date.
