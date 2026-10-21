@@ -4,8 +4,8 @@
 # Run-time env: API_URL (where the backend is, e.g. http://backend:8000). MOCK_ENABLED must be absent or false.
 # Nothing secret is needed or baked in.
 
-FROM node:24-alpine AS base
-RUN npm install -g pnpm@11
+FROM node:24.22.0-alpine3.24 AS base
+RUN npm install -g pnpm@11.28.7
 WORKDIR /app
 
 # ---- dependencies (cached until the lockfile changes) ----
@@ -23,7 +23,7 @@ ENV NEXT_OUTPUT=standalone NEXT_TELEMETRY_DISABLED=1 GITHUB_SHA=${GIT_SHA}
 RUN pnpm run build
 
 # ---- run ----
-FROM node:24-alpine
+FROM node:24.22.0-alpine3.24
 ENV NODE_ENV=production NEXT_TELEMETRY_DISABLED=1 PORT=3000 HOSTNAME=0.0.0.0
 RUN addgroup -S -g 10001 app && adduser -S -u 10001 -G app -h /app app
 WORKDIR /app
