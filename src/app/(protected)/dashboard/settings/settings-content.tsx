@@ -24,6 +24,7 @@ import { useRouter } from 'next/navigation';
 import { Routes } from '@/lib/routes';
 import { TrainingStatusCard } from './components/TrainingStatusCard';
 import { PhoneNumberCard } from './components/PhoneNumberCard';
+import { NotificationsCard } from './components/NotificationsCard';
 
 // Password change form schema
 const passwordSchema = z
@@ -175,6 +176,8 @@ export function SettingsContent() {
             </Form>
           </CardContent>
         </Card>
+
+        <NotificationsCard />
 
         <PhoneNumberCard />
 

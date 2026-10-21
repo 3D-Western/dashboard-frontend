@@ -108,6 +108,15 @@ export const endpoints = {
     pendingAgreements: '/api/v1/training/agreements/pending',
     acceptAgreement: (agreementId: number) => `/api/v1/training/agreements/${agreementId}/accept`,
   },
+  notifications: {
+    // Web push devices and notification preferences (docs/specs/notifications.md)
+    pushConfig: '/api/v1/notifications/push/config',
+    devices: '/api/v1/notifications/push/subscriptions',
+    device: (id: number) => `/api/v1/notifications/push/subscriptions/${id}`,
+    unsubscribe: '/api/v1/notifications/push/unsubscribe',
+    test: '/api/v1/notifications/push/test',
+    preferences: '/api/v1/notifications/preferences',
+  },
   onboarding: {
     status: '/api/v1/users/me/onboarding',
   },
