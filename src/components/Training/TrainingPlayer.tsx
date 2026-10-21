@@ -186,7 +186,7 @@ function PlayerBody({ attemptId }: { attemptId: number }) {
             className="h-2 w-full overflow-hidden rounded-full bg-muted"
           >
             <div
-              className="h-full bg-linear-to-r from-purple-dark to-purple-light transition-all motion-reduce:transition-none"
+              className="h-full bg-primary transition-all motion-reduce:transition-none"
               style={{ width: `${total ? (doneCount / total) * 100 : 0}%` }}
             />
           </div>
