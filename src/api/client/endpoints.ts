@@ -45,6 +45,7 @@ export const endpoints = {
     create: '/api/v1/admin/invitations',
     byId: (invitationId: number) => `/api/v1/admin/invitations/${invitationId}`,
     revoke: (invitationId: number) => `/api/v1/admin/invitations/${invitationId}/revoke`,
+    resend: (invitationId: number) => `/api/v1/admin/invitations/${invitationId}/resend`,
   },
   iam: {
     permissions: '/api/v1/admin/iam/permissions',

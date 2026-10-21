@@ -13,12 +13,14 @@ interface InvitationsTableProps {
   // shape (used by some tests) for compatibility.
   pagination: PaginationMetadata | Partial<PaginationMetadata>;
   onRevokeSuccess?: (invitationId: number) => void;
+  onResendSuccess?: (invitation: Invitation) => void;
 }
 
 export default function InvitationsTable({
   invitations,
   pagination,
   onRevokeSuccess,
+  onResendSuccess,
 }: InvitationsTableProps) {
   const [revokedInvitationIds, setRevokedInvitationIds] = useState<Set<number>>(new Set());
 
@@ -39,7 +41,7 @@ export default function InvitationsTable({
     onRevokeSuccess?.(invitationId);
   };
 
-  const columns = useColumns({ onRevoke: handleRevoke });
+  const columns = useColumns({ onRevoke: handleRevoke, onResend: onResendSuccess });
 
   return (
     <DataTable

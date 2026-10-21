@@ -20,7 +20,7 @@ const mapInvitationStatusToDisplayLabel = (status: InvitationStatus): string => 
     case 'PENDING':
       return 'Pending';
     case 'ACCEPTED':
-      return 'Accepted';
+      return 'Used';
     case 'EXPIRED':
       return 'Expired';
     case 'REVOKED':

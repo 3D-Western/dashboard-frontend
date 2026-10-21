@@ -1,7 +1,7 @@
 import { PageContainer } from '@/components/PageContainer';
 import type { Metadata } from 'next';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { ClipboardCheck, DoorOpen, PenSquare, Printer, TicketPlus, Users } from 'lucide-react';
+import { ClipboardCheck, DoorOpen, PenSquare, Printer, Users } from 'lucide-react';
 import Link from 'next/link';
 import PageTitle from '@/components/PageTitle';
 import { Routes } from '@/lib/routes';
@@ -38,7 +38,8 @@ export default async function AdminDashboardPage() {
               </CardHeader>
               <CardContent>
                 <p className="text-sm text-muted-foreground">
-                  View and manage all user accounts, roles, and access levels.
+                  View and manage all user accounts, add staff, alumni, community and organisation
+                  members without a Western email, and manage their invitations.
                 </p>
               </CardContent>
             </Card>
@@ -64,24 +65,6 @@ export default async function AdminDashboardPage() {
           </Link>
         )}
 
-        {user && hasPermission(user, PERMISSIONS.INVITATIONS_LIST) && (
-          <Link href={Routes.adminInvitationManagement}>
-            <Card className="cursor-pointer transition-colors hover:bg-accent">
-              <CardHeader>
-                <div className="flex items-center gap-2">
-                  <TicketPlus className="h-5 w-5 text-muted-foreground" />
-                  <CardTitle>Invitation Management</CardTitle>
-                </div>
-                <CardDescription>Manage user invitations</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm text-muted-foreground">
-                  Create, view, and revoke invitations for new users.
-                </p>
-              </CardContent>
-            </Card>
-          </Link>
-        )}
         {user && hasPermission(user, PERMISSIONS.TRAINING_SIGNOFF) && (
           <Link href={Routes.adminSignoffs}>
             <Card className="cursor-pointer transition-colors hover:bg-accent">

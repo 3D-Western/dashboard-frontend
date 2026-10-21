@@ -3,7 +3,7 @@
 For the initial launch, this dashboard intentionally only exposes:
 
 - **User-facing**: Dashboard, My Jobs (which replaced Print History and the New Job picker), the 3D print job form, Settings
-- **Admin-facing**: Admin Dashboard, Job Management, Invitation Management, User Management
+- **Admin-facing**: Admin Dashboard, Job Management, User Management (with the Invitations tab and "Add a non-Western member")
 
 Everything else already exists in the codebase and works — it's just hidden from navigation
 and blocked from direct access until it's ready for a future launch:

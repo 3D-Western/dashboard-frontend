@@ -42,25 +42,18 @@ import {
   SMS_OPT_IN_NEEDS_PHONE_ERROR,
 } from '@/lib/phone';
 
+// Student numbers from 900000000 up are reserved for invited members (the invitation carries theirs)
+const MAX_WESTERN_STUDENT_ID = 899999999;
+const UWO_EMAIL = /^[a-z0-9][a-z0-9._-]*@uwo\.ca$/;
+const ANY_EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
 const formSchema = z
   .object({
-    studentId: z
-      .string()
-      .min(1, 'Student ID is required')
-      .regex(/^\d+$/, 'Student ID must contain only numbers')
-      .refine((val) => {
-        const num = parseInt(val, 10);
-        return num >= 100000000 && num <= 999999999;
-      }, 'Student ID must be exactly 9 digits'),
-    email: z
-      .string()
-      .trim()
-      .toLowerCase()
-      .min(1, 'Email is required')
-      .regex(
-        /^[a-z0-9][a-z0-9._-]*@uwo\.ca$/,
-        'Must be a valid UWO email (e.g., jdoe@uwo.ca or jdoe2@uwo.ca)',
-      ),
+    // Required unless an invitation code is entered (checked below)
+    studentId: z.string(),
+    email: z.string().trim().toLowerCase().min(1, 'Email is required'),
+    // For people without a @uwo.ca email: the code an admin emailed them
+    invitationCode: z.string().trim(),
     // Optional. Blank is fine; anything typed must be a North American number.
     phoneNumber: z.string().trim().refine(isAcceptablePhoneInput, PHONE_NUMBER_ERROR),
     smsOptIn: z.boolean(),
@@ -77,18 +70,72 @@ const formSchema = z
   .refine((values) => !values.smsOptIn || values.phoneNumber !== '', {
     message: SMS_OPT_IN_NEEDS_PHONE_ERROR,
     path: ['smsOptIn'],
+  })
+  .superRefine((values, ctx) => {
+    const hasCode = values.invitationCode !== '';
+
+    // Open signup (D-5) is @uwo.ca; anyone else needs the invitation code sent to their address.
+    if (values.email !== '') {
+      if (hasCode && !ANY_EMAIL.test(values.email)) {
+        ctx.addIssue({ code: 'custom', path: ['email'], message: 'Enter a valid email address' });
+      } else if (!hasCode && !UWO_EMAIL.test(values.email)) {
+        ctx.addIssue({
+          code: 'custom',
+          path: ['email'],
+          message:
+            'Must be a valid UWO email (e.g., jdoe@uwo.ca). No @uwo.ca address? Use the invitation code you were sent.',
+        });
+      }
+    }
+
+    // With a code the invitation carries the student number
+    if (!hasCode) {
+      if (values.studentId === '') {
+        ctx.addIssue({ code: 'custom', path: ['studentId'], message: 'Student ID is required' });
+      } else if (!/^\d+$/.test(values.studentId)) {
+        ctx.addIssue({
+          code: 'custom',
+          path: ['studentId'],
+          message: 'Student ID must contain only numbers',
+        });
+      } else {
+        const num = parseInt(values.studentId, 10);
+        if (num < 100000000 || num > MAX_WESTERN_STUDENT_ID) {
+          ctx.addIssue({
+            code: 'custom',
+            path: ['studentId'],
+            message: 'Student ID must be exactly 9 digits',
+          });
+        }
+      }
+    }
   });
 type FormData = z.infer<typeof formSchema>;
 
-export function SignupForm({ className, ...props }: React.ComponentProps<'div'>) {
+interface SignupFormProps extends React.ComponentProps<'div'> {
+  /** From the link in an invitation email (?code=). Shows the code field filled in. */
+  initialInvitationCode?: string;
+  /** From the same link (?email=). */
+  initialEmail?: string;
+}
+
+export function SignupForm({
+  className,
+  initialInvitationCode = '',
+  initialEmail = '',
+  ...props
+}: SignupFormProps) {
   const [isLoading, setIsLoading] = useState(false);
+  // The code field is hidden until someone has a code (from the email link, or "I have an invitation code")
+  const [showCodeField, setShowCodeField] = useState(initialInvitationCode !== '');
   const router = useRouter();
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       studentId: '',
-      email: '',
+      email: initialEmail,
+      invitationCode: initialInvitationCode,
       phoneNumber: '',
       smsOptIn: false,
       password: '',
@@ -100,6 +147,8 @@ export function SignupForm({ className, ...props }: React.ComponentProps<'div'>)
 
   // Watched so the consent box can be disabled until a number is typed.
   const phoneNumber = useWatch({ control: form.control, name: 'phoneNumber' });
+  const invitationCode = useWatch({ control: form.control, name: 'invitationCode' });
+  const hasInvitationCode = invitationCode.trim() !== '';
 
   async function onSubmit(values: FormData) {
     try {
@@ -107,7 +156,10 @@ export function SignupForm({ className, ...props }: React.ComponentProps<'div'>)
 
       // Convert studentId to number and prepare data for API
       const signupData = {
-        studentId: parseInt(values.studentId, 10),
+        // With an invitation code the invitation carries the student number
+        ...(values.invitationCode !== ''
+          ? { invitationCode: values.invitationCode }
+          : { studentId: parseInt(values.studentId, 10) }),
         email: values.email,
         password: values.password,
         faculty: transformFacultyToBackend(values.faculty as UserFaculty),
@@ -178,33 +230,72 @@ export function SignupForm({ className, ...props }: React.ComponentProps<'div'>)
                   />
                 </div>
 
-                <FormField
-                  control={form.control}
-                  name="studentId"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Student ID</FormLabel>
-                      <FormControl>
-                        <Input placeholder="251000000" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                {hasInvitationCode ? (
+                  <p className="text-sm text-muted-foreground">
+                    You were invited, so you don&apos;t need a student ID. Use the email address the
+                    invitation was sent to.
+                  </p>
+                ) : (
+                  <FormField
+                    control={form.control}
+                    name="studentId"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Student ID</FormLabel>
+                        <FormControl>
+                          <Input placeholder="251000000" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                )}
 
                 <FormField
                   control={form.control}
                   name="email"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>UWO Email</FormLabel>
+                      <FormLabel>{hasInvitationCode ? 'Email' : 'UWO Email'}</FormLabel>
                       <FormControl>
-                        <Input placeholder="example@uwo.ca" {...field} />
+                        <Input
+                          placeholder={hasInvitationCode ? 'you@example.com' : 'example@uwo.ca'}
+                          {...field}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
+
+                {showCodeField ? (
+                  <FormField
+                    control={form.control}
+                    name="invitationCode"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Invitation code</FormLabel>
+                        <FormControl>
+                          <Input
+                            autoComplete="off"
+                            autoCapitalize="characters"
+                            placeholder="ABC234"
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => setShowCodeField(true)}
+                    className="-mt-2 inline-flex min-h-11 items-center self-start px-1 text-sm underline fine:min-h-0 fine:px-0"
+                  >
+                    No @uwo.ca email? I have an invitation code
+                  </button>
+                )}
 
                 <FormField
                   control={form.control}

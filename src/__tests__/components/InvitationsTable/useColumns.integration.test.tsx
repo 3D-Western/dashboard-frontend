@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderHook } from '@testing-library/react';
-import { useColumns } from '@/app/(protected)/admin/invitations/components/InvitationsTable/useColumns';
+import { useColumns } from '@/app/(protected)/admin/users/components/InvitationsTable/useColumns';
 import type { ColumnDef } from '@tanstack/react-table';
 import type { Invitation } from '@/types/invitation';
 
@@ -24,8 +24,8 @@ describe('useColumns Hook', () => {
 
       const columns = result.current;
 
-      // Should have: studentId, email, invitationCode, status, createdAt, expiredAt, actions
-      expect(columns.length).toBe(7);
+      // Should have: name, studentId, email, invitationCode, status, createdAt, expiredAt, actions
+      expect(columns.length).toBe(8);
     });
 
     it('includes studentId column', () => {

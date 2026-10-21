@@ -14,7 +14,6 @@ export const Routes = {
   // Admin routes
   adminUsersManagement: '/admin/users',
   adminJobsManagement: '/admin/jobs',
-  adminInvitationManagement: '/admin/invitations',
   adminIamManagement: '/admin/iam',
   adminBookingsManagement: '/admin/bookings',
   adminBookingRequests: '/admin/requests',

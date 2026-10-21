@@ -6,11 +6,57 @@ import {
   generateSuccessResponse,
   generateErrorResponse,
 } from './utils';
-import { InvitationStatus } from './database/types';
+import { Invitation, InvitationStatus, MemberType } from './database/types';
 import { mockUserHasPermission } from './utils';
 import { PERMISSIONS } from '@/constants/permissions';
+import { RESERVED_STUDENT_ID_START } from '@/types/invitation';
 
 const apiUrl = process.env.API_URL;
+
+const MEMBER_TYPES: MemberType[] = ['STAFF', 'ALUMNI', 'COMMUNITY', 'ORGANISATION'];
+
+/** An invitation as the API returns it, with the admin who created it. */
+const toInvitationResponse = (inv: Invitation) => {
+  const creator = db.getUserById(inv.createdByUserId);
+  return {
+    id: inv.id,
+    studentId: inv.studentId,
+    email: inv.email,
+    firstName: inv.firstName,
+    lastName: inv.lastName,
+    memberType: inv.memberType,
+    invitationCode: inv.invitationCode,
+    status: inv.status,
+    createdAt: inv.createdAt,
+    expiredAt: inv.expiredAt,
+    acceptedAt: inv.acceptedAt,
+    createdBy: creator
+      ? {
+          studentId: creator.studentId,
+          firstName: creator.firstName,
+          lastName: creator.lastName,
+        }
+      : null,
+  };
+};
+
+const forbidden = () =>
+  HttpResponse.json(
+    generateErrorResponse({
+      code: 'FORBIDDEN',
+      message: 'Insufficient permissions',
+    }),
+    { status: 403 },
+  );
+
+const notFound = (invitationId: unknown) =>
+  HttpResponse.json(
+    generateErrorResponse({
+      code: 'INVITATION_NOT_FOUND',
+      message: `Invitation with ID ${invitationId} not found`,
+    }),
+    { status: 404 },
+  );
 
 export const invitationHandlers = [
   // GET /api/v1/admin/invitations - List invitations with filters and pagination
@@ -22,13 +68,7 @@ export const invitationHandlers = [
     }
 
     if (!mockUserHasPermission(user, PERMISSIONS.INVITATIONS_LIST)) {
-      return HttpResponse.json(
-        generateErrorResponse({
-          code: 'FORBIDDEN',
-          message: 'Insufficient permissions',
-        }),
-        { status: 403 },
-      );
+      return forbidden();
     }
 
     // Parse query parameters
@@ -49,27 +89,7 @@ export const invitationHandlers = [
       snapshotCreatedBefore,
     });
 
-    // Map to include createdBy information
-    const invitationsWithCreator = invitations.map((inv) => {
-      const creator = db.getUserById(inv.createdByUserId);
-      return {
-        id: inv.id,
-        studentId: inv.studentId,
-        email: inv.email,
-        invitationCode: inv.invitationCode,
-        status: inv.status,
-        createdAt: inv.createdAt,
-        expiredAt: inv.expiredAt,
-        acceptedAt: inv.acceptedAt,
-        createdBy: creator
-          ? {
-              studentId: creator.studentId,
-              firstName: creator.firstName,
-              lastName: creator.lastName,
-            }
-          : null,
-      };
-    });
+    const invitationsWithCreator = invitations.map(toInvitationResponse);
 
     // Calculate pagination
     const totalItems = invitationsWithCreator.length;
@@ -103,52 +123,20 @@ export const invitationHandlers = [
     }
 
     if (!mockUserHasPermission(user, PERMISSIONS.INVITATIONS_READ)) {
-      return HttpResponse.json(
-        generateErrorResponse({
-          code: 'FORBIDDEN',
-          message: 'Insufficient permissions',
-        }),
-        { status: 403 },
-      );
+      return forbidden();
     }
 
     const { invitationId } = params;
     const invitation = db.getInvitationById(parseInt(invitationId as string));
 
     if (!invitation) {
-      return HttpResponse.json(
-        generateErrorResponse({
-          code: 'INVITATION_NOT_FOUND',
-          message: `Invitation with ID ${invitationId} not found`,
-        }),
-        { status: 404 },
-      );
+      return notFound(invitationId);
     }
 
-    const creator = db.getUserById(invitation.createdByUserId);
-
-    return HttpResponse.json(
-      generateSuccessResponse({
-        id: invitation.id,
-        studentId: invitation.studentId,
-        email: invitation.email,
-        invitationCode: invitation.invitationCode,
-        status: invitation.status,
-        createdAt: invitation.createdAt,
-        expiredAt: invitation.expiredAt,
-        acceptedAt: invitation.acceptedAt,
-        createdBy: creator
-          ? {
-              studentId: creator.studentId,
-              firstName: creator.firstName,
-              lastName: creator.lastName,
-            }
-          : null,
-      }),
-    );
+    return HttpResponse.json(generateSuccessResponse(toInvitationResponse(invitation)));
   }),
 
-  // POST /api/v1/admin/invitations - Create invitation
+  // POST /api/v1/admin/invitations - Invite a non-Western member
   http.post(`${apiUrl}${endpoints.invitations.create}`, async ({ cookies, request }) => {
     const sessionId = cookies['sessionToken'] || '';
     const user = db.validateSession(sessionId);
@@ -157,34 +145,41 @@ export const invitationHandlers = [
     }
 
     if (!mockUserHasPermission(user, PERMISSIONS.INVITATIONS_CREATE)) {
-      return HttpResponse.json(
-        generateErrorResponse({
-          code: 'FORBIDDEN',
-          message: 'Insufficient permissions',
-        }),
-        { status: 403 },
-      );
+      return forbidden();
     }
 
     const body = (await request.json()) as {
-      studentId: number;
-      email: string;
+      firstName?: string;
+      lastName?: string;
+      email?: string;
+      memberType?: MemberType;
+      studentId?: number | null;
       expiresInDays?: number;
     };
 
-    // Validation
+    // Validation (mirrors the backend)
     const errors: Record<string, string> = {};
 
-    if (!body.studentId) {
-      errors.studentId = 'Student ID is required';
-    } else if (body.studentId < 251000000 || body.studentId > 251999999) {
-      errors.studentId = 'Student ID must be between 251000000 and 251999999';
+    if (!body.firstName?.trim()) {
+      errors.firstName = 'First name is required';
     }
-
+    if (!body.lastName?.trim()) {
+      errors.lastName = 'Last name is required';
+    }
     if (!body.email) {
       errors.email = 'Email is required';
-    } else if (!/^[a-z]+\d*@uwo\.ca$/i.test(body.email)) {
-      errors.email = 'Email must be a valid UWO email address';
+    } else if (!/^[^\s@]+@[^\s@]+$/.test(body.email)) {
+      errors.email = 'Email must be a valid email address';
+    }
+    if (!body.memberType || !MEMBER_TYPES.includes(body.memberType)) {
+      errors.memberType = 'Member type is required';
+    }
+    if (body.studentId != null) {
+      if (body.studentId < 100000000) {
+        errors.studentId = 'Student number must be 9 digits';
+      } else if (body.studentId >= RESERVED_STUDENT_ID_START) {
+        errors.studentId = 'Student numbers from 900000000 up are reserved for non-Western members';
+      }
     }
 
     if (Object.keys(errors).length > 0) {
@@ -198,8 +193,22 @@ export const invitationHandlers = [
       );
     }
 
+    const studentId = body.studentId ?? undefined;
+    const email = body.email!;
+
+    // Check if user already exists
+    if (studentId !== undefined && db.getUserById(studentId)) {
+      return HttpResponse.json(
+        generateErrorResponse({
+          code: 'USER_ALREADY_EXISTS',
+          message: `User with student ID ${studentId} already exists`,
+        }),
+        { status: 409 },
+      );
+    }
+
     // Check if invitation already exists for this student or email
-    const existingInvitation = db.findInvitationByStudentIdOrEmail(body.studentId, body.email);
+    const existingInvitation = db.findInvitationByStudentIdOrEmail(studentId, email);
     if (existingInvitation) {
       return HttpResponse.json(
         generateErrorResponse({
@@ -210,44 +219,56 @@ export const invitationHandlers = [
       );
     }
 
-    // Check if user already exists
-    const existingUser = db.getUserById(body.studentId);
-    if (existingUser) {
+    const invitation = db.createInvitation({
+      studentId,
+      email,
+      firstName: body.firstName!.trim(),
+      lastName: body.lastName!.trim(),
+      memberType: body.memberType!,
+      expiresInDays: body.expiresInDays,
+      createdByUserId: user.studentId,
+    });
+
+    return HttpResponse.json(generateSuccessResponse(toInvitationResponse(invitation)), {
+      status: 201,
+    });
+  }),
+
+  // POST /api/v1/admin/invitations/:id/resend - Send an invitation email again
+  http.post(`${apiUrl}/api/v1/admin/invitations/:invitationId/resend`, ({ cookies, params }) => {
+    const sessionId = cookies['sessionToken'] || '';
+    const user = db.validateSession(sessionId);
+    if (!user) {
+      return createInvalidSessionResponse();
+    }
+
+    // Sending again uses the same permission as creating an invitation
+    if (!mockUserHasPermission(user, PERMISSIONS.INVITATIONS_CREATE)) {
+      return forbidden();
+    }
+
+    const { invitationId } = params;
+    const invitation = db.getInvitationById(parseInt(invitationId as string));
+
+    if (!invitation) {
+      return notFound(invitationId);
+    }
+
+    const resent = db.resendInvitation(invitation.id);
+    if (!resent) {
       return HttpResponse.json(
         generateErrorResponse({
-          code: 'USER_ALREADY_EXISTS',
-          message: `User with student ID ${body.studentId} already exists`,
+          code: 'INVITATION_CANNOT_BE_RESENT',
+          message: 'Only pending or expired invitations can be sent again',
+          details: {
+            currentStatus: invitation.status,
+          },
         }),
         { status: 409 },
       );
     }
 
-    // Create the invitation
-    const invitation = db.createInvitation({
-      studentId: body.studentId,
-      email: body.email,
-      expiresInDays: body.expiresInDays,
-      createdByUserId: user.studentId,
-    });
-
-    return HttpResponse.json(
-      generateSuccessResponse({
-        id: invitation.id,
-        studentId: invitation.studentId,
-        email: invitation.email,
-        invitationCode: invitation.invitationCode,
-        status: invitation.status,
-        createdAt: invitation.createdAt,
-        expiredAt: invitation.expiredAt,
-        acceptedAt: invitation.acceptedAt,
-        createdBy: {
-          studentId: user.studentId,
-          firstName: user.firstName,
-          lastName: user.lastName,
-        },
-      }),
-      { status: 201 },
-    );
+    return HttpResponse.json(generateSuccessResponse(toInvitationResponse(resent)));
   }),
 
   // PATCH /api/v1/admin/invitations/:id/revoke - Revoke invitation
@@ -259,26 +280,14 @@ export const invitationHandlers = [
     }
 
     if (!mockUserHasPermission(user, PERMISSIONS.INVITATIONS_REVOKE)) {
-      return HttpResponse.json(
-        generateErrorResponse({
-          code: 'FORBIDDEN',
-          message: 'Insufficient permissions',
-        }),
-        { status: 403 },
-      );
+      return forbidden();
     }
 
     const { invitationId } = params;
     const invitation = db.getInvitationById(parseInt(invitationId as string));
 
     if (!invitation) {
-      return HttpResponse.json(
-        generateErrorResponse({
-          code: 'INVITATION_NOT_FOUND',
-          message: `Invitation with ID ${invitationId} not found`,
-        }),
-        { status: 404 },
-      );
+      return notFound(invitationId);
     }
 
     if (invitation.status !== 'PENDING') {
@@ -295,26 +304,7 @@ export const invitationHandlers = [
     }
 
     const revokedInvitation = db.revokeInvitation(invitation.id);
-    const creator = db.getUserById(invitation.createdByUserId);
 
-    return HttpResponse.json(
-      generateSuccessResponse({
-        id: revokedInvitation!.id,
-        studentId: revokedInvitation!.studentId,
-        email: revokedInvitation!.email,
-        invitationCode: revokedInvitation!.invitationCode,
-        status: revokedInvitation!.status,
-        createdAt: revokedInvitation!.createdAt,
-        expiredAt: revokedInvitation!.expiredAt,
-        acceptedAt: revokedInvitation!.acceptedAt,
-        createdBy: creator
-          ? {
-              studentId: creator.studentId,
-              firstName: creator.firstName,
-              lastName: creator.lastName,
-            }
-          : null,
-      }),
-    );
+    return HttpResponse.json(generateSuccessResponse(toInvitationResponse(revokedInvitation!)));
   }),
 ];

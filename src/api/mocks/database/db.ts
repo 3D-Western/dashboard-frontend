@@ -1,4 +1,5 @@
-import { PrintJob, User, FileMetadata, Invitation, InvitationStatus } from './types';
+import { PrintJob, User, FileMetadata, Invitation, InvitationStatus, MemberType } from './types';
+import { RESERVED_STUDENT_ID_START } from '@/types/invitation';
 import { OnboardingAnswers } from '@/types/onboarding';
 import { mockUsers } from '../data/users';
 import { mockPrintJobs } from '../data/print-jobs';
@@ -449,9 +450,24 @@ export class Database {
     return this.invitations.get(invitationId) || null;
   }
 
+  /**
+   * Mirrors the backend: without a Western number the next reserved one (900000000 and up) is
+   * assigned, counting every invitation (revoked ones too) so a number is never reused.
+   */
+  public nextReservedStudentId(): number {
+    const used = [
+      ...Array.from(this.invitations.values()).map((inv) => inv.studentId),
+      ...Array.from(this.users.keys()),
+    ].filter((id) => id >= RESERVED_STUDENT_ID_START);
+    return Math.max(RESERVED_STUDENT_ID_START - 1, ...used) + 1;
+  }
+
   public createInvitation(data: {
-    studentId: number;
+    studentId?: number;
     email: string;
+    firstName: string;
+    lastName: string;
+    memberType: MemberType;
     expiresInDays?: number;
     createdByUserId: number;
   }): Invitation {
@@ -462,8 +478,11 @@ export class Database {
 
     const invitation: Invitation = {
       id: this.nextInvitationId++,
-      studentId: data.studentId,
-      email: data.email,
+      studentId: data.studentId ?? this.nextReservedStudentId(),
+      email: data.email.toLowerCase(),
+      firstName: data.firstName,
+      lastName: data.lastName,
+      memberType: data.memberType,
       invitationCode: Math.random().toString(36).substring(2, 18),
       status: 'PENDING',
       createdAt: now.toISOString(),
@@ -490,11 +509,30 @@ export class Database {
     return invitation;
   }
 
-  public findInvitationByStudentIdOrEmail(studentId: number, email: string): Invitation | null {
+  /** Send again: a pending invitation gets a fresh week, an expired one is reopened. */
+  public resendInvitation(invitationId: number): Invitation | null {
+    const invitation = this.invitations.get(invitationId);
+    if (!invitation || (invitation.status !== 'PENDING' && invitation.status !== 'EXPIRED')) {
+      return null;
+    }
+    const expiredAt = new Date();
+    expiredAt.setDate(expiredAt.getDate() + 7);
+    invitation.status = 'PENDING';
+    invitation.expiredAt = expiredAt.toISOString();
+    return invitation;
+  }
+
+  public findInvitationByStudentIdOrEmail(
+    studentId: number | undefined,
+    email: string,
+  ): Invitation | null {
     const invitations = Array.from(this.invitations.values());
     return (
       invitations.find(
-        (inv) => inv.status === 'PENDING' && (inv.studentId === studentId || inv.email === email),
+        (inv) =>
+          inv.status === 'PENDING' &&
+          ((studentId !== undefined && inv.studentId === studentId) ||
+            inv.email.toLowerCase() === email.toLowerCase()),
       ) || null
     );
   }

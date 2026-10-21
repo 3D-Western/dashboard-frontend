@@ -284,7 +284,10 @@ export const createMockInvitation = (overrides?: Partial<Invitation>): Invitatio
   return {
     id: faker.number.int({ min: 1, max: 10000 }),
     studentId: faker.number.int({ min: 251000000, max: 251999999 }),
-    email: faker.internet.email({ provider: 'uwo.ca' }),
+    email: faker.internet.email({ provider: 'example.com' }),
+    firstName: faker.person.firstName(),
+    lastName: faker.person.lastName(),
+    memberType: 'COMMUNITY',
     invitationCode: faker.string.alphanumeric(16),
     status: 'PENDING' as InvitationStatus,
     createdAt: createdAt.toISOString(),

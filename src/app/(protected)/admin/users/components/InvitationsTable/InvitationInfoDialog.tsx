@@ -7,7 +7,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { Invitation } from '@/types/invitation';
+import { Invitation, RESERVED_STUDENT_ID_START, memberTypeLabel } from '@/types/invitation';
 
 interface InvitationInfoDialogProps {
   open: boolean;
@@ -28,6 +28,18 @@ export function InvitationInfoDialog({
           <DialogDescription>Additional information about this invitation.</DialogDescription>
         </DialogHeader>
         <div className="space-y-4 py-4">
+          <div className="space-y-1">
+            <p className="text-sm font-medium text-muted-foreground">Member type</p>
+            <p className="text-sm">{memberTypeLabel(invitation.memberType)}</p>
+          </div>
+          <div className="space-y-1">
+            <p className="text-sm font-medium text-muted-foreground">Student number</p>
+            <p className="text-sm">
+              {invitation.studentId}
+              {invitation.studentId >= RESERVED_STUDENT_ID_START &&
+                ' (assigned by the system: no Western number)'}
+            </p>
+          </div>
           <div className="space-y-1">
             <p className="text-sm font-medium text-muted-foreground">Created By</p>
             {invitation.createdBy ? (

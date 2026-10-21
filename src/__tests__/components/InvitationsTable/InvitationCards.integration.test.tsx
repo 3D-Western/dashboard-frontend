@@ -1,7 +1,7 @@
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen, within } from '@test/utils/render';
 import userEvent from '@testing-library/user-event';
-import InvitationsTable from '@/app/(protected)/admin/invitations/components/InvitationsTable';
+import InvitationsTable from '@/app/(protected)/admin/users/components/InvitationsTable';
 import { createMockInvitation, createMockUser, perm } from '@test/utils/mockFactories';
 import { PERMISSIONS } from '@/constants/permissions';
 

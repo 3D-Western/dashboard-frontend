@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@test/utils/render';
-import { DateCell } from '@/app/(protected)/admin/invitations/components/InvitationsTable/DateCell';
+import { DateCell } from '@/app/(protected)/admin/users/components/InvitationsTable/DateCell';
 
 // Mock the useLocalTime hook
 vi.mock('@/hooks/useLocalTime', () => ({

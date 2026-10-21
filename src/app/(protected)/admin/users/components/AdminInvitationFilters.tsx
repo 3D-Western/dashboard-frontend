@@ -5,7 +5,7 @@ import { InvitationStatus } from '@/types/invitation';
 
 const INVITATION_STATUS_OPTIONS: StatusOption<InvitationStatus>[] = [
   { value: 'PENDING', label: 'Pending', dotClassName: 'bg-status-blue' },
-  { value: 'ACCEPTED', label: 'Accepted', dotClassName: 'bg-status-purple' },
+  { value: 'ACCEPTED', label: 'Used', dotClassName: 'bg-status-purple' },
   { value: 'EXPIRED', label: 'Expired', dotClassName: 'bg-status-red' },
   { value: 'REVOKED', label: 'Revoked', dotClassName: 'bg-status-red' },
 ];
