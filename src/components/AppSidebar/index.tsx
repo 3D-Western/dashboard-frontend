@@ -145,6 +145,8 @@ export function AppSidebar({ user }: AppSidebarProps) {
       hasPermission(user, item.permission) ||
       (item.alsoPermission !== undefined && hasPermission(user, item.alsoPermission)),
   );
+  // The admin pages stay folded away on member pages, so the drawer shows the member links first
+  const onAdminPage = pathname === '/admin' || pathname.startsWith('/admin/');
 
   return (
     <Sidebar>
@@ -183,7 +185,12 @@ export function AppSidebar({ user }: AppSidebarProps) {
             <SidebarGroupLabel>Admin</SidebarGroupLabel>
             <SidebarGroupContent>
               <SidebarMenu>
-                <Collapsible asChild defaultOpen>
+                {/* Keyed on the section, so entering an admin page opens it (the default is read again) */}
+                <Collapsible
+                  key={onAdminPage ? 'admin-page' : 'member-page'}
+                  asChild
+                  defaultOpen={onAdminPage}
+                >
                   <SidebarMenuItem>
                     <SidebarMenuButton
                       asChild
