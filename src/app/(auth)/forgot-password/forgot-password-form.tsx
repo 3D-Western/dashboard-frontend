@@ -30,9 +30,9 @@ const formSchema = z.object({
     .refine(
       (val) => {
         const num = parseInt(val, 10);
-        return num >= 251000000 && num <= 251999999;
+        return num >= 100000000 && num <= 999999999;
       },
-      { message: 'Student ID must be between 251000000 and 251999999' },
+      { message: 'Student ID must be exactly 9 digits' },
     ),
 });
 
