@@ -28,7 +28,6 @@ import { toast } from 'sonner';
 import { CreateJobRequest } from '@/api/types';
 import { PurposeChips } from './PurposeChips';
 import { DesignIntentCards } from './DesignIntentCards';
-import { PrintAllowance } from './PrintAllowance';
 import { OrientationLockNotice } from '@/components/Training/OrientationLockNotice';
 import { TrainingErrorCodes } from '@/api/client/training-errors';
 
@@ -135,7 +134,6 @@ export default function NewPrintForm({ mockMode = false }: NewPrintFormProps = {
       {orientationRequired && <OrientationLockNotice interrupt className="mb-8" />}
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-          <PrintAllowance />
           <FormField
             control={form.control}
             name="jobName"

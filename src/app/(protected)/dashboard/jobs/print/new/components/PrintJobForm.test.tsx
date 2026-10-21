@@ -4,6 +4,7 @@ import userEvent from '@testing-library/user-event';
 import { toast } from 'sonner';
 import { jobApi } from '@/api/client/job';
 import { ApiError } from '@/api/client/errors';
+import { usageAPI } from '@/api/client/usage';
 import PrintJobForm from './PrintJobForm';
 
 vi.mock('next/navigation', () => ({ useRouter: () => ({ push: vi.fn(), refresh: vi.fn() }) }));
@@ -12,7 +13,9 @@ vi.mock('@/api/client/job', () => ({
   jobApi: { createJob: vi.fn(), uploadJobFile: vi.fn(), completeUpload: vi.fn() },
 }));
 vi.mock('@/components/UnsavedChangesDialog', () => ({ UnsavedChangesDialog: () => null }));
-vi.mock('./PrintAllowance', () => ({ PrintAllowance: () => null }));
+vi.mock('@/api/client/usage', () => ({
+  usageAPI: { getUsageSummary: vi.fn(), getAccountLimits: vi.fn() },
+}));
 // Dropping a real file needs a browser; this stands in for "the student picked an STL"
 vi.mock('@/components/FileUploadDropzone', () => ({
   FileUploadDropzone: ({ onFileAccepted }: { onFileAccepted: (file: File) => void }) => (
@@ -84,6 +87,15 @@ describe('PrintJobForm: orientation refusal', () => {
     expect(
       screen.queryByRole('link', { name: /go to maker orientation/i }),
     ).not.toBeInTheDocument();
+  });
+});
+
+describe('PrintJobForm: usage', () => {
+  it('makes no usage or limits requests, since those endpoints do not exist yet', () => {
+    render(<PrintJobForm />);
+
+    expect(usageAPI.getUsageSummary).not.toHaveBeenCalled();
+    expect(usageAPI.getAccountLimits).not.toHaveBeenCalled();
   });
 });
 
