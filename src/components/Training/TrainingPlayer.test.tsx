@@ -297,7 +297,9 @@ describe('TrainingPlayer', () => {
     );
     render(<TrainingPlayer attemptId={42} />);
 
-    await userEvent.click(await screen.findByRole('button', { name: /cancel this attempt/i }));
+    const cancelButton = await screen.findByRole('button', { name: /cancel this attempt/i });
+    expect(cancelButton).toHaveClass('min-h-11', 'text-sm');
+    await userEvent.click(cancelButton);
     await userEvent.click(screen.getByRole('button', { name: /^cancel attempt$/i }));
 
     await waitFor(() => expect(api.abandonAttempt).toHaveBeenCalledWith(42));

@@ -524,7 +524,8 @@ export function VideoStep({ attemptId, step, onStepCompleted }: VideoStepProps) 
           )}
         </div>
 
-        <div className="space-y-2 p-3">
+        {/* The slider below is 44 px tall; its own padding is enough, so the bottom padding is small */}
+        <div className="space-y-2 px-3 pt-3 pb-1 md:p-3">
           <div className="flex items-center gap-3">
             <Button
               type="button"
