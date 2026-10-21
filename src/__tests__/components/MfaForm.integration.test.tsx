@@ -1,5 +1,5 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, waitFor } from '@testing-library/react';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { cleanup, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { toast } from 'sonner';
 import { sessionApi } from '@/api/client/session';
@@ -13,6 +13,12 @@ vi.mock('@/lib/pwa/push', () => ({
 vi.mock('@/api/client/session', () => ({
   sessionApi: { verifyMfa: vi.fn(), resendMfaOtp: vi.fn() },
 }));
+
+// The OTP input (input-otp) schedules a short timer; let it fire while the DOM still exists, so it can't run after the file's environment is torn down.
+afterEach(async () => {
+  cleanup();
+  await new Promise((resolve) => setTimeout(resolve, 50));
+});
 
 describe('MFAForm', () => {
   beforeEach(() => {
