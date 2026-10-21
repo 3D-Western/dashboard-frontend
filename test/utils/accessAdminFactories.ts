@@ -89,6 +89,8 @@ export const createCardLink = (overrides: Partial<CardLink> = {}): CardLink => (
 
 export const createLive = (overrides: Partial<LiveAccess> = {}): LiveAccess => ({
   generatedAt: new Date().toISOString(),
+  visitsTruncated: false,
+  sessionsTruncated: false,
   visits: [
     {
       id: 1,

@@ -189,7 +189,11 @@ describe('Devices adding', () => {
       name: /limit how long one session can last/i,
     });
     expect(limit).not.toBeChecked();
-    expect(within(dialog).getByText(/never cuts a running machine/i)).toBeInTheDocument();
+    expect(
+      within(dialog).getByText(
+        /on a smart-plug machine, the longest session only raises a warning and never switches a running machine off.*relay machines have no maximum/i,
+      ),
+    ).toBeInTheDocument();
     expect(
       within(dialog).queryByRole('textbox', { name: /longest session/i }),
     ).not.toBeInTheDocument();

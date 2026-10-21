@@ -50,6 +50,14 @@ describe('LiveView', () => {
     expect(screen.getByText('No machine is running.')).toBeInTheDocument();
   });
 
+  it('marks a list the server cut short with a plus', async () => {
+    api.getLive.mockResolvedValue(createLive({ visitsTruncated: true, sessionsTruncated: true }));
+    render(<LiveView />);
+
+    expect(await screen.findByRole('region', { name: /in the space now \(2\+\)/i })).toBeInTheDocument();
+    expect(screen.getByRole('region', { name: /machines running \(1\+\)/i })).toBeInTheDocument();
+  });
+
   it('refreshes on its own and on request', async () => {
     vi.useFakeTimers({ shouldAdvanceTime: true });
     render(<LiveView />);

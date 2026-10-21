@@ -371,7 +371,7 @@ function DeviceCard({
                 label="Session length"
                 value={
                   device.maxSessionMinutes
-                    ? `Limit of ${device.maxSessionMinutes} min (never cuts a running machine)`
+                    ? `Warns after ${device.maxSessionMinutes} min (never switches a running machine off)`
                     : 'No maximum'
                 }
               />
@@ -645,7 +645,7 @@ function DeviceDialog({
                     label="Limit how long one session can last"
                     checked={form.limitSession}
                     onCheckedChange={(value) => set('limitSession', value)}
-                    help="Off by default. This never cuts a running machine, so a 20-hour print is safe; the limit only stops new starts or raises a warning."
+                    help="Off by default. On a smart-plug machine, the longest session only raises a warning and never switches a running machine off, so a 20-hour print is safe. Relay machines have no maximum."
                   />
                   {form.limitSession && (
                     <TextField

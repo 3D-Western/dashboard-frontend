@@ -159,4 +159,7 @@ export interface LiveAccess {
   generatedAt: string;
   visits: LiveVisit[];
   sessions: LiveSession[];
+  /** The server returns at most 200 of each (oldest first); these say there were more. */
+  visitsTruncated: boolean;
+  sessionsTruncated: boolean;
 }
