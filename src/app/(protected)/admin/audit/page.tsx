@@ -1,3 +1,4 @@
+import { PageContainer } from '@/components/PageContainer';
 import type { Metadata } from 'next';
 import { ClipboardList } from 'lucide-react';
 import PageTitle from '@/components/PageTitle';
@@ -17,7 +18,7 @@ export default async function AuditLogPage() {
     return <UnauthorizedPage title="Audit Log" />;
 
   return (
-    <div className="container space-y-6 p-6">
+    <PageContainer className="space-y-6 p-6">
       <PageTitle title="Audit Log" description="View system audit logs and activity history" />
 
       <div className="space-y-4 rounded-lg border p-8 text-center">
@@ -30,6 +31,6 @@ export default async function AuditLogPage() {
           </p>
         </div>
       </div>
-    </div>
+    </PageContainer>
   );
 }

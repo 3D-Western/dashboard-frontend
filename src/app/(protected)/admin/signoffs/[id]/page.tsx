@@ -1,3 +1,4 @@
+import { PageContainer } from '@/components/PageContainer';
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import PageTitle from '@/components/PageTitle';
@@ -22,9 +23,9 @@ export default async function SignoffDetailPage({ params }: { params: Promise<{ 
   if (!Number.isInteger(signoffId) || signoffId <= 0) notFound();
 
   return (
-    <div className="mx-auto w-full max-w-3xl space-y-6 p-4 sm:p-6">
+    <PageContainer narrow className="space-y-6 p-4 sm:p-6">
       <PageTitle title="Training sign-off" />
       <SignoffDetail signoffId={signoffId} />
-    </div>
+    </PageContainer>
   );
 }

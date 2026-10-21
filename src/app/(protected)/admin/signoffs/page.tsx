@@ -1,3 +1,4 @@
+import { PageContainer } from '@/components/PageContainer';
 import type { Metadata } from 'next';
 import PageTitle from '@/components/PageTitle';
 import { SignoffQueue } from '@/components/Signoff/SignoffQueue';
@@ -18,12 +19,12 @@ export default async function SignoffQueuePage() {
   }
 
   return (
-    <div className="mx-auto w-full max-w-3xl space-y-6 p-4 sm:p-6">
+    <PageContainer narrow className="space-y-6 p-4 sm:p-6">
       <PageTitle
         title="Training Sign-offs"
         description="Students who passed the online part and are waiting for you in the space."
       />
       <SignoffQueue />
-    </div>
+    </PageContainer>
   );
 }

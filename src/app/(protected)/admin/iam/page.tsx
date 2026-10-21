@@ -1,3 +1,4 @@
+import { PageContainer } from '@/components/PageContainer';
 import type { Metadata } from 'next';
 import { iamApi } from '@/api/client/iam';
 import PageTitle from '@/components/PageTitle';
@@ -23,9 +24,9 @@ export default async function IamManagementPage() {
   );
 
   return (
-    <div className="container space-y-6 p-6">
+    <PageContainer className="space-y-6 p-6">
       <PageTitle title="IAM Management" description="Manage roles, groups, and permissions" />
       <IamTabs initialRoles={roles} initialGroups={groups} currentUser={user} />
-    </div>
+    </PageContainer>
   );
 }

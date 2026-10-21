@@ -1,3 +1,4 @@
+import { PageContainer } from '@/components/PageContainer';
 import type { Metadata } from 'next';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { ClipboardCheck, DoorOpen, PenSquare, Printer, TicketPlus, Users } from 'lucide-react';
@@ -21,7 +22,7 @@ export default async function AdminDashboardPage() {
   const user = await validateSession();
 
   return (
-    <div className="container space-y-6 p-6">
+    <PageContainer className="space-y-6 p-6">
       <PageTitle title="Admin Dashboard" description="Administrative dashboard for 3D Western" />
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
@@ -141,6 +142,6 @@ export default async function AdminDashboardPage() {
           </Link>
         )}
       </div>
-    </div>
+    </PageContainer>
   );
 }

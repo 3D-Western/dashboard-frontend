@@ -1,3 +1,4 @@
+import { PageContainer } from '@/components/PageContainer';
 import type { Metadata } from 'next';
 import PageTitle from '@/components/PageTitle';
 import { validateSession } from '@/lib/auth';
@@ -31,12 +32,12 @@ export default async function UserManagementPage({ searchParams }: UserManagemen
   );
 
   return (
-    <div className="container space-y-6 p-6">
+    <PageContainer className="space-y-6 p-6">
       <PageTitle title="User Management" description="Manage user accounts and permissions" />
 
       <div>
         <UsersTable users={users} pagination={pagination} />
       </div>
-    </div>
+    </PageContainer>
   );
 }
