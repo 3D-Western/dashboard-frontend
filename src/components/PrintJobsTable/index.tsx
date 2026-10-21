@@ -3,6 +3,7 @@
 import { PrintJob } from '@/types/jobs';
 import { PaginationMetadata } from '@/types/common';
 import { DataTable } from './DataTable';
+import { PrintJobCard } from './PrintJobCard';
 import { useColumns } from './useColumns';
 import { useCallback, useMemo, useState } from 'react';
 
@@ -75,5 +76,12 @@ export default function PrintJobsTable({
   );
 
   const columns = useColumns({ mode, setJobs });
-  return <DataTable columns={columns} data={jobs} pagination={pagination} />;
+  return (
+    <DataTable
+      columns={columns}
+      data={jobs}
+      pagination={pagination}
+      renderCard={(row) => <PrintJobCard row={row} mode={mode} />}
+    />
+  );
 }

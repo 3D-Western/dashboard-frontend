@@ -4,6 +4,7 @@ import { AdminUserProfile } from '@/types/user';
 import { PaginationMetadata } from '@/types/common';
 import { useCallback, useMemo, useState } from 'react';
 import { DataTable } from './DataTable';
+import { UserCard } from './UserCard';
 import { useColumns } from './useColumns';
 
 export interface UsersTableProps {
@@ -25,5 +26,12 @@ export default function UsersTable({ users, pagination }: UsersTableProps) {
 
   const columns = useColumns({ onStatusChanged: handleStatusChanged });
 
-  return <DataTable columns={columns} data={rows} pagination={pagination} />;
+  return (
+    <DataTable
+      columns={columns}
+      data={rows}
+      pagination={pagination}
+      renderCard={(row) => <UserCard row={row} />}
+    />
+  );
 }

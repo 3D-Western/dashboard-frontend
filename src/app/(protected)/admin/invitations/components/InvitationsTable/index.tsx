@@ -4,6 +4,7 @@ import { Invitation } from '@/types/invitation';
 import { PaginationMetadata } from '@/types/common';
 import { useMemo, useState } from 'react';
 import { DataTable } from './DataTable';
+import { InvitationCard } from './InvitationCard';
 import { useColumns } from './useColumns';
 
 interface InvitationsTableProps {
@@ -40,5 +41,12 @@ export default function InvitationsTable({
 
   const columns = useColumns({ onRevoke: handleRevoke });
 
-  return <DataTable columns={columns} data={data} pagination={pagination} />;
+  return (
+    <DataTable
+      columns={columns}
+      data={data}
+      pagination={pagination}
+      renderCard={(row) => <InvitationCard row={row} />}
+    />
+  );
 }

@@ -11,6 +11,7 @@ import {
 import {
   ColumnDef,
   ColumnFiltersState,
+  Row,
   SortingState,
   flexRender,
   getCoreRowModel,
@@ -18,20 +19,25 @@ import {
   getSortedRowModel,
   useReactTable,
 } from '@tanstack/react-table';
+import type { ReactNode } from 'react';
 import { useState } from 'react';
 import { DataTablePagination } from '@/components/DataTablePagination';
+import { ResponsiveTable } from '@/components/ResponsiveTable';
 import { PaginationMetadata } from '@/types/common';
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
   data: TData[];
   pagination: PaginationMetadata | Partial<PaginationMetadata>;
+  /** The phone (below md) version of one row. */
+  renderCard: (row: Row<TData>) => ReactNode;
 }
 
 export function DataTable<TData, TValue>({
   columns,
   data,
   pagination,
+  renderCard,
 }: DataTableProps<TData, TValue>) {
   'use no memo';
   const [sorting, setSorting] = useState<SortingState>([]);
@@ -52,47 +58,54 @@ export function DataTable<TData, TValue>({
 
   return (
     <div className="space-y-4">
-      <div className="overflow-hidden rounded-lg border bg-card">
-        <Table aria-label="Users table" aria-describedby="users-table-caption">
-          <caption id="users-table-caption" className="sr-only">
-            Users with account status, email, and student ID. Sortable by name.
-          </caption>
-          <TableHeader>
-            {table.getHeaderGroups().map((headerGroup) => (
-              <TableRow key={headerGroup.id}>
-                {headerGroup.headers.map((header) => {
-                  return (
-                    <TableHead key={header.id}>
-                      {header.isPlaceholder
-                        ? null
-                        : flexRender(header.column.columnDef.header, header.getContext())}
-                    </TableHead>
-                  );
-                })}
-              </TableRow>
-            ))}
-          </TableHeader>
-          <TableBody>
-            {table.getRowModel().rows?.length ? (
-              table.getRowModel().rows.map((row) => (
-                <TableRow key={row.id}>
-                  {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id}>
-                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                    </TableCell>
-                  ))}
+      <ResponsiveTable
+        items={table.getRowModel().rows}
+        getKey={(row) => row.id}
+        renderCard={renderCard}
+        emptyMessage="No users found."
+      >
+        <div className="overflow-hidden rounded-lg border bg-card">
+          <Table aria-label="Users table" aria-describedby="users-table-caption">
+            <caption id="users-table-caption" className="sr-only">
+              Users with account status, email, and student ID. Sortable by name.
+            </caption>
+            <TableHeader>
+              {table.getHeaderGroups().map((headerGroup) => (
+                <TableRow key={headerGroup.id}>
+                  {headerGroup.headers.map((header) => {
+                    return (
+                      <TableHead key={header.id}>
+                        {header.isPlaceholder
+                          ? null
+                          : flexRender(header.column.columnDef.header, header.getContext())}
+                      </TableHead>
+                    );
+                  })}
                 </TableRow>
-              ))
-            ) : (
-              <TableRow>
-                <TableCell colSpan={columns.length} className="h-24 text-center">
-                  No users found.
-                </TableCell>
-              </TableRow>
-            )}
-          </TableBody>
-        </Table>
-      </div>
+              ))}
+            </TableHeader>
+            <TableBody>
+              {table.getRowModel().rows?.length ? (
+                table.getRowModel().rows.map((row) => (
+                  <TableRow key={row.id}>
+                    {row.getVisibleCells().map((cell) => (
+                      <TableCell key={cell.id}>
+                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                ))
+              ) : (
+                <TableRow>
+                  <TableCell colSpan={columns.length} className="h-24 text-center">
+                    No users found.
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </div>
+      </ResponsiveTable>
 
       <DataTablePagination table={table} pagination={pagination} />
     </div>

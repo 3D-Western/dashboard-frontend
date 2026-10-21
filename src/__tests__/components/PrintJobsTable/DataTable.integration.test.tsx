@@ -40,6 +40,9 @@ let mockTable: {
   };
   getFilteredRowModel: () => { rows: unknown[] };
   getFilteredSelectedRowModel: () => { rows: unknown[] };
+  getState: () => { sorting: unknown[] };
+  getAllLeafColumns: () => unknown[];
+  setSorting: (sorting: unknown) => void;
 };
 
 vi.mock('@tanstack/react-table', () => ({
@@ -176,6 +179,9 @@ const setupTable = (overrides: Partial<typeof mockTable> = {}) => {
     }),
     getFilteredRowModel: () => ({ rows: [] }),
     getFilteredSelectedRowModel: () => ({ rows: [] }),
+    getState: () => ({ sorting: [] }),
+    getAllLeafColumns: () => [],
+    setSorting: vi.fn(),
     ...overrides,
   };
 
@@ -194,7 +200,14 @@ describe('DataTable', () => {
       getFilteredSelectedRowModel: () => ({ rows: [] }),
     });
 
-    render(<DataTable columns={[]} data={[{ id: 1 }, { id: 2 }]} pagination={pagination} />);
+    render(
+      <DataTable
+        columns={[]}
+        data={[{ id: 1 }, { id: 2 }]}
+        pagination={pagination}
+        renderCard={() => null}
+      />,
+    );
 
     await waitFor(() => {
       expect(screen.getByRole('status')).toHaveTextContent('Showing 1 of 2 print jobs');
@@ -208,7 +221,12 @@ describe('DataTable', () => {
     });
 
     const { unmount } = render(
-      <DataTable columns={[]} data={[{ id: 1 }, { id: 2 }]} pagination={pagination} />,
+      <DataTable
+        columns={[]}
+        data={[{ id: 1 }, { id: 2 }]}
+        pagination={pagination}
+        renderCard={() => null}
+      />,
     );
 
     await waitFor(() => {
@@ -222,7 +240,14 @@ describe('DataTable', () => {
       getFilteredSelectedRowModel: () => ({ rows: [{}, {}] }),
     });
 
-    render(<DataTable columns={[]} data={[{ id: 1 }, { id: 2 }]} pagination={pagination} />);
+    render(
+      <DataTable
+        columns={[]}
+        data={[{ id: 1 }, { id: 2 }]}
+        pagination={pagination}
+        renderCard={() => null}
+      />,
+    );
 
     await waitFor(() => {
       expect(screen.getByRole('status')).toHaveTextContent('2 print jobs selected');
