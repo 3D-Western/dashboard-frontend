@@ -12,17 +12,48 @@
 /** The moments we ask at. Each one is a time the app is obviously useful to the student. */
 export type InstallMoment = 'orientation-passed' | 'print-submitted';
 
-export type InstallPlatform = 'ios' | 'android' | 'desktop' | 'other';
+/**
+ * Where the page is open. The "-webview" kinds are browsers inside other apps (Teams, Instagram,
+ * the Google app, ...): they have no Add to Home Screen, so the student must open the page in the
+ * real browser first.
+ */
+export type InstallPlatform =
+  | 'ios'
+  | 'ios-chrome'
+  | 'ios-webview'
+  | 'android'
+  | 'android-webview'
+  | 'desktop';
 
-/** What to show: nothing, our own card with the browser's install button, or the two manual steps. */
-export type InstallPromptMode = 'hidden' | 'native' | 'ios-steps';
+/**
+ * What to show: nothing; our own card with the browser's install button (Android); the manual
+ * steps for Safari or for Chrome on iPhone; or a pointer to open the page in the real browser.
+ */
+export type InstallPromptMode =
+  | 'hidden'
+  | 'native'
+  | 'ios-steps'
+  | 'ios-chrome-steps'
+  | 'open-in-safari'
+  | 'open-in-chrome';
 
 export const DISMISS_DAYS = 30;
 export const DISMISS_STORAGE_KEY = '3dw.install-prompt.dismissed-at';
 const DAY_MS = 24 * 60 * 60 * 1000;
 
-// Browsers embedded in other apps (Facebook, Instagram, ...): they have no Add to Home Screen.
-const IN_APP_BROWSER = /FBAN|FBAV|Instagram|Snapchat|MicroMessenger|Line\/|Twitter/i;
+// Apps that open links in their own embedded browser. Some of them still say "Safari/" in their
+// user agent, so they are named. (`GSA/` is the Google app.)
+const IN_APP_BROWSER =
+  /FBAN|FBAV|Instagram|Snapchat|MicroMessenger|Line\/|Twitter|Teams\/|LinkedInApp|TikTok|musical_ly|BytedanceWebview|Outlook|GSA\//i;
+
+/** True for a browser embedded in another app, on a phone or tablet. */
+function isWebview(userAgent: string, ios: boolean): boolean {
+  if (IN_APP_BROWSER.test(userAgent)) return true;
+  // A real iOS browser (Safari, Chrome, Firefox) always says "Safari/"; a bare web view doesn't
+  if (ios) return !/Safari\//.test(userAgent);
+  // Android's system web view marks itself "; wv)"
+  return /; wv\)/.test(userAgent);
+}
 
 interface PlatformInput {
   userAgent: string;
@@ -36,11 +67,15 @@ export function detectPlatform({
   platform = '',
   maxTouchPoints = 0,
 }: PlatformInput): InstallPlatform {
-  if (IN_APP_BROWSER.test(userAgent)) return 'other';
-  if (/iPhone|iPad|iPod/.test(userAgent)) return 'ios';
   // iPadOS 13+ reports itself as a Mac; a real Mac has no touch screen
-  if (platform === 'MacIntel' && maxTouchPoints > 1) return 'ios';
-  if (/Android/.test(userAgent)) return 'android';
+  const ios = /iPhone|iPad|iPod/.test(userAgent) || (platform === 'MacIntel' && maxTouchPoints > 1);
+  if (ios) {
+    if (isWebview(userAgent, true)) return 'ios-webview';
+    return /CriOS/.test(userAgent) ? 'ios-chrome' : 'ios';
+  }
+  if (/Android/.test(userAgent)) {
+    return isWebview(userAgent, false) ? 'android-webview' : 'android';
+  }
   return 'desktop';
 }
 
@@ -119,7 +154,18 @@ export interface InstallPromptInput {
 
 export function resolveInstallPrompt(input: InstallPromptInput): InstallPromptMode {
   if (!input.moment || input.standalone || input.dismissedRecently) return 'hidden';
-  if (input.platform === 'ios') return 'ios-steps';
-  if (input.platform === 'android' && input.canPromptNatively) return 'native';
-  return 'hidden';
+  switch (input.platform) {
+    case 'ios':
+      return 'ios-steps';
+    case 'ios-chrome':
+      return 'ios-chrome-steps';
+    case 'ios-webview':
+      return 'open-in-safari';
+    case 'android-webview':
+      return 'open-in-chrome';
+    case 'android':
+      return input.canPromptNatively ? 'native' : 'hidden';
+    default:
+      return 'hidden';
+  }
 }

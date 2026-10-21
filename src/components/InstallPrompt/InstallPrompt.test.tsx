@@ -59,7 +59,9 @@ describe('InstallPrompt on an iPhone', () => {
   it('shows the two steps (Share, then Add to Home Screen) with their icons', () => {
     const { container } = render(<InstallPrompt moment="orientation-passed" />);
 
-    expect(screen.getByRole('region', { name: /install the 3d western app/i })).toBeInTheDocument();
+    expect(
+      screen.getByRole('region', { name: /keep 3d western on your home screen/i }),
+    ).toBeInTheDocument();
     const steps = screen.getAllByRole('listitem');
     expect(steps).toHaveLength(2);
     expect(steps[0]).toHaveTextContent(/share/i);
@@ -70,11 +72,18 @@ describe('InstallPrompt on an iPhone', () => {
     expect(screen.queryByRole('button', { name: /install/i })).not.toBeInTheDocument();
   });
 
-  it("says 'Get notified when it's ready' after a print is submitted", () => {
+  it('does not promise notifications that do not exist yet', () => {
     render(<InstallPrompt moment="print-submitted" />);
     expect(
-      screen.getByRole('heading', { name: /get notified when it's ready/i }),
+      screen.getByRole('heading', { name: 'Keep 3D Western on your home screen' }),
     ).toBeInTheDocument();
+    expect(screen.getByText(/notifications for your prints are coming soon/i)).toBeInTheDocument();
+    expect(screen.queryByText(/get notified|is how you/i)).not.toBeInTheDocument();
+  });
+
+  it('keeps the steps a real list for screen readers', () => {
+    render(<InstallPrompt moment="orientation-passed" />);
+    expect(screen.getByRole('list')).toHaveAttribute('role', 'list');
   });
 
   it('uses the short heading in its "note" form', () => {
@@ -143,6 +152,50 @@ describe('InstallPrompt on an iPhone', () => {
     await user.tab();
     expect(screen.getByRole('button', { name: 'Not now' })).toHaveFocus();
     await user.keyboard('{Enter}');
+    expect(screen.queryByRole('region')).not.toBeInTheDocument();
+  });
+});
+
+describe('InstallPrompt on Chrome for iPhone', () => {
+  it('words the steps for Chrome, not Safari', () => {
+    setDevice(
+      'Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) CriOS/130.0.6723.90 Mobile/15E148 Safari/604.1',
+    );
+    render(<InstallPrompt moment="orientation-passed" />);
+
+    const steps = screen.getAllByRole('listitem');
+    expect(steps[0]).toHaveTextContent(/address bar at the top of Chrome/i);
+    expect(steps[0]).not.toHaveTextContent(/safari/i);
+    expect(steps[1]).toHaveTextContent(/add to home screen/i);
+  });
+});
+
+describe('InstallPrompt inside another app (web view)', () => {
+  it('on iPhone, says to open the page in Safari and shows no steps', () => {
+    setDevice(IPHONE + ' Teams/6.0');
+    render(<InstallPrompt moment="orientation-passed" />);
+
+    expect(screen.getByText(/open in safari/i)).toBeInTheDocument();
+    expect(screen.queryByRole('list')).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /install/i })).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Not now' })).toBeInTheDocument();
+  });
+
+  it('on Android, says to open the page in Chrome, even if a prompt was offered', () => {
+    setDevice(ANDROID + ' Instagram 300.0');
+    render(<InstallPrompt moment="print-submitted" />);
+    offerNativePrompt();
+
+    expect(screen.getByText(/open in browser/i)).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /install/i })).not.toBeInTheDocument();
+  });
+
+  it('can be dismissed like the rest', async () => {
+    const user = userEvent.setup();
+    setDevice(IPHONE + ' GSA/300.0');
+    render(<InstallPrompt moment="orientation-passed" />);
+
+    await user.click(screen.getByRole('button', { name: 'Not now' }));
     expect(screen.queryByRole('region')).not.toBeInTheDocument();
   });
 });

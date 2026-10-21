@@ -38,9 +38,41 @@ describe('detectPlatform', () => {
     );
   });
 
-  it("doesn't offer anything inside another app's browser", () => {
-    expect(detectPlatform({ userAgent: IPHONE + ' Instagram 300.0' })).toBe('other');
-    expect(detectPlatform({ userAgent: ANDROID + ' [FBAN/FB4A;FBAV/450.0]' })).toBe('other');
+  it('tells Chrome on iPhone (CriOS) from Safari', () => {
+    const chromeIos =
+      'Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) CriOS/130.0.6723.90 Mobile/15E148 Safari/604.1';
+    expect(detectPlatform({ userAgent: chromeIos })).toBe('ios-chrome');
+    expect(detectPlatform({ userAgent: IPHONE })).toBe('ios');
+  });
+
+  it.each([
+    ['Instagram', IPHONE + ' Instagram 300.0', 'ios-webview'],
+    ['Facebook', ANDROID + ' [FBAN/FB4A;FBAV/450.0]', 'android-webview'],
+    ['Teams', IPHONE + ' Teams/6.0', 'ios-webview'],
+    ['LinkedIn', IPHONE + ' LinkedInApp/9.0', 'ios-webview'],
+    ['TikTok', ANDROID + ' musical_ly_2023 BytedanceWebview/d8a21c6', 'android-webview'],
+    ['Outlook', IPHONE + ' Outlook-iOS/4.0', 'ios-webview'],
+    ['the Google app', IPHONE + ' GSA/300.0', 'ios-webview'],
+  ] as const)("treats %s's built-in browser as a web view", (_app, userAgent, expected) => {
+    // These all still say "Safari/" (or Chrome) in their user agent, so they are matched by name
+    expect(detectPlatform({ userAgent })).toBe(expected);
+  });
+
+  it('treats an iOS user agent with no "Safari/" token as a web view', () => {
+    const bare =
+      'Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148';
+    expect(detectPlatform({ userAgent: bare })).toBe('ios-webview');
+  });
+
+  it('treats the Android system web view ("; wv)") as a web view', () => {
+    const wv =
+      'Mozilla/5.0 (Linux; Android 14; Pixel 8 Build/AP1A; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/130.0.0.0 Mobile Safari/537.36';
+    expect(detectPlatform({ userAgent: wv })).toBe('android-webview');
+  });
+
+  it('does not mistake a normal Android Chrome or desktop browser for a web view', () => {
+    expect(detectPlatform({ userAgent: ANDROID })).toBe('android');
+    expect(detectPlatform({ userAgent: DESKTOP + ' Teams/1.6' })).toBe('desktop');
   });
 });
 
@@ -160,11 +192,25 @@ describe('resolveInstallPrompt', () => {
     ).toBe('hidden');
   });
 
-  it('never shows on desktop or in other browsers, even if the browser offers an install prompt', () => {
+  it('never shows on desktop, even if the browser offers an install prompt', () => {
     expect(resolveInstallPrompt({ ...base, platform: 'desktop', canPromptNatively: true })).toBe(
       'hidden',
     );
-    expect(resolveInstallPrompt({ ...base, platform: 'other', canPromptNatively: true })).toBe(
+  });
+
+  it('words the steps for Chrome on iPhone separately from Safari', () => {
+    expect(resolveInstallPrompt({ ...base, platform: 'ios-chrome' })).toBe('ios-chrome-steps');
+  });
+
+  it('inside another app, says to open the real browser instead of showing steps that cannot work', () => {
+    expect(resolveInstallPrompt({ ...base, platform: 'ios-webview' })).toBe('open-in-safari');
+    expect(resolveInstallPrompt({ ...base, platform: 'android-webview' })).toBe('open-in-chrome');
+    // ...and the usual rules still apply
+    expect(resolveInstallPrompt({ ...base, platform: 'ios-webview', moment: null })).toBe('hidden');
+    expect(
+      resolveInstallPrompt({ ...base, platform: 'ios-webview', dismissedRecently: true }),
+    ).toBe('hidden');
+    expect(resolveInstallPrompt({ ...base, platform: 'android-webview', standalone: true })).toBe(
       'hidden',
     );
   });

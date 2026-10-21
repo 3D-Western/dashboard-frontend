@@ -15,16 +15,9 @@ interface InstallPromptProps {
   className?: string;
 }
 
-const COPY: Record<InstallMoment, { heading: string; body: string }> = {
-  'orientation-passed': {
-    heading: 'Install the 3D Western app',
-    body: 'Keep it on your home screen so it opens like any other app, and be ready for ready-for-pickup alerts as soon as we switch them on.',
-  },
-  'print-submitted': {
-    heading: "Get notified when it's ready",
-    body: 'Install the 3D Western app on your home screen. Pickup alerts are coming, and the app is how you will get them.',
-  },
-};
+// Don't promise more than we have: notifications are not built yet
+const HEADING = 'Keep 3D Western on your home screen';
+const BODY = 'Open it in one tap; notifications for your prints are coming soon.';
 
 /**
  * Asks the student to add the dashboard to their home screen. It shows itself only when that is
@@ -38,8 +31,7 @@ export function InstallPrompt({ moment, variant = 'card', className }: InstallPr
   const headingId = useId();
   if (mode === 'hidden' || !moment) return null;
 
-  const copy = COPY[moment];
-  const heading = variant === 'note' ? 'Add the 3D Western app to your home screen' : copy.heading;
+  const heading = variant === 'note' ? 'Add the 3D Western app to your home screen' : HEADING;
 
   return (
     <section
@@ -56,18 +48,21 @@ export function InstallPrompt({ moment, variant = 'card', className }: InstallPr
           <h2 id={headingId} className={variant === 'note' ? 'text-base' : 'text-lg'}>
             {heading}
           </h2>
-          <p className="text-sm text-muted-foreground">{copy.body}</p>
+          <p className="text-sm text-muted-foreground">{BODY}</p>
         </div>
       </div>
 
-      {mode === 'ios-steps' && (
-        <ol className="space-y-2 text-sm">
+      {(mode === 'ios-steps' || mode === 'ios-chrome-steps') && (
+        // role="list" because list styling is reset, which makes Safari drop the list semantics
+        <ol role="list" className="space-y-2 text-sm">
           <li className="flex items-center gap-3">
             <StepNumber n={1} />
             <span>
               Tap the <strong className="font-semibold">Share</strong> button
               <Share className="mx-1.5 inline size-4 align-text-bottom" aria-hidden="true" />
-              at the bottom of Safari (or the top of the screen on an iPad).
+              {mode === 'ios-chrome-steps'
+                ? 'next to the address bar at the top of Chrome.'
+                : 'at the bottom of Safari (or the top of the screen on an iPad).'}
             </span>
           </li>
           <li className="flex items-center gap-3">
@@ -79,6 +74,20 @@ export function InstallPrompt({ moment, variant = 'card', className }: InstallPr
             </span>
           </li>
         </ol>
+      )}
+
+      {(mode === 'open-in-safari' || mode === 'open-in-chrome') && (
+        <p className="text-sm">
+          Open this page in{' '}
+          <strong className="font-semibold">
+            {mode === 'open-in-safari' ? 'Safari' : 'Chrome'}
+          </strong>{' '}
+          to install it. Use this app&apos;s menu and choose{' '}
+          <strong className="font-semibold">
+            {mode === 'open-in-safari' ? 'Open in Safari' : 'Open in browser'}
+          </strong>
+          .
+        </p>
       )}
 
       <div className="flex flex-col gap-2 sm:flex-row">

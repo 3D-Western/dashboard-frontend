@@ -31,11 +31,11 @@ afterEach(() => {
 });
 
 describe('My Jobs: add the app to the home screen', () => {
-  it('offers it right after a print is submitted ("get notified when it\'s ready")', async () => {
+  it('offers it right after a print is submitted', async () => {
     await renderPage({ submitted: '1' });
 
     expect(
-      await screen.findByRole('heading', { name: /get notified when it's ready/i }),
+      await screen.findByRole('heading', { name: /keep 3d western on your home screen/i }),
     ).toBeInTheDocument();
   });
 

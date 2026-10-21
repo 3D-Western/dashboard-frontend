@@ -20,7 +20,9 @@ describe('OrientationInstallPrompt (dashboard)', () => {
   it('shows once Maker Orientation is passed', () => {
     useTrainings.mockReturnValue({ data: { orientationComplete: true, trainings: [] } });
     render(<OrientationInstallPrompt />);
-    expect(screen.getByRole('region', { name: /install the 3d western app/i })).toBeInTheDocument();
+    expect(
+      screen.getByRole('region', { name: /keep 3d western on your home screen/i }),
+    ).toBeInTheDocument();
   });
 
   it('stays away before orientation is passed', () => {
