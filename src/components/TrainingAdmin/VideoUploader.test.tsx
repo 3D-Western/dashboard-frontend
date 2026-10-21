@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach, type Mock } from 'vitest';
 import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { ApiError } from '@/api/client/errors';
-import { setVideoPreparer } from '@/lib/video-prepare';
+import { checkCompressionSupport, unsupported } from '@/lib/video-compress';
 import { VideoUploadError, readVideoInfo, uploadVideo } from '@/lib/video-upload';
 import { VideoUploader } from './VideoUploader';
 
@@ -11,8 +11,14 @@ vi.mock('@/lib/video-upload', async (importOriginal) => {
   return { ...actual, uploadVideo: vi.fn(), readVideoInfo: vi.fn() };
 });
 
+vi.mock('@/lib/video-compress', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/lib/video-compress')>();
+  return { ...actual, checkCompressionSupport: vi.fn() };
+});
+
 const upload = uploadVideo as unknown as Mock;
 const probe = readVideoInfo as unknown as Mock;
+const support = checkCompressionSupport as unknown as Mock;
 
 const info = (durationSeconds: number | null, width = 1280, height = 720) => ({
   durationSeconds,
@@ -33,7 +39,9 @@ function deferred<T>() {
 }
 
 beforeEach(() => {
-  setVideoPreparer();
+  vi.clearAllMocks();
+  // Most tests are about the upload itself: a browser that cannot compress sends files as they are.
+  support.mockResolvedValue(unsupported('no-h264'));
   probe.mockResolvedValue(info(60));
   Object.assign(URL, {
     createObjectURL: vi.fn(() => 'blob:local-preview'),
@@ -298,23 +306,5 @@ describe('VideoUploader safeguards', () => {
 
     expect(await screen.findByText(/upload link expired/i)).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /try the upload again/i })).toBeInTheDocument();
-  });
-});
-
-describe('VideoUploader and the compression hook', () => {
-  it('uploads whatever the registered preparer returns, and nothing else by default', async () => {
-    upload.mockResolvedValue('videos/small.mp4');
-    const smaller = new File([new Uint8Array(10)], 'intro-720p.mp4', { type: 'video/mp4' });
-    const preparer = vi.fn(async () => smaller);
-    setVideoPreparer(preparer);
-    const onUploaded = vi.fn();
-    render(<VideoUploader assetKey={null} onUploaded={onUploaded} />);
-
-    await choose();
-
-    await waitFor(() => expect(onUploaded).toHaveBeenCalled());
-    expect(preparer).toHaveBeenCalledWith(mp4, info(60), [], expect.any(AbortSignal));
-    expect(upload.mock.calls[0][0]).toBe(smaller);
-    expect(screen.getByText(/uploaded intro-720p\.mp4/i)).toBeInTheDocument();
   });
 });
