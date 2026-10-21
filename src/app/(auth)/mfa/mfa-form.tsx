@@ -19,6 +19,7 @@ import { useForm, useWatch } from 'react-hook-form';
 import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
 import { Routes } from '@/lib/routes';
+import { CONTACT_EMAIL } from '@/constants/website';
 import { useState } from 'react';
 import { sessionApi } from '@/api/client/session';
 import { ApiError, ErrorCodes } from '@/api/client/errors';
@@ -150,7 +151,7 @@ export function MFAForm({
                     type="button"
                     onClick={handleResend}
                     disabled={isResending}
-                    className="underline-offset-2 hover:underline disabled:cursor-not-allowed disabled:opacity-50"
+                    className="inline-flex min-h-11 items-center px-1 underline-offset-2 hover:underline disabled:cursor-not-allowed disabled:opacity-50 md:min-h-0 md:px-0"
                   >
                     {isResending ? 'Sending...' : 'Resend code'}
                   </button>
@@ -164,7 +165,13 @@ export function MFAForm({
         </CardContent>
       </Card>
       <FieldDescription className="px-6 text-center">
-        Having trouble? <a href="#">Contact support</a>
+        Having trouble?{' '}
+        <a
+          href={`mailto:${CONTACT_EMAIL}`}
+          className="inline-flex min-h-11 items-center px-1 md:min-h-0 md:px-0"
+        >
+          Contact support
+        </a>
       </FieldDescription>
     </div>
   );

@@ -30,4 +30,18 @@ describe('MFAForm', () => {
     const { duration } = vi.mocked(toast.success).mock.calls[0][1] as { duration: number };
     expect(duration).toBeLessThanOrEqual(2000);
   });
+
+  it('gives the support link a real mailto address, not a dead "#"', () => {
+    render(<MFAForm challengeId={7} />);
+
+    const support = screen.getByRole('link', { name: /contact support/i });
+    expect(support).toHaveAttribute('href', 'mailto:contact@3dwestern.ca');
+    expect(support).toHaveClass('min-h-11');
+  });
+
+  it('makes "Resend code" a 44 px tap target on phones', () => {
+    render(<MFAForm challengeId={7} />);
+
+    expect(screen.getByRole('button', { name: /resend code/i })).toHaveClass('min-h-11');
+  });
 });

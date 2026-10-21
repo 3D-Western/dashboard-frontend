@@ -339,6 +339,8 @@ describe('LoginForm Integration', () => {
 
       const forgotPasswordLink = screen.getByRole('link', { name: /forgot password/i });
       expect(forgotPasswordLink).toHaveAttribute('href', '/forgot-password');
+      // Phone-sized tap target (44 px) that shrinks back on desktop
+      expect(forgotPasswordLink).toHaveClass('min-h-11', 'md:min-h-0');
     });
 
     it('displays "Sign up" link', () => {
@@ -347,6 +349,7 @@ describe('LoginForm Integration', () => {
       const signupLink = screen.getByText(/sign up/i);
       expect(signupLink).toBeInTheDocument();
       expect(signupLink.closest('a')).toHaveAttribute('href', '/signup');
+      expect(signupLink.closest('a')).toHaveClass('min-h-11');
     });
 
     it('renders password input with type="password"', () => {
