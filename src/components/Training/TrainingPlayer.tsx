@@ -299,7 +299,12 @@ function PlayerBody({ attemptId }: { attemptId: number }) {
         <footer className="border-t pt-4">
           <AlertDialog>
             <AlertDialogTrigger asChild>
-              <Button type="button" variant="ghost" size="sm" className="text-muted-foreground">
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="text-sm text-muted-foreground md:text-[0.8rem]"
+              >
                 Cancel this attempt
               </Button>
             </AlertDialogTrigger>
