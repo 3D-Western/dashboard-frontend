@@ -108,4 +108,18 @@ describe('JobList', () => {
     expect(within(rows[1]).getByRole('progressbar')).toBeInTheDocument();
     expect(within(rows[2]).getByText('Collected')).toBeInTheDocument();
   });
+
+  it('shows cards instead of the table on a phone, even when table view is saved', () => {
+    Object.defineProperty(window, 'innerWidth', { configurable: true, value: 390 });
+    try {
+      const jobs = [createMockPrintJob({ name: 'Bracket', status: 'Printing' })];
+      render(<JobList jobs={jobs} pagination={pagination} hasFilters={false} view="table" />);
+
+      expect(screen.queryByRole('table')).not.toBeInTheDocument();
+      expect(screen.getByRole('list', { name: 'Your jobs' })).toBeInTheDocument();
+      expect(screen.getByRole('link', { name: 'Bracket' })).toBeInTheDocument();
+    } finally {
+      Object.defineProperty(window, 'innerWidth', { configurable: true, value: 1024 });
+    }
+  });
 });

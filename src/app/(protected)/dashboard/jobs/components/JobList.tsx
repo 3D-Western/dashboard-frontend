@@ -1,6 +1,9 @@
+'use client';
+
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { DataTablePagination } from '@/components/DataTablePagination';
+import { useIsMobile } from '@/hooks/useIsMobile';
 import { Routes } from '@/lib/routes';
 import { PaginationMetadata } from '@/types/common';
 import { JobsView } from '../lib/jobs-view';
@@ -19,6 +22,10 @@ interface JobListProps {
 }
 
 export function JobList({ jobs, pagination, hasFilters, view = 'list' }: JobListProps) {
+  // The table is for wide screens only: on a phone the cards show whatever view was saved
+  const isMobile = useIsMobile();
+  const showTable = view === 'table' && !isMobile;
+
   if (jobs.length === 0) {
     return (
       <div className="flex flex-col items-center gap-4 rounded-lg border border-dashed border-primary-text/25 px-6 py-10 text-center">
@@ -40,7 +47,7 @@ export function JobList({ jobs, pagination, hasFilters, view = 'list' }: JobList
 
   return (
     <div className="space-y-4">
-      {view === 'table' ? (
+      {showTable ? (
         <JobTable jobs={jobs} />
       ) : (
         <ul className="space-y-3" aria-label="Your jobs">

@@ -24,7 +24,7 @@ export function JobsViewToggle({ view }: { view: JobsView }) {
     <div
       role="group"
       aria-label="Jobs layout"
-      className="flex shrink-0 rounded-lg border bg-card p-0.5"
+      className="hidden shrink-0 rounded-lg border bg-card p-0.5 md:flex"
     >
       {VIEWS.map(({ value, label, icon: Icon }) => (
         <button
@@ -35,7 +35,7 @@ export function JobsViewToggle({ view }: { view: JobsView }) {
           title={label}
           onClick={() => choose(value)}
           className={cn(
-            'flex size-9 items-center justify-center rounded-md transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none sm:size-8',
+            'flex size-11 items-center justify-center rounded-md transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none md:size-8',
             view === value
               ? 'bg-purple-light/15 text-purple-light'
               : 'text-muted-foreground hover:text-foreground',
