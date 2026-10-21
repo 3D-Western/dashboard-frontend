@@ -47,9 +47,11 @@ export default async function DashboardPage({
         {/* After orientation is passed: offer to add the app to the home screen (phones only) */}
         <OrientationInstallPrompt />
 
-        {/* Two columns on desktop (prints + actions | training), stacked on phones */}
-        <div className="grid items-start gap-6 lg:grid-cols-3">
-          <div className="space-y-6 lg:col-span-2">
+        {/* Two columns from xl (prints + actions | training), stacked below. The sidebar takes 256 px
+            of a 1024 px screen, so lg would leave the training card too narrow. min-w-0 keeps a
+            grid item from growing past the page. */}
+        <div className="grid items-start gap-6 xl:grid-cols-3">
+          <div className="min-w-0 space-y-6 xl:col-span-2">
             <DashboardSection id="prints" title="Your prints">
               <DashboardStats />
             </DashboardSection>
@@ -57,7 +59,7 @@ export default async function DashboardPage({
               <QuickActions />
             </DashboardSection>
           </div>
-          <TrainingSummary />
+          <TrainingSummary className="min-w-0" />
         </div>
       </TrainingsProvider>
     </div>

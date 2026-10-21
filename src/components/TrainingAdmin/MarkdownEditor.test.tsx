@@ -2,6 +2,17 @@ import { describe, it, expect } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import { MarkdownEditor } from './MarkdownEditor';
 
+describe('MarkdownEditor split view', () => {
+  it('shows Write and Preview side by side only from xl (1280 px), not on iPads', () => {
+    render(<MarkdownEditor label="Question" value="" onValueChange={() => {}} />);
+
+    const split = screen.getByLabelText('Question').closest('.grid');
+    expect(split).toHaveClass('xl:grid-cols-2');
+    expect(split).not.toHaveClass('lg:grid-cols-2');
+    expect(screen.getByRole('group', { name: 'View' })).toHaveClass('xl:hidden');
+  });
+});
+
 describe('MarkdownEditor phone sizing', () => {
   it('uses a 16 px text box on phones so iPhone Safari does not zoom on focus', () => {
     render(<MarkdownEditor label="Question" value="" onValueChange={() => {}} />);

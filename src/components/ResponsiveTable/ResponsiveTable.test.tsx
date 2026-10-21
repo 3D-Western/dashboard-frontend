@@ -13,12 +13,19 @@ const items = [
   { id: 'b', name: 'Bravo' },
 ];
 
-function Harness({ list = items }: { list?: typeof items }) {
+function Harness({
+  list = items,
+  cardsBelow,
+}: {
+  list?: typeof items;
+  cardsBelow?: 'md' | 'lg' | 'xl';
+}) {
   return (
     <ResponsiveTable
       items={list}
       getKey={(item) => item.id}
       emptyMessage="Nothing here."
+      cardsBelow={cardsBelow}
       renderCard={(item) => (
         <RowCard title={item.name} actions={<button>Open {item.name}</button>} />
       )}
@@ -54,6 +61,30 @@ describe('ResponsiveTable', () => {
     expect(cards).toHaveLength(2);
     expect(within(cards[0]).getByText('Alpha')).toBeInTheDocument();
     expect(within(cards[1]).getByRole('button', { name: 'Open Bravo' })).toBeInTheDocument();
+  });
+
+  it('keeps cards up to 1023 px and shows the table from 1024 px with cardsBelow="lg"', () => {
+    setViewportWidth(1000);
+    const { unmount } = render(<Harness cardsBelow="lg" />);
+    expect(screen.queryByRole('table')).not.toBeInTheDocument();
+    unmount();
+
+    setViewportWidth(1024);
+    render(<Harness cardsBelow="lg" />);
+    expect(screen.getByRole('table')).toBeInTheDocument();
+  });
+
+  it('keeps cards up to 1279 px and shows the table from 1280 px with cardsBelow="xl"', () => {
+    setViewportWidth(1180);
+    const { unmount } = render(<Harness cardsBelow="xl" />);
+    expect(screen.queryByRole('table')).not.toBeInTheDocument();
+    expect(within(screen.getByRole('list')).getAllByRole('listitem')).toHaveLength(2);
+    unmount();
+
+    setViewportWidth(1280);
+    render(<Harness cardsBelow="xl" />);
+    expect(screen.getByRole('table')).toBeInTheDocument();
+    expect(screen.queryByRole('list')).not.toBeInTheDocument();
   });
 
   it('shows the empty message below md when there are no items', () => {

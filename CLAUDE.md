@@ -10,7 +10,7 @@ Part of the monorepo. Read the root `CLAUDE.md` first; it has the workflow, docs
 ## Responsive rules
 
 - **Touch sizes follow the pointer, not the width.** Controls are 44 px tall with 16 px input text by default. Shrink only behind the `fine` variant (`globals.css`: md and wider, with hover and a precise pointer); never write `md:h-8`, `md:min-h-0`, `sm:size-8` and the like (`src/__tests__/touch-sizes.test.ts` fails on them). `short` is landscape under 500 px tall.
-- The sidebar is a drawer below `lg` (1024 px, `useIsCompactShell`), permanent from `lg`. `useIsMobile` (768 px) is only for cards versus tables. Audit and fix plan: `docs/responsive-audit-2026-10.md`.
+- The sidebar is a drawer below `lg` (1024 px, `useIsCompactShell`), permanent from `lg`. `ResponsiveTable` switches tables to cards below `cardsBelow` (`md` 768 px by default, `lg` or `xl` for wide admin tables such as Invitations); `useIsMobile` (768 px) is for lists that change layout. Audit and fix plan: `docs/responsive-audit-2026-10.md`.
 
 ## Training (learner UI)
 

@@ -175,6 +175,7 @@ export function QuestionReport() {
             items={rows}
             getKey={(row) => row.questionVersionId}
             emptyMessage="No questions have been asked yet."
+            cardsBelow="lg"
             renderCard={(row) => (
               <QuestionCard
                 row={row}

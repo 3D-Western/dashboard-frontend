@@ -455,6 +455,14 @@ describe('QuestionReport on a phone', () => {
     expect(cards[2]).toHaveTextContent('n/a');
   });
 
+  it('keeps cards on an iPad held upright (1000 px here), where the table is too wide', async () => {
+    Object.defineProperty(window, 'innerWidth', { configurable: true, value: 1000 });
+    await renderInTraining(<QuestionReport />, { user: publisherUser() });
+
+    expect(within(await screen.findByRole('list')).getAllByRole('listitem')).toHaveLength(3);
+    expect(screen.queryByRole('table')).not.toBeInTheDocument();
+  });
+
   it('puts the correction buttons full width on each card, at 44 px', async () => {
     await renderInTraining(<QuestionReport />, { user: publisherUser() });
 

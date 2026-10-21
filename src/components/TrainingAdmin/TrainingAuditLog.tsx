@@ -114,7 +114,8 @@ export function TrainingAuditLog() {
         id="audit-filters"
         aria-label="Filter the audit log"
         className={cn(
-          'gap-3 rounded-xl border bg-card p-4 md:grid md:grid-cols-2 lg:grid-cols-5',
+          // Five filters need the room beside the sidebar: 3 columns from lg, 5 from xl
+          'gap-3 rounded-xl border bg-card p-4 md:grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5',
           filtersOpen ? 'grid' : 'hidden',
         )}
       >

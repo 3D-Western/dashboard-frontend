@@ -63,6 +63,18 @@ describe('InvitationsTable on a phone', () => {
     );
   });
 
+  it('still shows cards at 1024 px (iPad landscape), where the table does not fit', () => {
+    Object.defineProperty(window, 'innerWidth', { configurable: true, value: 1024 });
+    const invitations = [createMockInvitation({ email: 'jordan@uwo.ca', status: 'PENDING' })];
+
+    render(<InvitationsTable invitations={invitations} pagination={pagination} />, {
+      user: mockAdminUser,
+    });
+
+    expect(screen.queryByRole('table')).not.toBeInTheDocument();
+    expect(within(screen.getByRole('list')).getAllByRole('listitem')).toHaveLength(1);
+  });
+
   it('renders the actions menu on each card, with 44 px targets, and it opens', async () => {
     const user = userEvent.setup();
     const invitations = [
@@ -83,5 +95,23 @@ describe('InvitationsTable on a phone', () => {
 
     expect(screen.getByRole('menuitem', { name: /more info/i })).toBeInTheDocument();
     expect(screen.getByRole('menuitem', { name: /revoke invitation/i })).toBeInTheDocument();
+  });
+});
+
+describe('InvitationsTable on a laptop', () => {
+  afterEach(() => {
+    Object.defineProperty(window, 'innerWidth', { configurable: true, value: 1024 });
+  });
+
+  it('shows the table, and no cards, from 1280 px where the six columns fit', () => {
+    Object.defineProperty(window, 'innerWidth', { configurable: true, value: 1280 });
+    const invitations = [createMockInvitation({ email: 'jordan@uwo.ca', status: 'PENDING' })];
+
+    render(<InvitationsTable invitations={invitations} pagination={pagination} />, {
+      user: mockAdminUser,
+    });
+
+    expect(screen.getByRole('table', { name: 'Invitations table' })).toBeInTheDocument();
+    expect(screen.queryByRole('list')).not.toBeInTheDocument();
   });
 });

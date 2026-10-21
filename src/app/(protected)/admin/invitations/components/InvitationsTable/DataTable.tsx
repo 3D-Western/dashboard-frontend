@@ -60,11 +60,13 @@ export function DataTable<TData, TValue>({
 
   return (
     <div className="space-y-4">
+      {/* The table is about 900 px wide with its six columns: cards until it fits beside the sidebar */}
       <ResponsiveTable
         items={table.getRowModel().rows}
         getKey={(row) => row.id}
         renderCard={renderCard}
         emptyMessage="No invitations found."
+        cardsBelow="xl"
       >
         <div className="overflow-hidden rounded-lg border bg-card">
           <Table aria-label="Invitations table" aria-describedby="invitations-table-caption">

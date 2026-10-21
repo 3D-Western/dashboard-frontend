@@ -17,8 +17,9 @@ interface MarkdownEditorProps {
 }
 
 /**
- * A Markdown text box with a live preview rendered by the same component members see. On a
- * laptop the two sit side by side; on a phone you switch between Write and Preview.
+ * A Markdown text box with a live preview rendered by the same component members see. From xl
+ * (1280 px) the two sit side by side; below that you switch between Write and Preview. The dialog
+ * is 672 px wide on every screen, so the width of the screen decides, not the dialog.
  */
 export function MarkdownEditor({
   label,
@@ -37,7 +38,7 @@ export function MarkdownEditor({
       <div className="flex flex-wrap items-center justify-between gap-2">
         <Label htmlFor={id}>{label}</Label>
         <div
-          className="inline-flex rounded-lg border p-0.5 lg:hidden"
+          className="inline-flex rounded-lg border p-0.5 xl:hidden"
           role="group"
           aria-label="View"
         >
@@ -57,8 +58,8 @@ export function MarkdownEditor({
           ))}
         </div>
       </div>
-      <div className="grid gap-3 lg:grid-cols-2">
-        <div className={cn(mode === 'preview' && 'hidden lg:block')}>
+      <div className="grid gap-3 xl:grid-cols-2">
+        <div className={cn(mode === 'preview' && 'hidden xl:block')}>
           <Textarea
             id={id}
             value={value}
@@ -72,7 +73,7 @@ export function MarkdownEditor({
         <div
           className={cn(
             'min-h-24 rounded-lg border bg-card p-3',
-            mode === 'write' && 'hidden lg:block',
+            mode === 'write' && 'hidden xl:block',
           )}
           aria-label={`${label} preview`}
         >

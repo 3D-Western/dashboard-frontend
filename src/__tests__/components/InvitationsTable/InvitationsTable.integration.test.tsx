@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeAll, beforeEach } from 'vitest';
 import { render, screen, waitFor } from '@test/utils/render';
 import userEvent from '@testing-library/user-event';
 import InvitationsTable from '@/app/(protected)/admin/invitations/components/InvitationsTable';
@@ -29,6 +29,11 @@ vi.mock('sonner', () => ({
 
 describe('InvitationsTable Integration', () => {
   const mockOnRevokeSuccess = vi.fn();
+
+  // These tests check the table, which shows from xl (1280 px); below that the cards show
+  beforeAll(() => {
+    Object.defineProperty(window, 'innerWidth', { configurable: true, value: 1280 });
+  });
 
   beforeEach(() => {
     mockOnRevokeSuccess.mockClear();
