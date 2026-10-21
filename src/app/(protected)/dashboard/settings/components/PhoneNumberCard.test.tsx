@@ -126,6 +126,21 @@ describe('PhoneNumberCard', () => {
     );
   });
 
+  it('restores the saved consent when the saved number is typed back in', async () => {
+    vi.mocked(userApi.getMyProfile).mockResolvedValue(
+      profile({ phoneNumber: '+15195551234', smsOptIn: true }),
+    );
+    render(<PhoneNumberCard />);
+
+    await screen.findByLabelText(/mobile number/i);
+    await userEvent.clear(phoneInput());
+    expect(consentBox()).not.toBeChecked();
+
+    await userEvent.type(phoneInput(), '519-555-1234');
+
+    expect(consentBox()).toBeChecked();
+  });
+
   it('keeps the tick while the saved number is left unchanged', async () => {
     vi.mocked(userApi.getMyProfile).mockResolvedValue(
       profile({ phoneNumber: '+15195551234', smsOptIn: true }),

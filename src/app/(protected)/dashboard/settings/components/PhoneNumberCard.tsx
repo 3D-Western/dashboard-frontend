@@ -166,9 +166,14 @@ export function PhoneNumberCard() {
                         placeholder="519-555-1234"
                         {...field}
                         onChange={(event) => {
+                          const wasSaved = isSavedNumber(field.value, saved.phoneNumber);
+                          const isSaved = isSavedNumber(event.target.value, saved.phoneNumber);
                           field.onChange(event);
-                          // Consent is for one number: a different number starts unticked.
-                          if (!isSavedNumber(event.target.value, saved.phoneNumber)) {
+                          if (isSaved && !wasSaved) {
+                            // Back on the saved number: restore the saved consent state.
+                            form.setValue('smsOptIn', saved.smsOptIn);
+                          } else if (!isSaved) {
+                            // Consent is for one number: a different number starts unticked.
                             form.setValue('smsOptIn', false);
                           }
                         }}
