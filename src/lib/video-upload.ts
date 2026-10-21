@@ -1,4 +1,7 @@
 import { trainingAdminAPI } from '@/api/client/training-admin';
+import { videoTypeOf } from '@/lib/video-type';
+
+export { videoTypeOf };
 
 /** Largest file the server will sign an upload URL for (1 GB). */
 export const MAX_VIDEO_BYTES = 1_073_741_824;
@@ -23,22 +26,6 @@ export class VideoUploadError extends Error {
 
 /** Headers a browser sets itself; trying to set them throws or is ignored. */
 const BROWSER_SET_HEADERS = new Set(['host', 'content-length']);
-
-const TYPE_BY_EXTENSION: Record<string, UploadableType> = {
-  mp4: 'video/mp4',
-  mov: 'video/quicktime',
-  webm: 'video/webm',
-};
-
-/**
- * The type of a chosen file. Browsers often leave `type` empty (a .mov on Windows, for one), so
- * then the file name's extension decides.
- */
-export function videoTypeOf(file: { type: string; name?: string }): string {
-  if (file.type) return file.type;
-  const extension = file.name?.toLowerCase().split('.').pop() ?? '';
-  return TYPE_BY_EXTENSION[extension] ?? '';
-}
 
 /** Why this file cannot be uploaded, or null if it can. A format that is merely not ideal is a warning, not a problem. */
 export function videoFileProblem(file: {
