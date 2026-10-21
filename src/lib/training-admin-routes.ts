@@ -9,4 +9,6 @@ export const TrainingAdminRoutes = {
   questions: (trainingId: number) => `/admin/training/${trainingId}/questions`,
   settings: (trainingId: number) => `/admin/training/${trainingId}/settings`,
   report: (trainingId: number) => `/admin/training/${trainingId}/report`,
+  preview: (trainingId: number, versionId: number) =>
+    `/admin/training/${trainingId}/preview/${versionId}`,
 } as const;

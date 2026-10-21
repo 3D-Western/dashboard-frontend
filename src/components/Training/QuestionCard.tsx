@@ -12,6 +12,11 @@ interface QuestionCardProps {
   disabled?: boolean;
   /** "Question 3 of 8"-style label shown above the prompt. */
   heading?: string;
+  /**
+   * Staff preview only: marks which options are right once a quiz has been submitted. The learner
+   * API never sends this, so a real student's card is never given it.
+   */
+  reveal?: { correctOptionIds: number[] };
 }
 
 /**
@@ -25,6 +30,7 @@ export function QuestionCard({
   onChange,
   disabled,
   heading,
+  reveal,
 }: QuestionCardProps) {
   const groupId = useId();
   const promptId = `${groupId}-prompt`;
@@ -63,6 +69,8 @@ export function QuestionCard({
         {question.options.map((option) => {
           const checked = selected.includes(option.optionId);
           const inputId = `${groupId}-${option.optionId}`;
+          const isRight = !!reveal && reveal.correctOptionIds.includes(option.optionId);
+          const isWrongPick = !!reveal && checked && !isRight;
           return (
             <label
               key={option.optionId}
@@ -70,7 +78,10 @@ export function QuestionCard({
               className={cn(
                 'flex min-h-12 cursor-pointer items-center gap-3 rounded-lg border px-3 py-2 text-base transition-colors motion-reduce:transition-none',
                 checked ? 'border-purple-light bg-purple-light/10' : 'hover:border-purple-light/60',
-                disabled && 'cursor-not-allowed opacity-60',
+                isRight && 'border-status-green bg-status-green/10',
+                isWrongPick && 'border-status-red bg-status-red/10',
+                disabled && 'cursor-not-allowed',
+                disabled && !reveal && 'opacity-60',
               )}
             >
               <input
@@ -83,6 +94,16 @@ export function QuestionCard({
                 className="size-5 shrink-0 accent-purple-light"
               />
               <span className="min-w-0 [overflow-wrap:anywhere]">{option.label}</span>
+              {isRight && (
+                <span className="ml-auto shrink-0 text-xs font-medium text-status-green">
+                  Right answer
+                </span>
+              )}
+              {isWrongPick && (
+                <span className="ml-auto shrink-0 text-xs font-medium text-status-red">
+                  Not right
+                </span>
+              )}
             </label>
           );
         })}

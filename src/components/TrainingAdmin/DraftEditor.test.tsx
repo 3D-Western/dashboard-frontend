@@ -96,6 +96,18 @@ describe('DraftEditor', () => {
     ).toBeInTheDocument();
   });
 
+  it('offers to preview the draft as a student, to anyone who can see it', async () => {
+    for (const user of [authorUser(), trainingUser('training:publish')]) {
+      const { unmount } = await renderInTraining(<DraftEditor />, { training: withDraft(), user });
+
+      expect(await screen.findByRole('link', { name: /preview as student/i })).toHaveAttribute(
+        'href',
+        '/admin/training/1/preview/100',
+      );
+      unmount();
+    }
+  });
+
   it('has no checklist for an orientation, which is fully online', async () => {
     await renderInTraining(<DraftEditor />, {
       training: withDraft({ kind: 'ORIENTATION', requiresSignoff: false, equipmentGroupId: null }),

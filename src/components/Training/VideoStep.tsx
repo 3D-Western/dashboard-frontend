@@ -2,7 +2,6 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Maximize2, Pause, Play } from 'lucide-react';
-import { trainingAPI } from '@/api/client/training';
 import { ApiError, ErrorCodes } from '@/api/client/errors';
 import { TrainingErrorCodes, trainingErrorMessage } from '@/api/client/training-errors';
 import { Button } from '@/components/ui/button';
@@ -18,6 +17,7 @@ import {
 } from '@/lib/video-watch';
 import type { AttemptStep, VideoCheckpoint, VideoPlayback } from '@/types/training';
 import { QuestionCard } from './QuestionCard';
+import { useTrainingRuntime } from './TrainingRuntime';
 
 /** How often (while playing) progress is reported to the server. */
 export const HEARTBEAT_INTERVAL_MS = 10_000;
@@ -47,6 +47,9 @@ interface VideoStepProps {
 }
 
 export function VideoStep({ attemptId, step, onStepCompleted }: VideoStepProps) {
+  const { api, preview } = useTrainingRuntime();
+  // Staff previewing may jump anywhere; the questions still come up as the video reaches them.
+  const freeSeek = preview !== null;
   const block = step.video!;
   const stepId = step.stepId;
 
@@ -128,8 +131,8 @@ export function VideoStep({ attemptId, step, onStepCompleted }: VideoStepProps) 
       try {
         const body = { ranges, focusLossCount };
         const result = keepalive
-          ? await trainingAPI.sendHeartbeat(attemptId, stepId, body, { keepalive: true })
-          : await trainingAPI.sendHeartbeat(attemptId, stepId, body);
+          ? await api.sendHeartbeat(attemptId, stepId, body, { keepalive: true })
+          : await api.sendHeartbeat(attemptId, stepId, body);
         lastSentRef.current = key;
         pendingFocusLossRef.current = Math.max(0, pendingFocusLossRef.current - focusLossCount);
         setWatchedPercent(Number(result.watchedPercent) || 0);
@@ -177,7 +180,7 @@ export function VideoStep({ attemptId, step, onStepCompleted }: VideoStepProps) 
         }
       }
     },
-    [attemptId, stepId, block.checkpoints, onStepCompleted],
+    [api, attemptId, stepId, block.checkpoints, onStepCompleted],
   );
 
   // (assigned below, once sendHeartbeat exists)
@@ -203,7 +206,7 @@ export function VideoStep({ attemptId, step, onStepCompleted }: VideoStepProps) 
     async (resume?: { time: number; play: boolean }) => {
       try {
         resumeRef.current = resume ?? null;
-        const next = await trainingAPI.getPlaybackUrl(attemptId, stepId);
+        const next = await api.getPlaybackUrl(attemptId, stepId);
         expiresAtRef.current = new Date(next.expiresAt).getTime();
         setPlayback(next);
         setLoadError(null);
@@ -213,7 +216,7 @@ export function VideoStep({ attemptId, step, onStepCompleted }: VideoStepProps) 
         setLoadError(trainingErrorMessage(error, "We couldn't load the video. Please try again."));
       }
     },
-    [attemptId, stepId],
+    [api, attemptId, stepId],
   );
 
   useEffect(() => {
@@ -335,6 +338,7 @@ export function VideoStep({ attemptId, step, onStepCompleted }: VideoStepProps) 
     const video = videoRef.current;
     if (!video) return;
     trackerRef.current.breakSegment();
+    if (freeSeek) return;
     const limit = seekLimit(furthestRef.current, openCheckpoint());
     if (video.currentTime > limit) {
       // Forward seeking past what they've watched is blocked; send them back to the edge.
@@ -413,6 +417,11 @@ export function VideoStep({ attemptId, step, onStepCompleted }: VideoStepProps) 
   const handleSeekInput = (value: number) => {
     const video = videoRef.current;
     if (!video || activeCheckpointRef.current) return;
+    if (freeSeek) {
+      video.currentTime = Math.max(0, Math.min(value, Math.max(duration, 1)));
+      setCurrentTime(video.currentTime);
+      return;
+    }
     // The furthest point they may jump to: what they've watched, and never past an open question
     const limit = seekLimit(furthestRef.current, openCheckpoint()) - SEEK_TOLERANCE_SECONDS;
     if (value > limit + SEEK_TOLERANCE_SECONDS) {
@@ -445,7 +454,7 @@ export function VideoStep({ attemptId, step, onStepCompleted }: VideoStepProps) 
     setChecking(true);
     setCheckpointError(null);
     try {
-      const result = await trainingAPI.answerCheckpoint(
+      const result = await api.answerCheckpoint(
         attemptId,
         stepId,
         checkpoint.checkpointId,
