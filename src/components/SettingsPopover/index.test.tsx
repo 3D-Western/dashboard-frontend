@@ -75,7 +75,7 @@ describe('SettingsPopover', () => {
   });
 
   describe('theme cycling', () => {
-    it('shows light theme icon initially', async () => {
+    it('offers dark mode while the page is light', async () => {
       mockTheme.mockReturnValue('light');
       const user = userEvent.setup();
       render(<SettingsPopover />);
@@ -83,18 +83,18 @@ describe('SettingsPopover', () => {
       await user.click(screen.getByRole('button', { name: 'Settings' }));
 
       await waitFor(() => {
-        expect(screen.getByText('Light')).toBeInTheDocument();
+        expect(screen.getByText('Dark mode')).toBeInTheDocument();
       });
     });
 
-    it('cycles from light to dark theme', async () => {
+    it('switches from light to dark theme', async () => {
       mockTheme.mockReturnValue('light');
       const user = userEvent.setup();
       render(<SettingsPopover />);
 
       await user.click(screen.getByRole('button', { name: 'Settings' }));
 
-      const themeButton = await screen.findByText('Light');
+      const themeButton = await screen.findByText('Dark mode');
       await user.click(themeButton);
 
       expect(mockSetTheme).toHaveBeenCalledWith('dark');
@@ -107,7 +107,7 @@ describe('SettingsPopover', () => {
 
       await user.click(screen.getByRole('button', { name: 'Settings' }));
 
-      const themeButton = await screen.findByText('Dark');
+      const themeButton = await screen.findByText('Light mode');
       await user.click(themeButton);
 
       expect(mockSetTheme).toHaveBeenCalledWith('light');
@@ -121,13 +121,13 @@ describe('SettingsPopover', () => {
 
       await user.click(screen.getByRole('button', { name: 'Settings' }));
 
-      const themeButton = await screen.findByText('Dark');
+      const themeButton = await screen.findByText('Light mode');
       await user.click(themeButton);
 
       expect(mockSetTheme).toHaveBeenCalledWith('light');
     });
 
-    it('displays Moon icon for dark theme', async () => {
+    it('offers light mode while the page is dark', async () => {
       mockTheme.mockReturnValue('dark');
       const user = userEvent.setup();
       render(<SettingsPopover />);
@@ -135,7 +135,7 @@ describe('SettingsPopover', () => {
       await user.click(screen.getByRole('button', { name: 'Settings' }));
 
       await waitFor(() => {
-        expect(screen.getByText('Dark')).toBeInTheDocument();
+        expect(screen.getByText('Light mode')).toBeInTheDocument();
       });
     });
 
@@ -147,7 +147,7 @@ describe('SettingsPopover', () => {
       await user.click(screen.getByRole('button', { name: 'Settings' }));
 
       await waitFor(() => {
-        expect(screen.getByText('Light')).toBeInTheDocument();
+        expect(screen.getByText('Dark mode')).toBeInTheDocument();
       });
     });
   });

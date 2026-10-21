@@ -22,18 +22,19 @@ export function SettingsPopover() {
     window.location.href = '/login';
   };
 
-  // Light <-> dark, based on what's on screen (same behaviour as ThemeToggle)
+  // Light <-> dark, based on what's on screen. Like ThemeToggle, the row names the mode a tap
+  // switches TO (a sun and "Light mode" while dark), not the current one.
   const isDark = (resolvedTheme ?? theme) === 'dark';
   const cycleTheme = () => setTheme(isDark ? 'light' : 'dark');
 
   const getThemeIcon = () => {
     if (!mounted) return <Sun className="h-4 w-4" />;
-    return isDark ? <Moon className="h-4 w-4" /> : <Sun className="h-4 w-4" />;
+    return isDark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />;
   };
 
   const getThemeLabel = () => {
     if (!mounted) return 'Theme';
-    return isDark ? 'Dark' : 'Light';
+    return isDark ? 'Light mode' : 'Dark mode';
   };
 
   return (

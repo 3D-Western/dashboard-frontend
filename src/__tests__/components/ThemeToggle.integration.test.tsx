@@ -25,15 +25,15 @@ describe('ThemeToggle', () => {
     render(<ThemeToggle />);
 
     await waitFor(() => {
-      expect(screen.getByRole('button', { name: /light mode/i })).toBeEnabled();
+      expect(screen.getByRole('button', { name: /switch to dark mode/i })).toBeEnabled();
     });
   });
 
-  it('cycles from light to dark on click', async () => {
+  it('switches from light to dark on click', async () => {
     const user = userEvent.setup();
     render(<ThemeToggle />);
 
-    const toggleButton = await screen.findByRole('button', { name: /light mode/i });
+    const toggleButton = await screen.findByRole('button', { name: /switch to dark mode/i });
     await user.click(toggleButton);
 
     expect(setTheme).toHaveBeenCalledWith('dark');

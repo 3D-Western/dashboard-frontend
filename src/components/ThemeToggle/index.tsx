@@ -6,6 +6,8 @@ import { useEffect, useState } from 'react';
 
 // Switches straight between light and dark. It used to cycle light -> dark -> system, but with
 // dark as the default the first tap went dark -> system, which often changed nothing on screen.
+// The button shows (and says) what a tap switches TO: a sun while dark, a moon while light.
+// Showing the current mode instead read as inverted: a moon on a dark page looked like "go dark".
 export function ThemeToggle() {
   const { theme, resolvedTheme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
@@ -30,7 +32,7 @@ export function ThemeToggle() {
 
   // What's actually on screen (a saved "system" preference resolves to light or dark)
   const isDark = (resolvedTheme ?? theme) === 'dark';
-  const label = isDark ? 'Dark mode (click for light)' : 'Light mode (click for dark)';
+  const label = isDark ? 'Switch to light mode' : 'Switch to dark mode';
 
   return (
     <button
@@ -39,7 +41,7 @@ export function ThemeToggle() {
       title={label}
       aria-label={label}
     >
-      {isDark ? <Moon className="h-4 w-4" /> : <Sun className="h-4 w-4" />}
+      {isDark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
     </button>
   );
 }
