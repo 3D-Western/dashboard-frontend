@@ -24,6 +24,17 @@ export interface User {
 // are PascalCase, matching this codebase's convention for other status strings (PrintJobStatus).
 export type AccountStatus = 'Active' | 'Locked' | 'Suspended' | 'Banned';
 
+// Shape of GET/PATCH /api/v1/users/me/profile (the user's own profile). Only the fields the
+// dashboard uses are listed. phoneNumber is E.164 (+15195551234) or null.
+export interface MyProfile {
+  studentId: number;
+  email: string;
+  firstName: string;
+  lastName: string;
+  phoneNumber: string | null;
+  smsOptIn: boolean;
+}
+
 // Shape returned by the admin-only endpoints (GET/PATCH /api/v1/users, GET /api/v1/users/{id}).
 // Deliberately separate from `User`: that type models `/users/me` (groups + permissions, no
 // accountStatus), while this models the admin profile view (no groups/permissions, but

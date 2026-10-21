@@ -11,6 +11,7 @@ export const endpoints = {
   },
   users: {
     me: '/api/v1/users/me',
+    myProfile: '/api/v1/users/me/profile',
     list: '/api/v1/users',
     byId: (userId: number) => `/api/v1/users/${userId}`,
     updateStatus: (userId: number) => `/api/v1/users/${userId}/status`,

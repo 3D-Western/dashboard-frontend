@@ -339,6 +339,20 @@ export class Database {
     return this.users.get(userId) || null;
   }
 
+  public setPhoneSettings(
+    userId: number,
+    phoneNumber: string | null,
+    smsOptIn: boolean,
+  ): User | null {
+    const user = this.users.get(userId);
+    if (!user) {
+      return null;
+    }
+    user.phoneNumber = phoneNumber;
+    user.smsOptIn = smsOptIn;
+    return user;
+  }
+
   public updateAccountStatus(
     userId: number,
     status: NonNullable<User['accountStatus']>,

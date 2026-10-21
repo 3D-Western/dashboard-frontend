@@ -10,6 +10,11 @@ import {
 import { ErrorCodes } from '../client/errors';
 import { PERMISSIONS } from '@/constants/permissions';
 import type { AccountStatus } from '@/types/user';
+import {
+  normalizePhoneNumber,
+  PHONE_NUMBER_ERROR,
+  SMS_OPT_IN_NEEDS_PHONE_ERROR,
+} from '@/lib/phone';
 
 const apiUrl = process.env.API_URL;
 
@@ -267,6 +272,86 @@ export const userHandlers = [
           hasPrevious: page > 1,
           snapshotCreatedBefore,
         },
+      }),
+    );
+  }),
+
+  // GET /users/me/profile - the signed-in user's own profile (phone and texting consent included)
+  http.get(`${apiUrl}${endpoints.users.myProfile}`, ({ cookies }) => {
+    const sessionId = cookies['sessionToken'] || '';
+    const user = db.validateSession(sessionId);
+    if (!user) {
+      return createInvalidSessionResponse();
+    }
+
+    return HttpResponse.json(
+      generateSuccessResponse({
+        studentId: user.studentId,
+        email: user.email,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        phoneNumber: user.phoneNumber ?? null,
+        smsOptIn: user.smsOptIn === true,
+      }),
+    );
+  }),
+
+  // PATCH /users/me/profile - mirrors the backend's phone and consent rules: a blank number removes
+  // it (which withdraws consent), a changed number withdraws consent for the old one, and opting in
+  // needs a number.
+  http.patch(`${apiUrl}${endpoints.users.myProfile}`, async ({ cookies, request }) => {
+    const sessionId = cookies['sessionToken'] || '';
+    const user = db.validateSession(sessionId);
+    if (!user) {
+      return createInvalidSessionResponse();
+    }
+
+    const body = (await request.json()) as { phoneNumber?: string | null; smsOptIn?: boolean };
+    const previousPhone = user.phoneNumber ?? null;
+
+    let phone = previousPhone;
+    if (body.phoneNumber !== undefined) {
+      const input = body.phoneNumber?.trim() ?? '';
+      phone = input === '' ? null : normalizePhoneNumber(input);
+      if (input !== '' && phone === null) {
+        return HttpResponse.json(
+          generateErrorResponse({
+            code: 'VALIDATION_FAILED',
+            message: PHONE_NUMBER_ERROR,
+            details: { phoneNumber: PHONE_NUMBER_ERROR },
+          }),
+          { status: 400 },
+        );
+      }
+    }
+
+    let smsOptIn = phone === previousPhone && user.smsOptIn === true;
+    if (body.smsOptIn === true) {
+      if (phone === null) {
+        return HttpResponse.json(
+          generateErrorResponse({
+            code: 'VALIDATION_FAILED',
+            message: SMS_OPT_IN_NEEDS_PHONE_ERROR,
+            details: { smsOptIn: SMS_OPT_IN_NEEDS_PHONE_ERROR },
+          }),
+          { status: 400 },
+        );
+      }
+      smsOptIn = true;
+    } else if (body.smsOptIn === false) {
+      smsOptIn = false;
+    }
+
+    db.setPhoneSettings(user.studentId, phone, smsOptIn);
+
+    return HttpResponse.json(
+      generateSuccessResponse({
+        studentId: user.studentId,
+        email: user.email,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        phoneNumber: phone,
+        smsOptIn: phone !== null && smsOptIn,
       }),
     );
   }),

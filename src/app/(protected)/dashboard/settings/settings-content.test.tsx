@@ -11,6 +11,20 @@ vi.mock('@/api/client/training', () => ({
 vi.mock('@/api/client/usage', () => ({
   usageAPI: { getUsageSummary: vi.fn(), getAccountLimits: vi.fn() },
 }));
+vi.mock('@/api/client/user', () => ({
+  userApi: {
+    getMyProfile: vi.fn().mockResolvedValue({
+      studentId: 251123456,
+      email: 'jdoe123@uwo.ca',
+      firstName: 'John',
+      lastName: 'Doe',
+      phoneNumber: null,
+      smsOptIn: false,
+    }),
+    updatePhoneSettings: vi.fn(),
+    changePassword: vi.fn(),
+  },
+}));
 
 describe('SettingsContent', () => {
   beforeEach(() => {
@@ -28,6 +42,7 @@ describe('SettingsContent', () => {
     // wait for the cards that do exist
     expect(await screen.findByText('Training Status')).toBeInTheDocument();
     expect(screen.getByText('Change Password')).toBeInTheDocument();
+    expect(await screen.findByLabelText(/mobile number/i)).toBeInTheDocument();
 
     expect(screen.queryByText(/usage summary|print usage|usage/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/limits/i)).not.toBeInTheDocument();
