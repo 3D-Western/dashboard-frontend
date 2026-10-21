@@ -29,7 +29,6 @@ const profile = (overrides: Partial<AdminUserProfile>): AdminUserProfile => ({
   lastName: 'Student',
   createdAt: new Date().toISOString(),
   updatedAt: new Date().toISOString(),
-  experienceLevel: null,
   faculty: 'science',
   accountStatus: 'Active',
   accountStatusReason: null,

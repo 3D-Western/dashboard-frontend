@@ -123,7 +123,6 @@ export function transformAdminUserProfileResponse(
     lastName: response.lastName,
     createdAt: response.createdAt,
     updatedAt: response.updatedAt,
-    experienceLevel: response.experienceLevel as AdminUserProfile['experienceLevel'],
     faculty: transformFacultyFromBackend(response.faculty),
     accountStatus: response.accountStatus as AccountStatus,
     accountStatusReason: response.accountStatusReason,

@@ -30,7 +30,6 @@ import { useState } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
 import { toast } from 'sonner';
 import { z } from 'zod';
-import { EXPERIENCE_LEVEL_OPTIONS } from '@/constants/experience-levels';
 import { FACULTY_OPTIONS } from '@/constants/faculties';
 import { transformFacultyToBackend } from '@/api/client/transformers';
 import type { UserFaculty } from '@/types/user';
@@ -72,7 +71,6 @@ const formSchema = z
       .regex(/[a-z]/, 'Password must contain at least one lowercase letter')
       .regex(/[0-9]/, 'Password must contain at least one number'),
     faculty: z.string().min(1, 'Faculty is required'),
-    experienceLevel: z.string().min(1, 'Experience level is required'),
     firstName: z.string().min(1, 'First name is required'),
     lastName: z.string().min(1, 'Last name is required'),
   })
@@ -95,7 +93,6 @@ export function SignupForm({ className, ...props }: React.ComponentProps<'div'>)
       smsOptIn: false,
       password: '',
       faculty: '',
-      experienceLevel: '',
       firstName: '',
       lastName: '',
     },
@@ -114,7 +111,6 @@ export function SignupForm({ className, ...props }: React.ComponentProps<'div'>)
         email: values.email,
         password: values.password,
         faculty: transformFacultyToBackend(values.faculty as UserFaculty),
-        experienceLevel: values.experienceLevel,
         firstName: values.firstName,
         lastName: values.lastName,
         ...phoneRequestFields(values.phoneNumber, values.smsOptIn),
@@ -282,31 +278,6 @@ export function SignupForm({ className, ...props }: React.ComponentProps<'div'>)
                         </FormControl>
                         <SelectContent>
                           {FACULTY_OPTIONS.map((option) => (
-                            <SelectItem key={option.value} value={option.value}>
-                              {option.label}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="experienceLevel"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Experience Level</FormLabel>
-                      <Select onValueChange={field.onChange} value={field.value}>
-                        <FormControl>
-                          <SelectTrigger className="w-full">
-                            <SelectValue placeholder="Select your experience level" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {EXPERIENCE_LEVEL_OPTIONS.map((option) => (
                             <SelectItem key={option.value} value={option.value}>
                               {option.label}
                             </SelectItem>

@@ -28,7 +28,6 @@ function mapToAdminUserProfile(u: ReturnType<typeof db.getAllUsers>[number]) {
     lastName: u.lastName,
     createdAt: u.createdDate || new Date().toISOString(),
     updatedAt: u.createdDate || new Date().toISOString(),
-    experienceLevel: u.experienceLevel ?? null,
     faculty: u.faculty ?? 'Undeclared',
     accountStatus: u.accountStatus ?? 'Active',
     accountStatusReason: u.accountStatusReason ?? null,
@@ -102,7 +101,6 @@ export const userHandlers = [
       groups: u.groups,
       accountStatus: u.accountStatus ?? 'Active',
       accountStatusReason: u.accountStatusReason ?? null,
-      experienceLevel: u.experienceLevel ?? null,
       faculty: u.faculty ?? 'Undeclared',
     }));
 

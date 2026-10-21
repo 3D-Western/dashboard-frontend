@@ -83,6 +83,18 @@ describe('SignupForm phone number and text consent', () => {
   });
 });
 
+describe('SignupForm experience level', () => {
+  it('no longer asks for experience level (it comes from training records instead)', async () => {
+    render(<SignupForm />);
+
+    expect(screen.queryByText(/experience/i)).not.toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole('button', { name: /create account/i }));
+    expect(await screen.findByText(/first name is required/i)).toBeInTheDocument();
+    expect(screen.queryByText(/experience/i)).not.toBeInTheDocument();
+  });
+});
+
 describe('SignupForm layout', () => {
   it('is one column until lg, and the logo column only shows from lg and never in short landscape', () => {
     const { container } = render(<SignupForm />);

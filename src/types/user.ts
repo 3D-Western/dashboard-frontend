@@ -1,5 +1,4 @@
 import type { Faculty } from '@/constants/faculties';
-import type { ExperienceLevel } from '@/constants/experience-levels';
 import { ADMIN_SECTION_PERMISSIONS } from '@/constants/permissions';
 import type { IamGroup } from '@/types/iam';
 
@@ -46,7 +45,6 @@ export interface AdminUserProfile {
   lastName: string;
   createdAt: string;
   updatedAt: string;
-  experienceLevel: ExperienceLevel | null;
   faculty: UserFaculty;
   accountStatus: AccountStatus;
   accountStatusReason: string | null;

@@ -136,7 +136,7 @@ The app uses Next.js route groups for layout organization:
 - `(protected)/dashboard/jobs/cnc/new/` - CNC job form (stub)
 - `(protected)/dashboard/jobs/laser-cutting/new/` - Laser cutting form (stub)
 - `(protected)/dashboard/jobs/water-jet/new/` - Water jet form (stub)
-- `(protected)/dashboard/settings/` - User settings (password, experience level)
+- `(protected)/dashboard/settings/` - User settings (password)
 - `(protected)/admin/` - Admin panel (requires at least one admin permission)
 - `(protected)/admin/jobs/` - All-user job management (`jobs:list`)
 - `(protected)/admin/invitations/` - Invitation management (`invitations:list`)
@@ -452,7 +452,6 @@ File: `src/types/user.ts`
 
 ```typescript
 export type UserRole = 'user' | 'admin';
-export type UserExperienceLevel = 'beginner' | 'advanced' | 'no-experience';
 
 export interface User {
   id: number;
@@ -460,7 +459,6 @@ export interface User {
   firstName: string;
   lastName: string;
   role: UserRole;
-  experienceLevel: UserExperienceLevel;
 }
 ```
 
