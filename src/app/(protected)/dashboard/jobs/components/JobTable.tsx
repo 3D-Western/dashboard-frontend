@@ -64,7 +64,7 @@ function JobTableRow({ job }: { job: JobListEntry }) {
       }}
     >
       <TableCell className="max-w-64 font-medium">
-        <Link href={href} className="block truncate hover:text-purple-light hover:underline">
+        <Link href={href} className="block truncate hover:text-primary hover:underline">
           {job.name}
         </Link>
       </TableCell>

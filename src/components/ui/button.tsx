@@ -12,9 +12,9 @@ const buttonVariants = cva(
         // Primary = the website's gradient button; secondary/outline = the website's outlined button
         default: 'btn text-white',
         outline:
-          'border-primary-text/18 text-primary-text hover:border-purple-light hover:bg-purple-light/10 aria-expanded:border-purple-light aria-expanded:bg-purple-light/10',
+          'border-control-border text-primary-text hover:border-purple-light hover:bg-purple-light/10 aria-expanded:border-purple-light aria-expanded:bg-purple-light/10',
         secondary:
-          'border-primary-text/18 text-primary-text hover:border-purple-light hover:bg-purple-light/10 aria-expanded:border-purple-light aria-expanded:bg-purple-light/10',
+          'border-control-border text-primary-text hover:border-purple-light hover:bg-purple-light/10 aria-expanded:border-purple-light aria-expanded:bg-purple-light/10',
         ghost:
           'hover:bg-muted hover:text-foreground aria-expanded:bg-muted aria-expanded:text-foreground dark:hover:bg-muted/50',
         destructive:
@@ -22,7 +22,7 @@ const buttonVariants = cva(
         link: 'text-primary underline-offset-4 hover:underline',
         // Website (website-2.0) variants
         outlined:
-          'border-primary-text/18 text-primary-text hover:border-purple-light hover:bg-purple-light/10',
+          'border-control-border text-primary-text hover:border-purple-light hover:bg-purple-light/10',
         gradient: 'btn text-white',
       },
       size: {

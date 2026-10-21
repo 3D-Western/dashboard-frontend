@@ -67,6 +67,7 @@
   --color-chart-1: var(--chart-1);
   --color-ring: var(--ring);
   --color-input: var(--input);
+  --color-control-border: var(--control-border);
   --color-border: var(--border);
   --color-destructive: var(--destructive);
   --color-accent-foreground: var(--accent-foreground);
@@ -153,7 +154,10 @@
   --accent-foreground: #171717;
   --destructive: oklch(0.577 0.245 27.325);
   --border: #e2dee8;
-  --input: #e2dee8;
+  /* Field and outlined-button edges: 3:1 against the card and the page (WCAG 1.4.11). The soft
+     --border stays for cards and dividers, which are decoration. */
+  --input: #8a8494;
+  --control-border: #8a8494;
   --ring: var(--purple-light);
   --chart-1: oklch(0.646 0.222 41.116);
   --chart-2: oklch(0.6 0.118 184.704);
@@ -181,33 +185,33 @@
   --status-pink: #ec4899;
 
   /* Readable text shade of each status colour (labels, small text) */
-  --status-purple-foreground: color-mix(in srgb, var(--status-purple) 65%, black);
-  --status-green-foreground: color-mix(in srgb, var(--status-green) 65%, black);
-  --status-blue-foreground: color-mix(in srgb, var(--status-blue) 65%, black);
-  --status-red-foreground: color-mix(in srgb, var(--status-red) 65%, black);
-  --status-yellow-foreground: color-mix(in srgb, var(--status-yellow) 65%, black);
-  --status-gray-foreground: color-mix(in srgb, var(--status-gray) 65%, black);
-  --status-pink-foreground: color-mix(in srgb, var(--status-pink) 65%, black);
+  --status-purple-foreground: color-mix(in srgb, var(--status-purple) 50%, black);
+  --status-green-foreground: color-mix(in srgb, var(--status-green) 50%, black);
+  --status-blue-foreground: color-mix(in srgb, var(--status-blue) 50%, black);
+  --status-red-foreground: color-mix(in srgb, var(--status-red) 50%, black);
+  --status-yellow-foreground: color-mix(in srgb, var(--status-yellow) 50%, black);
+  --status-gray-foreground: color-mix(in srgb, var(--status-gray) 50%, black);
+  --status-pink-foreground: color-mix(in srgb, var(--status-pink) 50%, black);
 
   /* Status badges: a light tint of the status colour, with text darkened for contrast on light */
   --status-draft: color-mix(in srgb, var(--status-gray) 14%, transparent);
-  --status-draft-foreground: color-mix(in srgb, var(--status-gray) 65%, black);
+  --status-draft-foreground: color-mix(in srgb, var(--status-gray) 50%, black);
   --status-in-queue: color-mix(in srgb, var(--status-blue) 14%, transparent);
-  --status-in-queue-foreground: color-mix(in srgb, var(--status-blue) 65%, black);
+  --status-in-queue-foreground: color-mix(in srgb, var(--status-blue) 50%, black);
   --status-printing: color-mix(in srgb, var(--status-green) 14%, transparent);
-  --status-printing-foreground: color-mix(in srgb, var(--status-green) 65%, black);
+  --status-printing-foreground: color-mix(in srgb, var(--status-green) 50%, black);
   --status-ready: color-mix(in srgb, var(--status-purple) 14%, transparent);
-  --status-ready-foreground: color-mix(in srgb, var(--status-purple) 65%, black);
+  --status-ready-foreground: color-mix(in srgb, var(--status-purple) 50%, black);
   --status-flagged: color-mix(in srgb, var(--status-red) 14%, transparent);
-  --status-flagged-foreground: color-mix(in srgb, var(--status-red) 65%, black);
+  --status-flagged-foreground: color-mix(in srgb, var(--status-red) 50%, black);
   --status-error: color-mix(in srgb, var(--status-red) 14%, transparent);
-  --status-error-foreground: color-mix(in srgb, var(--status-red) 65%, black);
+  --status-error-foreground: color-mix(in srgb, var(--status-red) 50%, black);
   --status-success: color-mix(in srgb, var(--status-purple) 14%, transparent);
-  --status-success-foreground: color-mix(in srgb, var(--status-purple) 65%, black);
+  --status-success-foreground: color-mix(in srgb, var(--status-purple) 50%, black);
   --status-fail: color-mix(in srgb, var(--status-red) 14%, transparent);
-  --status-fail-foreground: color-mix(in srgb, var(--status-red) 65%, black);
+  --status-fail-foreground: color-mix(in srgb, var(--status-red) 50%, black);
   --status-cancelled: color-mix(in srgb, var(--status-gray) 14%, transparent);
-  --status-cancelled-foreground: color-mix(in srgb, var(--status-gray) 65%, black);
+  --status-cancelled-foreground: color-mix(in srgb, var(--status-gray) 50%, black);
 }
 
 .dark {
@@ -229,6 +233,7 @@
   --destructive: oklch(0.704 0.191 22.216);
   --border: #29323b; /* --b-grey */
   --input: #29323b;
+  --control-border: color-mix(in oklab, var(--foreground) 18%, transparent);
   --ring: var(--purple-light);
   --chart-1: oklch(0.488 0.243 264.376);
   --chart-2: oklch(0.696 0.17 162.48);
@@ -341,6 +346,23 @@
 }
 .btn:hover {
   background-position: right top;
+}
+
+/* Light theme only: a disabled button used to be the normal button at 50% opacity, which turned
+   the gradient into pale lavender with white text and the outlined ones into near-invisible
+   grey. Instead it is a flat, clearly "off" surface whose label is still readable (about 5:1).
+   Plain CSS (not a utility) so it also beats the unlayered .btn background. Dark is unchanged. */
+:root:not(.dark) [data-slot='button']:disabled {
+  opacity: 1;
+  color: #6b6577;
+  background-image: none;
+  background-color: #ebe8f0;
+  border: 1px solid #cfc9d8;
+}
+:root:not(.dark) [data-slot='button'][data-variant='ghost']:disabled,
+:root:not(.dark) [data-slot='button'][data-variant='link']:disabled {
+  background-color: transparent;
+  border-color: transparent;
 }
 
 /* Scroll cue for lists inside a fixed-height panel (the sidebar): a soft shadow appears on the

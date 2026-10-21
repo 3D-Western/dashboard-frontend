@@ -72,7 +72,7 @@ export function JobInfo({ job, className }: { job: JobDetail; className?: string
           <Field label="Printed again from">
             <Link
               href={Routes.jobs.detail(job.reprint)}
-              className="text-purple-light underline-offset-4 hover:underline"
+              className="text-primary underline-offset-4 hover:underline"
             >
               View original job
             </Link>

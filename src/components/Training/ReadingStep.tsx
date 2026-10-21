@@ -59,7 +59,7 @@ export function ReadingStep({ attemptId, step, onStepCompleted }: ReadingStepPro
 
       {gate && (
         <div className="space-y-3 rounded-lg border border-purple-light/50 bg-purple-light/5 p-4">
-          <p className="text-sm font-medium text-purple-light">Check your understanding</p>
+          <p className="text-sm font-medium text-primary">Check your understanding</p>
           <QuestionCard
             question={gate}
             selected={selected}

@@ -589,7 +589,7 @@ export function VideoStep({ attemptId, step, onStepCompleted }: VideoStepProps) 
 
           {activeCheckpoint && (
             <div className="space-y-3 rounded-lg border border-purple-light/50 bg-purple-light/5 p-3 short:w-full">
-              <p className="text-sm font-medium text-purple-light">
+              <p className="text-sm font-medium text-primary">
                 Quick question about what you just watched
               </p>
               <QuestionCard

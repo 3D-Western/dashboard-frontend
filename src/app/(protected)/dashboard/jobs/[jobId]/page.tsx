@@ -43,7 +43,7 @@ export default async function JobDetailPage({ params }: PageProps) {
           </p>
           <Link
             href={Routes.jobs.home}
-            className="inline-flex items-center gap-1.5 text-sm text-purple-light hover:underline"
+            className="inline-flex items-center gap-1.5 text-sm text-primary hover:underline"
           >
             <ArrowLeft className="size-4" aria-hidden="true" />
             Back to My Jobs
