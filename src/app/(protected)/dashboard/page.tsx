@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { AlertCircle } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import DashboardStats from '@/components/DashboardStats';
+import { PageContainer } from '@/components/PageContainer';
 import { DashboardGreeting } from './components/DashboardGreeting';
 import { DashboardSection } from './components/DashboardSection';
 import { QuickActions } from './components/QuickActions';
@@ -30,7 +31,7 @@ export default async function DashboardPage({
   const { error } = await searchParams;
 
   return (
-    <div className="mx-auto w-full max-w-6xl space-y-6 p-6">
+    <PageContainer className="space-y-6 p-6">
       {error && ERROR_MESSAGES[error] && (
         <Alert variant="destructive">
           <AlertCircle className="h-4 w-4" />
@@ -62,6 +63,6 @@ export default async function DashboardPage({
           <TrainingSummary className="min-w-0" />
         </div>
       </TrainingsProvider>
-    </div>
+    </PageContainer>
   );
 }

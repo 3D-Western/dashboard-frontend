@@ -1,9 +1,10 @@
+import { PageContainer } from '@/components/PageContainer';
 import NewBookingForm from '@/components/Booking/NewBookingForm';
 import PageTitle from '@/components/PageTitle';
 
 export default function NewBookingPage() {
   return (
-    <div className="container space-y-6 p-6">
+    <PageContainer className="space-y-6 p-6">
       <PageTitle
         title="New Equipment Booking"
         description="Reserve time on laser cutters, circuit machines, sewing machines, soldering stations, or the waterjet."
@@ -23,6 +24,6 @@ export default function NewBookingPage() {
           </ul>
         </div>
       </div>
-    </div>
+    </PageContainer>
   );
 }
