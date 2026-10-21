@@ -19,7 +19,7 @@ function Field({
 }) {
   return (
     <div className={cn(wide && 'sm:col-span-2')}>
-      <dt className="eyebrow text-[11px] text-muted-foreground">{label}</dt>
+      <dt className="eyebrow text-xs text-muted-foreground">{label}</dt>
       <dd className="mt-1 text-sm break-words">{children}</dd>
     </div>
   );
@@ -27,7 +27,8 @@ function Field({
 
 /** Everything the user entered for the job; the same layout for every status. */
 export function JobInfo({ job, className }: { job: JobDetail; className?: string }) {
-  const createdAt = useLocalTime(job.dateSubmitted || job.jobPlaced, 'MMM d, yyyy, h:mm a');
+  const createdSource = job.dateSubmitted || job.jobPlaced;
+  const createdAt = useLocalTime(createdSource, 'MMM d, yyyy, h:mm a');
   const specs = getPrintSpecs(job.formAnswersJson);
   // The file list is the reliable source; older records may only have the storage path
   const fileName = job.files?.[0]?.name || job.filepath?.split('/').pop();
@@ -56,9 +57,12 @@ export function JobInfo({ job, className }: { job: JobDetail; className?: string
             </span>
           )}
         </Field>
-        <Field label="Created">
-          <time dateTime={job.dateSubmitted || job.jobPlaced}>{createdAt}</time>
-        </Field>
+        {/* A job with no date at all (old or incomplete records) leaves the row out, not blank */}
+        {createdSource && createdAt && (
+          <Field label="Created">
+            <time dateTime={createdSource}>{createdAt}</time>
+          </Field>
+        )}
         {specs.map((spec) => (
           <Field key={spec.label} label={spec.label}>
             {spec.value}
@@ -75,7 +79,7 @@ export function JobInfo({ job, className }: { job: JobDetail; className?: string
           </Field>
         )}
         <Field label="Job ID">
-          <span className="font-mono text-xs break-all text-muted-foreground">{job.id}</span>
+          <span className="font-mono text-sm break-all text-muted-foreground">{job.id}</span>
         </Field>
         {job.comments && (
           <Field label="Comments" wide>

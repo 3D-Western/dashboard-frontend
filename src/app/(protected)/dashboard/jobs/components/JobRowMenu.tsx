@@ -69,7 +69,12 @@ export function JobRowMenu({ job, onDeleted }: JobRowMenuProps) {
     <>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button variant="ghost" size="icon-lg" aria-label={`More actions for ${job.name}`}>
+          <Button
+            variant="ghost"
+            size="icon-lg"
+            className="size-11 md:size-9"
+            aria-label={`More actions for ${job.name}`}
+          >
             <MoreHorizontal aria-hidden="true" />
           </Button>
         </DropdownMenuTrigger>

@@ -1,8 +1,12 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { render, screen, within } from '@test/utils/render';
 import { JobDetail } from '@/types/jobs';
+import { JobDetailHeader } from './JobDetailHeader';
+import { JobInfo } from './JobInfo';
 import { StagePanel } from './StagePanel';
 import { StatusStepper } from './StatusStepper';
+
+vi.mock('next/navigation', () => ({ useRouter: () => ({ push: vi.fn(), refresh: vi.fn() }) }));
 
 const baseJob: JobDetail = {
   id: 'job-123',
@@ -103,5 +107,36 @@ describe('StatusStepper', () => {
     expect(within(steps[1]).getByText('Issue')).toBeInTheDocument();
     expect(screen.getByText('Over the size limit')).toBeInTheDocument();
     expect(screen.queryByText('Ready')).not.toBeInTheDocument();
+  });
+});
+
+describe('JobInfo and JobDetailHeader on phones', () => {
+  it('uses 12 px labels, a 14 px job ID and a 44 px menu and back link', () => {
+    render(<JobDetailHeader job={baseJob} />);
+    render(<JobInfo job={baseJob} />);
+
+    const label = screen.getByText('Description');
+    expect(label).toHaveClass('text-xs');
+    expect(label).not.toHaveClass('text-[11px]');
+    expect(screen.getByText('job-123')).toHaveClass('text-sm');
+    expect(screen.getByRole('button', { name: 'More actions for Robot Arm Gear' })).toHaveClass(
+      'size-11',
+    );
+    expect(screen.getByRole('link', { name: /my jobs/i })).toHaveClass('min-h-11');
+  });
+
+  it('leaves out the Created row and date when the job has no date, instead of showing blanks', () => {
+    const undated: JobDetail = { ...baseJob, jobPlaced: '', dateSubmitted: '' };
+    render(<JobInfo job={undated} />);
+    render(<JobDetailHeader job={undated} />);
+
+    expect(screen.queryByText('Created')).not.toBeInTheDocument();
+    expect(screen.queryByText(/Created/)).not.toBeInTheDocument();
+    expect(screen.getByText('Description')).toBeInTheDocument();
+  });
+
+  it('still shows the Created date when the job has one', () => {
+    render(<JobInfo job={baseJob} />);
+    expect(screen.getByText('Created')).toBeInTheDocument();
   });
 });
