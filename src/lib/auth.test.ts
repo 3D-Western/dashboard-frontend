@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi, afterEach } from 'vitest';
 import { validateSession, login, logout } from './auth';
 import {
   mockAuthenticatedSession,
@@ -74,5 +74,49 @@ describe('auth', () => {
 
       await expect(logout()).resolves.not.toThrow();
     });
+
+    it('stops this device receiving notifications before the session ends', async () => {
+      const order: string[] = [];
+      const subscription = {
+        endpoint: 'https://fcm.googleapis.com/fcm/send/mine',
+        unsubscribe: vi.fn().mockResolvedValue(true),
+      };
+      vi.stubGlobal('navigator', {
+        ...navigator,
+        serviceWorker: {
+          getRegistration: vi.fn().mockResolvedValue({
+            pushManager: { getSubscription: vi.fn().mockResolvedValue(subscription) },
+          }),
+        },
+      });
+      mockServer.use(
+        http.post('*/api/v1/notifications/push/unsubscribe', async ({ request }) => {
+          order.push(`unsubscribe ${((await request.json()) as { endpoint: string }).endpoint}`);
+          return HttpResponse.json({ success: true, data: null });
+        }),
+        http.post('*/api/v1/auth/logout', () => {
+          order.push('logout');
+          return new HttpResponse(null, { status: 204 });
+        }),
+      );
+
+      await logout();
+
+      expect(order).toEqual(['unsubscribe https://fcm.googleapis.com/fcm/send/mine', 'logout']);
+    });
+
+    it('still signs out when turning notifications off fails', async () => {
+      vi.stubGlobal('navigator', {
+        ...navigator,
+        serviceWorker: { getRegistration: vi.fn().mockRejectedValue(new Error('no worker')) },
+      });
+      mockServer.use(
+        http.post('*/api/v1/auth/logout', () => new HttpResponse(null, { status: 204 })),
+      );
+
+      await expect(logout()).resolves.toBeUndefined();
+    });
+
+    afterEach(() => vi.unstubAllGlobals());
   });
 });

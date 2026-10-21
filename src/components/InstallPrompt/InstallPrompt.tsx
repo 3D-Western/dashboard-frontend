@@ -15,9 +15,9 @@ interface InstallPromptProps {
   className?: string;
 }
 
-// Don't promise more than we have: notifications are not built yet
 const HEADING = 'Keep 3D Western on your home screen';
-const BODY = 'Open it in one tap; notifications for your prints are coming soon.';
+const BODY =
+  'Open it in one tap, and turn on notifications (in Settings) to hear about your training and prints.';
 
 /**
  * Asks the student to add the dashboard to their home screen. It shows itself only when that is
@@ -52,43 +52,9 @@ export function InstallPrompt({ moment, variant = 'card', className }: InstallPr
         </div>
       </div>
 
-      {(mode === 'ios-steps' || mode === 'ios-chrome-steps') && (
-        // role="list" because list styling is reset, which makes Safari drop the list semantics
-        <ol role="list" className="space-y-2 text-sm">
-          <li className="flex items-center gap-3">
-            <StepNumber n={1} />
-            <span>
-              Tap the <strong className="font-semibold">Share</strong> button
-              <Share className="mx-1.5 inline size-4 align-text-bottom" aria-hidden="true" />
-              {mode === 'ios-chrome-steps'
-                ? 'next to the address bar at the top of Chrome.'
-                : 'at the bottom of Safari (or the top of the screen on an iPad).'}
-            </span>
-          </li>
-          <li className="flex items-center gap-3">
-            <StepNumber n={2} />
-            <span>
-              Choose <strong className="font-semibold">Add to Home Screen</strong>
-              <SquarePlus className="mx-1.5 inline size-4 align-text-bottom" aria-hidden="true" />
-              then tap Add.
-            </span>
-          </li>
-        </ol>
-      )}
+      {(mode === 'ios-steps' || mode === 'ios-chrome-steps') && <InstallSteps mode={mode} />}
 
-      {(mode === 'open-in-safari' || mode === 'open-in-chrome') && (
-        <p className="text-sm">
-          Open this page in{' '}
-          <strong className="font-semibold">
-            {mode === 'open-in-safari' ? 'Safari' : 'Chrome'}
-          </strong>{' '}
-          to install it. Use this app&apos;s menu and choose{' '}
-          <strong className="font-semibold">
-            {mode === 'open-in-safari' ? 'Open in Safari' : 'Open in browser'}
-          </strong>
-          .
-        </p>
-      )}
+      {(mode === 'open-in-safari' || mode === 'open-in-chrome') && <OpenInBrowser mode={mode} />}
 
       <div className="flex flex-col gap-2 sm:flex-row">
         {mode === 'native' && (
@@ -121,5 +87,51 @@ function StepNumber({ n }: { n: number }) {
     >
       {n}
     </span>
+  );
+}
+
+/**
+ * The two steps to add the app to the iPhone/iPad Home Screen, with their icons. Shared with the
+ * Notifications card in Settings, which needs the same explanation (iPhone only gets web push once
+ * the app is on the Home Screen).
+ */
+export function InstallSteps({ mode }: { mode: 'ios-steps' | 'ios-chrome-steps' }) {
+  return (
+    // role="list" because list styling is reset, which makes Safari drop the list semantics
+    <ol role="list" className="space-y-2 text-sm">
+      <li className="flex items-center gap-3">
+        <StepNumber n={1} />
+        <span>
+          Tap the <strong className="font-semibold">Share</strong> button
+          <Share className="mx-1.5 inline size-4 align-text-bottom" aria-hidden="true" />
+          {mode === 'ios-chrome-steps'
+            ? 'next to the address bar at the top of Chrome.'
+            : 'at the bottom of Safari (or the top of the screen on an iPad).'}
+        </span>
+      </li>
+      <li className="flex items-center gap-3">
+        <StepNumber n={2} />
+        <span>
+          Choose <strong className="font-semibold">Add to Home Screen</strong>
+          <SquarePlus className="mx-1.5 inline size-4 align-text-bottom" aria-hidden="true" />
+          then tap Add.
+        </span>
+      </li>
+    </ol>
+  );
+}
+
+/** Inside another app's browser (Teams, Instagram...) there is no Add to Home Screen: go to the real browser. */
+export function OpenInBrowser({ mode }: { mode: 'open-in-safari' | 'open-in-chrome' }) {
+  return (
+    <p className="text-sm">
+      Open this page in{' '}
+      <strong className="font-semibold">{mode === 'open-in-safari' ? 'Safari' : 'Chrome'}</strong>{' '}
+      to install it. Use this app&apos;s menu and choose{' '}
+      <strong className="font-semibold">
+        {mode === 'open-in-safari' ? 'Open in Safari' : 'Open in browser'}
+      </strong>
+      .
+    </p>
   );
 }

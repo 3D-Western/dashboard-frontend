@@ -51,15 +51,15 @@ const formSchema = z
       .regex(/^\d+$/, 'Student ID must contain only numbers')
       .refine((val) => {
         const num = parseInt(val, 10);
-        return num >= 251000000 && num <= 251999999;
-      }, 'Student ID must be between 251000000 and 251999999'),
+        return num >= 100000000 && num <= 999999999;
+      }, 'Student ID must be exactly 9 digits'),
     email: z
       .string()
       .trim()
       .toLowerCase()
       .min(1, 'Email is required')
       .regex(
-        /^[a-z]+[0-9]*@uwo\.ca$/,
+        /^[a-z0-9][a-z0-9._-]*@uwo\.ca$/,
         'Must be a valid UWO email (e.g., jdoe@uwo.ca or jdoe2@uwo.ca)',
       ),
     // Optional. Blank is fine; anything typed must be a North American number.
@@ -276,7 +276,7 @@ export function SignupForm({ className, ...props }: React.ComponentProps<'div'>)
                       <FormLabel>Faculty</FormLabel>
                       <Select onValueChange={field.onChange} value={field.value}>
                         <FormControl>
-                          <SelectTrigger>
+                          <SelectTrigger className="w-full">
                             <SelectValue placeholder="Select your faculty" />
                           </SelectTrigger>
                         </FormControl>
@@ -301,7 +301,7 @@ export function SignupForm({ className, ...props }: React.ComponentProps<'div'>)
                       <FormLabel>Experience Level</FormLabel>
                       <Select onValueChange={field.onChange} value={field.value}>
                         <FormControl>
-                          <SelectTrigger>
+                          <SelectTrigger className="w-full">
                             <SelectValue placeholder="Select your experience level" />
                           </SelectTrigger>
                         </FormControl>
@@ -326,7 +326,10 @@ export function SignupForm({ className, ...props }: React.ComponentProps<'div'>)
 
                 <FieldDescription className="text-center">
                   Already have an account?{' '}
-                  <Link href={Routes.login} className="underline">
+                  <Link
+                    href={Routes.login}
+                    className="inline-flex min-h-11 items-center px-1 underline md:min-h-0 md:px-0"
+                  >
                     Sign in
                   </Link>
                 </FieldDescription>
@@ -343,11 +346,17 @@ export function SignupForm({ className, ...props }: React.ComponentProps<'div'>)
 
       <FieldDescription className="px-6 text-center">
         By creating an account, you agree to our{' '}
-        <Link href="/terms-and-conditions" className="underline">
+        <Link
+          href="/terms-and-conditions"
+          className="inline-flex min-h-11 items-center px-1 underline md:min-h-0 md:px-0"
+        >
           Terms of Service
         </Link>{' '}
         and{' '}
-        <Link href="/data-policy" className="underline">
+        <Link
+          href="/data-policy"
+          className="inline-flex min-h-11 items-center px-1 underline md:min-h-0 md:px-0"
+        >
           Privacy Policy
         </Link>
         .

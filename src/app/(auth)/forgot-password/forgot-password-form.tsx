@@ -30,9 +30,9 @@ const formSchema = z.object({
     .refine(
       (val) => {
         const num = parseInt(val, 10);
-        return num >= 251000000 && num <= 251999999;
+        return num >= 100000000 && num <= 999999999;
       },
-      { message: 'Student ID must be between 251000000 and 251999999' },
+      { message: 'Student ID must be exactly 9 digits' },
     ),
 });
 
@@ -131,7 +131,10 @@ export function ForgotPasswordForm({ className, ...props }: React.ComponentProps
 
                 <FieldDescription className="text-center">
                   Remember your password?{' '}
-                  <a href={Routes.login} className="underline-offset-2 hover:underline">
+                  <a
+                    href={Routes.login}
+                    className="inline-flex min-h-11 items-center px-1 underline-offset-2 hover:underline md:min-h-0 md:px-0"
+                  >
                     Back to Login
                   </a>
                 </FieldDescription>

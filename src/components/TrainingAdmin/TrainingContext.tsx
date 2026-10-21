@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { createContext, useCallback, useContext, type ReactNode } from 'react';
+import { createContext, useCallback, useContext, useEffect, useRef, type ReactNode } from 'react';
 import { ArrowLeft } from 'lucide-react';
 import { trainingAdminAPI } from '@/api/client/training-admin';
 import { Badge } from '@/components/ui/badge';
@@ -58,20 +58,26 @@ export function TrainingProvider({
 
 function TrainingFrame({ training, children }: { training: AdminTraining; children: ReactNode }) {
   const pathname = usePathname();
+  const activeTab = useRef<HTMLAnchorElement>(null);
   const sections = [
     { title: 'Overview', href: TrainingAdminRoutes.detail(training.id) },
     { title: 'Draft', href: TrainingAdminRoutes.draft(training.id) },
     { title: 'Questions', href: TrainingAdminRoutes.questions(training.id) },
     { title: 'Settings', href: TrainingAdminRoutes.settings(training.id) },
-    { title: 'Question report', href: TrainingAdminRoutes.report(training.id) },
+    { title: 'Report', href: TrainingAdminRoutes.report(training.id) },
   ];
+
+  // On a phone the strip scrolls sideways; bring the current section into view.
+  useEffect(() => {
+    activeTab.current?.scrollIntoView?.({ inline: 'center', block: 'nearest' });
+  }, [pathname]);
 
   return (
     <div className="space-y-5">
       <div className="space-y-2">
         <Link
           href={TrainingAdminRoutes.home}
-          className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
+          className="inline-flex min-h-11 items-center gap-1 text-sm text-muted-foreground hover:text-foreground md:min-h-0"
         >
           <ArrowLeft className="size-4" /> All trainings
         </Link>
@@ -85,17 +91,18 @@ function TrainingFrame({ training, children }: { training: AdminTraining; childr
       </div>
       <nav
         aria-label={`${training.title} sections`}
-        className="-mx-1 flex gap-1 overflow-x-auto border-b px-1"
+        className="-mx-1 flex gap-1 overflow-x-auto border-b [mask-image:linear-gradient(to_right,#000_calc(100%_-_2rem),transparent)] px-1 md:[mask-image:none]"
       >
         {sections.map((section) => {
           const active = pathname === section.href;
           return (
             <Link
               key={section.href}
+              ref={active ? activeTab : undefined}
               href={section.href}
               aria-current={active ? 'page' : undefined}
               className={cn(
-                '-mb-px shrink-0 border-b-2 px-3 py-2.5 text-sm font-medium whitespace-nowrap',
+                '-mb-px flex min-h-11 shrink-0 items-center border-b-2 px-3 py-2.5 text-sm font-medium whitespace-nowrap md:min-h-0',
                 active
                   ? 'border-primary text-foreground'
                   : 'border-transparent text-muted-foreground hover:text-foreground',

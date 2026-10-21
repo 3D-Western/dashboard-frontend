@@ -19,6 +19,7 @@ export default async function AuthLayout({ children }: { children: React.ReactNo
       <div className="absolute top-4 right-4 z-10">
         <ThemeToggle />
       </div>
+      {/* Each page leaves room for the toggle on phones (pt-16) and sizes itself to the screen. */}
       {children}
     </div>
   );

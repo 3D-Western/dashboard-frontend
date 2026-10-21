@@ -171,7 +171,7 @@ function CreateTrainingDialog({ onClose }: { onClose: () => void }) {
 
   return (
     <Dialog open onOpenChange={(open) => !open && requestClose()}>
-      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-md">
+      <DialogContent className="max-h-[92dvh] overflow-y-auto sm:max-w-md">
         <DialogHeader>
           <DialogTitle>New training</DialogTitle>
           <DialogDescription>
@@ -238,7 +238,7 @@ function CreateTrainingDialog({ onClose }: { onClose: () => void }) {
             claimedFields={['title', 'slug', 'equipmentGroupId']}
           />
         </div>
-        <DialogFooter>
+        <DialogFooter stickyFooter>
           <Button type="button" variant="outline" onClick={requestClose}>
             Cancel
           </Button>

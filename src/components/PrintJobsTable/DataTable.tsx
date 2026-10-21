@@ -11,28 +11,80 @@ import {
 import {
   ColumnDef,
   ColumnFiltersState,
+  Row,
   SortingState,
+  Table as TanStackTable,
   flexRender,
   getCoreRowModel,
   getFilteredRowModel,
   getSortedRowModel,
   useReactTable,
 } from '@tanstack/react-table';
+import type { ReactNode } from 'react';
 import { useEffect, useState } from 'react';
 import { DataTablePagination } from '../DataTablePagination';
+import { ResponsiveTable } from '@/components/ResponsiveTable';
 import { PaginationMetadata } from '@/types/common';
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
   data: TData[];
   pagination: PaginationMetadata;
+  /** The phone (below md) version of one row. */
+  renderCard: (row: Row<TData>) => ReactNode;
   className?: string;
+}
+
+/** Column ids that can be sorted from the phone's "Sort by" select, with their names. */
+const SORT_LABELS: Record<string, string> = {
+  name: 'Name',
+  user: 'User',
+  status: 'Status',
+  jobPlaced: 'Print date',
+};
+
+/** On phones the column headers are hidden, so sorting moves to one select above the cards. */
+function SortSelect<TData>({ table }: { table: TanStackTable<TData> }) {
+  const active = table.getState().sorting[0];
+  const value = active ? `${active.id}:${active.desc ? 'desc' : 'asc'}` : '';
+  const options = table
+    .getAllLeafColumns()
+    .filter((column) => column.getCanSort() && SORT_LABELS[column.id])
+    .flatMap((column) => [
+      { value: `${column.id}:asc`, label: `${SORT_LABELS[column.id]}, ascending` },
+      { value: `${column.id}:desc`, label: `${SORT_LABELS[column.id]}, descending` },
+    ]);
+
+  return (
+    <div className="space-y-1.5 md:hidden">
+      <label htmlFor="print-jobs-sort" className="text-sm font-medium">
+        Sort by
+      </label>
+      <select
+        id="print-jobs-sort"
+        value={value}
+        onChange={(event) => {
+          const [id, direction] = event.target.value.split(':');
+          table.setSorting(id ? [{ id, desc: direction === 'desc' }] : []);
+        }}
+        className="h-11 w-full rounded-lg border border-input bg-card px-3 text-base"
+      >
+        <option value="">Default order</option>
+        {options.map((option) => (
+          <option key={option.value} value={option.value}>
+            {option.label}
+          </option>
+        ))}
+      </select>
+    </div>
+  );
 }
 
 export function DataTable<TData, TValue>({
   columns,
   data,
   pagination,
+  renderCard,
 }: DataTableProps<TData, TValue>) {
   'use no memo';
   const [sorting, setSorting] = useState<SortingState>([]);
@@ -76,51 +128,60 @@ export function DataTable<TData, TValue>({
         {announcement}
       </div>
 
-      <div className="overflow-hidden rounded-lg border bg-card">
-        <Table aria-label="Print jobs table" aria-describedby="table-caption">
-          <caption id="table-caption" className="sr-only">
-            Your print jobs with status, dates, and file information. Sortable by print date.
-          </caption>
-          <TableHeader>
-            {table.getHeaderGroups().map((headerGroup) => (
-              <TableRow key={headerGroup.id}>
-                {headerGroup.headers.map((header) => {
-                  return (
-                    <TableHead key={header.id}>
-                      {header.isPlaceholder
-                        ? null
-                        : flexRender(header.column.columnDef.header, header.getContext())}
-                    </TableHead>
-                  );
-                })}
-              </TableRow>
-            ))}
-          </TableHeader>
-          <TableBody>
-            {table.getRowModel().rows?.length ? (
-              table.getRowModel().rows.map((row) => (
-                <TableRow
-                  key={row.id}
-                  data-state={row.getIsSelected() && 'selected'}
-                  aria-selected={row.getIsSelected()}
-                >
-                  {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id}>
-                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                    </TableCell>
-                  ))}
+      <SortSelect table={table} />
+
+      <ResponsiveTable
+        items={table.getRowModel().rows}
+        getKey={(row) => row.id}
+        renderCard={renderCard}
+        emptyMessage="No results."
+      >
+        <div className="overflow-hidden rounded-lg border bg-card">
+          <Table aria-label="Print jobs table" aria-describedby="table-caption">
+            <caption id="table-caption" className="sr-only">
+              Your print jobs with status, dates, and file information. Sortable by print date.
+            </caption>
+            <TableHeader>
+              {table.getHeaderGroups().map((headerGroup) => (
+                <TableRow key={headerGroup.id}>
+                  {headerGroup.headers.map((header) => {
+                    return (
+                      <TableHead key={header.id}>
+                        {header.isPlaceholder
+                          ? null
+                          : flexRender(header.column.columnDef.header, header.getContext())}
+                      </TableHead>
+                    );
+                  })}
                 </TableRow>
-              ))
-            ) : (
-              <TableRow>
-                <TableCell colSpan={columns.length} className="h-24 text-center">
-                  No results.
-                </TableCell>
-              </TableRow>
-            )}
-          </TableBody>
-        </Table>
-      </div>
+              ))}
+            </TableHeader>
+            <TableBody>
+              {table.getRowModel().rows?.length ? (
+                table.getRowModel().rows.map((row) => (
+                  <TableRow
+                    key={row.id}
+                    data-state={row.getIsSelected() && 'selected'}
+                    aria-selected={row.getIsSelected()}
+                  >
+                    {row.getVisibleCells().map((cell) => (
+                      <TableCell key={cell.id}>
+                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                ))
+              ) : (
+                <TableRow>
+                  <TableCell colSpan={columns.length} className="h-24 text-center">
+                    No results.
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </div>
+      </ResponsiveTable>
 
       <DataTablePagination table={table} pagination={pagination} />
     </div>

@@ -524,7 +524,8 @@ export function VideoStep({ attemptId, step, onStepCompleted }: VideoStepProps) 
           )}
         </div>
 
-        <div className="space-y-2 p-3">
+        {/* The slider below is 44 px tall; its own padding is enough, so the bottom padding is small */}
+        <div className="space-y-2 px-3 pt-3 pb-1 md:p-3">
           <div className="flex items-center gap-3">
             <Button
               type="button"
@@ -547,7 +548,7 @@ export function VideoStep({ attemptId, step, onStepCompleted }: VideoStepProps) 
                 id={`rate-${stepId}`}
                 value={rate}
                 onChange={(event) => handleRate(Number(event.target.value))}
-                className="h-11 rounded-lg border bg-background px-2 text-sm sm:h-8"
+                className="h-11 rounded-lg border bg-background px-2 text-base sm:h-8 md:text-sm"
               >
                 {PLAYBACK_RATES.map((value) => (
                   <option key={value} value={value}>

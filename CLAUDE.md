@@ -36,6 +36,14 @@ Part of the monorepo. Read the root `CLAUDE.md` first; it has the workflow, docs
 
 - `src/app/manifest.ts` + icons in `public/icons/` and `src/app/apple-icon.png` (badge on `#0b0d10`). `/sw.js` comes from `src/app/sw.js/route.ts`; the worker (`src/lib/pwa/service-worker-source.ts`) must stay cache-free: no API responses, no signed-in pages, no app code. It is registered only in production (`PwaSetup` in the root layout).
 - The install card is `InstallPrompt` (`src/components/InstallPrompt/`). Rules live in `src/lib/pwa/install-prompt.ts`: it needs a **moment of value** (pass `moment`, or null for none), is never shown on desktop or once installed, and stays quiet for 30 days after "Not now". Current moments: orientation passed (dashboard, results note) and print submitted (My Jobs with `?submitted=1`).
+- **Web push**: the worker also handles `push` and `notificationclick` (still no caching). Browser-side rules and the permission flow are in `src/lib/pwa/push.ts` (the permission prompt is shown only by `enablePush`, called from the "Turn on notifications" button; iPhone not on the Home Screen gets the install steps instead), the state is `src/hooks/usePushNotifications.ts`, and the Settings card is `settings/components/NotificationsCard.tsx`. `logout()` first turns push off for the device. Spec: `docs/specs/notifications.md`.
+
+## Access system (admin UI)
+
+- Routes under `/admin/access` (all need `access:admin`, checked by `AccessAdminShell`; sidebar and admin home show it for that permission only): `/` live view, `devices`, `gatekeepers`, `card-links`. Components in `src/components/AccessAdmin/`, client `src/api/client/access-admin.ts`, contract `docs/specs/gatekeeper-contract.md` section 5.
+- Tokens and keys come back once from the register/rotate call and live only in `SecretDialog` state (no Escape, no outside tap); never put them in a list, a toast or storage.
+- Machine settings (lock method, idle level and time, session limit, check-in) belong to the machine's STATION device; the PLUG only has an address. Form rules are in `src/lib/access-admin-forms.ts`; 0 clears `idleMinutes`/`maxSessionMinutes` on update. Online status uses `STALE_AFTER_MINUTES` (`access-admin-format.ts`).
+- Tests mock `@/api/client/access-admin`; factories in `test/utils/accessAdminFactories.ts`.
 
 ## Legacy docs: verify before trusting
 

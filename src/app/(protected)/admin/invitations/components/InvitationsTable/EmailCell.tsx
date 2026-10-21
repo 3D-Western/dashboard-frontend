@@ -22,12 +22,12 @@ export const EmailCell = memo(function EmailCell({ email }: EmailCellProps) {
   };
 
   return (
-    <div className="flex w-full items-center justify-center gap-2">
-      <span className="text-sm">{email}</span>
+    <div className="flex w-full items-center justify-start gap-2 md:justify-center">
+      <span className="text-sm break-all">{email}</span>
       <Button
         variant="ghost"
         size="sm"
-        className="h-6 w-6 p-0"
+        className="h-11 w-11 shrink-0 p-0 md:h-6 md:w-6"
         onClick={handleCopy}
         aria-label="Copy email"
       >

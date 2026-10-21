@@ -144,6 +144,21 @@ describe('AppSidebar', () => {
       expect(screen.queryByRole('link', { name: /training sign-offs/i })).not.toBeInTheDocument();
     });
 
+    it('shows Access System only when user has access:admin', () => {
+      renderSidebar(createMockAdmin({ permissions: [perm(PERMISSIONS.ACCESS_ADMIN)] }));
+
+      expect(screen.getByRole('link', { name: /access system/i })).toHaveAttribute(
+        'href',
+        '/admin/access',
+      );
+    });
+
+    it('hides Access System from admins who lack access:admin', () => {
+      renderSidebar(createMockAdmin({ permissions: [perm(PERMISSIONS.USERS_LIST)] }));
+
+      expect(screen.queryByRole('link', { name: /access system/i })).not.toBeInTheDocument();
+    });
+
     it('shows all admin items when user has all relevant permissions', () => {
       const admin = createMockAdmin({
         permissions: [perm(PERMISSIONS.JOBS_UPDATE_STATUS), perm(PERMISSIONS.INVITATIONS_LIST)],
@@ -220,6 +235,20 @@ describe('AppSidebar', () => {
       expect(screen.queryByRole('link', { name: /equipment bookings/i })).not.toBeInTheDocument();
       expect(screen.queryByRole('link', { name: /booking requests/i })).not.toBeInTheDocument();
       expect(screen.queryByRole('link', { name: /equipment management/i })).not.toBeInTheDocument();
+    });
+  });
+
+  describe('phone tap targets', () => {
+    it('makes the admin sub-links and the collapse chevron 44 px on phones', () => {
+      const admin = createMockAdmin({ permissions: [perm(PERMISSIONS.USERS_LIST)] });
+      renderSidebar(admin);
+
+      expect(screen.getByRole('link', { name: /^user management$/i })).toHaveClass(
+        'h-11',
+        'md:h-7',
+      );
+      const chevron = screen.getByRole('button', { name: /toggle admin pages/i });
+      expect(chevron).toHaveClass('size-11!', 'md:size-5!');
     });
   });
 

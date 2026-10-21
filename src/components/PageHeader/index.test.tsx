@@ -78,6 +78,28 @@ describe('PageHeader', () => {
     expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Import a Training');
   });
 
+  it('names the sign-off queue and a single sign-off, not Dashboard', () => {
+    mockUsePathname.mockReturnValue(Routes.adminSignoffs);
+    const { unmount } = render(<PageHeader />);
+    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Training Sign-offs');
+    unmount();
+
+    mockUsePathname.mockReturnValue(Routes.adminSignoff(42));
+    render(<PageHeader />);
+    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Training Sign-off');
+    expect(screen.getByRole('link', { name: 'Training Sign-offs' })).toHaveAttribute(
+      'href',
+      Routes.adminSignoffs,
+    );
+  });
+
+  it('names the training audit log, not Edit Training', () => {
+    mockUsePathname.mockReturnValue(TrainingAdminRoutes.auditLog);
+    render(<PageHeader />);
+
+    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Training Audit Log');
+  });
+
   it('renders a training being edited under the Training Editor', () => {
     mockUsePathname.mockReturnValue(TrainingAdminRoutes.draft(12));
     render(<PageHeader />);

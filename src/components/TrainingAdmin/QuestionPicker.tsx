@@ -59,7 +59,13 @@ export function QuestionPicker({
         error={error}
       />
       {onNewQuestion && (
-        <Button type="button" variant="outline" size="sm" onClick={onNewQuestion}>
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          className="min-h-11 w-full md:min-h-0 md:w-auto"
+          onClick={onNewQuestion}
+        >
           <Plus /> Write a new question
         </Button>
       )}

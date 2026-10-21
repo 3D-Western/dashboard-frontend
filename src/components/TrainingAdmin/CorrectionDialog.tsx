@@ -157,7 +157,7 @@ export function CorrectionDialog({ row, mode, onClose, onRecorded }: CorrectionD
 
   return (
     <Dialog open onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="max-h-[92vh] overflow-y-auto sm:max-w-2xl">
+      <DialogContent className="max-h-[92dvh] overflow-y-auto sm:max-w-2xl">
         <DialogHeader>
           <DialogTitle>
             {mode === 'rescore' ? 'Re-score attempts' : 'Correct this question'}
@@ -195,9 +195,14 @@ export function CorrectionDialog({ row, mode, onClose, onRecorded }: CorrectionD
               {(Object.keys(KIND_TEXT) as CorrectionKind[]).map((option) => (
                 <div
                   key={option}
-                  className="flex items-start gap-3 rounded-lg border p-3 has-data-checked:border-primary has-data-checked:bg-primary/5"
+                  className="relative flex items-start gap-3 rounded-lg border p-3 has-data-checked:border-primary has-data-checked:bg-primary/5"
                 >
-                  <RadioGroupItem value={option} id={`kind-${option}`} className="mt-0.5" />
+                  {/* Phones: the radio's hit area covers the whole row (44 px or taller) */}
+                  <RadioGroupItem
+                    value={option}
+                    id={`kind-${option}`}
+                    className="mt-0.5 after:absolute after:inset-0 after:content-[''] md:after:hidden"
+                  />
                   <div className="space-y-0.5">
                     <Label htmlFor={`kind-${option}`}>{KIND_TEXT[option].label}</Label>
                     <p className="text-sm text-muted-foreground">{KIND_TEXT[option].help}</p>
@@ -248,7 +253,7 @@ export function CorrectionDialog({ row, mode, onClose, onRecorded }: CorrectionD
         )}
         {rescore && <RescoreResult rescore={rescore} />}
 
-        <DialogFooter>
+        <DialogFooter stickyFooter>
           <Button type="button" variant="outline" onClick={onClose}>
             {showForm ? 'Cancel' : 'Close'}
           </Button>

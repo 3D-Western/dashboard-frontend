@@ -83,7 +83,7 @@ function RetryUploadButton({ jobId }: { jobId: string }) {
 function Reason({ entry, fallback }: { entry?: StatusHistory; fallback: string }) {
   return (
     <div className="mt-3 rounded-md border bg-background/60 px-4 py-3">
-      <p className="eyebrow text-[11px] text-muted-foreground">Reason</p>
+      <p className="eyebrow text-xs text-muted-foreground">Reason</p>
       <p className="mt-1 text-sm">{entry?.comments || fallback}</p>
     </div>
   );
@@ -155,7 +155,7 @@ export function StagePanel({ job }: { job: JobDetail }) {
             ] as const
           ).map(([label, value]) => (
             <div key={label}>
-              <dt className="eyebrow text-[11px] text-muted-foreground">{label}</dt>
+              <dt className="eyebrow text-xs text-muted-foreground">{label}</dt>
               <dd className="mt-1 text-foreground">{value}</dd>
             </div>
           ))}
@@ -233,7 +233,7 @@ export function StagePanel({ job }: { job: JobDetail }) {
       className={cn('relative overflow-hidden rounded-lg border p-5 pl-6', tone.tint)}
     >
       <span aria-hidden="true" className={cn('absolute inset-y-0 left-0 w-1', tone.bar)} />
-      <p className={cn('eyebrow text-[11px]', tone.text)}>Current stage</p>
+      <p className={cn('eyebrow text-xs', tone.text)}>Current stage</p>
       <h2 id="stage-heading" className="mt-1 text-xl">
         {title}
       </h2>

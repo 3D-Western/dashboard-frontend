@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, afterEach } from 'vitest';
 import { screen } from '@testing-library/react';
 import { usePathname } from 'next/navigation';
 import { render } from '@test/utils/render';
@@ -106,5 +106,33 @@ describe('TrainingAdminShell permission-based visibility', () => {
     renderShell(['training:author']);
 
     expect(screen.getByRole('link', { name: 'Trainings' })).toHaveAttribute('aria-current', 'page');
+  });
+});
+
+describe('TrainingAdminShell pill strip on a phone', () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+    mockPathname.mockReturnValue('/admin/training');
+  });
+
+  it('scrolls the current section into view so it is not hidden under the fade', () => {
+    mockPathname.mockReturnValue('/admin/training/audit-log');
+    // The strip is 300 px wide; the active pill ends at 420 px, under the 2rem fade on the right
+    vi.spyOn(Element.prototype, 'getBoundingClientRect').mockImplementation(function (
+      this: Element,
+    ) {
+      const isNav = this.tagName === 'NAV';
+      const isActive = this.getAttribute('aria-current') === 'page';
+      const box = isNav
+        ? { left: 0, right: 300 }
+        : isActive
+          ? { left: 320, right: 420 }
+          : { left: 0, right: 0 };
+      return { ...box, top: 0, bottom: 0, width: box.right - box.left, height: 0 } as DOMRect;
+    });
+    renderShell(['training:author']);
+
+    const nav = screen.getByRole('navigation', { name: /training editor sections/i });
+    expect(nav.scrollLeft).toBe(152);
   });
 });

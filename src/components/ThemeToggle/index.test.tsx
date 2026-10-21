@@ -57,6 +57,13 @@ describe('ThemeToggle', () => {
     expect(button).toHaveAttribute('title', expect.stringContaining('Light mode'));
   });
 
+  it('is a 44 px tap target on phones and 32 px from md', async () => {
+    render(<ThemeToggle />);
+    const button = await screen.findByLabelText(/light mode/i);
+
+    expect(button).toHaveClass('h-11', 'w-11', 'md:h-8', 'md:w-8');
+  });
+
   it('provides an accessible button label', async () => {
     render(<ThemeToggle />);
     const button = await screen.findByLabelText(/light mode/i);

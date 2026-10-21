@@ -54,6 +54,7 @@ export function missingPermissionOf(error: unknown): string | null {
 const PERMISSION_WORDS: Record<string, string> = {
   'training:author': 'author trainings',
   'training:publish': 'publish trainings',
+  'access:admin': 'manage the access system',
 };
 
 /**

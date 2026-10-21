@@ -176,7 +176,7 @@ export function StepDialog({
   return (
     <>
       <Dialog open onOpenChange={(open) => !open && requestClose()}>
-        <DialogContent className="max-h-[92vh] overflow-y-auto sm:max-w-3xl">
+        <DialogContent className="max-h-[92dvh] overflow-y-auto sm:max-w-3xl">
           <DialogHeader>
             <DialogTitle>
               {isNew
@@ -294,8 +294,8 @@ export function StepDialog({
                         row.uid === selectedCheckpoint && 'ring-2 ring-primary',
                       )}
                     >
-                      <div className="flex flex-wrap items-start gap-2">
-                        <div className="w-32">
+                      <div className="flex flex-col gap-2 md:flex-row md:flex-wrap md:items-start">
+                        <div className="w-full md:w-32">
                           <TextField
                             label={`Question ${index + 1} appears at (seconds)`}
                             value={row.at}
@@ -313,7 +313,7 @@ export function StepDialog({
                             ].filter((m): m is string => !!m)}
                           />
                         </div>
-                        <div className="min-w-0 flex-1">
+                        <div className="w-full min-w-0 md:flex-1">
                           <QuestionPicker
                             label={`Question ${index + 1}`}
                             value={row.questionVersionId}
@@ -344,7 +344,7 @@ export function StepDialog({
                           type="button"
                           variant="ghost"
                           size="icon-sm"
-                          className="mt-6"
+                          className="size-11 self-end md:mt-6 md:size-8 md:self-auto"
                           aria-label={`Remove question ${index + 1}`}
                           onClick={() =>
                             patch({
@@ -447,7 +447,7 @@ export function StepDialog({
             <ErrorNote message={issues.length === 0 ? failure : null} />
           </div>
 
-          <DialogFooter>
+          <DialogFooter stickyFooter>
             <Button type="button" variant="outline" onClick={requestClose}>
               {saved && !step ? 'Done' : 'Cancel'}
             </Button>

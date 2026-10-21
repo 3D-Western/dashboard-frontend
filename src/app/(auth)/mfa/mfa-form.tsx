@@ -19,10 +19,12 @@ import { useForm, useWatch } from 'react-hook-form';
 import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
 import { Routes } from '@/lib/routes';
+import { CONTACT_EMAIL } from '@/constants/website';
 import { useState } from 'react';
 import { sessionApi } from '@/api/client/session';
 import { ApiError, ErrorCodes } from '@/api/client/errors';
 import { BrandMark } from '@/components/BrandLogo';
+import { dropOtherUsersSubscription } from '@/lib/pwa/push';
 
 const formSchema = z.object({
   otp: z.string().min(6, 'Please enter the complete OTP code').max(6),
@@ -52,6 +54,9 @@ export function MFAForm({
       // Short on purpose: the toast outlives the navigation (the Toaster is in the root layout) and
       // used to linger over the next screen.
       toast.success('OTP verified successfully! Redirecting...', { duration: 1500 });
+      // Signed in: if this phone still holds the previous person's push subscription, drop it. Not awaited:
+      // signing in never waits on it.
+      void dropOtherUsersSubscription();
       router.refresh();
       router.push(Routes.dashboard);
     } catch (error) {
@@ -150,7 +155,7 @@ export function MFAForm({
                     type="button"
                     onClick={handleResend}
                     disabled={isResending}
-                    className="underline-offset-2 hover:underline disabled:cursor-not-allowed disabled:opacity-50"
+                    className="inline-flex min-h-11 items-center px-1 underline-offset-2 hover:underline disabled:cursor-not-allowed disabled:opacity-50 md:min-h-0 md:px-0"
                   >
                     {isResending ? 'Sending...' : 'Resend code'}
                   </button>
@@ -164,7 +169,13 @@ export function MFAForm({
         </CardContent>
       </Card>
       <FieldDescription className="px-6 text-center">
-        Having trouble? <a href="#">Contact support</a>
+        Having trouble?{' '}
+        <a
+          href={`mailto:${CONTACT_EMAIL}`}
+          className="inline-flex min-h-11 items-center px-1 md:min-h-0 md:px-0"
+        >
+          Contact support
+        </a>
       </FieldDescription>
     </div>
   );

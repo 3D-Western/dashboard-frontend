@@ -48,7 +48,7 @@ export function MarkdownEditor({
               aria-pressed={mode === option}
               onClick={() => setMode(option)}
               className={cn(
-                'rounded-md px-3 py-1 text-sm',
+                'min-h-11 rounded-md px-4 py-1 text-sm md:min-h-0 md:px-3',
                 mode === option ? 'bg-muted font-medium' : 'text-muted-foreground',
               )}
             >
@@ -66,7 +66,7 @@ export function MarkdownEditor({
             onChange={(event) => onValueChange(event.target.value)}
             aria-invalid={!!error || undefined}
             aria-describedby={help ? `${id}-help` : undefined}
-            className="font-mono text-sm"
+            className="font-mono text-base md:text-sm"
           />
         </div>
         <div
@@ -84,12 +84,12 @@ export function MarkdownEditor({
         </div>
       </div>
       {help && (
-        <p id={`${id}-help`} className="text-xs text-muted-foreground">
+        <p id={`${id}-help`} className="text-sm text-muted-foreground md:text-xs">
           {help}
         </p>
       )}
       {error && (
-        <p role="alert" className="text-xs text-destructive">
+        <p role="alert" className="text-sm text-destructive md:text-xs">
           {error}
         </p>
       )}

@@ -1,7 +1,8 @@
 // The service worker's code, as a string served at /sw.js (src/app/sw.js/route.ts).
 //
 // It is deliberately minimal. Its jobs: make the dashboard installable, show a friendly page when
-// the phone has no signal, and (later) receive web push. It does NOT cache anything:
+// the phone has no signal, and show web push notifications (docs/specs/notifications.md). It does
+// NOT cache anything:
 //  - no API responses and no signed-in pages (they are personal and must always be live),
 //  - no app code (JS/CSS), so it can never serve stale code after a deploy.
 // The offline page is built into the worker itself rather than cached, so there is nothing that
@@ -63,6 +64,79 @@ self.addEventListener('activate', (event) => {
       const keys = await caches.keys();
       await Promise.all(keys.map((key) => caches.delete(key)));
       await self.clients.claim();
+    })(),
+  );
+});
+
+// ---- Web push -------------------------------------------------------------------------------
+// The server sends a small JSON body, encrypted end to end: { v, type, title, body, url, tag }.
+// Browsers require every push to show a notification, so anything we can't understand still shows
+// a generic one rather than being dropped (a silent push can get the subscription revoked).
+const PUSH_FALLBACK = { title: '3D Western', body: 'You have a new notification.', url: '/dashboard', tag: 'general' };
+
+// A tap may only ever go to a page inside this site: a path, never another site. Not //host, and no backslash or control
+// character (tab, newline...) anywhere: browsers strip tabs and newlines from URLs, so a slash, a tab and another slash would
+// become //host, and a backslash is treated like a slash.
+function safePath(value) {
+  if (typeof value !== 'string' || value.charAt(0) !== '/' || value.charAt(1) === '/') return PUSH_FALLBACK.url;
+  for (let i = 0; i < value.length; i++) {
+    const code = value.charCodeAt(i);
+    if (code < 32 || code === 127 || code === 92) return PUSH_FALLBACK.url;
+  }
+  return value;
+}
+
+function text(value, fallback, max) {
+  return typeof value === 'string' && value.trim() ? value.trim().slice(0, max) : fallback;
+}
+
+function readPush(event) {
+  let data = null;
+  try {
+    data = event.data ? event.data.json() : null;
+  } catch (error) {
+    data = null;
+  }
+  if (!data || typeof data !== 'object' || data.v !== 1) return PUSH_FALLBACK;
+  return {
+    title: text(data.title, PUSH_FALLBACK.title, 100),
+    body: text(data.body, PUSH_FALLBACK.body, 200),
+    url: safePath(data.url),
+    tag: text(data.tag, PUSH_FALLBACK.tag, 64),
+  };
+}
+
+self.addEventListener('push', (event) => {
+  const push = readPush(event);
+  event.waitUntil(
+    self.registration.showNotification(push.title, {
+      body: push.body,
+      tag: push.tag,
+      icon: '/icons/icon-192.png',
+      data: { url: push.url },
+    }),
+  );
+});
+
+// Tap: focus the dashboard if it is already open (and take it to the link), otherwise open it.
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+  const path = safePath(event.notification.data && event.notification.data.url);
+  event.waitUntil(
+    (async () => {
+      const target = new URL(path, self.location.origin).href;
+      const windows = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
+      for (const client of windows) {
+        if (new URL(client.url).origin !== self.location.origin) continue;
+        try {
+          await client.focus();
+          if (client.navigate) await client.navigate(target);
+          return;
+        } catch (error) {
+          // This window can't be reused (some browsers refuse to navigate it): open a new one below
+        }
+      }
+      if (self.clients.openWindow) await self.clients.openWindow(target);
     })(),
   );
 });

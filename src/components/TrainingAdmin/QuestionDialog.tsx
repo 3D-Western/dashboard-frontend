@@ -152,7 +152,7 @@ export function QuestionDialog({
 
   return (
     <Dialog open onOpenChange={(open) => !open && requestClose()}>
-      <DialogContent className="max-h-[92vh] overflow-y-auto sm:max-w-2xl">
+      <DialogContent className="max-h-[92dvh] overflow-y-auto sm:max-w-2xl">
         <DialogHeader>
           <DialogTitle>{isEdit ? 'Edit question' : 'Add a question'}</DialogTitle>
           <DialogDescription>
@@ -234,14 +234,17 @@ export function QuestionDialog({
             <ul className="space-y-2">
               {values.options.map((option, index) => (
                 <li key={option.uid} className="flex items-center gap-2">
-                  <input
-                    type={values.type === 'MULTI' ? 'checkbox' : 'radio'}
-                    name="correct-option"
-                    checked={option.correct}
-                    onChange={(event) => setOption(option.uid, { correct: event.target.checked })}
-                    aria-label={`Option ${index + 1} is correct`}
-                    className="size-5 shrink-0 accent-[var(--color-primary)]"
-                  />
+                  {/* Phones: the label is the 44 px tap target; desktop keeps the 20 px box */}
+                  <label className="inline-flex size-11 shrink-0 cursor-pointer items-center justify-center md:size-5">
+                    <input
+                      type={values.type === 'MULTI' ? 'checkbox' : 'radio'}
+                      name="correct-option"
+                      checked={option.correct}
+                      onChange={(event) => setOption(option.uid, { correct: event.target.checked })}
+                      aria-label={`Option ${index + 1} is correct`}
+                      className="size-5 shrink-0 accent-[var(--color-primary)]"
+                    />
+                  </label>
                   <input
                     type="text"
                     value={option.label}
@@ -249,7 +252,7 @@ export function QuestionDialog({
                     onChange={(event) => setOption(option.uid, { label: event.target.value })}
                     aria-label={`Option ${index + 1} text`}
                     placeholder={`Option ${index + 1}`}
-                    className="h-10 min-w-0 flex-1 rounded-lg border border-input bg-transparent px-2.5 text-base outline-none read-only:opacity-70 focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 sm:h-8 md:text-sm"
+                    className="h-11 min-w-0 flex-1 rounded-lg border border-input bg-transparent px-2.5 text-base outline-none read-only:opacity-70 focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 md:h-8 md:text-sm"
                   />
                   {!optionRowsLocked && (
                     <Button
@@ -326,7 +329,7 @@ export function QuestionDialog({
           <ErrorNote message={serverIssues.length === 0 ? failure : null} />
         </div>
 
-        <DialogFooter>
+        <DialogFooter stickyFooter>
           <Button type="button" variant="outline" onClick={requestClose}>
             Cancel
           </Button>

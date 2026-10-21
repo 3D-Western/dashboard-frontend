@@ -240,6 +240,13 @@ describe('InvitationCodeCell Component', () => {
     const { container } = render(<InvitationCodeCell code={invitationCode} />);
 
     const wrapper = container.firstChild;
-    expect(wrapper).toHaveClass('flex', 'w-full', 'items-center', 'justify-center', 'gap-2');
+    expect(wrapper).toHaveClass(
+      'flex',
+      'w-full',
+      'items-center',
+      'justify-start',
+      'md:justify-center',
+      'gap-2',
+    );
   });
 });

@@ -151,7 +151,7 @@ export function PublishDialog({
 
   return (
     <Dialog open onOpenChange={(open) => !open && !publishing && onClose()}>
-      <DialogContent className="max-h-[92vh] overflow-y-auto sm:max-w-xl">
+      <DialogContent className="max-h-[92dvh] overflow-y-auto sm:max-w-xl">
         <DialogHeader>
           <DialogTitle>Publish this draft</DialogTitle>
           <DialogDescription>
@@ -172,13 +172,14 @@ export function PublishDialog({
             return (
               <div
                 key={option.value}
-                className="flex items-start gap-3 rounded-lg border p-3 has-data-checked:border-primary has-data-checked:bg-primary/5"
+                className="relative flex items-start gap-3 rounded-lg border p-3 has-data-checked:border-primary has-data-checked:bg-primary/5"
               >
+                {/* Phones: the radio's hit area covers the whole row (44 px or taller) */}
                 <RadioGroupItem
                   value={option.value}
                   id={id}
                   disabled={disabled}
-                  className="mt-0.5"
+                  className="mt-0.5 after:absolute after:inset-0 after:content-[''] md:after:hidden"
                 />
                 <div className="space-y-0.5">
                   <Label htmlFor={id} className="leading-snug">
@@ -277,7 +278,7 @@ export function PublishDialog({
         />
         <ErrorNote message={serverIssues.length === 0 ? failure : null} />
 
-        <DialogFooter>
+        <DialogFooter stickyFooter>
           <Button type="button" variant="outline" disabled={publishing} onClick={onClose}>
             Cancel
           </Button>

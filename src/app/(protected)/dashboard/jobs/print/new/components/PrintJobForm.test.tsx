@@ -86,3 +86,23 @@ describe('PrintJobForm: orientation refusal', () => {
     ).not.toBeInTheDocument();
   });
 });
+
+describe('PrintJobForm: phone layout', () => {
+  it('limits the project title to 30 characters and counts them', async () => {
+    render(<PrintJobForm />);
+    const title = screen.getByLabelText('Project title');
+
+    expect(title).toHaveAttribute('maxLength', '30');
+    await userEvent.type(title, 'Gear');
+    expect(screen.getByText('4/30')).toBeInTheDocument();
+  });
+
+  it('gives purpose chips a 44 px tap target and a full-width submit in a sticky footer', () => {
+    render(<PrintJobForm />);
+
+    expect(screen.getByRole('radio', { name: /school project/i })).toHaveClass('min-h-11');
+    const submit = screen.getByRole('button', { name: 'Submit job' });
+    expect(submit).toHaveClass('min-h-11', 'w-full', 'md:w-auto');
+    expect(submit.parentElement).toHaveClass('sticky', 'bottom-0', 'md:static');
+  });
+});

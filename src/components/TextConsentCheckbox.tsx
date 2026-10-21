@@ -22,24 +22,29 @@ export function TextConsentCheckbox({
   disabled,
 }: TextConsentCheckboxProps) {
   return (
-    <div className="flex items-start gap-3 rounded-md border p-4">
-      <Checkbox
-        id={id}
-        checked={checked}
-        onCheckedChange={(value) => onCheckedChange(value === true)}
-        disabled={disabled}
-        className="mt-0.5"
-      />
-      <div className="grid min-w-0 gap-1 leading-snug">
-        <label
-          htmlFor={id}
-          className={cn(
-            'text-sm font-medium',
-            disabled ? 'text-muted-foreground' : 'cursor-pointer',
-          )}
+    <div className="rounded-md border p-4">
+      {/* The label row is the tap target: checkbox plus text, 44 px tall on phones. */}
+      <label
+        htmlFor={id}
+        className={cn(
+          'flex min-h-11 items-center gap-3 md:min-h-0 md:items-start',
+          disabled ? 'cursor-not-allowed' : 'cursor-pointer',
+        )}
+      >
+        <Checkbox
+          id={id}
+          checked={checked}
+          onCheckedChange={(value) => onCheckedChange(value === true)}
+          disabled={disabled}
+          className="md:mt-0.5"
+        />
+        <span
+          className={cn('text-sm leading-snug font-medium', disabled && 'text-muted-foreground')}
         >
           Text me about my prints and access
-        </label>
+        </span>
+      </label>
+      <div className="grid min-w-0 gap-1 pl-8 leading-snug md:pl-7">
         <p className="text-sm text-muted-foreground">
           We&apos;ll only text about your prints and access. Reply STOP any time.
         </p>

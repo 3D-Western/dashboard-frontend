@@ -33,7 +33,10 @@ import { OrientationLockNotice } from '@/components/Training/OrientationLockNoti
 import { TrainingErrorCodes } from '@/api/client/training-errors';
 
 const formSchema = z.object({
-  jobName: z.string().min(1, { message: 'Must have a name for the print request' }).max(30),
+  jobName: z
+    .string()
+    .min(1, { message: 'Must have a name for the print request' })
+    .max(30, { message: 'Keep it to 30 characters or fewer' }),
   description: z
     .string()
     .min(2, { message: 'Must have a description for the print request' })
@@ -140,9 +143,20 @@ export default function NewPrintForm({ mockMode = false }: NewPrintFormProps = {
               <FormItem>
                 <FormLabel className="text-lg">Project title</FormLabel>
                 <FormControl>
-                  <Input placeholder="e.g. Robot Arm Gear – Revision B" {...field} />
+                  <Input placeholder="e.g. Robot Arm Gear – Revision B" maxLength={30} {...field} />
                 </FormControl>
-                <FormMessage />
+                <div className="flex items-center justify-between">
+                  <FormMessage />
+                  <span
+                    className={`text-sm ${
+                      (field.value?.length || 0) >= 27
+                        ? 'text-amber-600 dark:text-amber-500'
+                        : 'text-muted-foreground'
+                    }`}
+                  >
+                    {field.value?.length || 0}/30
+                  </span>
+                </div>
               </FormItem>
             )}
           />
@@ -211,14 +225,15 @@ export default function NewPrintForm({ mockMode = false }: NewPrintFormProps = {
 
           <PurposeChips />
           <DesignIntentCards />
-          <div className="flex justify-end border-t pt-6">
+          {/* Phones: the submit stays in reach at the bottom of a long form. Desktop: inline. */}
+          <div className="sticky bottom-0 z-10 flex justify-end border-t bg-background py-3 md:static md:bg-transparent md:pt-6 md:pb-0">
             <Button
               type="submit"
               size="default"
               variant="default"
               disabled={form.formState.isSubmitting || orientationRequired}
               aria-busy={form.formState.isSubmitting}
-              className="min-w-[120px]"
+              className="min-h-11 w-full md:min-h-0 md:w-auto md:min-w-[120px]"
             >
               {form.formState.isSubmitting ? (
                 <span className="inline-flex items-center">

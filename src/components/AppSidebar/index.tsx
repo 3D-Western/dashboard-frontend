@@ -32,12 +32,14 @@ import {
   ChevronDown,
   TicketPlus,
   PenSquare,
+  DoorOpen,
   type LucideIcon,
 } from 'lucide-react';
 import Link from 'next/link';
 import { BrandLockup } from '@/components/BrandLogo';
 import { usePathname } from 'next/navigation';
 import { Routes } from '@/lib/routes';
+import { AccessAdminRoutes } from '@/lib/access-admin-routes';
 
 // NOTE: Equipment Booking, IAM Management, Audit Log, and the booking-admin pages (Equipment
 // Bookings / Booking Requests / Equipment Management) are intentionally left out of this list
@@ -120,6 +122,12 @@ const adminNavigationItems: AdminNavItem[] = [
     permission: PERMISSIONS.TRAINING_AUTHOR,
     alsoPermission: PERMISSIONS.TRAINING_PUBLISH,
   },
+  {
+    title: 'Access System',
+    url: AccessAdminRoutes.home,
+    icon: DoorOpen,
+    permission: PERMISSIONS.ACCESS_ADMIN,
+  },
 ];
 
 // Larger text and tap area than the shadcn default, especially on phones
@@ -187,7 +195,7 @@ export function AppSidebar({ user }: AppSidebarProps) {
                       </Link>
                     </SidebarMenuButton>
                     <CollapsibleTrigger asChild>
-                      <SidebarMenuAction className="data-[state=open]:rotate-180">
+                      <SidebarMenuAction className="top-0! right-0! size-11! data-[state=open]:rotate-180 md:top-1.5! md:right-1! md:size-5!">
                         <ChevronDown />
                         <span className="sr-only">Toggle admin pages</span>
                       </SidebarMenuAction>

@@ -68,4 +68,17 @@ describe('SignupForm phone number and text consent', () => {
     expect(await screen.findByText(/10-digit North American phone number/i)).toBeInTheDocument();
     expect(sessionApi.signup).not.toHaveBeenCalled();
   });
+
+  it('accepts any 9-digit student number and an upper-case uwo email (D-5 open signup)', async () => {
+    render(<SignupForm />);
+
+    await userEvent.type(screen.getByLabelText(/student id/i), '100000001');
+    await userEvent.type(screen.getByLabelText(/uwo email/i), 'JDoe2@UWO.ca');
+    await userEvent.click(screen.getByRole('button', { name: /create account/i }));
+
+    // Other required fields are blank, so their errors show up in the same pass. Wait for one of them.
+    expect(await screen.findByText(/first name is required/i)).toBeInTheDocument();
+    expect(screen.queryByText(/student id must/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/must be a valid uwo email/i)).not.toBeInTheDocument();
+  });
 });

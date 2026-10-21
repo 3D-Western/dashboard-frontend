@@ -194,7 +194,7 @@ export function CreateInvitationDialog({
                   <FormLabel>Expires In</FormLabel>
                   <Select onValueChange={field.onChange} defaultValue={field.value}>
                     <FormControl>
-                      <SelectTrigger>
+                      <SelectTrigger className="w-full">
                         <SelectValue placeholder="Select expiry period" />
                       </SelectTrigger>
                     </FormControl>
