@@ -13,9 +13,9 @@ export default async function LoginPage({
 }) {
   const { error } = await searchParams;
 
-  // Phones start at the top so the Login button stays clear of the keyboard
+  // Phones start at the top (below the theme toggle) so the Login button stays clear of the keyboard
   return (
-    <div className="flex min-h-svh flex-col items-center justify-start p-6 md:justify-center md:p-10">
+    <div className="flex min-h-svh flex-col items-center justify-start px-6 pt-16 pb-6 md:justify-center md:p-10">
       <div className="w-full max-w-sm md:max-w-4xl">
         <LoginForm error={error} />
       </div>
