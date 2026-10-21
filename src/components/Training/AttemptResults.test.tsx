@@ -90,6 +90,48 @@ describe('AttemptResults: fail', () => {
     expect(screen.queryByText(/question \d/i)).not.toBeInTheDocument();
   });
 
+  it('links to a read-only review of the material, and each section opens on itself', () => {
+    render(<AttemptResults attempt={failedAttempt()} quizResult={failed} />);
+
+    expect(screen.getByRole('link', { name: 'Review the material' })).toHaveAttribute(
+      'href',
+      '/dashboard/training/attempt/42/review',
+    );
+    expect(screen.getByRole('link', { name: 'Safety video' })).toHaveAttribute(
+      'href',
+      '/dashboard/training/attempt/42/review?step=11',
+    );
+    expect(screen.getByRole('link', { name: 'Emergency procedures' })).toHaveAttribute(
+      'href',
+      '/dashboard/training/attempt/42/review?step=12',
+    );
+  });
+
+  it('offers the review while the retry cooldown is running too, and never after a pass', async () => {
+    api.getMyTrainings.mockResolvedValue({
+      orientationComplete: false,
+      orientationRequired: true,
+      trainings: [
+        createTrainingSummary({
+          nextAction: 'BLOCKED',
+          blockedReason: 'RETRY_COOLDOWN',
+          retryAt: '2026-10-20T13:00:00Z',
+        }),
+      ],
+    });
+    const { unmount } = render(
+      <AttemptResults
+        attempt={failedAttempt()}
+        quizResult={{ ...failed, retryAt: '2026-10-20T13:00:00Z' }}
+      />,
+    );
+    expect(screen.getByRole('link', { name: 'Review the material' })).toBeInTheDocument();
+    unmount();
+
+    render(<AttemptResults attempt={createAttempt({ status: 'PASSED' })} quizResult={null} />);
+    expect(screen.queryByRole('link', { name: /review the material/i })).not.toBeInTheDocument();
+  });
+
   it('works when reopening a finished attempt (no quiz result in hand)', () => {
     const attempt = createAttempt({
       status: 'FAILED',

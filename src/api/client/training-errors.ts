@@ -1,5 +1,5 @@
 import { ApiError, ErrorCodes } from './errors';
-import { formatWhen } from '@/lib/training-format';
+import { formatClock, formatWhen } from '@/lib/training-format';
 
 /** Every error code in the learner training contract (docs/plans/training-v1.md). */
 export const TrainingErrorCodes = {
@@ -7,6 +7,8 @@ export const TrainingErrorCodes = {
   ATTEMPT_NOT_FOUND: 'ATTEMPT_NOT_FOUND',
   STEP_NOT_FOUND: 'STEP_NOT_FOUND',
   CHECKPOINT_NOT_FOUND: 'CHECKPOINT_NOT_FOUND',
+  REWATCH_REQUIRED: 'REWATCH_REQUIRED',
+  REVIEW_NOT_AVAILABLE: 'REVIEW_NOT_AVAILABLE',
   AGREEMENT_NOT_FOUND: 'AGREEMENT_NOT_FOUND',
   ATTEMPT_ALREADY_IN_PROGRESS: 'ATTEMPT_ALREADY_IN_PROGRESS',
   ALREADY_CERTIFIED: 'ALREADY_CERTIFIED',
@@ -128,6 +130,15 @@ export function trainingErrorMessage(
         ? `Answer every question before submitting. ${count} ${count === 1 ? 'question is' : 'questions are'} still blank.`
         : 'Answer every question before submitting.';
     }
+    case TrainingErrorCodes.REWATCH_REQUIRED: {
+      const from = details.rewatchFromSeconds;
+      const to = details.checkpointAtSeconds;
+      return typeof from === 'number' && typeof to === 'number'
+        ? `Watch the video again from ${formatClock(from)} to ${formatClock(to)} before answering.`
+        : 'Watch that part of the video again before answering.';
+    }
+    case TrainingErrorCodes.REVIEW_NOT_AVAILABLE:
+      return 'You can review the material after an attempt that was not passed.';
     case TrainingErrorCodes.INVALID_ANSWER:
       return "That answer wasn't accepted. Choose from the options shown.";
     case TrainingErrorCodes.ATTESTATION_NOT_ACCEPTED:

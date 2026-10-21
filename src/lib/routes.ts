@@ -25,6 +25,9 @@ export const Routes = {
   training: {
     home: '/dashboard/training',
     attempt: (attemptId: number) => `/dashboard/training/attempt/${attemptId}`,
+    /** Read-only review of a failed attempt's material; `stepId` opens on that section. */
+    review: (attemptId: number, stepId?: number) =>
+      `/dashboard/training/attempt/${attemptId}/review${stepId ? `?step=${stepId}` : ''}`,
   },
 
   jobs: {

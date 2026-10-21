@@ -15,7 +15,7 @@ import {
   furthestWatched,
   seekLimit,
 } from '@/lib/video-watch';
-import type { AttemptStep, VideoCheckpoint, VideoPlayback } from '@/types/training';
+import type { AttemptStep, Rewatch, VideoCheckpoint, VideoPlayback } from '@/types/training';
 import { QuestionCard } from './QuestionCard';
 import { useTrainingRuntime } from './TrainingRuntime';
 
@@ -37,7 +37,8 @@ const TRANSIENT_HEARTBEAT_ERRORS = new Set<string>([
   'UNKNOWN_ERROR',
 ]);
 
-export const PLAYBACK_RATES = [0.5, 0.75, 1, 1.25, 1.5, 1.75, 2, 3, 4];
+/** The speeds on offer. The server also refuses credit beyond 2x of real time (`training.video.max-playback-speed`). */
+export const PLAYBACK_RATES = [0.5, 0.75, 1, 1.25, 1.5, 1.75, 2];
 
 interface VideoStepProps {
   attemptId: number;
@@ -47,9 +48,11 @@ interface VideoStepProps {
 }
 
 export function VideoStep({ attemptId, step, onStepCompleted }: VideoStepProps) {
-  const { api, preview } = useTrainingRuntime();
+  const { api, preview, review } = useTrainingRuntime();
   // Staff previewing may jump anywhere; the questions still come up as the video reaches them.
-  const freeSeek = preview !== null;
+  // Reviewing a failed attempt is just watching: free seeking, no questions, nothing sent.
+  const freeSeek = preview !== null || review !== null;
+  const reviewing = review !== null;
   const block = step.video!;
   const stepId = step.stepId;
 
@@ -58,6 +61,12 @@ export function VideoStep({ attemptId, step, onStepCompleted }: VideoStepProps) 
 
   // Mutable playback bookkeeping. None of it is rendered directly, so refs keep handlers cheap.
   const trackerRef = useRef(new WatchTracker());
+  // After a wrong answer: the seconds played since then (what the server credits toward the re-watch),
+  // and how far forward the learner may seek while it is owed.
+  const rewatchTrackerRef = useRef(new WatchTracker());
+  const rewatchRef = useRef<Rewatch | null>(block.rewatch ?? null);
+  const rewatchFurthestRef = useRef(block.rewatch?.fromSeconds ?? 0);
+  const awaitingRewatchRef = useRef(false);
   const furthestRef = useRef(furthestWatched(block.watchedRanges));
   const pendingFocusLossRef = useRef(0);
   const awayRef = useRef(false);
@@ -95,6 +104,7 @@ export function VideoStep({ attemptId, step, onStepCompleted }: VideoStepProps) 
   const [checkpointError, setCheckpointError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [heartbeatError, setHeartbeatError] = useState<string | null>(null);
+  const [rewatch, setRewatch] = useState<Rewatch | null>(block.rewatch ?? null);
   // This component only ever renders in the browser (after the attempt has loaded), so no hydration concern
   const canFullscreen = typeof document !== 'undefined' && !!document.fullscreenEnabled;
 
@@ -105,6 +115,48 @@ export function VideoStep({ attemptId, step, onStepCompleted }: VideoStepProps) 
     setCheckpointError(null);
   }, []);
 
+  // ---- Tracking what was played -------------------------------------------------------------
+
+  const sampleTrackers = useCallback((time: number, rate: number) => {
+    trackerRef.current.sample(time, rate);
+    if (rewatchRef.current) rewatchTrackerRef.current.sample(time, rate);
+    if (time > furthestRef.current) furthestRef.current = time;
+    if (rewatchRef.current && time > rewatchFurthestRef.current) {
+      rewatchFurthestRef.current = time;
+    }
+  }, []);
+
+  const breakTrackers = useCallback(() => {
+    trackerRef.current.breakSegment();
+    rewatchTrackerRef.current.breakSegment();
+  }, []);
+
+  /** The furthest point the learner may seek to: what they watched, or while a re-watch is owed, what they replayed since. */
+  const seekFurthest = () =>
+    rewatchRef.current ? rewatchFurthestRef.current : furthestRef.current;
+
+  /** A wrong answer (or the server's REWATCH_REQUIRED): the segment before the question must be watched again. */
+  const beginRewatch = useCallback(
+    (next: Rewatch) => {
+      if (freeSeek) return;
+      rewatchRef.current = next;
+      rewatchTrackerRef.current = new WatchTracker();
+      rewatchFurthestRef.current = next.fromSeconds;
+      awaitingRewatchRef.current = false;
+      setRewatch(next);
+    },
+    [freeSeek],
+  );
+
+  const finishRewatch = useCallback(() => {
+    rewatchRef.current = null;
+    rewatchTrackerRef.current = new WatchTracker();
+    setRewatch(null);
+  }, []);
+
+  // Assigned below, once the pieces it needs exist
+  const resolveAwaitedRef = useRef<(capped: boolean) => void>(() => undefined);
+
   // ---- Heartbeat ----------------------------------------------------------------------------
 
   const sendHeartbeatRef = useRef<(force?: boolean, keepalive?: boolean) => Promise<void>>(
@@ -113,23 +165,33 @@ export function VideoStep({ attemptId, step, onStepCompleted }: VideoStepProps) 
 
   const sendHeartbeat = useCallback(
     async (force = false, keepalive = false) => {
-      if (completedRef.current || blockedRef.current) return;
+      // Reviewing a failed attempt records nothing
+      if (completedRef.current || blockedRef.current || reviewing) return;
       // A keepalive send is the last chance (the page is going away), so it never waits its turn
       if (inFlightRef.current && !keepalive) {
         queuedRef.current = true;
         return;
       }
       const ranges = trackerRef.current.snapshot();
+      const rewatchRanges = rewatchRef.current ? rewatchTrackerRef.current.snapshot() : [];
       const focusLossCount = pendingFocusLossRef.current;
-      const key = JSON.stringify(ranges);
+      const key = JSON.stringify([ranges, rewatchRanges]);
       // Nothing new to say
-      if (!force && focusLossCount === 0 && (ranges.length === 0 || key === lastSentRef.current)) {
+      if (
+        !force &&
+        focusLossCount === 0 &&
+        ((ranges.length === 0 && rewatchRanges.length === 0) || key === lastSentRef.current)
+      ) {
         return;
       }
 
       inFlightRef.current = true;
       try {
-        const body = { ranges, focusLossCount };
+        const body = {
+          ranges,
+          focusLossCount,
+          ...(rewatchRanges.length > 0 ? { rewatchRanges } : {}),
+        };
         const result = keepalive
           ? await api.sendHeartbeat(attemptId, stepId, body, { keepalive: true })
           : await api.sendHeartbeat(attemptId, stepId, body);
@@ -142,6 +204,16 @@ export function VideoStep({ attemptId, step, onStepCompleted }: VideoStepProps) 
             passedRef.current.add(checkpoint.checkpointId);
           }
         }
+        // Trust the server about whether a re-watch is still owed
+        if (rewatchRef.current) {
+          if (result.rewatch) {
+            rewatchRef.current = result.rewatch;
+            setRewatch(result.rewatch);
+          } else {
+            finishRewatch();
+          }
+        }
+        if (awaitingRewatchRef.current) resolveAwaitedRef.current(result.capped);
         if (result.stepCompleted) {
           completedRef.current = true;
           onStepCompleted();
@@ -156,6 +228,10 @@ export function VideoStep({ attemptId, step, onStepCompleted }: VideoStepProps) 
           cappedRetriesRef.current = 0;
         }
       } catch (error) {
+        if (awaitingRewatchRef.current) {
+          awaitingRewatchRef.current = false;
+          setNotice("We couldn't check that yet. Press play to carry on.");
+        }
         if (error instanceof ApiError && error.code === TrainingErrorCodes.STEP_ALREADY_COMPLETED) {
           // Credit was already complete (another tab, or an earlier heartbeat): move on.
           completedRef.current = true;
@@ -180,7 +256,7 @@ export function VideoStep({ attemptId, step, onStepCompleted }: VideoStepProps) 
         }
       }
     },
-    [api, attemptId, stepId, block.checkpoints, onStepCompleted],
+    [api, attemptId, stepId, block.checkpoints, onStepCompleted, reviewing, finishRewatch],
   );
 
   // (assigned below, once sendHeartbeat exists)
@@ -234,17 +310,16 @@ export function VideoStep({ attemptId, step, onStepCompleted }: VideoStepProps) 
     const time = video ? video.currentTime : lastTimeRef.current;
     if (time === null || !Number.isFinite(time)) return;
     if (video?.seeking) return;
-    trackerRef.current.sample(time, video?.playbackRate || rateRef.current);
-    if (time > furthestRef.current) furthestRef.current = time;
-  }, []);
+    sampleTrackers(time, video?.playbackRate || rateRef.current);
+  }, [sampleTrackers]);
 
   // Last chance to report: the page is closing (or this step is going away). `keepalive` lets
   // the request finish after the page is gone.
   const flush = useCallback(() => {
     if (playingRef.current) sampleNow();
-    trackerRef.current.breakSegment();
+    breakTrackers();
     void sendHeartbeatRef.current(false, true);
-  }, [sampleNow]);
+  }, [sampleNow, breakTrackers]);
 
   useEffect(() => {
     window.addEventListener('pagehide', flush);
@@ -290,16 +365,48 @@ export function VideoStep({ attemptId, step, onStepCompleted }: VideoStepProps) 
   const openCheckpoint = () => firstOpenCheckpoint(block.checkpoints, passedRef.current);
 
   const maybeAskCheckpoint = (time: number, atEnd = false) => {
-    if (activeCheckpointRef.current) return;
+    if (activeCheckpointRef.current || awaitingRewatchRef.current) return;
     const open = openCheckpoint();
     if (
       open &&
       (time >= open.atSeconds || (atEnd && open.atSeconds >= duration - SEEK_TOLERANCE_SECONDS))
     ) {
       videoRef.current?.pause();
+      if (rewatchRef.current?.checkpointId === open.checkpointId) {
+        // A wrong answer is still being made up: the server says whether the replay counts before the
+        // question comes back, so this is not a place to guess.
+        awaitingRewatchRef.current = true;
+        setNotice('Checking that you watched it again...');
+        void sendHeartbeatRef.current(true);
+        return;
+      }
       showCheckpoint(open);
     }
   };
+
+  // The server has answered the heartbeat sent when the replay reached the question
+  useEffect(() => {
+    resolveAwaitedRef.current = (capped: boolean) => {
+      const owed = rewatchRef.current;
+      const video = videoRef.current;
+      if (!owed) {
+        awaitingRewatchRef.current = false;
+        setNotice(null);
+        maybeAskCheckpoint(video?.currentTime ?? 0, video?.ended ?? false);
+      } else if (!capped) {
+        // The replay did not cover enough: send them back to the start of it
+        awaitingRewatchRef.current = false;
+        setNotice(
+          `Watch from ${formatClock(owed.fromSeconds)} to ${formatClock(owed.toSeconds)} to unlock the question.`,
+        );
+        if (video) {
+          video.currentTime = owed.fromSeconds;
+          setCurrentTime(owed.fromSeconds);
+        }
+      }
+      // capped: part of the replay is still being credited; the retry in sendHeartbeat asks again
+    };
+  });
 
   const handleLoadedMetadata = () => {
     const video = videoRef.current;
@@ -316,7 +423,11 @@ export function VideoStep({ attemptId, step, onStepCompleted }: VideoStepProps) 
       // First load: carry on from where they got to last time
       firstLoadRef.current = false;
       const open = openCheckpoint();
-      const resumeAt = open ? Math.min(furthestRef.current, open.atSeconds) : furthestRef.current;
+      const resumeAt = rewatchRef.current
+        ? rewatchRef.current.fromSeconds
+        : open
+          ? Math.min(furthestRef.current, open.atSeconds)
+          : furthestRef.current;
       if (resumeAt > 5 && !completedRef.current) video.currentTime = resumeAt;
     }
   };
@@ -328,8 +439,7 @@ export function VideoStep({ attemptId, step, onStepCompleted }: VideoStepProps) 
     lastTimeRef.current = time;
     setCurrentTime(time);
     if (!video.seeking && !video.paused) {
-      trackerRef.current.sample(time, video.playbackRate || rateRef.current);
-      if (time > furthestRef.current) furthestRef.current = time;
+      sampleTrackers(time, video.playbackRate || rateRef.current);
     }
     maybeAskCheckpoint(time);
   };
@@ -337,9 +447,9 @@ export function VideoStep({ attemptId, step, onStepCompleted }: VideoStepProps) 
   const handleSeeking = () => {
     const video = videoRef.current;
     if (!video) return;
-    trackerRef.current.breakSegment();
+    breakTrackers();
     if (freeSeek) return;
-    const limit = seekLimit(furthestRef.current, openCheckpoint());
+    const limit = seekLimit(seekFurthest(), openCheckpoint());
     if (video.currentTime > limit) {
       // Forward seeking past what they've watched is blocked; send them back to the edge.
       video.currentTime = Math.max(0, limit - SEEK_TOLERANCE_SECONDS);
@@ -360,7 +470,7 @@ export function VideoStep({ attemptId, step, onStepCompleted }: VideoStepProps) 
     playingRef.current = false;
     setPlaying(false);
     stopInterval();
-    trackerRef.current.breakSegment();
+    breakTrackers();
     void sendHeartbeat();
   };
 
@@ -369,7 +479,7 @@ export function VideoStep({ attemptId, step, onStepCompleted }: VideoStepProps) 
     playingRef.current = false;
     setPlaying(false);
     stopInterval();
-    trackerRef.current.breakSegment();
+    breakTrackers();
     const video = videoRef.current;
     maybeAskCheckpoint(video?.currentTime ?? duration, true);
     void sendHeartbeat(true);
@@ -423,7 +533,7 @@ export function VideoStep({ attemptId, step, onStepCompleted }: VideoStepProps) 
       return;
     }
     // The furthest point they may jump to: what they've watched, and never past an open question
-    const limit = seekLimit(furthestRef.current, openCheckpoint()) - SEEK_TOLERANCE_SECONDS;
+    const limit = seekLimit(seekFurthest(), openCheckpoint()) - SEEK_TOLERANCE_SECONDS;
     if (value > limit + SEEK_TOLERANCE_SECONDS) {
       setNotice("You can't skip ahead of what you've watched. Going back is always fine.");
     }
@@ -474,6 +584,11 @@ export function VideoStep({ attemptId, step, onStepCompleted }: VideoStepProps) 
       } else {
         // Wrong: watch that part again. We never learn or show the right answer.
         const from = result.rewatchFromSeconds ?? 0;
+        beginRewatch({
+          checkpointId: checkpoint.checkpointId,
+          fromSeconds: from,
+          toSeconds: checkpoint.atSeconds,
+        });
         setCheckpointMessage("That wasn't right. Let's watch that part again.");
         showCheckpoint(null);
         if (video) {
@@ -483,7 +598,27 @@ export function VideoStep({ attemptId, step, onStepCompleted }: VideoStepProps) 
         }
       }
     } catch (error) {
-      setCheckpointError(trainingErrorMessage(error));
+      if (error instanceof ApiError && error.code === TrainingErrorCodes.REWATCH_REQUIRED) {
+        // The server wants the replay first (for example after a reload): go back to where it starts
+        const details = (error.details ?? {}) as Record<string, unknown>;
+        const from =
+          typeof details.rewatchFromSeconds === 'number' ? details.rewatchFromSeconds : 0;
+        beginRewatch({
+          checkpointId: checkpoint.checkpointId,
+          fromSeconds: from,
+          toSeconds: checkpoint.atSeconds,
+        });
+        setCheckpointMessage(trainingErrorMessage(error));
+        showCheckpoint(null);
+        const video = videoRef.current;
+        if (video) {
+          video.currentTime = from;
+          setCurrentTime(from);
+          void video.play()?.catch(() => undefined);
+        }
+      } else {
+        setCheckpointError(trainingErrorMessage(error));
+      }
     } finally {
       setChecking(false);
     }
@@ -627,6 +762,14 @@ export function VideoStep({ attemptId, step, onStepCompleted }: VideoStepProps) 
             <AlertDescription>{notice}</AlertDescription>
           </Alert>
         )}
+        {rewatch && !activeCheckpoint && (
+          <Alert variant="warning" role="status">
+            <AlertDescription>
+              To bring the question back, watch from {formatClock(rewatch.fromSeconds)} to{' '}
+              {formatClock(rewatch.toSeconds)} again. Skipping ahead isn&apos;t possible until then.
+            </AlertDescription>
+          </Alert>
+        )}
       </div>
 
       {loadError && (
@@ -665,25 +808,27 @@ export function VideoStep({ attemptId, step, onStepCompleted }: VideoStepProps) 
         </Alert>
       )}
 
-      <div className="space-y-1">
-        <div
-          role="progressbar"
-          aria-label="Video watched"
-          aria-valuemin={0}
-          aria-valuemax={100}
-          aria-valuenow={Math.round(watchedPercent)}
-          className="h-2 w-full overflow-hidden rounded-full bg-muted"
-        >
+      {!reviewing && (
+        <div className="space-y-1">
           <div
-            className="h-full bg-linear-to-r from-purple-dark to-purple-light transition-all motion-reduce:transition-none"
-            style={{ width: `${Math.min(100, Math.max(0, watchedPercent))}%` }}
-          />
+            role="progressbar"
+            aria-label="Video watched"
+            aria-valuemin={0}
+            aria-valuemax={100}
+            aria-valuenow={Math.round(watchedPercent)}
+            className="h-2 w-full overflow-hidden rounded-full bg-muted"
+          >
+            <div
+              className="h-full bg-linear-to-r from-purple-dark to-purple-light transition-all motion-reduce:transition-none"
+              style={{ width: `${Math.min(100, Math.max(0, watchedPercent))}%` }}
+            />
+          </div>
+          <p className="text-sm text-muted-foreground">
+            Watched {Math.round(watchedPercent)}%. Watch at least {block.minWatchPercent}% to
+            continue. You can play at up to 2x, and the video pauses if you switch tabs.
+          </p>
         </div>
-        <p className="text-sm text-muted-foreground">
-          Watched {Math.round(watchedPercent)}%. Watch at least {block.minWatchPercent}% to
-          continue. Playing at any speed is fine, and the video pauses if you switch tabs.
-        </p>
-      </div>
+      )}
     </div>
   );
 }

@@ -103,6 +103,10 @@ export const endpoints = {
     attempt: (attemptId: number) => `/api/v1/training/attempts/${attemptId}`,
     pledge: (attemptId: number) => `/api/v1/training/attempts/${attemptId}/pledge`,
     abandon: (attemptId: number) => `/api/v1/training/attempts/${attemptId}/abandon`,
+    // Read-only review of a failed attempt's material
+    review: (attemptId: number) => `/api/v1/training/attempts/${attemptId}/review`,
+    reviewPlaybackUrl: (attemptId: number, stepId: number) =>
+      `/api/v1/training/attempts/${attemptId}/review/steps/${stepId}/video/playback-url`,
     step: (attemptId: number, stepId: number) =>
       `/api/v1/training/attempts/${attemptId}/steps/${stepId}`,
     pendingAgreements: '/api/v1/training/agreements/pending',

@@ -64,9 +64,19 @@ export function TrainingCard({
       {training.signoffFeedback && <SignoffFeedbackNote feedback={training.signoffFeedback} />}
 
       {isNotPassed(training) && (
-        <p className="text-sm font-medium text-status-yellow-foreground">
-          You haven&apos;t passed this training yet.
-        </p>
+        <div className="space-y-1">
+          <p className="text-sm font-medium text-status-yellow-foreground">
+            You haven&apos;t passed this training yet.
+          </p>
+          {training.reviewAttemptId && (
+            <Link
+              href={Routes.training.review(training.reviewAttemptId)}
+              className="inline-flex min-h-11 items-center text-sm underline fine:min-h-0"
+            >
+              Review the material
+            </Link>
+          )}
+        </div>
       )}
 
       {errorMessage && (
