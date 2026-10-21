@@ -88,9 +88,11 @@ export function createPreviewSession(
     opened: false,
     reveal: null,
   });
+  /** What each quiz step draws: the first fetch, replaced as a whole by a retake's fresh fetch. */
+  let drawn: PreviewQuiz[] = preview.quizzes;
   const resetQuizzes = () => {
     quizStates.clear();
-    preview.quizzes.forEach((quiz) => quizStates.set(quiz.stepId, freshQuizState(quiz)));
+    drawn.forEach((quiz) => quizStates.set(quiz.stepId, freshQuizState(quiz)));
   };
   resetQuizzes();
 
@@ -221,6 +223,8 @@ export function createPreviewSession(
       const usable = (v: PreviewVideo | undefined) =>
         !!v?.url && !!v.expiresAt && new Date(v.expiresAt).getTime() > Date.now() + LINK_MARGIN_MS;
       let video = videos.get(stepId);
+      // A problem (no file, or a checkpoint whose question is gone) means this step is not ready to preview.
+      if (video?.problem) throw new PreviewProblemError(video.problem);
       if (!usable(video) && options.refetch) {
         try {
           const fresh = await options.refetch();
@@ -385,18 +389,21 @@ export function createPreviewSession(
     },
 
     retakeQuiz: async (stepId) => {
-      let quiz = preview.quizzes.find((q) => q.stepId === stepId);
       if (options.refetch) {
         try {
-          // A fresh draw (a random quiz may pick other questions) and a fresh answer key.
+          // One fetch redraws every quiz step together, so no question can appear in two of them
+          // (the server draws them as one set), and brings a fresh answer key.
           const fresh = await options.refetch();
           fresh.answerKey.forEach((k) => keys.set(k.questionVersionId, k));
-          quiz = fresh.quizzes.find((q) => q.stepId === stepId) ?? quiz;
+          drawn = fresh.quizzes;
+          resetQuizzes();
+          return;
         } catch {
           // Offline or signed out: retake the same questions.
         }
       }
-      if (quiz) quizStates.set(stepId, freshQuizState(quiz));
+      const same = drawn.find((q) => q.stepId === stepId);
+      if (same) quizStates.set(stepId, freshQuizState(same));
     },
   };
 

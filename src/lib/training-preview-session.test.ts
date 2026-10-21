@@ -122,6 +122,24 @@ describe('a preview session', () => {
       await expect(noFile.api.getPlaybackUrl(0, 1)).rejects.toThrow('No video file yet.');
     });
 
+    it('says why a video cannot be previewed even when its file is fine', async () => {
+      const broken = start(
+        createPreview({
+          videos: [
+            {
+              stepId: 1,
+              url: 'https://videos.test/laser.mp4',
+              expiresAt: new Date(Date.now() + 3_600_000).toISOString(),
+              durationSeconds: 100,
+              problem: 'The question for the checkpoint at 0:50 no longer exists.',
+            },
+          ],
+        }),
+      );
+
+      await expect(broken.api.getPlaybackUrl(0, 1)).rejects.toThrow('no longer exists');
+    });
+
     it('asks the server for a fresh link when the one in hand is about to expire', async () => {
       const expiring = createPreview({
         videos: [
@@ -241,6 +259,39 @@ describe('a preview session', () => {
       await session.controls.retakeQuiz(4);
 
       expect((await session.api.openQuiz(0, 4)).questions).toHaveLength(1);
+    });
+
+    it('redraws every quiz step together on a retake, so no question shows up in two of them', async () => {
+      const twoQuizzes = (first: number[], second: number[]) => {
+        const preview = createPreview();
+        const pool = new Map(preview.quizzes[0].questions.map((q) => [q.questionVersionId, q]));
+        preview.attempt.steps.push({
+          ...preview.attempt.steps[3],
+          stepId: 5,
+          position: 5,
+          title: 'Second quiz',
+        });
+        preview.quizzes = [
+          { stepId: 4, questions: first.map((id) => pool.get(id)!), problem: null },
+          { stepId: 5, questions: second.map((id) => pool.get(id)!), problem: null },
+        ];
+        return preview;
+      };
+      const ids = async (session: ReturnType<typeof start>, stepId: number) =>
+        (await session.api.openQuiz(0, stepId)).questions.map((q) => q.questionVersionId);
+      // The second fetch swaps the two sets, as a random draw may
+      const refetch = vi.fn().mockResolvedValue(twoQuizzes([703], [701, 702]));
+      const session = start(twoQuizzes([701, 702], [703]), refetch);
+      expect(await ids(session, 4)).toEqual([701, 702]);
+
+      await session.controls.retakeQuiz(4);
+
+      expect(refetch).toHaveBeenCalledTimes(1);
+      const first = await ids(session, 4);
+      const second = await ids(session, 5);
+      expect(first).toEqual([703]);
+      expect(second).toEqual([701, 702]);
+      expect(first.filter((id) => second.includes(id))).toEqual([]);
     });
 
     it('explains an unfinished quiz instead of failing', async () => {
