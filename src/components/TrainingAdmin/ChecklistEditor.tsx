@@ -197,7 +197,7 @@ export function ChecklistEditor({ versionId, items, onSaved }: ChecklistEditorPr
                       ),
                     )
                   }
-                  className="h-7 w-40 rounded-md border border-input bg-transparent px-2 font-mono text-xs"
+                  className="h-7 w-40 rounded-md border border-input bg-transparent px-2 font-mono text-base md:text-xs"
                 />
               </div>
               {(labelError || keyError) && (

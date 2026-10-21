@@ -151,7 +151,7 @@ export function PublishDialog({
 
   return (
     <Dialog open onOpenChange={(open) => !open && !publishing && onClose()}>
-      <DialogContent className="max-h-[92vh] overflow-y-auto sm:max-w-xl">
+      <DialogContent className="max-h-[92dvh] overflow-y-auto sm:max-w-xl">
         <DialogHeader>
           <DialogTitle>Publish this draft</DialogTitle>
           <DialogDescription>
@@ -277,7 +277,7 @@ export function PublishDialog({
         />
         <ErrorNote message={serverIssues.length === 0 ? failure : null} />
 
-        <DialogFooter>
+        <DialogFooter stickyFooter>
           <Button type="button" variant="outline" disabled={publishing} onClick={onClose}>
             Cancel
           </Button>

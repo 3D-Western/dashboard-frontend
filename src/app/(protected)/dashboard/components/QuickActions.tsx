@@ -20,7 +20,7 @@ export function QuickActions() {
             <Lock aria-hidden="true" />
             <span className="flex flex-col items-start text-left whitespace-normal">
               <span>New print is locked</span>
-              <span className="text-xs font-normal text-muted-foreground">
+              <span className="text-sm font-normal text-muted-foreground md:text-xs">
                 Finish Maker Orientation to submit prints
               </span>
             </span>

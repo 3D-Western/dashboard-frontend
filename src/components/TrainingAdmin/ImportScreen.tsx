@@ -197,7 +197,7 @@ export function ImportScreen() {
           rows={16}
           spellCheck={false}
           placeholder="format: 3dw-training/1"
-          className="font-mono text-sm whitespace-pre"
+          className="font-mono text-base whitespace-pre md:text-sm"
           aria-describedby="import-size"
         />
         <p

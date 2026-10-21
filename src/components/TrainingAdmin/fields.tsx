@@ -31,16 +31,21 @@ export function FieldFrame({ id, label, help, error, hint, children, className }
     <div className={cn('space-y-1.5', className)}>
       <div className="flex flex-wrap items-baseline justify-between gap-x-3">
         <Label htmlFor={id}>{label}</Label>
-        {hint && <span className="text-xs text-muted-foreground">{hint}</span>}
+        {hint && <span className="text-sm text-muted-foreground md:text-xs">{hint}</span>}
       </div>
       {children}
       {help && (
-        <p id={`${id}-help`} className="text-xs text-muted-foreground">
+        <p id={`${id}-help`} className="text-sm text-muted-foreground md:text-xs">
           {help}
         </p>
       )}
       {messages.map((message) => (
-        <p key={message} id={`${id}-error`} role="alert" className="text-xs text-destructive">
+        <p
+          key={message}
+          id={`${id}-error`}
+          role="alert"
+          className="text-sm text-destructive md:text-xs"
+        >
           {message}
         </p>
       ))}
@@ -218,7 +223,7 @@ export function CheckField({
         <span className="text-sm leading-snug font-medium">{label}</span>
       </label>
       {help && (
-        <p id={`${id}-help`} className="pl-8 text-xs text-muted-foreground md:pl-7">
+        <p id={`${id}-help`} className="pl-8 text-sm text-muted-foreground md:pl-7 md:text-xs">
           {help}
         </p>
       )}

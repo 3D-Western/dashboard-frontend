@@ -223,6 +223,20 @@ describe('AppSidebar', () => {
     });
   });
 
+  describe('phone tap targets', () => {
+    it('makes the admin sub-links and the collapse chevron 44 px on phones', () => {
+      const admin = createMockAdmin({ permissions: [perm(PERMISSIONS.USERS_LIST)] });
+      renderSidebar(admin);
+
+      expect(screen.getByRole('link', { name: /^user management$/i })).toHaveClass(
+        'h-11',
+        'md:h-7',
+      );
+      const chevron = screen.getByRole('button', { name: /toggle admin pages/i });
+      expect(chevron).toHaveClass('size-11!', 'md:size-5!');
+    });
+  });
+
   describe('user footer', () => {
     it('displays the user name and student ID', () => {
       const user = createMockUser({ firstName: 'Jane', lastName: 'Smith', studentId: 251000001 });

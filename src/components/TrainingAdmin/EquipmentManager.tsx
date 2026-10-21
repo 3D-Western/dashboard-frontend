@@ -376,7 +376,7 @@ function GroupDialog({
 
   return (
     <Dialog open onOpenChange={(open) => !open && requestClose()}>
-      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-md">
+      <DialogContent className="max-h-[92dvh] overflow-y-auto sm:max-w-md">
         <DialogHeader>
           <DialogTitle>{group ? 'Edit group' : 'Add an equipment group'}</DialogTitle>
           <DialogDescription>
@@ -419,7 +419,7 @@ function GroupDialog({
           />
           <ServerProblems issues={problems} failure={failure} claimedFields={['name', 'slug']} />
         </div>
-        <DialogFooter>
+        <DialogFooter stickyFooter>
           <Button type="button" variant="outline" onClick={requestClose}>
             Cancel
           </Button>
@@ -492,7 +492,7 @@ function MachineDialog({
 
   return (
     <Dialog open onOpenChange={(open) => !open && requestClose()}>
-      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-md">
+      <DialogContent className="max-h-[92dvh] overflow-y-auto sm:max-w-md">
         <DialogHeader>
           <DialogTitle>{machine ? 'Edit machine' : 'Add a machine'}</DialogTitle>
           <DialogDescription>One physical machine, belonging to a group.</DialogDescription>
@@ -545,7 +545,7 @@ function MachineDialog({
             claimedFields={['name', 'slug', 'equipmentGroupId']}
           />
         </div>
-        <DialogFooter>
+        <DialogFooter stickyFooter>
           <Button type="button" variant="outline" onClick={requestClose}>
             Cancel
           </Button>
