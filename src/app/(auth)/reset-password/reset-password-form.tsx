@@ -74,8 +74,8 @@ export function ResetPasswordForm({ className, ...props }: React.ComponentProps<
     return (
       <div className={cn('flex flex-col gap-6', className)} {...props}>
         <Card className="overflow-hidden p-0">
-          <CardContent className="grid p-0 md:grid-cols-2">
-            <div className="flex min-h-[500px] items-center p-6 md:p-8">
+          <CardContent className="grid p-0 lg:grid-cols-2 short:grid-cols-1">
+            <div className="flex items-center p-6 md:p-8 lg:min-h-[500px]">
               <div className="grid w-full gap-6">
                 <div className="flex flex-col items-center gap-2 text-center">
                   <h1 className="text-2xl font-bold">Invalid Reset Link</h1>
@@ -90,14 +90,14 @@ export function ResetPasswordForm({ className, ...props }: React.ComponentProps<
                   Remember your password?{' '}
                   <a
                     href={Routes.login}
-                    className="inline-flex min-h-11 items-center px-1 underline-offset-2 hover:underline md:min-h-0 md:px-0"
+                    className="inline-flex min-h-11 items-center px-1 underline-offset-2 hover:underline fine:min-h-0 fine:px-0"
                   >
                     Back to Login
                   </a>
                 </FieldDescription>
               </div>
             </div>
-            <div className="relative hidden min-h-[500px] md:block">
+            <div className="relative hidden min-h-[500px] lg:block short:hidden">
               <BrandMark className="p-12" />
             </div>
           </CardContent>
@@ -109,14 +109,14 @@ export function ResetPasswordForm({ className, ...props }: React.ComponentProps<
   return (
     <div className={cn('flex flex-col gap-6', className)} {...props}>
       <Card className="overflow-hidden p-0">
-        <CardContent className="grid p-0 md:grid-cols-2">
+        <CardContent className="grid p-0 lg:grid-cols-2 short:grid-cols-1">
           <Form {...form}>
             {/* method="post": if someone submits before the page's JavaScript has loaded, the
                 browser's fallback submit must not put the password in the URL */}
             <form
               method="post"
               onSubmit={form.handleSubmit(onSubmit)}
-              className="flex min-h-[500px] items-center p-6 md:p-8"
+              className="flex items-center p-6 md:p-8 lg:min-h-[500px]"
             >
               <div className="grid w-full gap-6">
                 <div className="flex flex-col items-center gap-2 text-center">
@@ -163,7 +163,7 @@ export function ResetPasswordForm({ className, ...props }: React.ComponentProps<
                   Remember your password?{' '}
                   <a
                     href={Routes.login}
-                    className="inline-flex min-h-11 items-center px-1 underline-offset-2 hover:underline md:min-h-0 md:px-0"
+                    className="inline-flex min-h-11 items-center px-1 underline-offset-2 hover:underline fine:min-h-0 fine:px-0"
                   >
                     Back to Login
                   </a>
@@ -171,7 +171,7 @@ export function ResetPasswordForm({ className, ...props }: React.ComponentProps<
               </div>
             </form>
           </Form>
-          <div className="relative hidden min-h-[500px] md:block">
+          <div className="relative hidden min-h-[500px] lg:block short:hidden">
             <BrandMark className="p-12" />
           </div>
         </CardContent>

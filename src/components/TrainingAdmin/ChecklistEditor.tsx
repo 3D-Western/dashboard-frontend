@@ -151,7 +151,7 @@ export function ChecklistEditor({ versionId, items, onSaved }: ChecklistEditorPr
                     onChange={(event) => setLabel(row.uid, event.target.value)}
                     aria-label={`Checklist item ${index + 1}`}
                     placeholder="Shows where the emergency stop is"
-                    className="h-11 min-w-0 flex-1 rounded-lg border border-input bg-transparent px-2.5 text-base md:h-8 md:text-sm"
+                    className="h-11 min-w-0 flex-1 rounded-lg border border-input bg-transparent px-2.5 text-base fine:h-8 fine:text-sm"
                   />
                 </div>
                 <div className="ml-auto flex shrink-0 items-center gap-1">
@@ -159,7 +159,7 @@ export function ChecklistEditor({ versionId, items, onSaved }: ChecklistEditorPr
                     type="button"
                     variant="ghost"
                     size="icon-sm"
-                    className="size-11 md:size-8"
+                    className="size-11 fine:size-8"
                     aria-label={`Move item ${index + 1} up`}
                     disabled={index === 0}
                     onClick={() => move(index, -1)}
@@ -170,7 +170,7 @@ export function ChecklistEditor({ versionId, items, onSaved }: ChecklistEditorPr
                     type="button"
                     variant="ghost"
                     size="icon-sm"
-                    className="size-11 md:size-8"
+                    className="size-11 fine:size-8"
                     aria-label={`Move item ${index + 1} down`}
                     disabled={index === rows.length - 1}
                     onClick={() => move(index, 1)}
@@ -181,7 +181,7 @@ export function ChecklistEditor({ versionId, items, onSaved }: ChecklistEditorPr
                     type="button"
                     variant="ghost"
                     size="icon-sm"
-                    className="size-11 md:size-8"
+                    className="size-11 fine:size-8"
                     aria-label={`Remove item ${index + 1}`}
                     onClick={() => update(rows.filter((r) => r.uid !== row.uid))}
                   >
@@ -189,7 +189,7 @@ export function ChecklistEditor({ versionId, items, onSaved }: ChecklistEditorPr
                   </Button>
                 </div>
               </div>
-              <div className="flex items-center gap-2 pl-8 text-sm text-muted-foreground md:text-xs">
+              <div className="flex items-center gap-2 pl-8 text-sm text-muted-foreground fine:text-xs">
                 <label htmlFor={`checklist-key-${row.uid}`}>Key</label>
                 <input
                   id={`checklist-key-${row.uid}`}
@@ -202,7 +202,7 @@ export function ChecklistEditor({ versionId, items, onSaved }: ChecklistEditorPr
                       ),
                     )
                   }
-                  className="h-11 w-40 max-w-full rounded-md border border-input bg-transparent px-2 font-mono text-base md:h-7 md:text-xs"
+                  className="h-11 w-40 max-w-full rounded-md border border-input bg-transparent px-2 font-mono text-base fine:h-7 fine:text-xs"
                 />
               </div>
               {(labelError || keyError) && (
@@ -230,7 +230,7 @@ export function ChecklistEditor({ versionId, items, onSaved }: ChecklistEditorPr
           type="button"
           variant="outline"
           size="sm"
-          className="min-h-11 md:min-h-0"
+          className="min-h-11 fine:min-h-0"
           disabled={rows.length >= 50}
           onClick={() => {
             const taken = new Set(rows.map((r) => r.key));
@@ -245,7 +245,7 @@ export function ChecklistEditor({ versionId, items, onSaved }: ChecklistEditorPr
         <Button
           type="button"
           size="sm"
-          className="min-h-11 md:min-h-0"
+          className="min-h-11 fine:min-h-0"
           disabled={!dirty || saving}
           onClick={() => void save()}
         >

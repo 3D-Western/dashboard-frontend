@@ -10,4 +10,14 @@ describe('LoginPage layout', () => {
 
     expect(container.firstElementChild).toHaveClass('justify-start', 'pt-16', 'md:justify-center');
   });
+
+  it('keeps the form at max-w-md until lg, where the logo column appears beside it', async () => {
+    const { container } = render(await LoginPage({ searchParams: Promise.resolve({}) }));
+
+    expect(container.firstElementChild?.firstElementChild).toHaveClass(
+      'max-w-md',
+      'lg:max-w-4xl',
+      'short:max-w-md',
+    );
+  });
 });

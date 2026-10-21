@@ -164,8 +164,8 @@ describe('DataTablePagination', () => {
 
     const previous = screen.getByLabelText(/go to previous page/i);
     const next = screen.getByLabelText(/go to next page/i);
-    expect(previous).toHaveClass('h-11', 'w-11', 'md:h-8', 'md:w-8');
-    expect(next).toHaveClass('h-11', 'w-11', 'md:h-8', 'md:w-8');
+    expect(previous).toHaveClass('h-11', 'w-11', 'fine:h-8', 'fine:w-8');
+    expect(next).toHaveClass('h-11', 'w-11', 'fine:h-8', 'fine:w-8');
 
     expect(screen.getByLabelText(/go to first page/i)).toHaveClass('hidden', 'md:inline-flex');
     expect(screen.getByLabelText(/go to last page/i)).toHaveClass('hidden', 'md:inline-flex');

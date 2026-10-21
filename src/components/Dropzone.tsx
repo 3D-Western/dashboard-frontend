@@ -165,7 +165,7 @@ export const DropzoneContent = ({ children, className }: DropzoneContentProps) =
       <p className="my-2 w-full truncate text-center text-sm font-medium" title="">
         {label}
       </p>
-      <p className="w-full text-center text-sm text-wrap text-muted-foreground md:text-xs">
+      <p className="w-full text-center text-sm text-wrap text-muted-foreground fine:text-xs">
         <span className="md:hidden">Tap to choose a file to replace it</span>
         <span className="hidden md:inline">Drag and drop or click to replace</span>
       </p>
@@ -203,11 +203,13 @@ export const DropzoneEmptyState = ({ children, className }: DropzoneEmptyStatePr
       <p className="my-2 w-full truncate text-sm font-medium text-wrap">
         Upload {maxFiles === 1 ? 'a file' : 'files'}
       </p>
-      <p className="w-full text-sm text-wrap text-muted-foreground md:truncate md:text-xs">
+      <p className="w-full text-sm text-wrap text-muted-foreground md:truncate fine:text-xs">
         <span className="md:hidden">Tap to choose a file</span>
         <span className="hidden md:inline">Drag and drop or click to upload</span>
       </p>
-      {caption && <p className="text-sm text-wrap text-muted-foreground md:text-xs">{caption}.</p>}
+      {caption && (
+        <p className="text-sm text-wrap text-muted-foreground fine:text-xs">{caption}.</p>
+      )}
     </div>
   );
 };

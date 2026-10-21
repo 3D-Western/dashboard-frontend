@@ -13,14 +13,16 @@ const ACTION_CLASS = 'h-auto w-full justify-start px-4 py-3 text-sm';
 export function QuickActions() {
   const { locked } = useOrientationLock();
   return (
-    <div className="grid gap-3 sm:grid-cols-3">
+    // Columns as wide as the room allows (at least 11 rem each), so a label never sticks out of its
+    // button; phones stay at one column
+    <div className="grid grid-cols-[repeat(auto-fit,minmax(11rem,1fr))] gap-3">
       {locked ? (
         <Button asChild variant="secondary" className={ACTION_CLASS}>
           <Link href={Routes.training.home}>
             <Lock aria-hidden="true" />
             <span className="flex flex-col items-start text-left whitespace-normal">
               <span>New print is locked</span>
-              <span className="text-sm font-normal text-muted-foreground md:text-xs">
+              <span className="text-sm font-normal text-muted-foreground fine:text-xs">
                 Finish Maker Orientation to submit prints
               </span>
             </span>
@@ -44,9 +46,14 @@ export function QuickActions() {
       <Button asChild variant="outline" className={ACTION_CLASS}>
         <a href={WEBSITE_EVENTS_URL} target="_blank" rel="noopener noreferrer">
           <CalendarDays aria-hidden="true" />
-          Events calendar
-          <ExternalLink className="ml-auto size-3.5 text-muted-foreground" aria-hidden="true" />
-          <span className="sr-only">(opens in a new tab)</span>
+          <span className="min-w-0 text-left whitespace-normal">
+            Events calendar
+            <ExternalLink
+              className="ml-1 inline size-3.5 align-[-0.125em] text-muted-foreground"
+              aria-hidden="true"
+            />
+            <span className="sr-only">(opens in a new tab)</span>
+          </span>
         </a>
       </Button>
     </div>

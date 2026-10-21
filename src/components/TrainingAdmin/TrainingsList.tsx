@@ -93,7 +93,7 @@ function TrainingRow({ training }: { training: AdminTrainingSummary }) {
           <h2 className="text-lg font-semibold">
             <Link
               href={TrainingAdminRoutes.detail(training.id)}
-              className="underline-offset-2 hover:underline"
+              className="inline-flex min-h-11 items-center underline-offset-2 hover:underline fine:min-h-0"
             >
               {training.title}
             </Link>

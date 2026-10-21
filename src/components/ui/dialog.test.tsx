@@ -70,6 +70,18 @@ describe('Dialog', () => {
     });
   });
 
+  describe('width cap', () => {
+    it('never lets the base width reach the screen edges (screen minus 2 rem at every width)', () => {
+      render(<FormDialog />);
+
+      const content = document.querySelector('[data-slot="dialog-content"]');
+      expect(content).toHaveClass(
+        'max-w-[calc(100%-2rem)]',
+        'sm:max-w-[min(24rem,calc(100%-2rem))]',
+      );
+    });
+  });
+
   describe('footer', () => {
     it('keeps the footer at the bottom of a scrolling dialog when stickyFooter is set', () => {
       render(<FormDialog stickyFooter />);
@@ -77,6 +89,13 @@ describe('Dialog', () => {
       const footer = screen.getByRole('button', { name: 'Save' }).parentElement;
       expect(footer).toHaveAttribute('data-slot', 'dialog-footer');
       expect(footer).toHaveClass('sticky', 'bottom-0', 'bg-popover');
+    });
+
+    it('paints the dialog padding under a sticky footer so scrolled text does not show there', () => {
+      render(<FormDialog stickyFooter />);
+
+      const footer = screen.getByRole('button', { name: 'Save' }).parentElement;
+      expect(footer).toHaveClass('shadow-[0_1rem_0_var(--popover)]');
     });
 
     it('does not make the footer sticky by default', () => {

@@ -17,7 +17,7 @@ describe('CheckField', () => {
     );
 
     const checkbox = screen.getByRole('checkbox', { name: 'Critical question' });
-    expect(checkbox.closest('label')).toHaveClass('min-h-11', 'md:min-h-0');
+    expect(checkbox.closest('label')).toHaveClass('min-h-11', 'fine:min-h-0');
 
     await user.click(screen.getByText('Critical question'));
     expect(onCheckedChange).toHaveBeenCalledWith(true);

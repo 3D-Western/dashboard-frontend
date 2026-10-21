@@ -1,3 +1,4 @@
+import { PageContainer } from '@/components/PageContainer';
 import type { Metadata } from 'next';
 import PageTitle from '@/components/PageTitle';
 import { validateSession } from '@/lib/auth';
@@ -17,12 +18,12 @@ export default async function AdminRequestsPage() {
     return <UnauthorizedPage title="Pending Requests Queue" />;
 
   return (
-    <div className="container space-y-6 p-6">
+    <PageContainer className="space-y-6 p-6">
       <PageTitle
         title="Pending Requests Queue"
         description="Review and manage equipment booking requests requiring administrative approval"
       />
       <AdminRequestsQueue />
-    </div>
+    </PageContainer>
   );
 }

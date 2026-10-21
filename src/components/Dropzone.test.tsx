@@ -13,6 +13,6 @@ describe('Dropzone empty state copy', () => {
     expect(screen.getByText('Tap to choose a file')).toHaveClass('md:hidden');
     const desktop = screen.getByText('Drag and drop or click to upload');
     expect(desktop).toHaveClass('hidden', 'md:inline');
-    expect(desktop.parentElement).toHaveClass('text-sm', 'md:text-xs');
+    expect(desktop.parentElement).toHaveClass('text-sm', 'fine:text-xs');
   });
 });

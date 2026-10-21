@@ -39,6 +39,16 @@ describe('AccessAdminShell permission-based visibility', () => {
     expect(screen.getByRole('link', { name: 'Live' })).not.toHaveAttribute('aria-current');
   });
 
+  it('makes the section pills 44 px tall on touch screens in one scrolling row', () => {
+    renderShell(['access:admin']);
+
+    const nav = screen.getByRole('navigation', { name: 'Access system sections' });
+    expect(nav).toHaveClass('flex-nowrap', 'overflow-x-auto', 'md:flex-wrap');
+    for (const link of screen.getAllByRole('link')) {
+      expect(link).toHaveClass('min-h-11', 'fine:min-h-0', 'shrink-0');
+    }
+  });
+
   it('denies access to other admins, including training editors and sign-off supervisors', () => {
     renderShell(['training:author', 'training:signoff', 'users:list']);
 

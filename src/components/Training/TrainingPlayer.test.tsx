@@ -266,6 +266,19 @@ describe('TrainingPlayer', () => {
     expect(within(list).getAllByText(/\(locked\)/)).toHaveLength(2);
   });
 
+  it('hides the step list and heading only on a phone on its side, and keeps them for screen readers', async () => {
+    api.getAttempt.mockResolvedValue(attemptAt(['COMPLETED', 'AVAILABLE', 'LOCKED', 'LOCKED']));
+    render(<TrainingPlayer attemptId={42} />);
+
+    const list = await screen.findByRole('list', { name: 'Steps' });
+    const heading = screen.getByRole('heading', { level: 3, name: 'Safety reading' });
+    // Visually hidden (sr-only) in short landscape, not removed from the accessibility tree
+    expect(list).toHaveClass('short:sr-only');
+    expect(heading).toHaveClass('short:sr-only');
+    // The progress line still says where the learner is
+    expect(screen.getByText('Step 2 of 4')).toBeInTheDocument();
+  });
+
   it('says what a refresher or add-on attempt covers', async () => {
     api.getAttempt.mockResolvedValue(
       attemptAt(['LOCKED', 'LOCKED', 'LOCKED', 'AVAILABLE'], { kind: 'REFRESHER' }),

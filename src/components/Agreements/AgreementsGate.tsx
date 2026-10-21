@@ -119,7 +119,7 @@ function AgreementItem({
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0 space-y-0.5">
           <h2 className="text-lg">{agreement.title}</h2>
-          <p className="text-sm text-muted-foreground md:text-xs">
+          <p className="text-sm text-muted-foreground fine:text-xs">
             Version {agreement.versionNo}
             {agreement.publishedAt ? ` · ${formatDate(agreement.publishedAt)}` : ''}
           </p>

@@ -403,7 +403,7 @@ function RejectDialog({
           <Button
             type="button"
             variant="outline"
-            className="h-12 sm:h-9"
+            className="h-12 fine:h-9"
             onClick={() => onOpenChange(false)}
             disabled={busy}
           >
@@ -412,7 +412,7 @@ function RejectDialog({
           <Button
             type="button"
             variant="destructive"
-            className="h-12 sm:h-9"
+            className="h-12 fine:h-9"
             onClick={onConfirm}
             disabled={busy || reason.trim().length === 0}
           >

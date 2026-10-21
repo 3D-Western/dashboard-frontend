@@ -104,7 +104,8 @@ export function StepList({
               className="rounded-xl border bg-card p-4"
               aria-label={`Step ${step.position}: ${step.title}`}
             >
-              <div className="flex flex-wrap items-start justify-between gap-3">
+              {/* Text on top, actions below, beside the text only from xl (1280 px). */}
+              <div className="flex flex-col gap-3 xl:flex-row xl:items-start xl:justify-between">
                 <div className="min-w-0">
                   <p className="flex flex-wrap items-center gap-2 font-medium">
                     <span className="text-muted-foreground">{step.position}.</span>
@@ -119,7 +120,7 @@ export function StepList({
                     type="button"
                     variant="ghost"
                     size="icon-sm"
-                    className="size-11 sm:size-8"
+                    className="size-11 fine:size-8"
                     aria-label={`Move step ${step.position} up`}
                     disabled={busy || index === 0}
                     onClick={() => void move(index, -1)}
@@ -130,7 +131,7 @@ export function StepList({
                     type="button"
                     variant="ghost"
                     size="icon-sm"
-                    className="size-11 sm:size-8"
+                    className="size-11 fine:size-8"
                     aria-label={`Move step ${step.position} down`}
                     disabled={busy || index === steps.length - 1}
                     onClick={() => void move(index, 1)}
@@ -150,7 +151,7 @@ export function StepList({
                     type="button"
                     variant="ghost"
                     size="icon-sm"
-                    className="size-11 sm:size-8"
+                    className="size-11 fine:size-8"
                     aria-label={`Delete step ${step.position}`}
                     disabled={busy}
                     onClick={() => setDeleting(step)}

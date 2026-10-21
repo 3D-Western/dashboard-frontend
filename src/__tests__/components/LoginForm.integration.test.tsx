@@ -340,7 +340,7 @@ describe('LoginForm Integration', () => {
       const forgotPasswordLink = screen.getByRole('link', { name: /forgot password/i });
       expect(forgotPasswordLink).toHaveAttribute('href', '/forgot-password');
       // Phone-sized tap target (44 px) that shrinks back on desktop
-      expect(forgotPasswordLink).toHaveClass('min-h-11', 'md:min-h-0');
+      expect(forgotPasswordLink).toHaveClass('min-h-11', 'fine:min-h-0');
     });
 
     it('displays "Sign up" link', () => {

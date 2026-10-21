@@ -7,6 +7,11 @@ Part of the monorepo. Read the root `CLAUDE.md` first; it has the workflow, docs
 - Talks only to the backend, through `API_URL`. Browser calls go through the proxy at `src/app/api/[...path]/route.ts`; server-side calls go direct and forward the session cookies.
 - Some screens use **mock endpoints that don't exist in the backend**. The list is in `docs/repos/dashboard-frontend.md`. When you build a feature, implement the backend endpoint and remove the mock in the same change.
 
+## Responsive rules
+
+- **Touch sizes follow the pointer, not the width.** Controls are 44 px tall with 16 px input text by default. Shrink only behind the `fine` variant (`globals.css`: md and wider, with hover and a precise pointer); never write `md:h-8`, `md:min-h-0`, `sm:size-8` and the like (`src/__tests__/touch-sizes.test.ts` fails on them). `short` is landscape under 500 px tall.
+- The sidebar is a drawer below `lg` (1024 px, `useIsCompactShell`), permanent from `lg`. `ResponsiveTable` switches tables to cards below `cardsBelow` (`md` 768 px by default, `lg` or `xl` for wide admin tables such as Invitations); `useIsMobile` (768 px) is for lists that change layout. Audit and fix plan: `docs/responsive-audit-2026-10.md`.
+
 ## Training (learner UI)
 
 - Routes: `/dashboard/training` (list) and `/dashboard/training/attempt/[id]` (player). Components are in `src/components/Training/`. The agreements gate (`src/components/Agreements/`) is shown by `(protected)/layout.tsx` in place of the dashboard while `GET /training/agreements/pending` is non-empty; it fails open if that call errors.

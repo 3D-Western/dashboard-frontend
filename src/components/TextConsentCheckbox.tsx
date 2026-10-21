@@ -27,7 +27,7 @@ export function TextConsentCheckbox({
       <label
         htmlFor={id}
         className={cn(
-          'flex min-h-11 items-center gap-3 md:min-h-0 md:items-start',
+          'flex min-h-11 items-center gap-3 fine:min-h-0 fine:items-start',
           disabled ? 'cursor-not-allowed' : 'cursor-pointer',
         )}
       >

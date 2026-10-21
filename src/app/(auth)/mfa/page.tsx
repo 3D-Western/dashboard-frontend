@@ -27,7 +27,7 @@ export default async function MFAPage({
 
   return (
     <div className="flex min-h-svh flex-col items-center justify-center px-6 pt-16 pb-6 md:p-10">
-      <div className="w-full max-w-sm md:max-w-4xl">
+      <div className="w-full max-w-md lg:max-w-4xl short:max-w-md">
         <MFAForm challengeId={parsed} />
       </div>
     </div>

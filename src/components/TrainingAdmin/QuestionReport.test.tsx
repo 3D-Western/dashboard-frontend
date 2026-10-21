@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach, afterEach, type Mock } from 'vitest';
+import { describe, it, expect, vi, beforeEach, type Mock } from 'vitest';
 import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { ApiError } from '@/api/client/errors';
@@ -130,6 +130,14 @@ describe('sortReport', () => {
   });
 });
 
+/**
+ * A button on a table row. Below md the cards are in the DOM too (CSS shows one copy, and jsdom
+ * applies no CSS), so row buttons are looked up inside the table.
+ */
+async function tableButton(name: RegExp) {
+  return within(await screen.findByRole('table')).findByRole('button', { name });
+}
+
 describe('QuestionReport table', () => {
   it('shows each question with how it is doing, hardest first', async () => {
     await renderInTraining(<QuestionReport />);
@@ -157,8 +165,9 @@ describe('QuestionReport table', () => {
   it('offers corrections to someone who can publish', async () => {
     await renderInTraining(<QuestionReport />, { user: publisherUser() });
 
-    expect(await screen.findAllByRole('button', { name: /^correct:/i })).toHaveLength(3);
-    expect(screen.getAllByRole('button', { name: /^re-score:/i })).toHaveLength(3);
+    const table = within(await screen.findByRole('table'));
+    expect(await table.findAllByRole('button', { name: /^correct:/i })).toHaveLength(3);
+    expect(table.getAllByRole('button', { name: /^re-score:/i })).toHaveLength(3);
   });
 
   it('hides corrections from someone who can only author, and says why', async () => {
@@ -184,7 +193,7 @@ describe('QuestionReport corrections', () => {
 
   async function openCorrection() {
     await renderInTraining(<QuestionReport />, { user: publisherUser() });
-    await userEvent.click(await screen.findByRole('button', { name: /^correct: hard question/i }));
+    await userEvent.click(await tableButton(/^correct: hard question/i));
     return screen.findByRole('dialog', { name: /correct this question/i });
   }
 
@@ -294,7 +303,7 @@ describe('QuestionReport corrections', () => {
 describe('QuestionReport correction confirmation', () => {
   async function ready(kind: 'ACCEPT_OPTION' | 'DROP_QUESTION') {
     await renderInTraining(<QuestionReport />, { user: publisherUser() });
-    await userEvent.click(await screen.findByRole('button', { name: /^correct: hard question/i }));
+    await userEvent.click(await tableButton(/^correct: hard question/i));
     const dialog = await screen.findByRole('dialog', { name: /correct this question/i });
     await within(dialog).findByRole('option', { name: 'On the side panel' });
     if (kind === 'DROP_QUESTION') {
@@ -401,7 +410,7 @@ describe('QuestionReport re-scoring', () => {
     api.rescore.mockResolvedValue(withChanges);
     await renderInTraining(<QuestionReport />, { user: publisherUser() });
 
-    await userEvent.click(await screen.findByRole('button', { name: /^re-score: hard question/i }));
+    await userEvent.click(await tableButton(/^re-score: hard question/i));
 
     const dialog = await screen.findByRole('dialog', { name: /re-score attempts/i });
     expect(await within(dialog).findByText('#66')).toBeInTheDocument();
@@ -415,7 +424,7 @@ describe('QuestionReport re-scoring', () => {
     api.rescore.mockResolvedValue(noChange);
     await renderInTraining(<QuestionReport />, { user: publisherUser() });
 
-    await userEvent.click(await screen.findByRole('button', { name: /^re-score: hard question/i }));
+    await userEvent.click(await tableButton(/^re-score: hard question/i));
 
     expect(await screen.findByText(/12 attempts re-scored/i)).toBeInTheDocument();
     expect(screen.getByText(/no attempt.s result would change/i)).toBeInTheDocument();
@@ -425,27 +434,26 @@ describe('QuestionReport re-scoring', () => {
     api.getQuestion.mockRejectedValue(new ApiError('NOT_FOUND', 'gone'));
     await renderInTraining(<QuestionReport />, { user: publisherUser() });
 
-    await userEvent.click(await screen.findByRole('button', { name: /^re-score: hard question/i }));
+    await userEvent.click(await tableButton(/^re-score: hard question/i));
 
     expect(await screen.findByText(/no longer exists/i)).toBeInTheDocument();
   });
 });
 
+// jsdom applies no CSS, so the switch is checked through the classes that CSS acts on: the cards
+// wrapper hides from the breakpoint up, the table wrapper hides below it.
+function expectCardsBelowLg() {
+  expect(screen.getByRole('list').parentElement).toHaveClass('lg:hidden');
+  expect(screen.getByRole('table').closest('[class~="lg:block"]')).toHaveClass('hidden');
+}
+
 describe('QuestionReport on a phone', () => {
-  beforeEach(() => {
-    Object.defineProperty(window, 'innerWidth', { configurable: true, value: 390 });
-  });
-
-  afterEach(() => {
-    Object.defineProperty(window, 'innerWidth', { configurable: true, value: 1024 });
-  });
-
   it('shows each question as a card with its numbers, and no table', async () => {
     await renderInTraining(<QuestionReport />, { user: publisherUser() });
 
     const cards = within(await screen.findByRole('list')).getAllByRole('listitem');
     expect(cards).toHaveLength(3);
-    expect(screen.queryByRole('table')).not.toBeInTheDocument();
+    expectCardsBelowLg();
 
     expect(cards[0]).toHaveTextContent('Hard question');
     expect(cards[0]).toHaveTextContent('Look at this one');
@@ -453,6 +461,13 @@ describe('QuestionReport on a phone', () => {
     expect(cards[0]).toHaveTextContent('30%');
     expect(cards[0]).toHaveTextContent('9 times');
     expect(cards[2]).toHaveTextContent('n/a');
+  });
+
+  it('keeps cards on an iPad held upright, where the table is too wide', async () => {
+    await renderInTraining(<QuestionReport />, { user: publisherUser() });
+
+    expect(within(await screen.findByRole('list')).getAllByRole('listitem')).toHaveLength(3);
+    expectCardsBelowLg();
   });
 
   it('puts the correction buttons full width on each card, at 44 px', async () => {

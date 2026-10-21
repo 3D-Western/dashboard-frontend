@@ -146,4 +146,10 @@ that wraps.
 
     expect(container.firstChild).toBeEmptyDOMElement();
   });
+
+  it('keeps running text to a readable line length (80 characters)', () => {
+    const { container } = render(<Markdown>{'A paragraph of text.'}</Markdown>);
+
+    expect(container.firstChild).toHaveClass('max-w-[80ch]');
+  });
 });

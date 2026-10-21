@@ -140,12 +140,12 @@ export function SignupForm({ className, ...props }: React.ComponentProps<'div'>)
   return (
     <div className={cn('flex flex-col gap-6', className)} {...props}>
       <Card className="overflow-hidden p-0">
-        <CardContent className="grid p-0 md:grid-cols-2">
+        <CardContent className="grid p-0 lg:grid-cols-2 short:grid-cols-1">
           <Form {...form}>
             {/* method="post": if someone submits before the page's JavaScript has loaded, the
                 browser's fallback submit must not put the password in the URL */}
             <form method="post" onSubmit={form.handleSubmit(onSubmit)} className="p-6 md:p-8">
-              <div className="flex min-h-[600px] flex-col justify-center gap-6">
+              <div className="flex flex-col justify-center gap-6 lg:min-h-[600px]">
                 {/* Header */}
                 <div className="flex flex-col items-center gap-2 text-center">
                   <h1 className="text-2xl font-bold">Create your account</h1>
@@ -328,7 +328,7 @@ export function SignupForm({ className, ...props }: React.ComponentProps<'div'>)
                   Already have an account?{' '}
                   <Link
                     href={Routes.login}
-                    className="inline-flex min-h-11 items-center px-1 underline md:min-h-0 md:px-0"
+                    className="inline-flex min-h-11 items-center px-1 underline fine:min-h-0 fine:px-0"
                   >
                     Sign in
                   </Link>
@@ -338,7 +338,7 @@ export function SignupForm({ className, ...props }: React.ComponentProps<'div'>)
           </Form>
 
           {/* Right side - Logo/Image */}
-          <div className="relative hidden min-h-[600px] md:block">
+          <div className="relative hidden min-h-[600px] lg:block short:hidden">
             <BrandMark className="p-12" />
           </div>
         </CardContent>
@@ -348,14 +348,14 @@ export function SignupForm({ className, ...props }: React.ComponentProps<'div'>)
         By creating an account, you agree to our{' '}
         <Link
           href="/terms-and-conditions"
-          className="inline-flex min-h-11 items-center px-1 underline md:min-h-0 md:px-0"
+          className="inline-flex min-h-11 items-center px-1 underline fine:min-h-0 fine:px-0"
         >
           Terms of Service
         </Link>{' '}
         and{' '}
         <Link
           href="/data-policy"
-          className="inline-flex min-h-11 items-center px-1 underline md:min-h-0 md:px-0"
+          className="inline-flex min-h-11 items-center px-1 underline fine:min-h-0 fine:px-0"
         >
           Privacy Policy
         </Link>

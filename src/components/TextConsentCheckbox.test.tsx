@@ -18,7 +18,7 @@ describe('TextConsentCheckbox', () => {
 
     const checkbox = screen.getByRole('checkbox', { name: 'Text me about my prints and access' });
     const label = checkbox.closest('label');
-    expect(label).toHaveClass('min-h-11', 'md:min-h-0');
+    expect(label).toHaveClass('min-h-11', 'fine:min-h-0');
 
     await user.click(screen.getByText('Text me about my prints and access'));
     expect(onCheckedChange).toHaveBeenCalledWith(true);

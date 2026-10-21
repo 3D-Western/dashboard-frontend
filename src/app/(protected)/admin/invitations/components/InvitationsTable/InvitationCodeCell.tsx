@@ -31,7 +31,7 @@ export const InvitationCodeCell = memo(function InvitationCodeCell({
       <Button
         variant="ghost"
         size="sm"
-        className="h-11 w-11 shrink-0 p-0 md:h-6 md:w-6"
+        className="h-11 w-11 shrink-0 p-0 fine:h-6 fine:w-6"
         onClick={() => setIsVisible(!isVisible)}
         aria-label={isVisible ? 'Hide invitation code' : 'Show invitation code'}
       >
@@ -44,7 +44,7 @@ export const InvitationCodeCell = memo(function InvitationCodeCell({
       <Button
         variant="ghost"
         size="sm"
-        className="h-11 w-11 shrink-0 p-0 md:h-6 md:w-6"
+        className="h-11 w-11 shrink-0 p-0 fine:h-6 fine:w-6"
         onClick={handleCopy}
         aria-label="Copy invitation code"
       >

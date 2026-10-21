@@ -33,11 +33,11 @@ function nextStepFor(trainings: Training[]): string | null {
   return null;
 }
 
-export function TrainingSummary() {
+export function TrainingSummary({ className }: { className?: string }) {
   const { data, isLoading, error, refetch } = useTrainings();
 
   return (
-    <DashboardSection id="training" title="Training">
+    <DashboardSection id="training" title="Training" className={className}>
       {isLoading ? (
         <div className="space-y-3" role="status" aria-label="Loading training">
           <Skeleton className="h-4 w-40" />
@@ -84,7 +84,7 @@ function TrainingSummaryBody({ trainings }: { trainings: Training[] }) {
             key={training.slug}
             className="flex items-center justify-between gap-3 px-3 py-2.5 text-sm"
           >
-            <span className="min-w-0 truncate">{training.title}</span>
+            <span className="min-w-0 break-words">{training.title}</span>
             <CertificationBadge status={displayStatus(training)} />
           </li>
         ))}

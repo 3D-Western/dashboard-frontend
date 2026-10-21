@@ -3,6 +3,7 @@ import { render, screen } from '@testing-library/react';
 import { PageHeader } from './index';
 import { Routes } from '@/lib/routes';
 import { TrainingAdminRoutes } from '@/lib/training-admin-routes';
+import { AccessAdminRoutes } from '@/lib/access-admin-routes';
 
 // Mock usePathname from next/navigation
 vi.mock('next/navigation', () => ({
@@ -133,6 +134,28 @@ describe('PageHeader', () => {
 
     expect(screen.getByRole('link', { name: 'Admin Dashboard' })).toHaveAttribute('href', '/admin');
     expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('User Management');
+  });
+
+  it.each([
+    [AccessAdminRoutes.home, 'Access System'],
+    [AccessAdminRoutes.gatekeepers, 'Gatekeepers'],
+    [AccessAdminRoutes.devices, 'Devices'],
+    [AccessAdminRoutes.cardLinks, 'Card Links'],
+  ])('titles the access page %s as %s', (route, title) => {
+    mockUsePathname.mockReturnValue(route);
+    render(<PageHeader />);
+
+    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent(title);
+  });
+
+  it('puts the access sub-pages under Access System', () => {
+    mockUsePathname.mockReturnValue(AccessAdminRoutes.devices);
+    render(<PageHeader />);
+
+    expect(screen.getByRole('link', { name: 'Access System' })).toHaveAttribute(
+      'href',
+      AccessAdminRoutes.home,
+    );
   });
 
   it('shows no parent links on top-level pages', () => {

@@ -63,7 +63,7 @@ export function QuestionPicker({
           type="button"
           variant="outline"
           size="sm"
-          className="min-h-11 w-full md:min-h-0 md:w-auto"
+          className="min-h-11 w-full md:w-auto fine:min-h-0"
           onClick={onNewQuestion}
         >
           <Plus /> Write a new question

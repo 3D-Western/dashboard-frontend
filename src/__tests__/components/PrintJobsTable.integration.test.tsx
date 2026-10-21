@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import PrintJobsTable from '@/components/PrintJobsTable';
 import { createMockPrintJob } from '@/../test/utils/mockFactories';
@@ -64,16 +64,18 @@ describe('PrintJobsTable Integration', () => {
       const pagination = createMockPagination(mockJobs);
       render(<PrintJobsTable printJobs={mockJobs} pagination={pagination} />);
 
-      expect(screen.getByText('Test Print 1')).toBeInTheDocument();
-      expect(screen.getByText('Test Print 2')).toBeInTheDocument();
-      expect(screen.getByText('Test Print 3')).toBeInTheDocument();
+      // The cards are in the DOM too (hidden by CSS above md), so look inside the table
+      const table = within(screen.getByRole('table'));
+      expect(table.getByText('Test Print 1')).toBeInTheDocument();
+      expect(table.getByText('Test Print 2')).toBeInTheDocument();
+      expect(table.getByText('Test Print 3')).toBeInTheDocument();
     });
 
     it('shows empty state when no jobs', () => {
       const pagination = createMockPagination([]);
       render(<PrintJobsTable printJobs={[]} pagination={pagination} />);
 
-      expect(screen.getByText('No results.')).toBeInTheDocument();
+      expect(within(screen.getByRole('table')).getByText('No results.')).toBeInTheDocument();
     });
 
     it('displays correct number of rows', () => {

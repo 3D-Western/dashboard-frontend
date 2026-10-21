@@ -40,7 +40,7 @@ export function SettingsPopover() {
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
         <button
-          className="flex size-11 items-center justify-center rounded-md transition-colors hover:bg-accent hover:text-accent-foreground md:size-8"
+          className="flex size-11 items-center justify-center rounded-md transition-colors hover:bg-accent hover:text-accent-foreground fine:size-8"
           title="Settings"
           aria-label="Settings"
         >
@@ -51,7 +51,7 @@ export function SettingsPopover() {
         <div className="flex flex-col">
           <button
             onClick={cycleTheme}
-            className="flex items-center gap-2 rounded-sm px-2 py-3 text-sm transition-colors hover:bg-accent hover:text-accent-foreground md:py-1.5"
+            className="flex items-center gap-2 rounded-sm px-2 py-3 text-sm transition-colors hover:bg-accent hover:text-accent-foreground fine:py-1.5"
           >
             {getThemeIcon()}
             <span>{getThemeLabel()}</span>
@@ -59,7 +59,7 @@ export function SettingsPopover() {
 
           <Link
             href="/dashboard/settings"
-            className="flex items-center gap-2 rounded-sm px-2 py-3 text-sm transition-colors hover:bg-accent hover:text-accent-foreground md:py-1.5"
+            className="flex items-center gap-2 rounded-sm px-2 py-3 text-sm transition-colors hover:bg-accent hover:text-accent-foreground fine:py-1.5"
             onClick={() => setOpen(false)}
           >
             <Settings className="h-4 w-4" />
@@ -70,7 +70,7 @@ export function SettingsPopover() {
 
           <button
             onClick={handleLogout}
-            className="flex items-center gap-2 rounded-sm px-2 py-3 text-sm transition-colors hover:bg-accent hover:text-accent-foreground md:py-1.5"
+            className="flex items-center gap-2 rounded-sm px-2 py-3 text-sm transition-colors hover:bg-accent hover:text-accent-foreground fine:py-1.5"
           >
             <LogOut className="h-4 w-4" />
             <span>Logout</span>

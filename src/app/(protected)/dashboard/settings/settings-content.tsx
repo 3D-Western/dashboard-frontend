@@ -25,6 +25,7 @@ import { Routes } from '@/lib/routes';
 import { TrainingStatusCard } from './components/TrainingStatusCard';
 import { PhoneNumberCard } from './components/PhoneNumberCard';
 import { NotificationsCard } from './components/NotificationsCard';
+import { PageContainer } from '@/components/PageContainer';
 
 // Password change form schema
 const passwordSchema = z
@@ -92,7 +93,7 @@ export function SettingsContent() {
   }
 
   return (
-    <div className="flex flex-1 flex-col gap-4 p-4">
+    <PageContainer className="flex flex-1 flex-col gap-4 p-4">
       <div className="grid gap-4">
         {/* Password Change Card */}
         <Card>
@@ -151,7 +152,7 @@ export function SettingsContent() {
                   render={({ field }) => (
                     <FormItem className="space-y-0 rounded-md border p-4">
                       {/* The label row is the tap target: checkbox plus text, 44 px tall on phones. */}
-                      <FormLabel className="flex min-h-11 cursor-pointer items-center gap-3 md:min-h-0 md:items-start">
+                      <FormLabel className="flex min-h-11 cursor-pointer items-center gap-3 fine:min-h-0 fine:items-start">
                         <FormControl>
                           <Checkbox
                             checked={field.value}
@@ -161,7 +162,7 @@ export function SettingsContent() {
                         </FormControl>
                         Sign out all active sessions
                       </FormLabel>
-                      <FormDescription className="pl-8 md:pl-7">
+                      <FormDescription className="max-w-[80ch] pl-8 md:pl-7">
                         After changing your password, you will be signed out from all devices and
                         redirected to the login page.
                       </FormDescription>
@@ -185,6 +186,6 @@ export function SettingsContent() {
             backend (roadmap, usage limits): they only ever showed errors. Components are kept. */}
         <TrainingStatusCard />
       </div>
-    </div>
+    </PageContainer>
   );
 }

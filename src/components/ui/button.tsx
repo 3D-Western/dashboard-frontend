@@ -26,22 +26,23 @@ const buttonVariants = cva(
         gradient: 'btn text-white',
       },
       size: {
-        // Phones get 44 px buttons (easier to tap); from md up they're the original sizes.
+        // Touch screens (phones, iPads, any width) get 44 px buttons; a mouse-like pointer at md+
+        // (the `fine` variant in globals.css) gets the original compact sizes.
         // The two heights live in a CSS variable behind ONE height class, so a caller's own
         // height (h-auto, h-6, ...) replaces it on every screen size instead of only on phones.
         default:
-          'h-[var(--btn-h)] gap-1.5 px-2.5 [--btn-h:2.75rem] has-data-[icon=inline-end]:pr-2 has-data-[icon=inline-start]:pl-2 md:[--btn-h:2rem]',
-        xs: "h-6 gap-1 rounded-[min(var(--radius-md),10px)] px-2 text-xs in-data-[slot=button-group]:rounded-lg has-data-[icon=inline-end]:pr-1.5 has-data-[icon=inline-start]:pl-1.5 [&_svg:not([class*='size-'])]:size-3",
-        sm: "h-[var(--btn-h)] gap-1 rounded-[min(var(--radius-md),12px)] px-2.5 text-[0.8rem] [--btn-h:2.75rem] md:[--btn-h:1.75rem] in-data-[slot=button-group]:rounded-lg has-data-[icon=inline-end]:pr-1.5 has-data-[icon=inline-start]:pl-1.5 [&_svg:not([class*='size-'])]:size-3.5",
-        lg: 'h-[var(--btn-h)] gap-1.5 px-2.5 [--btn-h:2.75rem] has-data-[icon=inline-end]:pr-2 has-data-[icon=inline-start]:pl-2 md:[--btn-h:2.25rem]',
-        icon: 'size-[var(--btn-h)] [--btn-h:2.75rem] md:[--btn-h:2rem]',
+          'h-[var(--btn-h)] gap-1.5 px-2.5 [--btn-h:2.75rem] has-data-[icon=inline-end]:pr-2 has-data-[icon=inline-start]:pl-2 fine:[--btn-h:2rem]',
+        xs: "h-[var(--btn-h)] gap-1 rounded-[min(var(--radius-md),10px)] px-2 text-xs [--btn-h:2.75rem] fine:[--btn-h:1.5rem] in-data-[slot=button-group]:rounded-lg has-data-[icon=inline-end]:pr-1.5 has-data-[icon=inline-start]:pl-1.5 [&_svg:not([class*='size-'])]:size-3",
+        sm: "h-[var(--btn-h)] gap-1 rounded-[min(var(--radius-md),12px)] px-2.5 text-[0.8rem] [--btn-h:2.75rem] fine:[--btn-h:1.75rem] in-data-[slot=button-group]:rounded-lg has-data-[icon=inline-end]:pr-1.5 has-data-[icon=inline-start]:pl-1.5 [&_svg:not([class*='size-'])]:size-3.5",
+        lg: 'h-[var(--btn-h)] gap-1.5 px-2.5 [--btn-h:2.75rem] has-data-[icon=inline-end]:pr-2 has-data-[icon=inline-start]:pl-2 fine:[--btn-h:2.25rem]',
+        icon: 'size-[var(--btn-h)] [--btn-h:2.75rem] fine:[--btn-h:2rem]',
         'icon-xs':
-          "size-6 rounded-[min(var(--radius-md),10px)] in-data-[slot=button-group]:rounded-lg [&_svg:not([class*='size-'])]:size-3",
+          "size-[var(--btn-h)] rounded-[min(var(--radius-md),10px)] [--btn-h:2.75rem] fine:[--btn-h:1.5rem] in-data-[slot=button-group]:rounded-lg [&_svg:not([class*='size-'])]:size-3",
         'icon-sm':
-          'size-[var(--btn-h)] rounded-[min(var(--radius-md),12px)] [--btn-h:2.75rem] in-data-[slot=button-group]:rounded-lg md:[--btn-h:1.75rem]',
-        'icon-lg': 'size-[var(--btn-h)] [--btn-h:2.75rem] md:[--btn-h:2.25rem]',
+          'size-[var(--btn-h)] rounded-[min(var(--radius-md),12px)] [--btn-h:2.75rem] in-data-[slot=button-group]:rounded-lg fine:[--btn-h:1.75rem]',
+        'icon-lg': 'size-[var(--btn-h)] [--btn-h:2.75rem] fine:[--btn-h:2.25rem]',
         // Website (website-2.0) size
-        pill: 'h-[var(--btn-h)] gap-2 rounded-lg px-5 font-semibold [--btn-h:2.75rem] has-[>svg:first-child]:pl-4 sm:[--btn-h:2.5rem]',
+        pill: 'h-[var(--btn-h)] gap-2 rounded-lg px-5 font-semibold [--btn-h:2.75rem] has-[>svg:first-child]:pl-4 fine:[--btn-h:2.5rem]',
       },
     },
     defaultVariants: {

@@ -114,7 +114,8 @@ export function TrainingAuditLog() {
         id="audit-filters"
         aria-label="Filter the audit log"
         className={cn(
-          'gap-3 rounded-xl border bg-card p-4 md:grid md:grid-cols-2 lg:grid-cols-5',
+          // Five filters need the room beside the sidebar: 3 columns from lg, 5 from xl
+          'gap-3 rounded-xl border bg-card p-4 md:grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5',
           filtersOpen ? 'grid' : 'hidden',
         )}
       >
@@ -151,11 +152,11 @@ export function TrainingAuditLog() {
           value={filters.to}
           onValueChange={(to) => update({ to })}
         />
-        <div className="flex items-end md:col-span-2 lg:col-span-5 lg:justify-end">
+        <div className="flex items-end md:col-span-2 lg:col-span-3 lg:justify-end xl:col-span-5">
           <Button
             type="button"
             variant="ghost"
-            className="min-h-11 md:min-h-0"
+            className="min-h-11 fine:min-h-0"
             onClick={() => setFilters(EMPTY_AUDIT_FILTERS)}
             disabled={!anyFilter}
           >
@@ -235,7 +236,7 @@ function AuditRow({
       </div>
       {entry.details != null && (
         <details className="mt-3">
-          <summary className="inline-flex min-h-11 cursor-pointer items-center text-sm font-medium text-primary md:min-h-0">
+          <summary className="inline-flex min-h-11 cursor-pointer items-center text-sm font-medium text-primary fine:min-h-0">
             Show details
           </summary>
           <pre className="mt-2 max-h-72 overflow-auto rounded-md bg-muted p-3 text-xs break-words whitespace-pre-wrap">

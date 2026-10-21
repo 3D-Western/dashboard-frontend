@@ -207,7 +207,7 @@ export function LoginForm({
       )}
 
       <Card className="overflow-hidden p-0">
-        <CardContent className="grid p-0 md:grid-cols-2">
+        <CardContent className="grid p-0 lg:grid-cols-2 short:grid-cols-1">
           <Form {...form}>
             {/* method="post": if someone submits before the page's JavaScript has loaded, the
                 browser's fallback submit must not put the password in the URL */}
@@ -252,7 +252,7 @@ export function LoginForm({
                         <FormLabel>Password</FormLabel>
                         <a
                           href={Routes.forgotPassword}
-                          className="inline-flex min-h-11 items-center px-1 text-sm text-muted-foreground underline-offset-2 hover:text-purple-light hover:underline md:min-h-0 md:px-0 md:text-xs"
+                          className="inline-flex min-h-11 items-center px-1 text-sm text-muted-foreground underline-offset-2 hover:text-purple-light hover:underline fine:min-h-0 fine:px-0 fine:text-xs"
                         >
                           Forgot password?
                         </a>
@@ -273,7 +273,7 @@ export function LoginForm({
                   Don&apos;t have an account?{' '}
                   <a
                     href={`${Routes.signup}`}
-                    className="inline-flex min-h-11 items-center px-1 md:min-h-0 md:px-0"
+                    className="inline-flex min-h-11 items-center px-1 fine:min-h-0 fine:px-0"
                   >
                     Sign up
                   </a>
@@ -281,18 +281,18 @@ export function LoginForm({
               </div>
             </form>
           </Form>
-          <div className="relative hidden min-h-[500px] md:block">
+          <div className="relative hidden min-h-[500px] lg:block short:hidden">
             <BrandMark className="p-12" />
           </div>
         </CardContent>
       </Card>
       <FieldDescription className="px-6 text-center">
         By clicking continue, you agree to our{' '}
-        <a href="#" className="inline-flex min-h-11 items-center px-1 md:min-h-0 md:px-0">
+        <a href="#" className="inline-flex min-h-11 items-center px-1 fine:min-h-0 fine:px-0">
           Terms of Service
         </a>{' '}
         and{' '}
-        <a href="#" className="inline-flex min-h-11 items-center px-1 md:min-h-0 md:px-0">
+        <a href="#" className="inline-flex min-h-11 items-center px-1 fine:min-h-0 fine:px-0">
           Privacy Policy
         </a>
         .

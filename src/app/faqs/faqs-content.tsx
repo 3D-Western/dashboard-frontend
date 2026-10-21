@@ -69,7 +69,7 @@ export function FAQsContent() {
       <Accordion type="multiple" className="w-full">
         {filteredFaqs.map((faq, index) => (
           <AccordionItem key={index} value={`item-${index}`}>
-            <AccordionTrigger className="min-h-11 cursor-pointer font-bold hover:no-underline md:min-h-0">
+            <AccordionTrigger className="min-h-11 cursor-pointer font-bold hover:no-underline fine:min-h-0">
               {faq.question}
             </AccordionTrigger>
             <AccordionContent className="pr-10 whitespace-pre-line">{faq.answer}</AccordionContent>

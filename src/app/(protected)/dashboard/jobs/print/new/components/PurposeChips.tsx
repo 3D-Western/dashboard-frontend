@@ -40,7 +40,7 @@ export function PurposeChips() {
                 <RadioGroupPrimitive.Item
                   key={option.value}
                   value={option.value}
-                  className="min-h-11 rounded-full border border-primary-text/18 px-3.5 py-1.5 text-sm transition-colors outline-none hover:border-purple-light focus-visible:ring-3 focus-visible:ring-ring/50 data-[state=checked]:border-purple-light data-[state=checked]:bg-purple-light/25 md:min-h-0"
+                  className="min-h-11 rounded-full border border-primary-text/18 px-3.5 py-1.5 text-sm transition-colors outline-none hover:border-purple-light focus-visible:ring-3 focus-visible:ring-ring/50 data-[state=checked]:border-purple-light data-[state=checked]:bg-purple-light/25 fine:min-h-0"
                 >
                   {option.label}
                 </RadioGroupPrimitive.Item>

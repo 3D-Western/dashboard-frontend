@@ -174,7 +174,7 @@ export function QuestionsManager() {
                           type="button"
                           size="sm"
                           variant="ghost"
-                          className="min-h-11 md:min-h-0"
+                          className="min-h-11 fine:min-h-0"
                           aria-label={`Rename ${topic.name}`}
                           onClick={() => setEditingTopic(topic)}
                         >
@@ -184,7 +184,7 @@ export function QuestionsManager() {
                           type="button"
                           size="icon-sm"
                           variant="ghost"
-                          className="size-11 md:size-8"
+                          className="size-11 fine:size-8"
                           aria-label={`Delete topic ${topic.name}`}
                           onClick={() => setDeletingTopic(topic)}
                         >
@@ -264,7 +264,7 @@ export function QuestionsManager() {
                                 type="button"
                                 size="sm"
                                 variant="outline"
-                                className="min-h-11 md:min-h-0"
+                                className="min-h-11 fine:min-h-0"
                                 aria-label={`Edit question: ${promptPreview(question.latest.promptMarkdown, 40)}`}
                                 onClick={() => setEditingQuestion(question)}
                               >
@@ -274,7 +274,7 @@ export function QuestionsManager() {
                                 type="button"
                                 size="icon-sm"
                                 variant="ghost"
-                                className="size-11 md:size-8"
+                                className="size-11 fine:size-8"
                                 aria-label={`Delete question: ${promptPreview(question.latest.promptMarkdown, 40)}`}
                                 onClick={() => setDeletingQuestion(question)}
                               >

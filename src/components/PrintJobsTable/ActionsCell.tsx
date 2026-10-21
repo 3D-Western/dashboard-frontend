@@ -59,7 +59,7 @@ export function ActionsCell({ printJob, mode, onStatusChanged, onJobDeleted }: A
         <DropdownMenuTrigger asChild>
           <Button
             variant="ghost"
-            className="h-11 w-11 p-0 md:h-8 md:w-8"
+            className="h-11 w-11 p-0 fine:h-8 fine:w-8"
             aria-label={`Actions for ${printJob.name}`}
             aria-haspopup="menu"
           >

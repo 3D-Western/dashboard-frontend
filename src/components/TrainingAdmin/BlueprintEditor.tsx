@@ -143,7 +143,7 @@ export function BlueprintEditor({ versionId, step, topics, onSaved }: BlueprintE
                         ),
                       )
                     }
-                    className="h-11 w-full rounded-lg border border-input bg-transparent px-2.5 text-base md:h-8 md:text-sm"
+                    className="h-11 w-full rounded-lg border border-input bg-transparent px-2.5 text-base fine:h-8 fine:text-sm"
                   >
                     <option value="">Choose a topic</option>
                     {topics
@@ -172,14 +172,14 @@ export function BlueprintEditor({ versionId, step, topics, onSaved }: BlueprintE
                         ),
                       )
                     }
-                    className="h-11 w-full rounded-lg border border-input bg-transparent px-2.5 text-base disabled:opacity-60 md:h-8 md:text-sm"
+                    className="h-11 w-full rounded-lg border border-input bg-transparent px-2.5 text-base disabled:opacity-60 fine:h-8 fine:text-sm"
                   />
                 </div>
                 <Button
                   type="button"
                   variant="ghost"
                   size="icon-sm"
-                  className="ml-auto size-11 md:ml-0 md:size-8"
+                  className="ml-auto size-11 md:ml-0 fine:size-8"
                   aria-label={`Remove ${topic?.name ?? 'this topic'} from the quiz`}
                   onClick={() => setRules((current) => current.filter((r) => r.uid !== rule.uid))}
                 >

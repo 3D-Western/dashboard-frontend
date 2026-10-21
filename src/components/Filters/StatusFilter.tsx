@@ -43,7 +43,7 @@ export function StatusFilter<T extends string>({
         <SelectTrigger
           id={id}
           aria-label={label}
-          className="w-full bg-card data-[size=default]:h-11 md:data-[size=default]:h-9 dark:bg-card"
+          className="w-full bg-card data-[size=default]:h-11 dark:bg-card fine:data-[size=default]:h-9"
         >
           <SelectValue placeholder={placeholder} />
         </SelectTrigger>

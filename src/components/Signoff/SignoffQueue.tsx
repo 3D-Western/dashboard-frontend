@@ -67,7 +67,7 @@ export function SignoffQueue({ now = new Date() }: { now?: Date }) {
           <Button
             type="button"
             variant="outline"
-            className="h-11 md:h-9"
+            className="h-11 fine:h-9"
             onClick={() => void load()}
             disabled={refreshing}
           >

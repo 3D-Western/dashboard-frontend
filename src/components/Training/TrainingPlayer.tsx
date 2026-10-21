@@ -158,15 +158,17 @@ function PlayerBody({ attemptId }: { attemptId: number }) {
   const doneCount = attempt.steps.filter((s) => s.status === 'COMPLETED').length;
   const note = KIND_NOTES[attempt.kind];
 
+  // On a phone on its side (short) the video and its controls must fit the screen, so the step
+  // list and the step heading are only read out there; the progress line still shows where they are.
   return (
-    <div className="space-y-6">
-      <header className="space-y-3">
+    <div className="space-y-6 short:space-y-3">
+      <header className="space-y-3 short:space-y-1">
         <div className="space-y-1">
           <h2 className="text-xl">{attempt.trainingTitle}</h2>
           {note && <p className="text-sm text-muted-foreground">{note}</p>}
         </div>
 
-        <div className="space-y-2">
+        <div className="space-y-2 short:space-y-1">
           <div className="flex items-center justify-between text-sm">
             <span className="font-medium">
               {current
@@ -188,7 +190,7 @@ function PlayerBody({ attemptId }: { attemptId: number }) {
               style={{ width: `${total ? (doneCount / total) * 100 : 0}%` }}
             />
           </div>
-          <ol className="flex flex-wrap gap-2" aria-label="Steps">
+          <ol className="flex flex-wrap gap-2 short:sr-only" aria-label="Steps">
             {attempt.steps.map((step) => (
               <li
                 key={step.stepId}
@@ -221,12 +223,12 @@ function PlayerBody({ attemptId }: { attemptId: number }) {
       </header>
 
       {current ? (
-        <section aria-labelledby="step-heading" className="space-y-4">
+        <section aria-labelledby="step-heading" className="space-y-4 short:space-y-0">
           <h3
             id="step-heading"
             ref={stepHeadingRef}
             tabIndex={-1}
-            className="text-lg font-semibold outline-none"
+            className="text-lg font-semibold outline-none short:sr-only"
           >
             {current.title}
           </h3>
@@ -269,7 +271,7 @@ function PlayerBody({ attemptId }: { attemptId: number }) {
             <Button
               type="button"
               variant="outline"
-              className="min-h-11 sm:min-h-9"
+              className="min-h-11 fine:min-h-9"
               onClick={() => {
                 preview.skipStep();
                 void load();
@@ -281,7 +283,7 @@ function PlayerBody({ attemptId }: { attemptId: number }) {
             <Button
               type="button"
               variant="ghost"
-              className="min-h-11 text-muted-foreground sm:min-h-9"
+              className="min-h-11 text-muted-foreground fine:min-h-9"
               onClick={() => {
                 preview.restart();
                 setQuizResult(null);
@@ -303,7 +305,7 @@ function PlayerBody({ attemptId }: { attemptId: number }) {
                 type="button"
                 variant="ghost"
                 size="sm"
-                className="min-h-11 text-sm text-muted-foreground md:min-h-0 md:text-[0.8rem]"
+                className="min-h-11 text-sm text-muted-foreground fine:min-h-0 fine:text-[0.8rem]"
               >
                 Cancel this attempt
               </Button>

@@ -22,6 +22,17 @@ const renderActions = (data: Pick<MyTrainings, 'orientationComplete' | 'orientat
 
 beforeEach(() => vi.clearAllMocks());
 
+describe('QuickActions: Events calendar', () => {
+  it('opens the website calendar in a new tab, with its label wrapping inside the button', async () => {
+    renderActions({ orientationComplete: true, orientationRequired: true });
+
+    const link = await screen.findByRole('link', { name: /events calendar/i });
+    expect(link).toHaveAttribute('target', '_blank');
+    // The label wraps on narrow buttons instead of sticking out past the border
+    expect(link.querySelector('span')).toHaveClass('min-w-0', 'whitespace-normal');
+  });
+});
+
 describe('QuickActions: New print', () => {
   it('is locked, with a way to orientation, until Maker Orientation is done', async () => {
     renderActions({ orientationComplete: false, orientationRequired: true });

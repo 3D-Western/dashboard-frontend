@@ -54,4 +54,11 @@ describe('SettingsContent', () => {
     expect(usageAPI.getUsageSummary).not.toHaveBeenCalled();
     expect(usageAPI.getAccountLimits).not.toHaveBeenCalled();
   });
+
+  it('caps the width of the page on big screens, centred', () => {
+    render(<SettingsContent />, { user: createMockUser() });
+
+    const page = screen.getByText('Change Password').closest('.max-w-6xl');
+    expect(page).toHaveClass('mx-auto', 'w-full');
+  });
 });

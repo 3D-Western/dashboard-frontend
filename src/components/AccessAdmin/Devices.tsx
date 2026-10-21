@@ -319,7 +319,8 @@ function DeviceCard({
   const idle = idleSummary(device);
   return (
     <li className="space-y-2 rounded-xl border bg-card p-4">
-      <div className="flex flex-wrap items-start justify-between gap-3">
+      {/* Text on top and the actions below until xl, then beside it: one layout, not one per text length */}
+      <div className="flex flex-col gap-3 xl:flex-row xl:flex-wrap xl:items-start xl:justify-between">
         <div className="min-w-0">
           <h3 className="flex flex-wrap items-center gap-2 font-semibold">
             {device.name}

@@ -144,10 +144,12 @@ export function TrainingOverview() {
                 ? `Members see version ${current.versionNo}. Start a draft to change it; it begins as a copy of that version and nothing changes for members until you publish.`
                 : 'Nothing is published yet. Start a draft to add the video, reading and quiz.'}
             </p>
+            {/* Wraps on a 320 px phone instead of pushing the page sideways */}
             <Button
               type="button"
               disabled={busy || training.archived}
               onClick={() => void startDraft()}
+              className="h-auto min-h-(--btn-h) w-full py-2 text-left whitespace-normal sm:w-auto"
             >
               {current ? 'Start a draft from the published version' : 'Start a draft'}
             </Button>
@@ -189,7 +191,7 @@ export function TrainingOverview() {
                 {version.publishReason && (
                   <p className="text-sm text-muted-foreground">Reason: {version.publishReason}</p>
                 )}
-                <Button asChild variant="outline" size="sm" className="min-h-11 sm:min-h-8">
+                <Button asChild variant="outline" size="sm" className="min-h-11 fine:min-h-8">
                   <Link href={TrainingAdminRoutes.preview(training.id, version.id)}>
                     <Eye /> Preview as student
                   </Link>

@@ -1,3 +1,4 @@
+import { PageContainer } from '@/components/PageContainer';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -21,7 +22,7 @@ export default async function AdminEquipmentPage() {
     return <UnauthorizedPage title="Equipment Management" />;
 
   return (
-    <div className="container space-y-6 p-6">
+    <PageContainer className="space-y-6 p-6">
       <PageTitle
         title="Equipment Management"
         description="Manage capacity and booking restrictions per piece of equipment"
@@ -50,6 +51,6 @@ export default async function AdminEquipmentPage() {
           </Link>
         ))}
       </div>
-    </div>
+    </PageContainer>
   );
 }

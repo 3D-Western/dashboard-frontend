@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { screen } from '@testing-library/react';
 import { render, userEvent } from '@test/utils/render';
 import { SidebarProvider } from '@/components/ui/sidebar';
@@ -7,12 +7,27 @@ import { createMockUser, createMockAdmin, perm } from '@test/utils/mockFactories
 import { PERMISSIONS } from '@/constants/permissions';
 import { User } from '@/types/user';
 
-function renderSidebar(user: User) {
-  return render(
+// The current path, changed by the tests that move between pages.
+const nav = vi.hoisted(() => ({ pathname: '/' }));
+vi.mock('next/navigation', () => ({
+  usePathname: () => nav.pathname,
+  useRouter: () => ({ push: vi.fn(), replace: vi.fn(), prefetch: vi.fn(), back: vi.fn() }),
+  useSearchParams: () => new URLSearchParams(),
+  useParams: () => ({}),
+}));
+
+function sidebar(user: User) {
+  return (
     <SidebarProvider>
       <AppSidebar user={user} />
-    </SidebarProvider>,
+    </SidebarProvider>
   );
+}
+
+// Most tests here are about the admin links, so they start on an admin page (section open).
+function renderSidebar(user: User, pathname = '/admin') {
+  nav.pathname = pathname;
+  return render(sidebar(user));
 }
 
 describe('AppSidebar', () => {
@@ -183,6 +198,29 @@ describe('AppSidebar', () => {
       expect(screen.queryByRole('link', { name: /^user management$/i })).not.toBeInTheDocument();
     });
 
+    it('folds the admin links away on a member page, behind Admin Dashboard', async () => {
+      const user = userEvent.setup();
+      renderSidebar(createMockAdmin({ permissions: [perm(PERMISSIONS.USERS_LIST)] }), '/dashboard');
+
+      expect(screen.getByRole('link', { name: /admin dashboard/i })).toBeInTheDocument();
+      expect(screen.queryByRole('link', { name: /^user management$/i })).not.toBeInTheDocument();
+
+      await user.click(screen.getByRole('button', { name: /toggle admin pages/i }));
+
+      expect(screen.getByRole('link', { name: /^user management$/i })).toBeInTheDocument();
+    });
+
+    it('opens the admin links when the admin pages are reached from a member page', () => {
+      const admin = createMockAdmin({ permissions: [perm(PERMISSIONS.USERS_LIST)] });
+      const { rerender } = renderSidebar(admin, '/dashboard');
+      expect(screen.queryByRole('link', { name: /^user management$/i })).not.toBeInTheDocument();
+
+      nav.pathname = '/admin/users';
+      rerender(sidebar(admin));
+
+      expect(screen.getByRole('link', { name: /^user management$/i })).toBeInTheDocument();
+    });
+
     it('does not show Job Management for a regular member permission set (regression: jobs:list is granted to members too, jobs:update_status is not)', () => {
       const member = createMockAdmin({
         permissions: [perm(PERMISSIONS.JOBS_LIST), perm(PERMISSIONS.BOOKINGS_READ)],
@@ -245,10 +283,10 @@ describe('AppSidebar', () => {
 
       expect(screen.getByRole('link', { name: /^user management$/i })).toHaveClass(
         'h-11',
-        'md:h-7',
+        'fine:h-7',
       );
       const chevron = screen.getByRole('button', { name: /toggle admin pages/i });
-      expect(chevron).toHaveClass('size-11!', 'md:size-5!');
+      expect(chevron).toHaveClass('size-11!', 'fine:size-5!');
     });
   });
 
