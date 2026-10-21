@@ -127,8 +127,9 @@ export function BlueprintEditor({ versionId, step, topics, onSaved }: BlueprintE
           const drawError = issueFor(index, 'drawCount');
           return (
             <li key={rule.uid} className="space-y-1.5 rounded-lg bg-muted/40 p-3">
+              {/* On phones the topic takes a full line; the count and the delete button share the next */}
               <div className="flex flex-wrap items-end gap-2">
-                <div className="min-w-0 flex-1 space-y-1">
+                <div className="w-full min-w-0 space-y-1 md:w-auto md:flex-1">
                   <label className="text-sm font-medium" htmlFor={`rule-topic-${rule.uid}`}>
                     Topic
                   </label>
@@ -154,7 +155,7 @@ export function BlueprintEditor({ versionId, step, topics, onSaved }: BlueprintE
                       ))}
                   </select>
                 </div>
-                <div className="w-32 space-y-1">
+                <div className="w-24 space-y-1 md:w-32">
                   <label className="text-sm font-medium" htmlFor={`rule-draw-${rule.uid}`}>
                     Questions
                   </label>
@@ -178,6 +179,7 @@ export function BlueprintEditor({ versionId, step, topics, onSaved }: BlueprintE
                   type="button"
                   variant="ghost"
                   size="icon-sm"
+                  className="ml-auto size-11 md:ml-0 md:size-8"
                   aria-label={`Remove ${topic?.name ?? 'this topic'} from the quiz`}
                   onClick={() => setRules((current) => current.filter((r) => r.uid !== rule.uid))}
                 >

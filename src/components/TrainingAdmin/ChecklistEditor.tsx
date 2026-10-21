@@ -140,51 +140,56 @@ export function ChecklistEditor({ versionId, items, onSaved }: ChecklistEditorPr
           const labelError = labelProblem(row, index);
           const keyError = keyProblem(row, index);
           return (
-            <li key={row.uid} className="space-y-1.5 rounded-lg bg-muted/40 p-3">
+            <li key={row.uid} className="space-y-2 rounded-lg bg-muted/40 p-3">
               <div className="flex flex-wrap items-center gap-2">
-                <span className="w-6 text-sm text-muted-foreground">{index + 1}.</span>
-                <input
-                  type="text"
-                  value={row.label}
-                  onChange={(event) => setLabel(row.uid, event.target.value)}
-                  aria-label={`Checklist item ${index + 1}`}
-                  placeholder="Shows where the emergency stop is"
-                  className="h-11 min-w-0 flex-1 rounded-lg border border-input bg-transparent px-2.5 text-base md:h-8 md:text-sm"
-                />
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon-sm"
-                  className="size-11 sm:size-8"
-                  aria-label={`Move item ${index + 1} up`}
-                  disabled={index === 0}
-                  onClick={() => move(index, -1)}
-                >
-                  <ArrowUp />
-                </Button>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon-sm"
-                  className="size-11 sm:size-8"
-                  aria-label={`Move item ${index + 1} down`}
-                  disabled={index === rows.length - 1}
-                  onClick={() => move(index, 1)}
-                >
-                  <ArrowDown />
-                </Button>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon-sm"
-                  className="size-11 sm:size-8"
-                  aria-label={`Remove item ${index + 1}`}
-                  onClick={() => update(rows.filter((r) => r.uid !== row.uid))}
-                >
-                  <Trash2 />
-                </Button>
+                {/* On phones the text box takes a full line; the buttons wrap onto the next one */}
+                <div className="flex min-w-0 basis-full items-center gap-2 md:flex-1 md:basis-auto">
+                  <span className="w-6 shrink-0 text-sm text-muted-foreground">{index + 1}.</span>
+                  <input
+                    type="text"
+                    value={row.label}
+                    onChange={(event) => setLabel(row.uid, event.target.value)}
+                    aria-label={`Checklist item ${index + 1}`}
+                    placeholder="Shows where the emergency stop is"
+                    className="h-11 min-w-0 flex-1 rounded-lg border border-input bg-transparent px-2.5 text-base md:h-8 md:text-sm"
+                  />
+                </div>
+                <div className="ml-auto flex shrink-0 items-center gap-1">
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon-sm"
+                    className="size-11 md:size-8"
+                    aria-label={`Move item ${index + 1} up`}
+                    disabled={index === 0}
+                    onClick={() => move(index, -1)}
+                  >
+                    <ArrowUp />
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon-sm"
+                    className="size-11 md:size-8"
+                    aria-label={`Move item ${index + 1} down`}
+                    disabled={index === rows.length - 1}
+                    onClick={() => move(index, 1)}
+                  >
+                    <ArrowDown />
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon-sm"
+                    className="size-11 md:size-8"
+                    aria-label={`Remove item ${index + 1}`}
+                    onClick={() => update(rows.filter((r) => r.uid !== row.uid))}
+                  >
+                    <Trash2 />
+                  </Button>
+                </div>
               </div>
-              <div className="flex items-center gap-2 pl-8 text-xs text-muted-foreground">
+              <div className="flex items-center gap-2 pl-8 text-sm text-muted-foreground md:text-xs">
                 <label htmlFor={`checklist-key-${row.uid}`}>Key</label>
                 <input
                   id={`checklist-key-${row.uid}`}
@@ -197,7 +202,7 @@ export function ChecklistEditor({ versionId, items, onSaved }: ChecklistEditorPr
                       ),
                     )
                   }
-                  className="h-7 w-40 rounded-md border border-input bg-transparent px-2 font-mono text-base md:text-xs"
+                  className="h-11 w-40 max-w-full rounded-md border border-input bg-transparent px-2 font-mono text-base md:h-7 md:text-xs"
                 />
               </div>
               {(labelError || keyError) && (
@@ -225,6 +230,7 @@ export function ChecklistEditor({ versionId, items, onSaved }: ChecklistEditorPr
           type="button"
           variant="outline"
           size="sm"
+          className="min-h-11 md:min-h-0"
           disabled={rows.length >= 50}
           onClick={() => {
             const taken = new Set(rows.map((r) => r.key));
@@ -236,7 +242,13 @@ export function ChecklistEditor({ versionId, items, onSaved }: ChecklistEditorPr
         >
           <Plus /> Add an item
         </Button>
-        <Button type="button" size="sm" disabled={!dirty || saving} onClick={() => void save()}>
+        <Button
+          type="button"
+          size="sm"
+          className="min-h-11 md:min-h-0"
+          disabled={!dirty || saving}
+          onClick={() => void save()}
+        >
           {saving ? 'Saving...' : 'Save checklist'}
         </Button>
       </div>

@@ -38,6 +38,9 @@ type Deleting =
   | { kind: 'group'; group: EquipmentGroup; blocked: string | null }
   | { kind: 'machine'; machine: Machine; blocked: string | null };
 
+/** A group or machine the user asked to deactivate or reactivate, waiting for their confirmation. */
+type Toggling = { kind: 'group'; group: EquipmentGroup } | { kind: 'machine'; machine: Machine };
+
 type Editing =
   | { kind: 'group'; group: EquipmentGroup | null }
   | { kind: 'machine'; machine: Machine | null; groupId?: number };
@@ -51,6 +54,7 @@ export function EquipmentManager() {
   const [editing, setEditing] = useState<Editing | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
   const [deleting, setDeleting] = useState<Deleting | null>(null);
+  const [toggling, setToggling] = useState<Toggling | null>(null);
 
   const reloadAll = async () => {
     await Promise.all([groups.reload(), machines.reload()]);
@@ -115,6 +119,18 @@ export function EquipmentManager() {
     else await toggleMachine(current.machine);
   };
 
+  const confirmToggle = async () => {
+    if (!toggling) return;
+    const current = toggling;
+    setToggling(null);
+    if (current.kind === 'group') await toggleGroup(current.group);
+    else await toggleMachine(current.machine);
+  };
+
+  const togglingName = toggling?.kind === 'group' ? toggling.group.name : toggling?.machine.name;
+  const togglingDeactivates =
+    toggling?.kind === 'group' ? toggling.group.active : toggling?.machine.active;
+
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -163,6 +179,7 @@ export function EquipmentManager() {
                       type="button"
                       size="sm"
                       variant="outline"
+                      className="min-h-11 md:min-h-0"
                       onClick={() => setEditing({ kind: 'group', group })}
                     >
                       Edit
@@ -171,7 +188,8 @@ export function EquipmentManager() {
                       type="button"
                       size="sm"
                       variant="outline"
-                      onClick={() => void toggleGroup(group)}
+                      className="min-h-11 md:min-h-0"
+                      onClick={() => setToggling({ kind: 'group', group })}
                     >
                       {group.active ? 'Deactivate' : 'Reactivate'}
                     </Button>
@@ -179,6 +197,7 @@ export function EquipmentManager() {
                       type="button"
                       size="icon-sm"
                       variant="ghost"
+                      className="size-11 md:size-8"
                       aria-label={`Delete group ${group.name}`}
                       onClick={() => setDeleting({ kind: 'group', group, blocked: null })}
                     >
@@ -212,6 +231,7 @@ export function EquipmentManager() {
                               type="button"
                               size="sm"
                               variant="ghost"
+                              className="min-h-11 md:min-h-0"
                               aria-label={`Edit ${machine.name}`}
                               onClick={() => setEditing({ kind: 'machine', machine })}
                             >
@@ -221,8 +241,9 @@ export function EquipmentManager() {
                               type="button"
                               size="sm"
                               variant="ghost"
+                              className="min-h-11 md:min-h-0"
                               aria-label={`${machine.active ? 'Deactivate' : 'Reactivate'} ${machine.name}`}
-                              onClick={() => void toggleMachine(machine)}
+                              onClick={() => setToggling({ kind: 'machine', machine })}
                             >
                               {machine.active ? 'Deactivate' : 'Reactivate'}
                             </Button>
@@ -230,6 +251,7 @@ export function EquipmentManager() {
                               type="button"
                               size="icon-sm"
                               variant="ghost"
+                              className="size-11 md:size-8"
                               aria-label={`Delete machine ${machine.name}`}
                               onClick={() =>
                                 setDeleting({ kind: 'machine', machine, blocked: null })
@@ -258,6 +280,32 @@ export function EquipmentManager() {
           })}
         </ul>
       </LoadState>
+
+      <AlertDialog open={toggling !== null} onOpenChange={(open) => !open && setToggling(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {togglingDeactivates ? 'Deactivate' : 'Reactivate'} {togglingName}?
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {togglingDeactivates ? (
+                <>
+                  {togglingName} is hidden from new trainings. Nothing is deleted and its history is
+                  kept. You can reactivate it at any time.
+                </>
+              ) : (
+                <>{togglingName} shows up again when you create new trainings.</>
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={() => void confirmToggle()}>
+              {togglingDeactivates ? 'Deactivate' : 'Reactivate'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <AlertDialog open={deleting !== null} onOpenChange={(open) => !open && setDeleting(null)}>
         <AlertDialogContent>

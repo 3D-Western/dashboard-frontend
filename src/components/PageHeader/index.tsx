@@ -27,9 +27,11 @@ const pageTitles: Record<string, string> = {
   [Routes.adminUsersManagement]: 'User Management',
   [Routes.adminJobsManagement]: 'Job Management',
   [Routes.adminInvitationManagement]: 'Invitation Management',
+  [Routes.adminSignoffs]: 'Training Sign-offs',
   [TrainingAdminRoutes.home]: 'Training Editor',
   [TrainingAdminRoutes.equipment]: 'Training Equipment',
   [TrainingAdminRoutes.import]: 'Import a Training',
+  [TrainingAdminRoutes.auditLog]: 'Training Audit Log',
 };
 
 // The titled pages above this one in the URL, e.g. /admin/users → [Admin Dashboard]
@@ -50,6 +52,8 @@ export function PageHeader() {
   // A training being edited, e.g. /admin/training/12/draft
   const isTrainingEdit =
     pathname.startsWith(`${TrainingAdminRoutes.home}/`) && !pageTitles[pathname];
+  // One sign-off, e.g. /admin/signoffs/12
+  const isSignoffDetail = pathname.startsWith(`${Routes.adminSignoffs}/`) && !pageTitles[pathname];
   const title =
     pageTitles[pathname] ||
     (isJobDetail
@@ -58,10 +62,12 @@ export function PageHeader() {
         ? 'Training Session'
         : isTrainingEdit
           ? 'Edit Training'
-          : 'Dashboard');
+          : isSignoffDetail
+            ? 'Training Sign-off'
+            : 'Dashboard');
   // A job's details page (or a training session) has no fixed title, but still sits under its list
   const parents =
-    pageTitles[pathname] || isJobDetail || isTrainingSession || isTrainingEdit
+    pageTitles[pathname] || isJobDetail || isTrainingSession || isTrainingEdit || isSignoffDetail
       ? getParentPages(pathname)
       : [];
 

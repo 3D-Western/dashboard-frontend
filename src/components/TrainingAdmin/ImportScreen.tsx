@@ -181,11 +181,18 @@ export function ImportScreen() {
               type="button"
               size="sm"
               variant="outline"
+              className="min-h-11 md:min-h-0"
               onClick={() => fileInput.current?.click()}
             >
               <FileUp /> Upload a file
             </Button>
-            <Button type="button" size="sm" variant="ghost" onClick={() => change(EXAMPLE)}>
+            <Button
+              type="button"
+              size="sm"
+              variant="ghost"
+              className="min-h-11 md:min-h-0"
+              onClick={() => change(EXAMPLE)}
+            >
               Insert an example
             </Button>
           </div>
@@ -213,6 +220,7 @@ export function ImportScreen() {
       <div className="flex flex-wrap gap-2">
         <Button
           type="button"
+          className="min-h-11 md:min-h-0"
           disabled={text.trim() === '' || tooLarge || checking}
           onClick={() => void check()}
         >
@@ -221,6 +229,7 @@ export function ImportScreen() {
         <Button
           type="button"
           variant="outline"
+          className="min-h-11 md:min-h-0"
           disabled={validText === null || validText !== text || importing}
           onClick={() => void runImport()}
         >

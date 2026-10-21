@@ -32,6 +32,19 @@ describe('ChecklistEditor', () => {
     expect(screen.getByRole('button', { name: /save checklist/i })).toBeDisabled();
   });
 
+  it('sizes the text boxes and buttons for a phone: 16 px text, 44 px targets', () => {
+    open();
+
+    const label = screen.getByLabelText('Checklist item 1');
+    expect(label).toHaveClass('h-11', 'text-base', 'md:h-8');
+    expect(screen.getAllByLabelText('Key')[0]).toHaveClass('h-11', 'text-base', 'md:h-7');
+    expect(screen.getByRole('button', { name: 'Move item 1 up' })).toHaveClass(
+      'size-11',
+      'md:size-8',
+    );
+    expect(screen.getByRole('button', { name: 'Remove item 2' })).toHaveClass('size-11');
+  });
+
   it('adds an item with a key made from its label, and saves the list', async () => {
     api.setChecklist.mockResolvedValue(
       createVersionDetail([], {

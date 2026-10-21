@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { useAdminResource } from '@/hooks/useAdminResource';
 import { adminErrorMessage } from '@/lib/training-admin-errors';
+import { cn } from '@/lib/utils';
 import {
   auditActorLabel,
   auditQueryFromFilters,
@@ -29,6 +30,8 @@ const ACTION_OPTIONS = (Object.keys(trainingAuditActionLabels) as TrainingAuditA
  */
 export function TrainingAuditLog() {
   const [filters, setFilters] = useState<AuditFilters>(EMPTY_AUDIT_FILTERS);
+  // On phones the filters fold away behind a button; from md up they are always shown.
+  const [filtersOpen, setFiltersOpen] = useState(false);
   const query = useMemo(() => auditQueryFromFilters(filters), [filters]);
 
   const loadTrainings = useCallback(() => trainingAdminAPI.listTrainings(), []);
@@ -60,7 +63,8 @@ export function TrainingAuditLog() {
 
   const update = (patch: Partial<AuditFilters>) =>
     setFilters((current) => ({ ...current, ...patch }));
-  const anyFilter = Object.values(filters).some((value) => value !== '');
+  const filterCount = Object.values(filters).filter((value) => value !== '').length;
+  const anyFilter = filterCount > 0;
 
   const loadOlder = async () => {
     if (!snapshot || !lastPagination) return;
@@ -95,9 +99,24 @@ export function TrainingAuditLog() {
         </p>
       </div>
 
+      <Button
+        type="button"
+        variant="outline"
+        className="min-h-11 w-full md:hidden"
+        aria-expanded={filtersOpen}
+        aria-controls="audit-filters"
+        onClick={() => setFiltersOpen((open) => !open)}
+      >
+        {filterCount > 0 ? `Filters (${filterCount} set)` : 'Filters'}
+      </Button>
+
       <section
+        id="audit-filters"
         aria-label="Filter the audit log"
-        className="grid gap-3 rounded-xl border bg-card p-4 sm:grid-cols-2 lg:grid-cols-5"
+        className={cn(
+          'gap-3 rounded-xl border bg-card p-4 md:grid md:grid-cols-2 lg:grid-cols-5',
+          filtersOpen ? 'grid' : 'hidden',
+        )}
       >
         <SelectField
           label="Training"
@@ -132,10 +151,11 @@ export function TrainingAuditLog() {
           value={filters.to}
           onValueChange={(to) => update({ to })}
         />
-        <div className="flex items-end sm:col-span-2 lg:col-span-5 lg:justify-end">
+        <div className="flex items-end md:col-span-2 lg:col-span-5 lg:justify-end">
           <Button
             type="button"
             variant="ghost"
+            className="min-h-11 md:min-h-0"
             onClick={() => setFilters(EMPTY_AUDIT_FILTERS)}
             disabled={!anyFilter}
           >
