@@ -78,6 +78,21 @@ describe('TrainingAdminShell permission-based visibility', () => {
     expect(screen.queryByText(/you can look and publish/i)).not.toBeInTheDocument();
   });
 
+  it('links to the audit log from the editor, for someone who can author or only publish', () => {
+    const { unmount } = renderShell(['training:author']);
+    expect(screen.getByRole('link', { name: 'Audit log' })).toHaveAttribute(
+      'href',
+      '/admin/training/audit-log',
+    );
+    unmount();
+
+    renderShell(['training:publish']);
+    expect(screen.getByRole('link', { name: 'Audit log' })).toHaveAttribute(
+      'href',
+      '/admin/training/audit-log',
+    );
+  });
+
   it('marks the current section', () => {
     mockPathname.mockReturnValue('/admin/training/equipment');
     renderShell(['training:author']);

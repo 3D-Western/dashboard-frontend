@@ -3,6 +3,7 @@ export const TrainingAdminRoutes = {
   home: '/admin/training',
   equipment: '/admin/training/equipment',
   import: '/admin/training/import',
+  auditLog: '/admin/training/audit-log',
   detail: (trainingId: number) => `/admin/training/${trainingId}`,
   draft: (trainingId: number) => `/admin/training/${trainingId}/draft`,
   questions: (trainingId: number) => `/admin/training/${trainingId}/questions`,

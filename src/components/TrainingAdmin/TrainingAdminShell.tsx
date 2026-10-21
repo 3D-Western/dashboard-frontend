@@ -13,6 +13,7 @@ const SECTIONS = [
   { title: 'Trainings', href: TrainingAdminRoutes.home },
   { title: 'Equipment', href: TrainingAdminRoutes.equipment },
   { title: 'Import', href: TrainingAdminRoutes.import },
+  { title: 'Audit log', href: TrainingAdminRoutes.auditLog },
 ];
 
 function isActive(pathname: string, href: string) {

@@ -1,5 +1,7 @@
 import { apiRequest } from './base';
 import { getBaseUrl } from './utils';
+import type { PaginatedResponse } from '@/types/common';
+import type { TrainingAuditEntry, TrainingAuditQuery } from '@/types/training-audit';
 import type {
   AdminQuestion,
   AdminStep,
@@ -74,6 +76,7 @@ export const trainingAdminPaths = {
   questionReport: (trainingId: number) => `${ADMIN}/trainings/${trainingId}/question-report`,
   importPreview: `${ADMIN}/import/preview`,
   importFile: `${ADMIN}/import`,
+  auditLog: `${ADMIN}/audit-log`,
 };
 
 const request = <T>(method: string, path: string, body?: unknown, options?: RequestInit) =>
@@ -195,6 +198,19 @@ export const trainingAdminAPI = {
     post<Rescore>(trainingAdminPaths.rescore(questionVersionId)),
   getQuestionReport: (trainingId: number) =>
     get<QuestionReportRow[]>(trainingAdminPaths.questionReport(trainingId)),
+
+  // ---- Audit log ----
+  /** Newest first. Empty filters are left out of the URL. */
+  listAuditLog: (query: TrainingAuditQuery) => {
+    const params = new URLSearchParams();
+    Object.entries(query).forEach(([key, value]) => {
+      if (value !== undefined && value !== '') params.set(key, String(value));
+    });
+    const search = params.toString();
+    return get<PaginatedResponse<TrainingAuditEntry>>(
+      search ? `${trainingAdminPaths.auditLog}?${search}` : trainingAdminPaths.auditLog,
+    );
+  },
 
   // ---- Import ----
   previewImport: (yaml: string) => postYaml<ImportPreview>(trainingAdminPaths.importPreview, yaml),

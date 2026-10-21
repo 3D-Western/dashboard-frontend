@@ -144,6 +144,35 @@ describe('trainingAdminAPI paths and bodies', () => {
   });
 });
 
+describe('trainingAdminAPI audit log', () => {
+  it('asks for the audit log with only the filters that are set', async () => {
+    answer({ data: [], pagination: {} });
+
+    await trainingAdminAPI.listAuditLog({
+      trainingId: 3,
+      action: 'STEP_ADDED',
+      pageSize: 50,
+      actorId: undefined,
+    });
+
+    expect(seen[0].method).toBe('GET');
+    expect(seen[0].url.pathname).toBe('/api/v1/admin/training/audit-log');
+    expect(seen[0].url.searchParams.get('trainingId')).toBe('3');
+    expect(seen[0].url.searchParams.get('action')).toBe('STEP_ADDED');
+    expect(seen[0].url.searchParams.get('pageSize')).toBe('50');
+    expect(seen[0].url.searchParams.has('actorId')).toBe(false);
+  });
+
+  it('asks for the first page with no query string at all when nothing is filtered', async () => {
+    answer({ data: [], pagination: {} });
+
+    await trainingAdminAPI.listAuditLog({});
+
+    expect(seen[0].url.pathname).toBe('/api/v1/admin/training/audit-log');
+    expect(seen[0].url.search).toBe('');
+  });
+});
+
 describe('trainingAdminAPI errors', () => {
   it('throws the server’s code and its list of problems', async () => {
     answer(null, {
