@@ -149,7 +149,7 @@ export function ChecklistEditor({ versionId, items, onSaved }: ChecklistEditorPr
                   onChange={(event) => setLabel(row.uid, event.target.value)}
                   aria-label={`Checklist item ${index + 1}`}
                   placeholder="Shows where the emergency stop is"
-                  className="h-10 min-w-0 flex-1 rounded-lg border border-input bg-transparent px-2.5 text-base sm:h-8 md:text-sm"
+                  className="h-11 min-w-0 flex-1 rounded-lg border border-input bg-transparent px-2.5 text-base md:h-8 md:text-sm"
                 />
                 <Button
                   type="button"

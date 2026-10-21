@@ -66,7 +66,8 @@ export function DataTablePagination<TData>({
       )}
 
       <div className="flex flex-col items-center gap-4 sm:flex-row">
-        <div className="flex items-center gap-2">
+        {/* Phones: Previous / Next only; the page size stays at its default there. */}
+        <div className="hidden items-center gap-2 md:flex">
           <p className="text-sm font-medium">Rows per page</p>
           <Select
             value={`${pageSize}`}
@@ -93,7 +94,7 @@ export function DataTablePagination<TData>({
           <nav className="flex items-center gap-1" aria-label="Pagination navigation">
             <Button
               variant="outline"
-              className="h-8 w-8 p-0"
+              className="hidden h-11 w-11 p-0 md:inline-flex md:h-8 md:w-8"
               onClick={() => updatePagination(1)}
               disabled={!Boolean(pagination.hasPrevious)}
               aria-label={`Go to first page, currently on page ${currentPage} of ${totalPages}`}
@@ -103,7 +104,7 @@ export function DataTablePagination<TData>({
             </Button>
             <Button
               variant="outline"
-              className="h-8 w-8 p-0"
+              className="h-11 w-11 p-0 md:h-8 md:w-8"
               onClick={() => updatePagination(currentPage - 1)}
               disabled={!Boolean(pagination.hasPrevious)}
               aria-label={`Go to previous page, currently on page ${currentPage} of ${totalPages}`}
@@ -113,7 +114,7 @@ export function DataTablePagination<TData>({
             </Button>
             <Button
               variant="outline"
-              className="h-8 w-8 p-0"
+              className="h-11 w-11 p-0 md:h-8 md:w-8"
               onClick={() => updatePagination(currentPage + 1)}
               disabled={!Boolean(pagination.hasNext)}
               aria-label={`Go to next page, currently on page ${currentPage} of ${totalPages}`}
@@ -123,7 +124,7 @@ export function DataTablePagination<TData>({
             </Button>
             <Button
               variant="outline"
-              className="h-8 w-8 p-0"
+              className="hidden h-11 w-11 p-0 md:inline-flex md:h-8 md:w-8"
               onClick={() => updatePagination(totalPages)}
               disabled={!Boolean(pagination.hasNext)}
               aria-label={`Go to last page, currently on page ${currentPage} of ${totalPages}`}

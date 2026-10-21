@@ -148,17 +148,22 @@ export function SettingsContent() {
                   control={passwordForm.control}
                   name="invalidateAllSessions"
                   render={({ field }) => (
-                    <FormItem className="flex flex-row items-start space-y-0 space-x-3 rounded-md border p-4">
-                      <FormControl>
-                        <Checkbox checked={field.value} onCheckedChange={field.onChange} />
-                      </FormControl>
-                      <div className="space-y-1 leading-none">
-                        <FormLabel>Sign out all active sessions</FormLabel>
-                        <FormDescription>
-                          After changing your password, you will be signed out from all devices and
-                          redirected to the login page.
-                        </FormDescription>
-                      </div>
+                    <FormItem className="space-y-0 rounded-md border p-4">
+                      {/* The label row is the tap target: checkbox plus text, 44 px tall on phones. */}
+                      <FormLabel className="flex min-h-11 cursor-pointer items-center gap-3 md:min-h-0 md:items-start">
+                        <FormControl>
+                          <Checkbox
+                            checked={field.value}
+                            onCheckedChange={field.onChange}
+                            className="md:mt-0.5"
+                          />
+                        </FormControl>
+                        Sign out all active sessions
+                      </FormLabel>
+                      <FormDescription className="pl-8 md:pl-7">
+                        After changing your password, you will be signed out from all devices and
+                        redirected to the login page.
+                      </FormDescription>
                     </FormItem>
                   )}
                 />

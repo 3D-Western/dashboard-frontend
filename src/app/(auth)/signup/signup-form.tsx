@@ -276,7 +276,7 @@ export function SignupForm({ className, ...props }: React.ComponentProps<'div'>)
                       <FormLabel>Faculty</FormLabel>
                       <Select onValueChange={field.onChange} value={field.value}>
                         <FormControl>
-                          <SelectTrigger>
+                          <SelectTrigger className="w-full">
                             <SelectValue placeholder="Select your faculty" />
                           </SelectTrigger>
                         </FormControl>
@@ -301,7 +301,7 @@ export function SignupForm({ className, ...props }: React.ComponentProps<'div'>)
                       <FormLabel>Experience Level</FormLabel>
                       <Select onValueChange={field.onChange} value={field.value}>
                         <FormControl>
-                          <SelectTrigger>
+                          <SelectTrigger className="w-full">
                             <SelectValue placeholder="Select your experience level" />
                           </SelectTrigger>
                         </FormControl>

@@ -19,7 +19,8 @@ export default async function AuthLayout({ children }: { children: React.ReactNo
       <div className="absolute top-4 right-4 z-10">
         <ThemeToggle />
       </div>
-      {children}
+      {/* On phones the toggle sits above the content (44 px tall, top-4), so the content starts below it. */}
+      <div className="pt-16 md:pt-0">{children}</div>
     </div>
   );
 }

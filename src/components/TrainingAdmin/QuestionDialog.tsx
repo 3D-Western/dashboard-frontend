@@ -249,7 +249,7 @@ export function QuestionDialog({
                     onChange={(event) => setOption(option.uid, { label: event.target.value })}
                     aria-label={`Option ${index + 1} text`}
                     placeholder={`Option ${index + 1}`}
-                    className="h-10 min-w-0 flex-1 rounded-lg border border-input bg-transparent px-2.5 text-base outline-none read-only:opacity-70 focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 sm:h-8 md:text-sm"
+                    className="h-11 min-w-0 flex-1 rounded-lg border border-input bg-transparent px-2.5 text-base outline-none read-only:opacity-70 focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 md:h-8 md:text-sm"
                   />
                   {!optionRowsLocked && (
                     <Button

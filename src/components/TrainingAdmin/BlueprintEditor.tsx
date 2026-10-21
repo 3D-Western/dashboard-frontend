@@ -142,7 +142,7 @@ export function BlueprintEditor({ versionId, step, topics, onSaved }: BlueprintE
                         ),
                       )
                     }
-                    className="h-10 w-full rounded-lg border border-input bg-transparent px-2.5 text-base sm:h-8 md:text-sm"
+                    className="h-11 w-full rounded-lg border border-input bg-transparent px-2.5 text-base md:h-8 md:text-sm"
                   >
                     <option value="">Choose a topic</option>
                     {topics
@@ -171,7 +171,7 @@ export function BlueprintEditor({ versionId, step, topics, onSaved }: BlueprintE
                         ),
                       )
                     }
-                    className="h-10 w-full rounded-lg border border-input bg-transparent px-2.5 text-base disabled:opacity-60 sm:h-8 md:text-sm"
+                    className="h-11 w-full rounded-lg border border-input bg-transparent px-2.5 text-base disabled:opacity-60 md:h-8 md:text-sm"
                   />
                 </div>
                 <Button
