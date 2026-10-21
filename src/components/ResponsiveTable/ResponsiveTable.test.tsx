@@ -1,6 +1,6 @@
 import { describe, it, expect, afterEach } from 'vitest';
 import { render, screen, within } from '@testing-library/react';
-import { ResponsiveTable, RowCard } from './index';
+import { CardDateLine, ResponsiveTable, RowCard } from './index';
 
 const DESKTOP_WIDTH = window.innerWidth;
 
@@ -81,5 +81,17 @@ describe('RowCard', () => {
     expect(screen.getByRole('button', { name: 'Actions for Jordan Lee' })).toBeInTheDocument();
     expect(screen.getByText('jordan@uwo.ca')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Re-score' })).toBeInTheDocument();
+  });
+});
+
+describe('CardDateLine', () => {
+  it('shows the label and the date when there is one', () => {
+    render(<CardDateLine label="Print date" date="2026-10-01T10:00:00Z" />);
+    expect(screen.getByText(/Print date:/)).toBeInTheDocument();
+  });
+
+  it('renders nothing at all when there is no date, not a blank "Print date:"', () => {
+    const { container } = render(<CardDateLine label="Print date" date="" />);
+    expect(container).toBeEmptyDOMElement();
   });
 });

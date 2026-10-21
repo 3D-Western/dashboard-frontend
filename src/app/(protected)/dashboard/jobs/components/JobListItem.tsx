@@ -54,13 +54,15 @@ export function JobListItem({ job }: { job: JobListEntry }) {
               <span aria-hidden="true" className={cn('size-1.5 rounded-full', tone.bar)} />
               {stage.label}
             </span>
-            {/* Dot and date stay together so a wrap never leaves the dot dangling */}
-            <span className="inline-flex items-center gap-2.5 text-muted-foreground">
-              <span aria-hidden="true">·</span>
-              <time dateTime={job.jobPlaced} className="eyebrow">
-                {createdAt}
-              </time>
-            </span>
+            {/* Dot and date stay together so a wrap never leaves the dot dangling. No date, no dot */}
+            {job.jobPlaced && createdAt && (
+              <span className="inline-flex items-center gap-2.5 text-muted-foreground">
+                <span aria-hidden="true">·</span>
+                <time dateTime={job.jobPlaced} className="eyebrow">
+                  {createdAt}
+                </time>
+              </span>
+            )}
           </p>
           <h3 className="mt-2 truncate text-base">
             {/* Stretched link: the whole card opens the job; the buttons sit above it */}

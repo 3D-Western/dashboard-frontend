@@ -69,6 +69,8 @@ interface RowCardProps {
 /** A date on a card's detail line, shown in the user's time zone. */
 export function CardDateLine({ label, date }: { label: string; date: string }) {
   const localTime = useLocalTime(date, 'MMM d, yyyy');
+  // A record with no date shows no line at all, rather than a blank "Print date:"
+  if (!date || !localTime) return null;
   return (
     <p>
       {label}: <time dateTime={date}>{localTime}</time>

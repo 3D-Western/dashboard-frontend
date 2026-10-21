@@ -123,3 +123,14 @@ describe('JobList', () => {
     }
   });
 });
+
+describe('JobList without a date', () => {
+  it('leaves out the date and its separator dot instead of showing a blank', () => {
+    renderList([createMockPrintJob({ name: 'Undated gear', status: 'InQueue', jobPlaced: '' })]);
+
+    const item = screen.getByRole('listitem');
+    expect(within(item).getByText('Queued')).toBeInTheDocument();
+    expect(item.textContent).not.toContain('·');
+    expect(item.querySelector('time')).toBeNull();
+  });
+});
