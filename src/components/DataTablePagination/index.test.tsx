@@ -159,6 +159,19 @@ describe('DataTablePagination', () => {
     expect(screen.getByText('2 of 30 row(s) selected.')).toBeInTheDocument();
   });
 
+  it('shows only Previous and Next on phones, with 44 px targets and 32 px from md', () => {
+    render(<PaginationHarness data={buildRows(30)} />);
+
+    const previous = screen.getByLabelText(/go to previous page/i);
+    const next = screen.getByLabelText(/go to next page/i);
+    expect(previous).toHaveClass('h-11', 'w-11', 'md:h-8', 'md:w-8');
+    expect(next).toHaveClass('h-11', 'w-11', 'md:h-8', 'md:w-8');
+
+    expect(screen.getByLabelText(/go to first page/i)).toHaveClass('hidden', 'md:inline-flex');
+    expect(screen.getByLabelText(/go to last page/i)).toHaveClass('hidden', 'md:inline-flex');
+    expect(screen.getByText('Rows per page').parentElement).toHaveClass('hidden', 'md:flex');
+  });
+
   it('navigates to next page via router.push', async () => {
     const user = userEvent.setup();
     render(<PaginationHarness data={buildRows(30)} />);
