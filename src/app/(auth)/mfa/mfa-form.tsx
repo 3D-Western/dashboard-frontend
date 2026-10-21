@@ -107,7 +107,7 @@ export function MFAForm({
   return (
     <div className={cn('flex flex-col gap-6 md:min-h-112.5', className)} {...props}>
       <Card className="flex-1 overflow-hidden p-0">
-        <CardContent className="grid flex-1 p-0 md:grid-cols-2">
+        <CardContent className="grid flex-1 p-0 lg:grid-cols-2 short:grid-cols-1">
           <Form {...form}>
             <form
               method="post"
@@ -163,7 +163,7 @@ export function MFAForm({
               </div>
             </form>
           </Form>
-          <div className="relative hidden min-h-[500px] md:block">
+          <div className="relative hidden min-h-[500px] lg:block short:hidden">
             <BrandMark className="p-12" />
           </div>
         </CardContent>

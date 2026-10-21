@@ -82,3 +82,14 @@ describe('SignupForm phone number and text consent', () => {
     expect(screen.queryByText(/must be a valid uwo email/i)).not.toBeInTheDocument();
   });
 });
+
+describe('SignupForm layout', () => {
+  it('is one column until lg, and the logo column only shows from lg and never in short landscape', () => {
+    const { container } = render(<SignupForm />);
+
+    const form = container.querySelector('form')!;
+    const card = form.parentElement!;
+    expect(card).toHaveClass('lg:grid-cols-2', 'short:grid-cols-1');
+    expect(card.lastElementChild).toHaveClass('hidden', 'lg:block', 'short:hidden');
+  });
+});
