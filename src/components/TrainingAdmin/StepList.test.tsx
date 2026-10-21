@@ -156,4 +156,11 @@ describe('StepList on a phone', () => {
       expect(screen.getByRole('button', { name })).toHaveClass('size-11');
     }
   });
+
+  it('puts the actions under the step text, beside it only from xl', () => {
+    setup();
+
+    const row = screen.getByRole('listitem', { name: 'Step 2: Safe operation' }).firstElementChild;
+    expect(row).toHaveClass('flex-col', 'xl:flex-row');
+  });
 });

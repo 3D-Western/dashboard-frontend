@@ -31,6 +31,15 @@ async function open() {
 }
 
 describe('Gatekeepers listing', () => {
+  it('puts the actions under the name, beside it only from xl', async () => {
+    await open();
+
+    const row = screen
+      .getByRole('heading', { name: /makerspace pc/i })
+      .closest('li')?.firstElementChild;
+    expect(row).toHaveClass('flex-col', 'xl:flex-row');
+  });
+
   it('shows status, last health report and last sync', async () => {
     await open();
 

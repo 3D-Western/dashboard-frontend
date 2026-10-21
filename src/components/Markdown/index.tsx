@@ -73,7 +73,13 @@ interface MarkdownProps {
 
 export function Markdown({ children, className }: MarkdownProps) {
   return (
-    <div className={cn('space-y-3 text-base leading-relaxed [overflow-wrap:anywhere]', className)}>
+    // 80ch keeps running text to about 70 to 90 characters a line, however wide the screen is.
+    <div
+      className={cn(
+        'max-w-[80ch] space-y-3 text-base leading-relaxed [overflow-wrap:anywhere]',
+        className,
+      )}
+    >
       <ReactMarkdown remarkPlugins={[remarkGfm]} components={components}>
         {children ?? ''}
       </ReactMarkdown>
