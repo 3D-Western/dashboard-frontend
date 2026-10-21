@@ -207,7 +207,7 @@ export function LoginForm({
       )}
 
       <Card className="overflow-hidden p-0">
-        <CardContent className="grid p-0 md:grid-cols-2">
+        <CardContent className="grid p-0 lg:grid-cols-2 short:grid-cols-1">
           <Form {...form}>
             {/* method="post": if someone submits before the page's JavaScript has loaded, the
                 browser's fallback submit must not put the password in the URL */}
@@ -281,7 +281,7 @@ export function LoginForm({
               </div>
             </form>
           </Form>
-          <div className="relative hidden min-h-[500px] md:block">
+          <div className="relative hidden min-h-[500px] lg:block short:hidden">
             <BrandMark className="p-12" />
           </div>
         </CardContent>

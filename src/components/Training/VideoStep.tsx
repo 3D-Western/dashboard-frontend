@@ -497,12 +497,14 @@ export function VideoStep({ attemptId, step, onStepCompleted }: VideoStepProps) 
   return (
     <div className="space-y-3">
       <div ref={containerRef} className="overflow-hidden rounded-xl border bg-card">
-        <div className="relative aspect-video w-full bg-black">
+        {/* On a phone on its side the picture is capped by the screen height, so the controls
+            below it stay in view. The picture is letterboxed inside the box, never cropped. */}
+        <div className="relative aspect-video w-full bg-black short:max-h-[calc(100svh-13rem)]">
           {playback ? (
             <video
               ref={videoRef}
               src={playback.url}
-              className="size-full"
+              className="size-full object-contain"
               playsInline
               preload="metadata"
               controls={false}
@@ -524,8 +526,9 @@ export function VideoStep({ attemptId, step, onStepCompleted }: VideoStepProps) 
           )}
         </div>
 
-        {/* The slider below is 44 px tall; its own padding is enough, so the bottom padding is small */}
-        <div className="space-y-2 px-3 pt-3 pb-1 md:p-3">
+        {/* The slider below is 44 px tall; its own padding is enough, so the bottom padding is small.
+            On a phone on its side everything is one row: buttons, then the slider in what is left. */}
+        <div className="space-y-2 px-3 pt-3 pb-1 md:p-3 short:flex short:flex-wrap short:items-center short:space-y-0 short:gap-x-3 short:px-2 short:pt-2 short:pb-2">
           <div className="flex items-center gap-3">
             <Button
               type="button"
@@ -581,11 +584,11 @@ export function VideoStep({ attemptId, step, onStepCompleted }: VideoStepProps) 
             disabled={!playback || controlsLocked}
             aria-label="Video position"
             aria-valuetext={`${formatClock(currentTime)} of ${formatClock(duration)}`}
-            className="h-11 w-full accent-purple-light disabled:opacity-50"
+            className="h-11 w-full accent-purple-light disabled:opacity-50 short:w-auto short:min-w-0 short:flex-1"
           />
 
           {activeCheckpoint && (
-            <div className="space-y-3 rounded-lg border border-purple-light/50 bg-purple-light/5 p-3">
+            <div className="space-y-3 rounded-lg border border-purple-light/50 bg-purple-light/5 p-3 short:w-full">
               <p className="text-sm font-medium text-purple-light">
                 Quick question about what you just watched
               </p>
