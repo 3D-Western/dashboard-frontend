@@ -68,7 +68,6 @@ export interface AdminUserListParams extends BasePaginationParams {
   email?: string;
   firstName?: string;
   lastName?: string;
-  experienceLevel?: string;
 }
 
 export interface CurrentUserJobListParams extends BasePaginationParams {

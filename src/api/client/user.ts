@@ -77,9 +77,6 @@ export const userApi = {
     if (params?.lastName !== undefined) {
       searchParams.append('lastName', params.lastName);
     }
-    if (params?.experienceLevel !== undefined) {
-      searchParams.append('experienceLevel', params.experienceLevel);
-    }
     if (params?.page !== undefined) {
       searchParams.append('page', params.page.toString());
     }

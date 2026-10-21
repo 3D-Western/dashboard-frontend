@@ -8,16 +8,13 @@ export interface User {
   password: string;
   email: string;
   groups: string[]; // group keys, e.g. ['members'] or ['super_admins']
-  experience: string;
   createdDate?: string;
   // Mirrors backend's real AccountStatus enum/column. Absent/undefined is treated as 'Active'
   // (see db.ts) so existing seeded users, which never set this field, aren't retroactively locked.
   accountStatus?: AccountStatus;
   accountStatusReason?: string | null;
-  // Raw backend-shaped values (e.g. 'Undeclared', 'Beginner') for the AdminUserProfile mock
-  // responses — separate from the unrelated, unused `experience` field above.
+  // Raw backend-shaped value (e.g. 'Undeclared') for the AdminUserProfile mock responses.
   faculty?: string;
-  experienceLevel?: string | null;
   // Absent/undefined is treated as completed (see db.ts), matching the emailVerified convention
   // below — existing seeded users, which never set this field, aren't retroactively sent back
   // through onboarding. Only a newly mock-signed-up user starts with this explicitly `false`.

@@ -126,7 +126,6 @@ export class Database {
       firstName: input.firstName,
       lastName: input.lastName,
       groups: ['members'],
-      experience: '',
       createdDate: new Date().toISOString(),
       emailVerified: false,
       onboardingCompleted: false,

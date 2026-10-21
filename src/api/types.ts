@@ -36,7 +36,6 @@ export interface AdminUserProfileResponse {
   lastName: string;
   createdAt: string;
   updatedAt: string;
-  experienceLevel: string | null;
   faculty: string;
   accountStatus: string;
   accountStatusReason: string | null;
@@ -77,10 +76,8 @@ export interface ApiSignupRequest {
   password: string;
   firstName: string;
   lastName: string;
-  // Backend RegisterRequest requires both — sent as the backend enum names
-  // (e.g. "Engineering", "Beginner").
+  // Sent as the backend enum name (e.g. "Engineering").
   faculty: string;
-  experienceLevel: string;
   // Optional phone number and separate texting consent (see lib/phone.ts). Omit both to skip.
   phoneNumber?: string | null;
   smsOptIn?: boolean;
