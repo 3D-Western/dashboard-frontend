@@ -123,10 +123,15 @@ export interface InvitationCreator {
   lastName: string;
 }
 
+export type MemberType = 'STAFF' | 'ALUMNI' | 'COMMUNITY' | 'ORGANISATION';
+
 export interface Invitation {
   id: number;
   studentId: number;
   email: string;
+  firstName: string | null;
+  lastName: string | null;
+  memberType: MemberType;
   invitationCode: string;
   status: InvitationStatus;
   createdAt: string;

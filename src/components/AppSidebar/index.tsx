@@ -30,7 +30,6 @@ import {
   Settings,
   Shield,
   ChevronDown,
-  TicketPlus,
   PenSquare,
   DoorOpen,
   type LucideIcon,
@@ -101,12 +100,6 @@ const adminNavigationItems: AdminNavItem[] = [
     // distinguish admins here. JOBS_UPDATE_STATUS is the permission the actual admin job-status
     // override endpoint requires (PATCH /jobs/:jobId) and is never granted to members.
     permission: PERMISSIONS.JOBS_UPDATE_STATUS,
-  },
-  {
-    title: 'Invitation Management',
-    url: Routes.adminInvitationManagement,
-    icon: TicketPlus,
-    permission: PERMISSIONS.INVITATIONS_LIST,
   },
   {
     title: 'Training Sign-offs',

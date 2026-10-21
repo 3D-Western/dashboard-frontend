@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeAll, beforeEach } from 'vitest';
 import { render, screen, waitFor, within } from '@test/utils/render';
 import userEvent from '@testing-library/user-event';
-import InvitationsTable from '@/app/(protected)/admin/invitations/components/InvitationsTable';
+import InvitationsTable from '@/app/(protected)/admin/users/components/InvitationsTable';
 import {
   createMockPendingInvitation,
   createMockAcceptedInvitation,
@@ -180,7 +180,7 @@ describe('InvitationsTable Integration', () => {
         />,
       );
 
-      expect(inTable().getByText('Accepted')).toBeInTheDocument();
+      expect(inTable().getByText('Used')).toBeInTheDocument();
     });
 
     it('displays EXPIRED status correctly', () => {
@@ -335,7 +335,7 @@ describe('InvitationsTable Integration', () => {
 
       await waitFor(() => {
         expect(inTable().getByText('Revoked')).toBeInTheDocument();
-        expect(inTable().getByText('Accepted')).toBeInTheDocument();
+        expect(inTable().getByText('Used')).toBeInTheDocument();
       });
     });
 

@@ -73,6 +73,19 @@ export const invitationApi = {
   },
 
   /**
+   * Send an invitation email again (pending: fresh week; expired: reopened)
+   */
+  resendInvitation: async (invitationId: number, options?: RequestInit) => {
+    const url = `${getBaseUrl()}${endpoints.invitations.resend(invitationId)}`;
+
+    return apiRequest<Invitation>(url, {
+      method: 'POST',
+      credentials: 'include',
+      ...options,
+    });
+  },
+
+  /**
    * Revoke a pending invitation
    */
   revokeInvitation: async (invitationId: number, options?: RequestInit) => {

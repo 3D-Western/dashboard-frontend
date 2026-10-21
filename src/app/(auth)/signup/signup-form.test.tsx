@@ -93,3 +93,81 @@ describe('SignupForm layout', () => {
     expect(card.lastElementChild).toHaveClass('hidden', 'lg:block', 'short:hidden');
   });
 });
+
+describe('SignupForm with an invitation code (people without a @uwo.ca email)', () => {
+  const fillRest = async () => {
+    await userEvent.type(screen.getByLabelText(/first name/i), 'Jane');
+    await userEvent.type(screen.getByLabelText(/last name/i), 'Roe');
+    await userEvent.type(screen.getByLabelText(/^password/i), 'Abcdefghij1');
+    await userEvent.click(screen.getByRole('combobox', { name: /faculty/i }));
+    await userEvent.click(screen.getAllByRole('option')[0]);
+    await userEvent.click(screen.getByRole('combobox', { name: /experience level/i }));
+    await userEvent.click(screen.getAllByRole('option')[0]);
+  };
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('hides the code field until asked, and keeps the @uwo.ca rule without a code', async () => {
+    render(<SignupForm />);
+
+    expect(screen.queryByLabelText(/invitation code/i)).not.toBeInTheDocument();
+    await userEvent.type(screen.getByLabelText(/student id/i), '251000001');
+    await userEvent.type(screen.getByLabelText(/uwo email/i), 'jane@example.com');
+    await userEvent.click(screen.getByRole('button', { name: /create account/i }));
+
+    expect(await screen.findByText(/must be a valid uwo email/i)).toBeInTheDocument();
+    expect(sessionApi.signup).not.toHaveBeenCalled();
+  });
+
+  it('shows the code field from the invitation link, filled in with the invited email', () => {
+    render(<SignupForm initialInvitationCode="ABC234" initialEmail="jane@example.com" />);
+
+    expect((screen.getByLabelText(/invitation code/i) as HTMLInputElement).value).toBe('ABC234');
+    expect((screen.getByLabelText(/^email/i) as HTMLInputElement).value).toBe('jane@example.com');
+    // The invitation carries the student number, so it is not asked for
+    expect(screen.queryByLabelText(/student id/i)).not.toBeInTheDocument();
+  });
+
+  it('lets someone reveal the code field themselves', async () => {
+    render(<SignupForm />);
+
+    await userEvent.click(screen.getByRole('button', { name: /i have an invitation code/i }));
+
+    expect(screen.getByLabelText(/invitation code/i)).toBeInTheDocument();
+  });
+
+  it('sends the code and no student number, and accepts a non-uwo email', async () => {
+    vi.mocked(sessionApi.signup).mockResolvedValue({} as never);
+    render(<SignupForm initialInvitationCode="ABC234" initialEmail="Jane@Example.com" />);
+
+    await fillRest();
+    await userEvent.click(screen.getByRole('button', { name: /create account/i }));
+
+    await vi.waitFor(() => expect(sessionApi.signup).toHaveBeenCalledTimes(1));
+    const sent = vi.mocked(sessionApi.signup).mock.calls[0][0];
+    expect(sent.invitationCode).toBe('ABC234');
+    expect(sent.email).toBe('jane@example.com');
+    expect(sent).not.toHaveProperty('studentId');
+  });
+
+  it('still rejects a malformed email when a code is entered', async () => {
+    render(<SignupForm initialInvitationCode="ABC234" initialEmail="jane@localhost" />);
+
+    await userEvent.click(screen.getByRole('button', { name: /create account/i }));
+
+    expect(await screen.findByText(/enter a valid email address/i)).toBeInTheDocument();
+    expect(sessionApi.signup).not.toHaveBeenCalled();
+  });
+
+  it('refuses a student number from the reserved range when there is no code', async () => {
+    render(<SignupForm />);
+
+    await userEvent.type(screen.getByLabelText(/student id/i), '900000001');
+    await userEvent.type(screen.getByLabelText(/uwo email/i), 'jdoe@uwo.ca');
+    await userEvent.click(screen.getByRole('button', { name: /create account/i }));
+
+    expect(await screen.findByText(/student id must be exactly 9 digits/i)).toBeInTheDocument();
+  });
+});

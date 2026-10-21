@@ -1,5 +1,6 @@
 'use client';
 
+import { ApiError } from '@/api/client/errors';
 import { invitationApi } from '@/api/client/invitation';
 import { Button } from '@/components/ui/button';
 import {
@@ -11,7 +12,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { PERMISSIONS } from '@/constants/permissions';
 import { useUser } from '@/providers/user-provider';
-import type { Invitation } from '@/types/invitation';
+import { memberTypeLabel, type Invitation } from '@/types/invitation';
 import { InvitationStatus } from '@/types/invitation';
 import { hasPermission } from '@/types/user';
 import type { Column, ColumnDef, Row } from '@tanstack/react-table';
@@ -27,16 +28,34 @@ import { RevokeInvitationDialog } from './RevokeInvitationDialog';
 
 interface UseColumnsOptions {
   onRevoke?: (invitationId: number) => void;
+  /** Called after an invitation was sent again, so the list can refresh (its dates changed). */
+  onResend?: (invitation: Invitation) => void;
 }
 
 export const useColumns = (opts: UseColumnsOptions = {}) => {
-  const { onRevoke } = opts;
+  const { onRevoke, onResend } = opts;
   const user = useUser();
   const canUserRevoke = hasPermission(user, PERMISSIONS.INVITATIONS_REVOKE);
   const canUserViewInfo = hasPermission(user, PERMISSIONS.INVITATIONS_READ);
+  // Sending again uses the same permission as creating an invitation
+  const canUserResend = hasPermission(user, PERMISSIONS.INVITATIONS_CREATE);
 
   return useMemo<ColumnDef<Invitation>[]>(
     () => [
+      {
+        id: 'name',
+        header: () => <div className="w-full text-center">Name</div>,
+        cell: ({ row }: { row: Row<Invitation> }) => {
+          const { firstName, lastName, memberType } = row.original;
+          const name = [firstName, lastName].filter(Boolean).join(' ');
+          return (
+            <div className="w-full text-center">
+              <div className="font-medium">{name || '-'}</div>
+              <div className="text-xs text-muted-foreground">{memberTypeLabel(memberType)}</div>
+            </div>
+          );
+        },
+      },
       {
         accessorKey: 'studentId',
         header: () => <div className="w-full text-center">Student ID</div>,
@@ -130,9 +149,30 @@ export const useColumns = (opts: UseColumnsOptions = {}) => {
         cell: function ActionsCell({ row }: { row: Row<Invitation> }) {
           const invitation = row.original;
           const canRevoke = canUserRevoke && invitation.status === 'PENDING';
+          const canResend =
+            canUserResend && (invitation.status === 'PENDING' || invitation.status === 'EXPIRED');
           const [showRevokeDialog, setShowRevokeDialog] = useState(false);
           const [showInfoDialog, setShowInfoDialog] = useState(false);
           const [isRevoking, setIsRevoking] = useState(false);
+          const [isResending, setIsResending] = useState(false);
+
+          const handleResend = async () => {
+            setIsResending(true);
+            try {
+              const updated = await invitationApi.resendInvitation(invitation.id);
+              onResend?.(updated);
+              toast.success(`Invitation sent again to ${invitation.email}.`);
+            } catch (error) {
+              toast.error(
+                error instanceof ApiError && error.message
+                  ? error.message
+                  : 'Failed to resend the invitation. Please try again.',
+              );
+              console.error('Failed to resend invitation:', error);
+            } finally {
+              setIsResending(false);
+            }
+          };
 
           const handleRevoke = async () => {
             setIsRevoking(true);
@@ -170,6 +210,12 @@ export const useColumns = (opts: UseColumnsOptions = {}) => {
                   >
                     More Info
                   </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onSelect={() => canResend && handleResend()}
+                    disabled={!canResend || isResending}
+                  >
+                    Resend invitation
+                  </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem
                     onSelect={() => canRevoke && setShowRevokeDialog(true)}
@@ -199,6 +245,6 @@ export const useColumns = (opts: UseColumnsOptions = {}) => {
         },
       },
     ],
-    [canUserRevoke, canUserViewInfo, onRevoke],
+    [canUserRevoke, canUserViewInfo, canUserResend, onRevoke, onResend],
   );
 };

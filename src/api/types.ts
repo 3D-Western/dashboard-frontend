@@ -72,8 +72,11 @@ export interface ApiVerifyMfaResponse {
 }
 
 export interface ApiSignupRequest {
-  studentId: number;
+  // Left out when signing up with an invitationCode (the invitation carries the student number)
+  studentId?: number;
   email: string;
+  // For people without a @uwo.ca email: the code an admin sent to that exact address
+  invitationCode?: string;
   password: string;
   firstName: string;
   lastName: string;

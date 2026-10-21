@@ -99,12 +99,15 @@ describe('AppSidebar', () => {
       ).not.toBeInTheDocument();
     });
 
-    it('shows Invitation Management only when user has invitations:list', () => {
-      const admin = createMockAdmin({ permissions: [perm(PERMISSIONS.INVITATIONS_LIST)] });
+    it('has no Invitation Management item: invitations live inside User Management', () => {
+      const admin = createMockAdmin({
+        permissions: [perm(PERMISSIONS.USERS_LIST), perm(PERMISSIONS.INVITATIONS_LIST)],
+      });
       renderSidebar(admin);
 
-      expect(screen.getByRole('link', { name: /invitation management/i })).toBeInTheDocument();
-      expect(screen.queryByRole('link', { name: /job management/i })).not.toBeInTheDocument();
+      expect(screen.getByRole('link', { name: /^user management$/i })).toBeInTheDocument();
+      expect(screen.queryByText(/invitation management/i)).not.toBeInTheDocument();
+      expect(screen.queryByRole('link', { name: /invitation/i })).not.toBeInTheDocument();
     });
 
     it('shows Training Editor to someone who can author trainings', () => {
@@ -182,7 +185,9 @@ describe('AppSidebar', () => {
 
       expect(screen.getByRole('link', { name: /admin dashboard/i })).toBeInTheDocument();
       expect(screen.getByRole('link', { name: /job management/i })).toBeInTheDocument();
-      expect(screen.getByRole('link', { name: /invitation management/i })).toBeInTheDocument();
+      expect(
+        screen.queryByRole('link', { name: /invitation management/i }),
+      ).not.toBeInTheDocument();
     });
 
     it('nests the admin pages under Admin Dashboard and can collapse them', async () => {
@@ -265,7 +270,9 @@ describe('AppSidebar', () => {
       renderSidebar(admin);
 
       expect(screen.getByRole('link', { name: /job management/i })).toBeInTheDocument();
-      expect(screen.getByRole('link', { name: /invitation management/i })).toBeInTheDocument();
+      expect(
+        screen.queryByRole('link', { name: /invitation management/i }),
+      ).not.toBeInTheDocument();
       expect(screen.getByRole('link', { name: /^user management$/i })).toBeInTheDocument();
 
       expect(screen.queryByRole('link', { name: /iam management/i })).not.toBeInTheDocument();

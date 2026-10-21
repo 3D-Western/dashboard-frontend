@@ -27,7 +27,6 @@ const pageTitles: Record<string, string> = {
   ['/admin']: 'Admin Dashboard',
   [Routes.adminUsersManagement]: 'User Management',
   [Routes.adminJobsManagement]: 'Job Management',
-  [Routes.adminInvitationManagement]: 'Invitation Management',
   [Routes.adminSignoffs]: 'Training Sign-offs',
   [TrainingAdminRoutes.home]: 'Training Editor',
   [TrainingAdminRoutes.equipment]: 'Training Equipment',

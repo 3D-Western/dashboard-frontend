@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, waitFor } from '@test/utils/render';
 import userEvent from '@testing-library/user-event';
 import { fireEvent } from '@testing-library/react';
-import { EmailCell } from '@/app/(protected)/admin/invitations/components/InvitationsTable/EmailCell';
+import { EmailCell } from '@/app/(protected)/admin/users/components/InvitationsTable/EmailCell';
 import { toast } from 'sonner';
 
 vi.mock('sonner', () => ({
