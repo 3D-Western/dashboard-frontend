@@ -113,8 +113,6 @@ describe('SignupForm with an invitation code (people without a @uwo.ca email)', 
     await userEvent.type(screen.getByLabelText(/^password/i), 'Abcdefghij1');
     await userEvent.click(screen.getByRole('combobox', { name: /faculty/i }));
     await userEvent.click(screen.getAllByRole('option')[0]);
-    await userEvent.click(screen.getByRole('combobox', { name: /experience level/i }));
-    await userEvent.click(screen.getAllByRole('option')[0]);
   };
 
   beforeEach(() => {
