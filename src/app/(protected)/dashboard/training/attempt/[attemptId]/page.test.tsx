@@ -12,4 +12,12 @@ describe('TrainingAttemptPage layout', () => {
 
     expect(container.firstElementChild).toHaveClass('max-w-3xl', 'xl:max-w-5xl');
   });
+
+  it('leaves little padding above and below on a phone on its side', async () => {
+    const { container } = render(
+      await TrainingAttemptPage({ params: Promise.resolve({ attemptId: '3' }) }),
+    );
+
+    expect(container.firstElementChild).toHaveClass('short:py-2');
+  });
 });

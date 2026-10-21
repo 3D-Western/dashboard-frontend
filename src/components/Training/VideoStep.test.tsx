@@ -128,6 +128,18 @@ describe('VideoStep', () => {
     expect(video).toHaveAttribute('disablepictureinpicture');
   });
 
+  it('fits the picture and its controls on a phone on its side', async () => {
+    const { video } = await setup();
+
+    // The picture is capped by the screen height in short landscape and letterboxed, never cropped
+    expect(video.parentElement).toHaveClass('aspect-video', 'short:max-h-[calc(100svh-13rem)]');
+    expect(video).toHaveClass('object-contain');
+    // The controls sit in one row there: the slider shares the line with the buttons
+    const slider = screen.getByLabelText('Video position');
+    expect(slider.parentElement).toHaveClass('short:flex', 'short:flex-wrap');
+    expect(slider).toHaveClass('short:flex-1');
+  });
+
   it('shows how much has been watched and what is required', async () => {
     await setup(
       createVideoStep({ video: createVideoBlock({ watchedPercent: 42, minWatchPercent: 90 }) }),

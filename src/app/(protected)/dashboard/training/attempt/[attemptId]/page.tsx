@@ -17,7 +17,7 @@ export default async function TrainingAttemptPage({
   if (!Number.isInteger(id) || id <= 0) notFound();
 
   return (
-    <div className="mx-auto w-full max-w-3xl p-4 sm:p-6 xl:max-w-5xl">
+    <div className="mx-auto w-full max-w-3xl p-4 sm:p-6 xl:max-w-5xl short:py-2">
       <TrainingPlayer attemptId={id} />
     </div>
   );
