@@ -16,8 +16,8 @@ describe('SelectItem classes', () => {
     );
 
     const option = screen.getByRole('option', { name: 'Alpha' });
-    expect(option).toHaveClass('md:py-1', '[&_svg]:pointer-events-none');
-    // The two used to be joined into one token, "md:py-1[&_svg]:pointer-events-none"
-    expect(option.className).not.toContain('md:py-1[');
+    expect(option).toHaveClass('fine:py-1', '[&_svg]:pointer-events-none');
+    // The two used to be joined into one token, "fine:py-1[&_svg]:pointer-events-none"
+    expect(option.className).not.toContain('fine:py-1[');
   });
 });

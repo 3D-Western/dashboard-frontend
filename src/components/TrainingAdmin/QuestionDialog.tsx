@@ -235,7 +235,7 @@ export function QuestionDialog({
               {values.options.map((option, index) => (
                 <li key={option.uid} className="flex items-center gap-2">
                   {/* Phones: the label is the 44 px tap target; desktop keeps the 20 px box */}
-                  <label className="inline-flex size-11 shrink-0 cursor-pointer items-center justify-center md:size-5">
+                  <label className="inline-flex size-11 shrink-0 cursor-pointer items-center justify-center fine:size-5">
                     <input
                       type={values.type === 'MULTI' ? 'checkbox' : 'radio'}
                       name="correct-option"
@@ -252,7 +252,7 @@ export function QuestionDialog({
                     onChange={(event) => setOption(option.uid, { label: event.target.value })}
                     aria-label={`Option ${index + 1} text`}
                     placeholder={`Option ${index + 1}`}
-                    className="h-11 min-w-0 flex-1 rounded-lg border border-input bg-transparent px-2.5 text-base outline-none read-only:opacity-70 focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 md:h-8 md:text-sm"
+                    className="h-11 min-w-0 flex-1 rounded-lg border border-input bg-transparent px-2.5 text-base outline-none read-only:opacity-70 focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 fine:h-8 fine:text-sm"
                   />
                   {!optionRowsLocked && (
                     <Button

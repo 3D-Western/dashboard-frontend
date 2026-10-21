@@ -36,11 +36,11 @@ describe('ChecklistEditor', () => {
     open();
 
     const label = screen.getByLabelText('Checklist item 1');
-    expect(label).toHaveClass('h-11', 'text-base', 'md:h-8');
-    expect(screen.getAllByLabelText('Key')[0]).toHaveClass('h-11', 'text-base', 'md:h-7');
+    expect(label).toHaveClass('h-11', 'text-base', 'fine:h-8');
+    expect(screen.getAllByLabelText('Key')[0]).toHaveClass('h-11', 'text-base', 'fine:h-7');
     expect(screen.getByRole('button', { name: 'Move item 1 up' })).toHaveClass(
       'size-11',
-      'md:size-8',
+      'fine:size-8',
     );
     expect(screen.getByRole('button', { name: 'Remove item 2' })).toHaveClass('size-11');
   });

@@ -155,7 +155,7 @@ export function MFAForm({
                     type="button"
                     onClick={handleResend}
                     disabled={isResending}
-                    className="inline-flex min-h-11 items-center px-1 underline-offset-2 hover:underline disabled:cursor-not-allowed disabled:opacity-50 md:min-h-0 md:px-0"
+                    className="inline-flex min-h-11 items-center px-1 underline-offset-2 hover:underline disabled:cursor-not-allowed disabled:opacity-50 fine:min-h-0 fine:px-0"
                   >
                     {isResending ? 'Sending...' : 'Resend code'}
                   </button>
@@ -172,7 +172,7 @@ export function MFAForm({
         Having trouble?{' '}
         <a
           href={`mailto:${CONTACT_EMAIL}`}
-          className="inline-flex min-h-11 items-center px-1 md:min-h-0 md:px-0"
+          className="inline-flex min-h-11 items-center px-1 fine:min-h-0 fine:px-0"
         >
           Contact support
         </a>

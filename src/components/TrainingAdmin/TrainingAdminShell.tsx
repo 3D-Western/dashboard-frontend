@@ -81,7 +81,7 @@ export function TrainingAdminShell({ children }: { children: ReactNode }) {
               href={section.href}
               aria-current={active ? 'page' : undefined}
               className={cn(
-                'flex min-h-11 shrink-0 items-center rounded-full border px-3 py-2 text-sm font-medium whitespace-nowrap transition-colors md:min-h-0 md:px-4',
+                'flex min-h-11 shrink-0 items-center rounded-full border px-3 py-2 text-sm font-medium whitespace-nowrap transition-colors fine:min-h-0 fine:px-4',
                 active
                   ? 'border-primary bg-primary/10 text-foreground'
                   : 'text-muted-foreground hover:bg-muted hover:text-foreground',

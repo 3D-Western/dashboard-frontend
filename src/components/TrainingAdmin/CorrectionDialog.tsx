@@ -21,7 +21,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { adminErrorMessage, issuesFromError } from '@/lib/training-admin-errors';
 import { describeCorrectionPreview, promptPreview } from '@/lib/training-admin-format';
@@ -193,21 +192,22 @@ export function CorrectionDialog({ row, mode, onClose, onRecorded }: CorrectionD
               className="gap-3"
             >
               {(Object.keys(KIND_TEXT) as CorrectionKind[]).map((option) => (
-                <div
+                <label
                   key={option}
-                  className="relative flex items-start gap-3 rounded-lg border p-3 has-data-checked:border-primary has-data-checked:bg-primary/5"
+                  htmlFor={`kind-${option}`}
+                  className="flex min-h-11 cursor-pointer items-start gap-3 rounded-lg border p-3 has-data-checked:border-primary has-data-checked:bg-primary/5"
                 >
-                  {/* Phones: the radio's hit area covers the whole row (44 px or taller) */}
-                  <RadioGroupItem
-                    value={option}
-                    id={`kind-${option}`}
-                    className="mt-0.5 after:absolute after:inset-0 after:content-[''] md:after:hidden"
-                  />
-                  <div className="space-y-0.5">
-                    <Label htmlFor={`kind-${option}`}>{KIND_TEXT[option].label}</Label>
-                    <p className="text-sm text-muted-foreground">{KIND_TEXT[option].help}</p>
-                  </div>
-                </div>
+                  {/* The whole row is the tap target (a label), not just the 16 px radio */}
+                  <RadioGroupItem value={option} id={`kind-${option}`} className="mt-0.5" />
+                  <span className="block min-w-0 space-y-0.5">
+                    <span className="block text-sm leading-snug font-medium">
+                      {KIND_TEXT[option].label}
+                    </span>
+                    <span className="block text-sm text-muted-foreground">
+                      {KIND_TEXT[option].help}
+                    </span>
+                  </span>
+                </label>
               ))}
             </RadioGroup>
 

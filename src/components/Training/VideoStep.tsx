@@ -548,7 +548,7 @@ export function VideoStep({ attemptId, step, onStepCompleted }: VideoStepProps) 
                 id={`rate-${stepId}`}
                 value={rate}
                 onChange={(event) => handleRate(Number(event.target.value))}
-                className="h-11 rounded-lg border bg-background px-2 text-base sm:h-8 md:text-sm"
+                className="h-11 rounded-lg border bg-background px-2 text-base fine:h-8 fine:text-sm"
               >
                 {PLAYBACK_RATES.map((value) => (
                   <option key={value} value={value}>

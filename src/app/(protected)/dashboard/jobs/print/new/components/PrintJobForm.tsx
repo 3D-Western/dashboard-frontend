@@ -233,7 +233,7 @@ export default function NewPrintForm({ mockMode = false }: NewPrintFormProps = {
               variant="default"
               disabled={form.formState.isSubmitting || orientationRequired}
               aria-busy={form.formState.isSubmitting}
-              className="min-h-11 w-full md:min-h-0 md:w-auto md:min-w-[120px]"
+              className="min-h-11 w-full md:w-auto md:min-w-[120px] fine:min-h-0"
             >
               {form.formState.isSubmitting ? (
                 <span className="inline-flex items-center">

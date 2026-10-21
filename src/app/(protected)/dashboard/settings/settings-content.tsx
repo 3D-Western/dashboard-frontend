@@ -151,7 +151,7 @@ export function SettingsContent() {
                   render={({ field }) => (
                     <FormItem className="space-y-0 rounded-md border p-4">
                       {/* The label row is the tap target: checkbox plus text, 44 px tall on phones. */}
-                      <FormLabel className="flex min-h-11 cursor-pointer items-center gap-3 md:min-h-0 md:items-start">
+                      <FormLabel className="flex min-h-11 cursor-pointer items-center gap-3 fine:min-h-0 fine:items-start">
                         <FormControl>
                           <Checkbox
                             checked={field.value}

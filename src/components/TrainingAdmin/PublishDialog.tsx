@@ -12,7 +12,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { Label } from '@/components/ui/label';
+import { cn } from '@/lib/utils';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { adminErrorMessage, issuesFromError } from '@/lib/training-admin-errors';
 import {
@@ -170,29 +170,31 @@ export function PublishDialog({
             const disabled = !hasPublished && option.value !== 'MINOR';
             const id = `impact-${option.value}`;
             return (
-              <div
+              <label
                 key={option.value}
-                className="relative flex items-start gap-3 rounded-lg border p-3 has-data-checked:border-primary has-data-checked:bg-primary/5"
+                htmlFor={id}
+                className={cn(
+                  'flex min-h-11 items-start gap-3 rounded-lg border p-3 has-data-checked:border-primary has-data-checked:bg-primary/5',
+                  disabled ? 'cursor-not-allowed' : 'cursor-pointer',
+                )}
               >
-                {/* Phones: the radio's hit area covers the whole row (44 px or taller) */}
+                {/* The whole row is the tap target (a label), not just the 16 px radio */}
                 <RadioGroupItem
                   value={option.value}
                   id={id}
                   disabled={disabled}
-                  className="mt-0.5 after:absolute after:inset-0 after:content-[''] md:after:hidden"
+                  className="mt-0.5"
                 />
-                <div className="space-y-0.5">
-                  <Label htmlFor={id} className="leading-snug">
-                    {option.label}
-                  </Label>
-                  <p className="text-sm text-muted-foreground">{option.summary}</p>
+                <span className="block min-w-0 space-y-0.5">
+                  <span className="block text-sm leading-snug font-medium">{option.label}</span>
+                  <span className="block text-sm text-muted-foreground">{option.summary}</span>
                   {disabled && (
-                    <p className="text-xs text-muted-foreground">
+                    <span className="block text-xs text-muted-foreground">
                       Not available yet: this is the first version, so no one is certified.
-                    </p>
+                    </span>
                   )}
-                </div>
-              </div>
+                </span>
+              </label>
             );
           })}
         </RadioGroup>

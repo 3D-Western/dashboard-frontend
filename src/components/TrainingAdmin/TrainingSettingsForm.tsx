@@ -120,7 +120,7 @@ export function TrainingSettingsForm({ defaults }: { defaults: TrainingSettings 
                   type="button"
                   variant="link"
                   size="xs"
-                  className="h-auto p-0"
+                  className="h-auto min-h-11 p-0 fine:min-h-0"
                   onClick={() => set(field.key, defaultValues[field.key])}
                 >
                   Use the default

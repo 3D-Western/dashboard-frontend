@@ -269,7 +269,7 @@ function PlayerBody({ attemptId }: { attemptId: number }) {
             <Button
               type="button"
               variant="outline"
-              className="min-h-11 sm:min-h-9"
+              className="min-h-11 fine:min-h-9"
               onClick={() => {
                 preview.skipStep();
                 void load();
@@ -281,7 +281,7 @@ function PlayerBody({ attemptId }: { attemptId: number }) {
             <Button
               type="button"
               variant="ghost"
-              className="min-h-11 text-muted-foreground sm:min-h-9"
+              className="min-h-11 text-muted-foreground fine:min-h-9"
               onClick={() => {
                 preview.restart();
                 setQuizResult(null);
@@ -303,7 +303,7 @@ function PlayerBody({ attemptId }: { attemptId: number }) {
                 type="button"
                 variant="ghost"
                 size="sm"
-                className="min-h-11 text-sm text-muted-foreground md:min-h-0 md:text-[0.8rem]"
+                className="min-h-11 text-sm text-muted-foreground fine:min-h-0 fine:text-[0.8rem]"
               >
                 Cancel this attempt
               </Button>

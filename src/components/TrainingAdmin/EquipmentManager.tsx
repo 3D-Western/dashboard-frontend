@@ -179,7 +179,7 @@ export function EquipmentManager() {
                       type="button"
                       size="sm"
                       variant="outline"
-                      className="min-h-11 md:min-h-0"
+                      className="min-h-11 fine:min-h-0"
                       onClick={() => setEditing({ kind: 'group', group })}
                     >
                       Edit
@@ -188,7 +188,7 @@ export function EquipmentManager() {
                       type="button"
                       size="sm"
                       variant="outline"
-                      className="min-h-11 md:min-h-0"
+                      className="min-h-11 fine:min-h-0"
                       onClick={() => setToggling({ kind: 'group', group })}
                     >
                       {group.active ? 'Deactivate' : 'Reactivate'}
@@ -197,7 +197,7 @@ export function EquipmentManager() {
                       type="button"
                       size="icon-sm"
                       variant="ghost"
-                      className="size-11 md:size-8"
+                      className="size-11 fine:size-8"
                       aria-label={`Delete group ${group.name}`}
                       onClick={() => setDeleting({ kind: 'group', group, blocked: null })}
                     >
@@ -231,7 +231,7 @@ export function EquipmentManager() {
                               type="button"
                               size="sm"
                               variant="ghost"
-                              className="min-h-11 md:min-h-0"
+                              className="min-h-11 fine:min-h-0"
                               aria-label={`Edit ${machine.name}`}
                               onClick={() => setEditing({ kind: 'machine', machine })}
                             >
@@ -241,7 +241,7 @@ export function EquipmentManager() {
                               type="button"
                               size="sm"
                               variant="ghost"
-                              className="min-h-11 md:min-h-0"
+                              className="min-h-11 fine:min-h-0"
                               aria-label={`${machine.active ? 'Deactivate' : 'Reactivate'} ${machine.name}`}
                               onClick={() => setToggling({ kind: 'machine', machine })}
                             >
@@ -251,7 +251,7 @@ export function EquipmentManager() {
                               type="button"
                               size="icon-sm"
                               variant="ghost"
-                              className="size-11 md:size-8"
+                              className="size-11 fine:size-8"
                               aria-label={`Delete machine ${machine.name}`}
                               onClick={() =>
                                 setDeleting({ kind: 'machine', machine, blocked: null })

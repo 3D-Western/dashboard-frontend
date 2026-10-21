@@ -245,10 +245,10 @@ describe('AppSidebar', () => {
 
       expect(screen.getByRole('link', { name: /^user management$/i })).toHaveClass(
         'h-11',
-        'md:h-7',
+        'fine:h-7',
       );
       const chevron = screen.getByRole('button', { name: /toggle admin pages/i });
-      expect(chevron).toHaveClass('size-11!', 'md:size-5!');
+      expect(chevron).toHaveClass('size-11!', 'fine:size-5!');
     });
   });
 

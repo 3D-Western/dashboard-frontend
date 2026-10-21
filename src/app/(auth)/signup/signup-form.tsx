@@ -328,7 +328,7 @@ export function SignupForm({ className, ...props }: React.ComponentProps<'div'>)
                   Already have an account?{' '}
                   <Link
                     href={Routes.login}
-                    className="inline-flex min-h-11 items-center px-1 underline md:min-h-0 md:px-0"
+                    className="inline-flex min-h-11 items-center px-1 underline fine:min-h-0 fine:px-0"
                   >
                     Sign in
                   </Link>
@@ -348,14 +348,14 @@ export function SignupForm({ className, ...props }: React.ComponentProps<'div'>)
         By creating an account, you agree to our{' '}
         <Link
           href="/terms-and-conditions"
-          className="inline-flex min-h-11 items-center px-1 underline md:min-h-0 md:px-0"
+          className="inline-flex min-h-11 items-center px-1 underline fine:min-h-0 fine:px-0"
         >
           Terms of Service
         </Link>{' '}
         and{' '}
         <Link
           href="/data-policy"
-          className="inline-flex min-h-11 items-center px-1 underline md:min-h-0 md:px-0"
+          className="inline-flex min-h-11 items-center px-1 underline fine:min-h-0 fine:px-0"
         >
           Privacy Policy
         </Link>

@@ -72,7 +72,7 @@ export function JobRowMenu({ job, onDeleted }: JobRowMenuProps) {
           <Button
             variant="ghost"
             size="icon-lg"
-            className="size-11 md:size-9"
+            className="size-11 fine:size-9"
             aria-label={`More actions for ${job.name}`}
           >
             <MoreHorizontal aria-hidden="true" />

@@ -98,7 +98,7 @@ export function VideoScrubber({
           type="button"
           variant="outline"
           size="icon"
-          className="size-11 shrink-0 sm:size-8"
+          className="size-11 shrink-0 fine:size-8"
           aria-label={playing ? 'Pause' : 'Play'}
           onClick={togglePlay}
         >
@@ -142,7 +142,7 @@ export function VideoScrubber({
             aria-label="Video position"
             aria-valuetext={`${formatClock(time)} of ${formatClock(duration)}`}
             onChange={(event) => seek(Number(event.target.value))}
-            className="h-11 w-full cursor-pointer accent-[var(--color-primary)] sm:h-6"
+            className="h-11 w-full cursor-pointer accent-[var(--color-primary)] fine:h-6"
           />
         </div>
         <span className="w-24 shrink-0 text-right text-sm tabular-nums" aria-live="off">
@@ -155,7 +155,7 @@ export function VideoScrubber({
           type="button"
           variant="outline"
           size="sm"
-          className="h-11 sm:h-7"
+          className="h-11 fine:h-7"
           aria-label="Back 1 second"
           disabled={duration === 0}
           onClick={() => seek(time - 1)}
@@ -166,7 +166,7 @@ export function VideoScrubber({
           type="button"
           variant="outline"
           size="sm"
-          className="h-11 sm:h-7"
+          className="h-11 fine:h-7"
           aria-label="Forward 1 second"
           disabled={duration === 0}
           onClick={() => seek(time + 1)}
@@ -175,7 +175,7 @@ export function VideoScrubber({
         </Button>
         <Button
           type="button"
-          className="h-11 sm:h-8"
+          className="h-11 fine:h-8"
           disabled={duration === 0 || alreadyHere}
           onClick={() => onAddHere(here)}
         >

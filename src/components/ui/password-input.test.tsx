@@ -7,6 +7,6 @@ describe('PasswordInput toggle', () => {
     render(<PasswordInput aria-label="Password" />);
 
     const toggle = screen.getByRole('button', { name: 'Show password' });
-    expect(toggle).toHaveClass('w-11', 'md:w-auto');
+    expect(toggle).toHaveClass('w-11', 'fine:w-auto');
   });
 });

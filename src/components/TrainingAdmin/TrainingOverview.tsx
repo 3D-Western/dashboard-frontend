@@ -189,7 +189,7 @@ export function TrainingOverview() {
                 {version.publishReason && (
                   <p className="text-sm text-muted-foreground">Reason: {version.publishReason}</p>
                 )}
-                <Button asChild variant="outline" size="sm" className="min-h-11 sm:min-h-8">
+                <Button asChild variant="outline" size="sm" className="min-h-11 fine:min-h-8">
                   <Link href={TrainingAdminRoutes.preview(training.id, version.id)}>
                     <Eye /> Preview as student
                   </Link>

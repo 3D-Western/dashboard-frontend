@@ -119,7 +119,7 @@ export function StepList({
                     type="button"
                     variant="ghost"
                     size="icon-sm"
-                    className="size-11 sm:size-8"
+                    className="size-11 fine:size-8"
                     aria-label={`Move step ${step.position} up`}
                     disabled={busy || index === 0}
                     onClick={() => void move(index, -1)}
@@ -130,7 +130,7 @@ export function StepList({
                     type="button"
                     variant="ghost"
                     size="icon-sm"
-                    className="size-11 sm:size-8"
+                    className="size-11 fine:size-8"
                     aria-label={`Move step ${step.position} down`}
                     disabled={busy || index === steps.length - 1}
                     onClick={() => void move(index, 1)}
@@ -150,7 +150,7 @@ export function StepList({
                     type="button"
                     variant="ghost"
                     size="icon-sm"
-                    className="size-11 sm:size-8"
+                    className="size-11 fine:size-8"
                     aria-label={`Delete step ${step.position}`}
                     disabled={busy}
                     onClick={() => setDeleting(step)}

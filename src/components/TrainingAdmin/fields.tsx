@@ -31,11 +31,11 @@ export function FieldFrame({ id, label, help, error, hint, children, className }
     <div className={cn('space-y-1.5', className)}>
       <div className="flex flex-wrap items-baseline justify-between gap-x-3">
         <Label htmlFor={id}>{label}</Label>
-        {hint && <span className="text-sm text-muted-foreground md:text-xs">{hint}</span>}
+        {hint && <span className="text-sm text-muted-foreground fine:text-xs">{hint}</span>}
       </div>
       {children}
       {help && (
-        <p id={`${id}-help`} className="text-sm text-muted-foreground md:text-xs">
+        <p id={`${id}-help`} className="text-sm text-muted-foreground fine:text-xs">
           {help}
         </p>
       )}
@@ -44,7 +44,7 @@ export function FieldFrame({ id, label, help, error, hint, children, className }
           key={message}
           id={`${id}-error`}
           role="alert"
-          className="text-sm text-destructive md:text-xs"
+          className="text-sm text-destructive fine:text-xs"
         >
           {message}
         </p>
@@ -169,7 +169,7 @@ export function SelectField({
         onChange={(event) => onValueChange(event.target.value)}
         aria-invalid={messagesOf(error).length > 0 || undefined}
         aria-describedby={help ? `${id}-help` : undefined}
-        className="h-11 w-full min-w-0 rounded-lg border border-input bg-transparent px-2.5 text-base outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-50 aria-invalid:border-destructive md:h-8 md:text-sm dark:bg-input/30"
+        className="h-11 w-full min-w-0 rounded-lg border border-input bg-transparent px-2.5 text-base outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-50 aria-invalid:border-destructive dark:bg-input/30 fine:h-8 fine:text-sm"
         {...props}
       >
         {placeholder !== undefined && <option value="">{placeholder}</option>}
@@ -208,7 +208,7 @@ export function CheckField({
       <label
         htmlFor={id}
         className={cn(
-          'flex min-h-11 items-center gap-3 select-none md:min-h-0 md:items-start',
+          'flex min-h-11 items-center gap-3 select-none fine:min-h-0 fine:items-start',
           disabled ? 'cursor-not-allowed' : 'cursor-pointer',
         )}
       >
@@ -218,12 +218,12 @@ export function CheckField({
           disabled={disabled}
           onCheckedChange={(value) => onCheckedChange(value === true)}
           aria-describedby={help ? `${id}-help` : undefined}
-          className="md:mt-0.5"
+          className="fine:mt-0.5"
         />
         <span className="text-sm leading-snug font-medium">{label}</span>
       </label>
       {help && (
-        <p id={`${id}-help`} className="pl-8 text-sm text-muted-foreground md:pl-7 md:text-xs">
+        <p id={`${id}-help`} className="pl-8 text-sm text-muted-foreground fine:pl-7 fine:text-xs">
           {help}
         </p>
       )}

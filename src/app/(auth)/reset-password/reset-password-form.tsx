@@ -90,7 +90,7 @@ export function ResetPasswordForm({ className, ...props }: React.ComponentProps<
                   Remember your password?{' '}
                   <a
                     href={Routes.login}
-                    className="inline-flex min-h-11 items-center px-1 underline-offset-2 hover:underline md:min-h-0 md:px-0"
+                    className="inline-flex min-h-11 items-center px-1 underline-offset-2 hover:underline fine:min-h-0 fine:px-0"
                   >
                     Back to Login
                   </a>
@@ -163,7 +163,7 @@ export function ResetPasswordForm({ className, ...props }: React.ComponentProps<
                   Remember your password?{' '}
                   <a
                     href={Routes.login}
-                    className="inline-flex min-h-11 items-center px-1 underline-offset-2 hover:underline md:min-h-0 md:px-0"
+                    className="inline-flex min-h-11 items-center px-1 underline-offset-2 hover:underline fine:min-h-0 fine:px-0"
                   >
                     Back to Login
                   </a>

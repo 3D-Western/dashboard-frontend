@@ -155,7 +155,7 @@ export function TrainingAuditLog() {
           <Button
             type="button"
             variant="ghost"
-            className="min-h-11 md:min-h-0"
+            className="min-h-11 fine:min-h-0"
             onClick={() => setFilters(EMPTY_AUDIT_FILTERS)}
             disabled={!anyFilter}
           >
@@ -235,7 +235,7 @@ function AuditRow({
       </div>
       {entry.details != null && (
         <details className="mt-3">
-          <summary className="inline-flex min-h-11 cursor-pointer items-center text-sm font-medium text-primary md:min-h-0">
+          <summary className="inline-flex min-h-11 cursor-pointer items-center text-sm font-medium text-primary fine:min-h-0">
             Show details
           </summary>
           <pre className="mt-2 max-h-72 overflow-auto rounded-md bg-muted p-3 text-xs break-words whitespace-pre-wrap">

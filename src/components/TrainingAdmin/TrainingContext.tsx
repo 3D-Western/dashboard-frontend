@@ -77,7 +77,7 @@ function TrainingFrame({ training, children }: { training: AdminTraining; childr
       <div className="space-y-2">
         <Link
           href={TrainingAdminRoutes.home}
-          className="inline-flex min-h-11 items-center gap-1 text-sm text-muted-foreground hover:text-foreground md:min-h-0"
+          className="inline-flex min-h-11 items-center gap-1 text-sm text-muted-foreground hover:text-foreground fine:min-h-0"
         >
           <ArrowLeft className="size-4" /> All trainings
         </Link>
@@ -102,7 +102,7 @@ function TrainingFrame({ training, children }: { training: AdminTraining; childr
               href={section.href}
               aria-current={active ? 'page' : undefined}
               className={cn(
-                '-mb-px flex min-h-11 shrink-0 items-center border-b-2 px-3 py-2.5 text-sm font-medium whitespace-nowrap md:min-h-0',
+                '-mb-px flex min-h-11 shrink-0 items-center border-b-2 px-3 py-2.5 text-sm font-medium whitespace-nowrap fine:min-h-0',
                 active
                   ? 'border-primary text-foreground'
                   : 'border-transparent text-muted-foreground hover:text-foreground',

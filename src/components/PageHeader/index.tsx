@@ -4,6 +4,7 @@ import { Fragment } from 'react';
 import Link from 'next/link';
 import { Routes } from '@/lib/routes';
 import { TrainingAdminRoutes } from '@/lib/training-admin-routes';
+import { AccessAdminRoutes } from '@/lib/access-admin-routes';
 import { usePathname } from 'next/navigation';
 import {
   Breadcrumb,
@@ -32,6 +33,10 @@ const pageTitles: Record<string, string> = {
   [TrainingAdminRoutes.equipment]: 'Training Equipment',
   [TrainingAdminRoutes.import]: 'Import a Training',
   [TrainingAdminRoutes.auditLog]: 'Training Audit Log',
+  [AccessAdminRoutes.home]: 'Access System',
+  [AccessAdminRoutes.gatekeepers]: 'Gatekeepers',
+  [AccessAdminRoutes.devices]: 'Devices',
+  [AccessAdminRoutes.cardLinks]: 'Card Links',
 };
 
 // The titled pages above this one in the URL, e.g. /admin/users → [Admin Dashboard]

@@ -35,7 +35,7 @@ export function JobsViewToggle({ view }: { view: JobsView }) {
           title={label}
           onClick={() => choose(value)}
           className={cn(
-            'flex size-11 items-center justify-center rounded-md transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none md:size-8',
+            'flex size-11 items-center justify-center rounded-md transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none fine:size-8',
             view === value
               ? 'bg-purple-light/15 text-purple-light'
               : 'text-muted-foreground hover:text-foreground',

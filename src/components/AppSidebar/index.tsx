@@ -131,7 +131,8 @@ const adminNavigationItems: AdminNavItem[] = [
 ];
 
 // Larger text and tap area than the shadcn default, especially on phones
-const NAV_BUTTON_CLASS = 'h-11 text-base md:h-9 md:text-[15px] [&_svg]:size-5 md:[&_svg]:size-4';
+const NAV_BUTTON_CLASS =
+  'h-11 text-base fine:h-9 fine:text-[15px] [&_svg]:size-5 fine:[&_svg]:size-4';
 
 interface AppSidebarProps {
   user: User;
@@ -195,7 +196,7 @@ export function AppSidebar({ user }: AppSidebarProps) {
                       </Link>
                     </SidebarMenuButton>
                     <CollapsibleTrigger asChild>
-                      <SidebarMenuAction className="top-0! right-0! size-11! data-[state=open]:rotate-180 md:top-1.5! md:right-1! md:size-5!">
+                      <SidebarMenuAction className="top-0! right-0! size-11! data-[state=open]:rotate-180 fine:top-1.5! fine:right-1! fine:size-5!">
                         <ChevronDown />
                         <span className="sr-only">Toggle admin pages</span>
                       </SidebarMenuAction>

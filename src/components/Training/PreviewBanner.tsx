@@ -23,7 +23,7 @@ export function PreviewBanner({ preview }: { preview: PreviewControls }) {
         </p>
         <Link
           href={preview.exitHref}
-          className="ml-auto inline-flex min-h-11 items-center text-sm underline sm:min-h-0"
+          className="ml-auto inline-flex min-h-11 items-center text-sm underline fine:min-h-0"
         >
           Back to the editor
         </Link>

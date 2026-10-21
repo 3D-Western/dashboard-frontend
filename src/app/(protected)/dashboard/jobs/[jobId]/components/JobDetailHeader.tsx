@@ -21,7 +21,7 @@ export function JobDetailHeader({ job }: { job: JobDetail }) {
     <div>
       <Link
         href={Routes.jobs.home}
-        className="inline-flex min-h-11 items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground md:min-h-0"
+        className="inline-flex min-h-11 items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground fine:min-h-0"
       >
         <ArrowLeft className="size-4" aria-hidden="true" />
         My Jobs

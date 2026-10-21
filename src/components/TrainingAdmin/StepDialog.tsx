@@ -176,7 +176,7 @@ export function StepDialog({
   return (
     <>
       <Dialog open onOpenChange={(open) => !open && requestClose()}>
-        <DialogContent className="max-h-[92dvh] overflow-y-auto sm:max-w-3xl">
+        <DialogContent className="max-h-[92dvh] overflow-y-auto sm:max-w-[min(48rem,calc(100%-2rem))]">
           <DialogHeader>
             <DialogTitle>
               {isNew
@@ -294,7 +294,7 @@ export function StepDialog({
                         row.uid === selectedCheckpoint && 'ring-2 ring-primary',
                       )}
                     >
-                      <div className="flex flex-col gap-2 md:flex-row md:flex-wrap md:items-start">
+                      <div className="flex flex-col gap-2 md:flex-row md:flex-wrap fine:items-start">
                         <div className="w-full md:w-32">
                           <TextField
                             label={`Question ${index + 1} appears at (seconds)`}
@@ -344,7 +344,7 @@ export function StepDialog({
                           type="button"
                           variant="ghost"
                           size="icon-sm"
-                          className="size-11 self-end md:mt-6 md:size-8 md:self-auto"
+                          className="size-11 self-end md:mt-6 md:self-auto fine:size-8"
                           aria-label={`Remove question ${index + 1}`}
                           onClick={() =>
                             patch({
