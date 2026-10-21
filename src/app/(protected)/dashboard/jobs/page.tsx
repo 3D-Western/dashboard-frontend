@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { cookies } from 'next/headers';
 import { Plus } from 'lucide-react';
+import { InstallPrompt } from '@/components/InstallPrompt/InstallPrompt';
 import { Button } from '@/components/ui/button';
 import { FilterToolbar } from '@/components/Filters';
 import { userApi } from '@/api/client/user';
@@ -19,7 +20,13 @@ export const metadata: Metadata = {
 };
 
 interface MyJobsPageProps {
-  searchParams: Promise<{ page?: string; pageSize?: string; status?: string; search?: string }>;
+  searchParams: Promise<{
+    page?: string;
+    pageSize?: string;
+    status?: string;
+    search?: string;
+    submitted?: string;
+  }>;
 }
 
 const isPrintJobStatus = (value: string | undefined): value is PrintJobStatus =>
@@ -53,6 +60,9 @@ export default async function MyJobsPage({ searchParams }: MyJobsPageProps) {
           </Link>
         </Button>
       </div>
+
+      {/* Just submitted a print: the moment to offer the home-screen app (phones only) */}
+      <InstallPrompt moment={params.submitted === '1' ? 'print-submitted' : null} />
 
       <FilterToolbar
         searchPlaceholder="Search for a job..."

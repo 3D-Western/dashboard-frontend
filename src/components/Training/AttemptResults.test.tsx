@@ -210,3 +210,65 @@ describe('AttemptResults: cancelled', () => {
     expect(screen.getByText(/doesn't count against your attempts/i)).toBeInTheDocument();
   });
 });
+
+describe('AttemptResults: add the app to the home screen', () => {
+  const IPHONE =
+    'Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Mobile/15E148 Safari/604.1';
+  const passed: QuizResult = {
+    ...failed,
+    passed: true,
+    scorePercent: 95,
+    criticalAllCorrect: true,
+    attemptStatus: 'PASSED',
+    reviewSteps: [],
+    certificationStatus: 'ACTIVE',
+  };
+  const noteHeading = { name: 'Add the 3D Western app to your home screen' };
+
+  beforeEach(() => {
+    vi.spyOn(navigator, 'userAgent', 'get').mockReturnValue(IPHONE);
+    window.localStorage.clear();
+  });
+
+  it('ends the orientation results with the note, on a phone', async () => {
+    render(<AttemptResults attempt={createAttempt({ status: 'PASSED' })} quizResult={passed} />);
+
+    expect(await screen.findByRole('heading', noteHeading)).toBeInTheDocument();
+  });
+
+  it('does not show it after passing an equipment training', async () => {
+    api.getMyTrainings.mockResolvedValue({
+      orientationComplete: true,
+      orientationRequired: true,
+      trainings: [createTrainingSummary({ kind: 'EQUIPMENT', nextAction: 'NONE' })],
+    });
+    render(<AttemptResults attempt={createAttempt({ status: 'PASSED' })} quizResult={passed} />);
+
+    await waitFor(() => expect(api.getMyTrainings).toHaveBeenCalled());
+    await screen.findByRole('heading', { name: /you passed/i });
+    expect(screen.queryByRole('heading', noteHeading)).not.toBeInTheDocument();
+  });
+
+  it('does not show it after a fail', async () => {
+    render(
+      <AttemptResults
+        attempt={createAttempt({ status: 'FAILED', scorePercent: 70, criticalAllCorrect: false })}
+        quizResult={failed}
+      />,
+    );
+
+    await waitFor(() => expect(api.getMyTrainings).toHaveBeenCalled());
+    expect(screen.queryByRole('heading', noteHeading)).not.toBeInTheDocument();
+  });
+
+  it('does not show it on a desktop', async () => {
+    vi.spyOn(navigator, 'userAgent', 'get').mockReturnValue(
+      'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/130.0.0.0 Safari/537.36',
+    );
+    render(<AttemptResults attempt={createAttempt({ status: 'PASSED' })} quizResult={passed} />);
+
+    await waitFor(() => expect(api.getMyTrainings).toHaveBeenCalled());
+    await screen.findByRole('heading', { name: /you passed/i });
+    expect(screen.queryByRole('heading', noteHeading)).not.toBeInTheDocument();
+  });
+});

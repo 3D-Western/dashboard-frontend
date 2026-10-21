@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { CheckCircle2, ClipboardList, XCircle } from 'lucide-react';
 import { blockedMessage } from '@/api/client/training-errors';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { InstallPrompt } from '@/components/InstallPrompt/InstallPrompt';
 import { Button } from '@/components/ui/button';
 import { useMyTrainings } from '@/hooks/useMyTrainings';
 import { useStartTraining } from '@/hooks/useStartTraining';
@@ -61,6 +62,10 @@ export function AttemptResults({ attempt, quizResult }: AttemptResultsProps) {
         </div>
         {scoreText && <p className="text-sm text-muted-foreground">Your score: {scoreText}</p>}
         <p>{passMessage(certification, training)}</p>
+        {/* Final note after Maker Orientation: add the app to the home screen (phones only) */}
+        {training?.kind === 'ORIENTATION' && (
+          <InstallPrompt moment="orientation-passed" variant="note" />
+        )}
         <div className="flex flex-col gap-3 sm:flex-row">
           <Button asChild className="w-full sm:w-auto">
             <Link href={Routes.training.home}>Back to my training</Link>

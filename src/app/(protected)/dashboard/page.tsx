@@ -6,6 +6,7 @@ import { DashboardGreeting } from './components/DashboardGreeting';
 import { DashboardSection } from './components/DashboardSection';
 import { QuickActions } from './components/QuickActions';
 import { TrainingSummary } from './components/TrainingSummary';
+import { OrientationInstallPrompt } from '@/components/InstallPrompt/OrientationInstallPrompt';
 import { OrientationPrompt } from '@/components/Training/OrientationPrompt';
 import { TrainingsProvider } from '@/providers/trainings-provider';
 
@@ -43,6 +44,8 @@ export default async function DashboardPage({
       <TrainingsProvider>
         {/* Until orientation is done this leads there first, on every screen size */}
         <OrientationPrompt />
+        {/* After orientation is passed: offer to add the app to the home screen (phones only) */}
+        <OrientationInstallPrompt />
 
         {/* Two columns on desktop (prints + actions | training), stacked on phones */}
         <div className="grid items-start gap-6 lg:grid-cols-3">

@@ -207,7 +207,7 @@ describe('NewPrintForm Integration', () => {
       const submitButton = screen.getByRole('button', { name: /Submit/i });
       await user.click(submitButton);
       await waitFor(() => {
-        expect(mockPush).toHaveBeenCalledWith('/dashboard/jobs');
+        expect(mockPush).toHaveBeenCalledWith('/dashboard/jobs?submitted=1');
       });
     });
 
@@ -258,7 +258,7 @@ describe('NewPrintForm Integration', () => {
         ).toMatchObject({ purpose: 'casual', design_intent: 'functional' });
         expect(jobApi.uploadJobFile).toHaveBeenCalledTimes(1);
         expect(jobApi.completeUpload).toHaveBeenCalledTimes(1);
-        expect(mockPush).toHaveBeenCalledWith('/dashboard/jobs');
+        expect(mockPush).toHaveBeenCalledWith('/dashboard/jobs?submitted=1');
       });
     });
 

@@ -31,6 +31,11 @@ Part of the monorepo. Read the root `CLAUDE.md` first; it has the workflow, docs
 - Dialogs that edit something guard closing with `useGuardedClose` (built on `UnsavedChangesDialog`'s controlled mode). Someone with only `training:publish` can read everything and publish; `AuthorOnly` switches off the editing controls for them.
 - Tests mock `@/api/client/training-admin` (use `renderInTraining` from `test/utils/renderTrainingAdmin.tsx`); there are no MSW handlers for these endpoints because the backend serves them.
 
+## Installable app (PWA)
+
+- `src/app/manifest.ts` + icons in `public/icons/` and `src/app/apple-icon.png` (badge on `#0b0d10`). `/sw.js` comes from `src/app/sw.js/route.ts`; the worker (`src/lib/pwa/service-worker-source.ts`) must stay cache-free: no API responses, no signed-in pages, no app code. It is registered only in production (`PwaSetup` in the root layout).
+- The install card is `InstallPrompt` (`src/components/InstallPrompt/`). Rules live in `src/lib/pwa/install-prompt.ts`: it needs a **moment of value** (pass `moment`, or null for none), is never shown on desktop or once installed, and stays quiet for 30 days after "Not now". Current moments: orientation passed (dashboard, results note) and print submitted (My Jobs with `?submitted=1`).
+
 ## Legacy docs: verify before trusting
 
 `AGENTS.md`, `README.md`, `docs/FEATURES.md`, `docs/ARCHITECTURE.md` and `.env.example` came over from the old repo and are partly **stale** (Next 15, npm/Node 20, invite codes, routes that no longer exist). `docs/LAUNCH_SCOPE.md` and `docs/IAM.md` are the most accurate. Prefer the code, and fix a stale doc when you touch its area.

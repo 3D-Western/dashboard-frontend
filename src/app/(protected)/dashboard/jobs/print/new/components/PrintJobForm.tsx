@@ -107,7 +107,7 @@ export default function NewPrintForm({ mockMode = false }: NewPrintFormProps = {
       toast.success('Print request submitted successfully');
 
       // Navigate to dashboard and force refresh to show new data
-      router.push(Routes.jobs.home);
+      router.push(Routes.jobs.printSubmitted);
       router.refresh();
     } catch (err) {
       if (err instanceof ApiError && err.code === TrainingErrorCodes.ORIENTATION_REQUIRED) {

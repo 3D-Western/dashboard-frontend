@@ -31,6 +31,8 @@ export const Routes = {
   jobs: {
     home: '/dashboard/jobs',
     detail: (jobId: string) => `/dashboard/jobs/${jobId}`,
+    /** My Jobs right after a print is submitted: it offers the home-screen install card. */
+    printSubmitted: '/dashboard/jobs?submitted=1',
     newJob: '/dashboard/jobs/new',
     newCncJob: '/dashboard/jobs/cnc/new',
     newPrintJob: '/dashboard/jobs/print/new',

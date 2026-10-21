@@ -1,6 +1,7 @@
+import { PwaSetup } from '@/components/InstallPrompt/PwaSetup';
 import { Toaster } from '@/components/ui/sonner';
 import { ThemeProvider } from '@/providers/theme-provider';
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import { Chakra_Petch, IBM_Plex_Mono, Space_Grotesk } from 'next/font/google';
 import localFont from 'next/font/local';
 import './globals.css';
@@ -43,6 +44,18 @@ export const metadata: Metadata = {
     index: false,
     follow: false,
   },
+  applicationName: '3D Western',
+  // iPhone: the name under the home-screen icon, and full-screen when opened from it
+  appleWebApp: {
+    capable: true,
+    title: '3D Western',
+    statusBarStyle: 'black',
+  },
+};
+
+// The address bar / status bar colour: the dashboard's default (dark) background
+export const viewport: Viewport = {
+  themeColor: '#0b0d10',
 };
 
 export default function RootLayout({
@@ -60,6 +73,7 @@ export default function RootLayout({
       <body className="antialiased">
         <ThemeProvider>{children}</ThemeProvider>
         <Toaster richColors />
+        <PwaSetup />
       </body>
     </html>
   );
