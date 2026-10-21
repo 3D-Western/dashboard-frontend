@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach, type Mock } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach, type Mock } from 'vitest';
 import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { ApiError } from '@/api/client/errors';
@@ -428,5 +428,51 @@ describe('QuestionReport re-scoring', () => {
     await userEvent.click(await screen.findByRole('button', { name: /^re-score: hard question/i }));
 
     expect(await screen.findByText(/no longer exists/i)).toBeInTheDocument();
+  });
+});
+
+describe('QuestionReport on a phone', () => {
+  beforeEach(() => {
+    Object.defineProperty(window, 'innerWidth', { configurable: true, value: 390 });
+  });
+
+  afterEach(() => {
+    Object.defineProperty(window, 'innerWidth', { configurable: true, value: 1024 });
+  });
+
+  it('shows each question as a card with its numbers, and no table', async () => {
+    await renderInTraining(<QuestionReport />, { user: publisherUser() });
+
+    const cards = within(await screen.findByRole('list')).getAllByRole('listitem');
+    expect(cards).toHaveLength(3);
+    expect(screen.queryByRole('table')).not.toBeInTheDocument();
+
+    expect(cards[0]).toHaveTextContent('Hard question');
+    expect(cards[0]).toHaveTextContent('Look at this one');
+    expect(cards[0]).toHaveTextContent('Asked');
+    expect(cards[0]).toHaveTextContent('30%');
+    expect(cards[0]).toHaveTextContent('9 times');
+    expect(cards[2]).toHaveTextContent('n/a');
+  });
+
+  it('puts the correction buttons full width on each card, at 44 px', async () => {
+    await renderInTraining(<QuestionReport />, { user: publisherUser() });
+
+    const cards = within(await screen.findByRole('list')).getAllByRole('listitem');
+    const correct = within(cards[0]).getByRole('button', { name: /^correct:/i });
+    const rescore = within(cards[0]).getByRole('button', { name: /^re-score:/i });
+    expect(correct).toHaveClass('h-11', 'w-full');
+    expect(rescore).toHaveClass('h-11', 'w-full');
+  });
+
+  it('opens the correction dialog from a card', async () => {
+    await renderInTraining(<QuestionReport />, { user: publisherUser() });
+
+    const cards = within(await screen.findByRole('list')).getAllByRole('listitem');
+    await userEvent.click(within(cards[0]).getByRole('button', { name: /^correct:/i }));
+
+    expect(
+      await screen.findByRole('dialog', { name: /correct this question/i }),
+    ).toBeInTheDocument();
   });
 });
