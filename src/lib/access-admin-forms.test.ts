@@ -8,6 +8,7 @@ import {
   gatekeeperFormFrom,
   updateDeviceBodyFrom,
   usesIdleDetection,
+  usesSessionLimit,
   validateDeviceForm,
   validateGatekeeperForm,
   validateUnlinkReason,
@@ -249,6 +250,21 @@ describe('device form', () => {
     expect(
       validateDeviceForm({ ...station(), relayStartWindowSeconds: 'x' }, { isNew: true }),
     ).toEqual({});
+  });
+
+  it('has no session limit on relay machines: it is neither validated nor sent, and an old one is cleared', () => {
+    const relay = {
+      ...station(),
+      lockMethod: 'RELAY' as const,
+      limitSession: true,
+      maxSessionMinutes: '',
+    };
+
+    expect(usesSessionLimit(relay)).toBe(false);
+    expect(usesSessionLimit(station())).toBe(true);
+    expect(validateDeviceForm(relay, { isNew: true })).toEqual({});
+    expect(createDeviceBodyFrom(relay)).not.toHaveProperty('maxSessionMinutes');
+    expect(updateDeviceBodyFrom(relay)).toMatchObject({ maxSessionMinutes: 0 });
   });
 
   it('does not send idle settings when the machine is not locked by a plug', () => {

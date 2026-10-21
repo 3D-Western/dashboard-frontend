@@ -38,6 +38,7 @@ import {
   updateDeviceBodyFrom,
   usesIdleDetection,
   usesRelayWindow,
+  usesSessionLimit,
   validateDeviceForm,
   type DeviceField,
   type DeviceForm,
@@ -365,14 +366,16 @@ function DeviceCard({
             {device.lockMethod === 'RELAY' && device.relayStartWindowSeconds !== null && (
               <Row label="Start window" value={`${device.relayStartWindowSeconds} s after a tap`} />
             )}
-            <Row
-              label="Session length"
-              value={
-                device.maxSessionMinutes
-                  ? `Limit of ${device.maxSessionMinutes} min (never cuts a running machine)`
-                  : 'No maximum'
-              }
-            />
+            {device.lockMethod !== 'RELAY' && (
+              <Row
+                label="Session length"
+                value={
+                  device.maxSessionMinutes
+                    ? `Limit of ${device.maxSessionMinutes} min (never cuts a running machine)`
+                    : 'No maximum'
+                }
+              />
+            )}
             <Row label="Check-in" value={device.checkInRequired ? 'Required' : 'Not required'} />
           </>
         )}
@@ -636,23 +639,25 @@ function DeviceDialog({
                   error={errorsFor('relayStartWindowSeconds')}
                 />
               )}
-              <div className="space-y-3">
-                <CheckField
-                  label="Limit how long one session can last"
-                  checked={form.limitSession}
-                  onCheckedChange={(value) => set('limitSession', value)}
-                  help="Off by default. This never cuts a running machine, so a 20-hour print is safe; the limit only stops new starts or raises a warning."
-                />
-                {form.limitSession && (
-                  <TextField
-                    label="Longest session (minutes)"
-                    inputMode="numeric"
-                    value={form.maxSessionMinutes}
-                    onValueChange={(value) => set('maxSessionMinutes', value)}
-                    error={errorsFor('maxSessionMinutes')}
+              {usesSessionLimit(form) && (
+                <div className="space-y-3">
+                  <CheckField
+                    label="Limit how long one session can last"
+                    checked={form.limitSession}
+                    onCheckedChange={(value) => set('limitSession', value)}
+                    help="Off by default. This never cuts a running machine, so a 20-hour print is safe; the limit only stops new starts or raises a warning."
                   />
-                )}
-              </div>
+                  {form.limitSession && (
+                    <TextField
+                      label="Longest session (minutes)"
+                      inputMode="numeric"
+                      value={form.maxSessionMinutes}
+                      onValueChange={(value) => set('maxSessionMinutes', value)}
+                      error={errorsFor('maxSessionMinutes')}
+                    />
+                  )}
+                </div>
+              )}
               <CheckField
                 label="Check-in required"
                 checked={form.checkInRequired}

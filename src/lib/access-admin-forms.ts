@@ -168,6 +168,11 @@ export function usesRelayWindow(form: Pick<DeviceForm, 'kind' | 'lockMethod'>): 
   return form.kind === 'STATION' && form.lockMethod === 'RELAY';
 }
 
+/** A relay machine has no maximum length (its session is only the allowed start), so the limit is not offered or sent. */
+export function usesSessionLimit(form: Pick<DeviceForm, 'kind' | 'lockMethod'>): boolean {
+  return form.kind === 'STATION' && form.lockMethod !== 'RELAY';
+}
+
 export function validateDeviceForm(
   form: DeviceForm,
   { isNew }: { isNew: boolean },
@@ -205,7 +210,7 @@ export function validateDeviceForm(
       errors.relayStartWindowSeconds = 'Enter a whole number of seconds from 5 to 120.';
     }
   }
-  if (form.kind === 'STATION' && form.limitSession) {
+  if (usesSessionLimit(form) && form.limitSession) {
     const max = form.maxSessionMinutes.trim();
     if (!WHOLE_NUMBER.test(max) || Number(max) < 1) {
       errors.maxSessionMinutes = 'Enter a whole number of minutes (1 or more).';
@@ -230,7 +235,9 @@ export function createDeviceBodyFrom(form: DeviceForm): CreateDeviceBody {
       body.idleMinutes = Number(form.idleMinutes);
     }
     if (usesRelayWindow(form)) body.relayStartWindowSeconds = Number(form.relayStartWindowSeconds);
-    if (form.limitSession) body.maxSessionMinutes = Number(form.maxSessionMinutes);
+    if (usesSessionLimit(form) && form.limitSession) {
+      body.maxSessionMinutes = Number(form.maxSessionMinutes);
+    }
   }
   if (form.kind === 'PLUG' && form.networkAddress.trim()) {
     body.networkAddress = form.networkAddress.trim();
@@ -252,7 +259,8 @@ export function updateDeviceBodyFrom(form: DeviceForm): UpdateDeviceBody {
       body.idleMinutes = Number(form.idleMinutes);
     }
     if (usesRelayWindow(form)) body.relayStartWindowSeconds = Number(form.relayStartWindowSeconds);
-    body.maxSessionMinutes = form.limitSession ? Number(form.maxSessionMinutes) : 0;
+    body.maxSessionMinutes =
+      usesSessionLimit(form) && form.limitSession ? Number(form.maxSessionMinutes) : 0;
   }
   if (form.kind === 'PLUG') body.networkAddress = form.networkAddress.trim();
   return body;

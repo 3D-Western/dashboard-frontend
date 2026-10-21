@@ -167,6 +167,21 @@ describe('Devices adding', () => {
     expect(api.registerDevice).not.toHaveBeenCalled();
   });
 
+  it('does not offer a session limit on relay machines', async () => {
+    const dialog = await openAddDialog();
+    await userEvent.selectOptions(
+      within(dialog).getByRole('combobox', { name: /how the machine is locked/i }),
+      'RELAY',
+    );
+
+    expect(
+      within(dialog).queryByRole('checkbox', { name: /limit how long one session/i }),
+    ).not.toBeInTheDocument();
+    expect(
+      within(dialog).getByRole('checkbox', { name: /check-in required/i }),
+    ).toBeInTheDocument();
+  });
+
   it('keeps the session limit off by default and says it never cuts a running machine', async () => {
     const dialog = await openAddDialog();
 
