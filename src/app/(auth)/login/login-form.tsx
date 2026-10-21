@@ -252,7 +252,7 @@ export function LoginForm({
                         <FormLabel>Password</FormLabel>
                         <a
                           href={Routes.forgotPassword}
-                          className="text-xs text-muted-foreground underline-offset-2 hover:text-purple-light hover:underline"
+                          className="inline-flex min-h-11 items-center px-1 text-sm text-muted-foreground underline-offset-2 hover:text-purple-light hover:underline md:min-h-0 md:px-0 md:text-xs"
                         >
                           Forgot password?
                         </a>
@@ -270,7 +270,13 @@ export function LoginForm({
                 </Button>
 
                 <FieldDescription className="text-center">
-                  Don&apos;t have an account? <a href={`${Routes.signup}`}>Sign up</a>
+                  Don&apos;t have an account?{' '}
+                  <a
+                    href={`${Routes.signup}`}
+                    className="inline-flex min-h-11 items-center px-1 md:min-h-0 md:px-0"
+                  >
+                    Sign up
+                  </a>
                 </FieldDescription>
               </div>
             </form>
@@ -281,8 +287,15 @@ export function LoginForm({
         </CardContent>
       </Card>
       <FieldDescription className="px-6 text-center">
-        By clicking continue, you agree to our <a href="#">Terms of Service</a> and{' '}
-        <a href="#">Privacy Policy</a>.
+        By clicking continue, you agree to our{' '}
+        <a href="#" className="inline-flex min-h-11 items-center px-1 md:min-h-0 md:px-0">
+          Terms of Service
+        </a>{' '}
+        and{' '}
+        <a href="#" className="inline-flex min-h-11 items-center px-1 md:min-h-0 md:px-0">
+          Privacy Policy
+        </a>
+        .
       </FieldDescription>
     </div>
   );

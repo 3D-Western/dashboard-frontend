@@ -303,7 +303,7 @@ function PlayerBody({ attemptId }: { attemptId: number }) {
                 type="button"
                 variant="ghost"
                 size="sm"
-                className="text-sm text-muted-foreground md:text-[0.8rem]"
+                className="min-h-11 text-sm text-muted-foreground md:min-h-0 md:text-[0.8rem]"
               >
                 Cancel this attempt
               </Button>

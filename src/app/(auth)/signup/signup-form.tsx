@@ -326,7 +326,10 @@ export function SignupForm({ className, ...props }: React.ComponentProps<'div'>)
 
                 <FieldDescription className="text-center">
                   Already have an account?{' '}
-                  <Link href={Routes.login} className="underline">
+                  <Link
+                    href={Routes.login}
+                    className="inline-flex min-h-11 items-center px-1 underline md:min-h-0 md:px-0"
+                  >
                     Sign in
                   </Link>
                 </FieldDescription>
@@ -343,11 +346,17 @@ export function SignupForm({ className, ...props }: React.ComponentProps<'div'>)
 
       <FieldDescription className="px-6 text-center">
         By creating an account, you agree to our{' '}
-        <Link href="/terms-and-conditions" className="underline">
+        <Link
+          href="/terms-and-conditions"
+          className="inline-flex min-h-11 items-center px-1 underline md:min-h-0 md:px-0"
+        >
           Terms of Service
         </Link>{' '}
         and{' '}
-        <Link href="/data-policy" className="underline">
+        <Link
+          href="/data-policy"
+          className="inline-flex min-h-11 items-center px-1 underline md:min-h-0 md:px-0"
+        >
           Privacy Policy
         </Link>
         .
