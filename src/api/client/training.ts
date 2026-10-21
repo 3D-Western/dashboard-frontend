@@ -46,6 +46,13 @@ export const trainingAPI = {
   abandonAttempt: (attemptId: number, options?: RequestInit) =>
     send<Attempt>('POST', endpoints.training.abandon(attemptId), undefined, options),
 
+  /** Read-only material of a failed attempt (video, reading, attestation text). Records nothing. */
+  getReviewAttempt: (attemptId: number, options?: RequestInit) =>
+    get<Attempt>(endpoints.training.review(attemptId), options),
+
+  getReviewPlaybackUrl: (attemptId: number, stepId: number) =>
+    send<VideoPlayback>('POST', endpoints.training.reviewPlaybackUrl(attemptId, stepId)),
+
   // ---- Steps ----
 
   /** A presigned video URL. Call it again when the URL has expired. */

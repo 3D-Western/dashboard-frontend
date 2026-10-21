@@ -39,6 +39,37 @@ describe('trainingAPI (learner contract)', () => {
     expect(seen.method).toBe('GET');
   });
 
+  it('reads a failed attempt for review, and its video link, without a body', async () => {
+    const view = capture('get', '/api/v1/training/attempts/5/review', { attemptId: 5 });
+    await trainingAPI.getReviewAttempt(5);
+    expect(view.method).toBe('GET');
+
+    const playback = capture(
+      'post',
+      '/api/v1/training/attempts/5/review/steps/9/video/playback-url',
+      {
+        url: 'https://v/x',
+      },
+    );
+    await trainingAPI.getReviewPlaybackUrl(5, 9);
+    expect(playback.method).toBe('POST');
+    expect(playback.body).toBeUndefined();
+  });
+
+  it('sends the seconds replayed after a wrong answer with the heartbeat', async () => {
+    const seen = capture('post', '/api/v1/training/attempts/5/steps/9/video/heartbeat', {});
+    await trainingAPI.sendHeartbeat(5, 9, {
+      ranges: [{ start: 0, end: 20 }],
+      focusLossCount: 0,
+      rewatchRanges: [{ start: 5, end: 12 }],
+    });
+    expect(seen.body).toEqual({
+      ranges: [{ start: 0, end: 20 }],
+      focusLossCount: 0,
+      rewatchRanges: [{ start: 5, end: 12 }],
+    });
+  });
+
   it('starts an attempt without a body', async () => {
     const seen = capture('post', '/api/v1/training/trainings/maker-orientation/attempts', {
       attemptId: 5,

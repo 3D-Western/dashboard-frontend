@@ -162,15 +162,18 @@ describe('VideoStep', () => {
   });
 
   describe('speed', () => {
-    it('offers any playback speed', async () => {
+    it('offers speeds from 0.5x to 2x and nothing faster', async () => {
       const { video, state } = await setup();
       const select = screen.getByLabelText(/playback speed/i);
 
-      await userEvent.selectOptions(select, '4');
+      await userEvent.selectOptions(select, '2');
 
-      expect(state.playbackRate).toBe(4);
-      expect(video.playbackRate).toBe(4);
-      expect(screen.getByRole('option', { name: '0.5x' })).toBeInTheDocument();
+      expect(state.playbackRate).toBe(2);
+      expect(video.playbackRate).toBe(2);
+      const labels = screen.getAllByRole('option').map((option) => option.textContent);
+      expect(labels).toEqual(['0.5x', '0.75x', '1x', '1.25x', '1.5x', '1.75x', '2x']);
+      expect(screen.queryByRole('option', { name: '3x' })).not.toBeInTheDocument();
+      expect(screen.queryByRole('option', { name: '4x' })).not.toBeInTheDocument();
     });
   });
 
@@ -711,6 +714,178 @@ describe('VideoStep', () => {
       await userEvent.click(screen.getByRole('button', { name: /check my answer/i }));
 
       expect(await screen.findByText(/finish the earlier steps first/i)).toBeInTheDocument();
+    });
+  });
+
+  describe('after a wrong answer (the segment must be watched again)', () => {
+    // Everything up to 100 s has been watched, so only the re-watch rule keeps the learner from
+    // jumping straight back to the question at 20 s.
+    const rewatchStep = () =>
+      createVideoStep({
+        video: createVideoBlock({
+          watchedRanges: [{ start: 0, end: 100 }],
+          checkpoints: [
+            createCheckpoint({
+              checkpointId: 11,
+              atSeconds: 20,
+              question: createQuestion({
+                questionVersionId: 601,
+                promptMarkdown: 'What did the video just show?',
+              }),
+            }),
+          ],
+        }),
+      });
+    const owed = { checkpointId: 11, fromSeconds: 5, toSeconds: 20 };
+
+    beforeEach(() => {
+      api.sendHeartbeat.mockResolvedValue(
+        heartbeatResult({ checkpointsRemaining: [11], rewatch: owed }),
+      );
+      api.answerCheckpoint.mockResolvedValue({
+        correct: false,
+        rewatchFromSeconds: 5,
+        stepCompleted: false,
+      });
+    });
+
+    /** Plays to the question, answers it wrongly and lands back at the start of the replay. */
+    async function answerWrong(step = rewatchStep()) {
+      const set = await setup(step);
+      set.playTo(20);
+      await userEvent.click(screen.getByLabelText('On the front panel'));
+      await userEvent.click(screen.getByRole('button', { name: /check my answer/i }));
+      await waitFor(() => expect(set.state.currentTime).toBe(5));
+      return set;
+    }
+
+    it('drops the forward-seek limit to where the replay starts', async () => {
+      const { video, state } = await answerWrong();
+
+      // Seeking straight forward to the question (or anywhere past the replay's start) is sent back
+      state.currentTime = 18;
+      fireEvent.seeking(video);
+
+      expect(state.currentTime).toBe(5);
+      expect(screen.getByText(/can't skip ahead/i)).toBeInTheDocument();
+      // Going back is still free
+      state.currentTime = 2;
+      fireEvent.seeking(video);
+      expect(state.currentTime).toBe(2);
+    });
+
+    it('applies the lower limit to the position slider too', async () => {
+      const { state } = await answerWrong();
+
+      fireEvent.change(screen.getByRole('slider', { name: /video position/i }), {
+        target: { value: '19' },
+      });
+
+      expect(state.currentTime).toBe(5);
+      expect(screen.getByText(/can't skip ahead/i)).toBeInTheDocument();
+    });
+
+    it('lets the limit follow the replay as it is watched', async () => {
+      const { video, state, playTo } = await answerWrong();
+
+      playTo(12);
+      state.currentTime = 13;
+      fireEvent.seeking(video);
+
+      expect(state.currentTime).toBe(13);
+      state.currentTime = 19;
+      fireEvent.seeking(video);
+      expect(state.currentTime).toBe(12);
+    });
+
+    it('tells the learner what to watch', async () => {
+      await answerWrong();
+
+      expect(screen.getByText(/watch from 0:05 to 0:20 again/i)).toBeInTheDocument();
+    });
+
+    it('reports the seconds played since the wrong answer, and not before', async () => {
+      const { playTo, pause } = await answerWrong();
+      // Nothing about a re-watch was sent while the question was being asked
+      expect(
+        api.sendHeartbeat.mock.calls.every(([, , body]) => body.rewatchRanges === undefined),
+      ).toBe(true);
+      api.sendHeartbeat.mockClear();
+
+      playTo(12);
+      pause();
+
+      await waitFor(() => expect(api.sendHeartbeat).toHaveBeenCalled());
+      const body = api.sendHeartbeat.mock.calls.at(-1)![2];
+      expect(body.rewatchRanges).toEqual([{ start: 6, end: 12 }]);
+    });
+
+    it('keeps the question closed until the server says the replay counted', async () => {
+      const { playTo } = await answerWrong();
+
+      // Reaching the question again: the server still says no, so the learner is sent back
+      playTo(20);
+      expect(await screen.findByText(/to unlock the question/i)).toBeInTheDocument();
+      expect(screen.queryByText('What did the video just show?')).not.toBeInTheDocument();
+
+      // Once the server has credited the replay, the question comes back
+      api.sendHeartbeat.mockResolvedValue(
+        heartbeatResult({ checkpointsRemaining: [11], rewatch: null }),
+      );
+      playTo(20);
+      expect(await screen.findByText('What did the video just show?')).toBeInTheDocument();
+    });
+
+    it('allows seeking up to the question again once the server has cleared the re-watch', async () => {
+      const { video, state, playTo, pause } = await answerWrong();
+      api.sendHeartbeat.mockResolvedValue(
+        heartbeatResult({ checkpointsRemaining: [11], rewatch: null }),
+      );
+      api.sendHeartbeat.mockClear();
+      playTo(8);
+      pause();
+      await waitFor(() => expect(api.sendHeartbeat).toHaveBeenCalled());
+      await waitFor(() =>
+        expect(screen.queryByText(/watch from 0:05 to 0:20 again/i)).not.toBeInTheDocument(),
+      );
+
+      state.currentTime = 18;
+      fireEvent.seeking(video);
+
+      expect(state.currentTime).toBe(18);
+    });
+
+    it('resumes in the replay after a reload', async () => {
+      const step = rewatchStep();
+      step.video!.rewatch = { ...owed, fromSeconds: 8 };
+      const { video, state } = await setup(step);
+      fireEvent.loadedMetadata(video);
+
+      expect(state.currentTime).toBe(8);
+      state.currentTime = 15;
+      fireEvent.seeking(video);
+      expect(state.currentTime).toBe(8);
+    });
+
+    it('goes back to the replay when the server refuses an early answer (REWATCH_REQUIRED)', async () => {
+      const { ApiError } = await import('@/api/client/errors');
+      api.answerCheckpoint.mockRejectedValueOnce(
+        new ApiError('REWATCH_REQUIRED', undefined, {
+          rewatchFromSeconds: 5,
+          checkpointAtSeconds: 20,
+        }),
+      );
+      const { state, playTo } = await setup(rewatchStep());
+      playTo(20);
+
+      await userEvent.click(screen.getByLabelText('On the front panel'));
+      await userEvent.click(screen.getByRole('button', { name: /check my answer/i }));
+
+      await waitFor(() => expect(state.currentTime).toBe(5));
+      expect(screen.queryByText('What did the video just show?')).not.toBeInTheDocument();
+      expect(
+        screen.getAllByText(/watch the video again from 0:05 to 0:20/i).length,
+      ).toBeGreaterThan(0);
     });
   });
 

@@ -251,6 +251,40 @@ describe('TrainingCard', () => {
       expect(screen.queryByText('Not passed yet')).not.toBeInTheDocument();
     });
 
+    it('links "Review the material" to the failed attempt, in the cooldown and after it', () => {
+      renderCard(
+        createTrainingSummary({
+          certification: started,
+          nextAction: 'BLOCKED',
+          blockedReason: 'RETRY_COOLDOWN',
+          retryAt: '2026-10-20T12:40:00Z',
+          reviewAttemptId: 31,
+        }),
+      );
+
+      expect(screen.getByRole('link', { name: 'Review the material' })).toHaveAttribute(
+        'href',
+        '/dashboard/training/attempt/31/review',
+      );
+    });
+
+    it('does not offer a review when there is no failed attempt to review', () => {
+      renderCard(createTrainingSummary({ certification: started, nextAction: 'START' }));
+      expect(screen.queryByRole('link', { name: /review the material/i })).not.toBeInTheDocument();
+
+      // Nor while an attempt is open: that row says "In progress", not "Not passed yet"
+      renderCard(
+        createTrainingSummary({
+          slug: 'other',
+          certification: started,
+          nextAction: 'RESUME',
+          inProgressAttemptId: 4,
+          reviewAttemptId: 31,
+        }),
+      );
+      expect(screen.queryByRole('link', { name: /review the material/i })).not.toBeInTheDocument();
+    });
+
     it('a training never started still says "Start training"', () => {
       renderCard(createTrainingSummary());
 

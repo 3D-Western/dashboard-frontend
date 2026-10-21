@@ -20,6 +20,20 @@ describe('trainingErrorMessage', () => {
     }
   });
 
+  it('says where to watch again when an answer comes too early', () => {
+    const message = trainingErrorMessage(
+      new ApiError('REWATCH_REQUIRED', 'x', { rewatchFromSeconds: 65, checkpointAtSeconds: 120 }),
+    );
+    expect(message).toBe('Watch the video again from 1:05 to 2:00 before answering.');
+    expect(trainingErrorMessage(new ApiError('REWATCH_REQUIRED', 'x'))).toMatch(/watch that part/i);
+  });
+
+  it('says what the review is for', () => {
+    expect(trainingErrorMessage(new ApiError('REVIEW_NOT_AVAILABLE', 'x'))).toMatch(
+      /review the material after an attempt that was not passed/i,
+    );
+  });
+
   it('says how long is left on a cooldown', () => {
     const message = trainingErrorMessage(
       new ApiError('RETRY_COOLDOWN', 'x', { retryAt: at(45) }),

@@ -117,7 +117,14 @@ export function AttemptResults({ attempt, quizResult }: AttemptResultsProps) {
           </h3>
           <ol className="list-decimal space-y-1 pl-6 text-sm">
             {reviewSteps.map((step) => (
-              <li key={step.stepId}>{step.title}</li>
+              <li key={step.stepId}>
+                <Link
+                  href={Routes.training.review(attempt.attemptId, step.stepId)}
+                  className="inline-flex min-h-11 items-center underline fine:min-h-0"
+                >
+                  {step.title}
+                </Link>
+              </li>
             ))}
           </ol>
         </div>
@@ -148,6 +155,9 @@ export function AttemptResults({ attempt, quizResult }: AttemptResultsProps) {
             {startingSlug === training.slug ? 'Starting...' : 'Try again'}
           </Button>
         )}
+        <Button asChild variant="outline" className="w-full sm:w-auto">
+          <Link href={Routes.training.review(attempt.attemptId)}>Review the material</Link>
+        </Button>
         <Button asChild variant="outline" className="w-full sm:w-auto">
           <Link href={Routes.training.home}>Back to my training</Link>
         </Button>

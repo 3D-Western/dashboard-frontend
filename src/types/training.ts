@@ -52,6 +52,11 @@ export interface TrainingSummary {
    * retake the online training first.
    */
   signoffFeedback?: SignoffFeedback | null;
+  /**
+   * The failed attempt whose material can be reviewed (read-only), when my latest real attempt
+   * failed. Null otherwise.
+   */
+  reviewAttemptId?: number | null;
 }
 
 export interface SignoffFeedback {
@@ -105,12 +110,24 @@ export interface VideoCheckpoint {
   question: Question;
 }
 
+/**
+ * After a wrong checkpoint answer: that question stays closed until `fromSeconds` to `toSeconds`
+ * has been watched again.
+ */
+export interface Rewatch {
+  checkpointId: number;
+  fromSeconds: number;
+  toSeconds: number;
+}
+
 export interface VideoBlock {
   durationSeconds: number;
   minWatchPercent: number;
   watchedPercent: number;
   watchedRanges: TimeRange[];
   checkpoints: VideoCheckpoint[];
+  /** Null or absent unless a wrong answer still has to be made up by re-watching. */
+  rewatch?: Rewatch | null;
 }
 
 export interface ReadingBlock {
@@ -174,6 +191,8 @@ export interface VideoPlayback {
 export interface HeartbeatBody {
   ranges: TimeRange[];
   focusLossCount: number;
+  /** Seconds played since the last wrong checkpoint answer. Sent only while a re-watch is owed. */
+  rewatchRanges?: TimeRange[];
 }
 
 export interface HeartbeatResult {
@@ -182,6 +201,8 @@ export interface HeartbeatResult {
   capped: boolean;
   stepCompleted: boolean;
   checkpointsRemaining: number[];
+  /** The re-watch still owed, or null/absent once it is done. */
+  rewatch?: Rewatch | null;
 }
 
 export interface CheckpointAnswerResult {

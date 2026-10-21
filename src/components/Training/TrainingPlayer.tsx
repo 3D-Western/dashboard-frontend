@@ -27,6 +27,7 @@ import { PledgeScreen } from './PledgeScreen';
 import { PreviewBanner } from './PreviewBanner';
 import { PreviewFinished } from './PreviewFinished';
 import { QuizStep } from './QuizStep';
+import { ReviewPlayer } from './ReviewPlayer';
 import { ReadingStep } from './ReadingStep';
 import { useTrainingRuntime } from './TrainingRuntime';
 import { VideoStep } from './VideoStep';
@@ -44,8 +45,17 @@ const KIND_NOTES: Record<Attempt['kind'], string | null> = {
   REFRESHER: 'Refresher: a short re-check of what you learned before.',
 };
 
-export function TrainingPlayer({ attemptId }: { attemptId: number }) {
-  const { preview } = useTrainingRuntime();
+export function TrainingPlayer({
+  attemptId,
+  initialStepId,
+}: {
+  attemptId: number;
+  /** Review mode only: open on this section. */
+  initialStepId?: number | null;
+}) {
+  const { preview, review } = useTrainingRuntime();
+  // Review mode (a student looking back over a failed attempt): the same player, read-only
+  if (review) return <ReviewPlayer attemptId={attemptId} initialStepId={initialStepId} />;
   return (
     <div className="space-y-4">
       {preview && <PreviewBanner preview={preview} />}
