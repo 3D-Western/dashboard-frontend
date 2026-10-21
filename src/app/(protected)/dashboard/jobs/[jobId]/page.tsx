@@ -66,11 +66,11 @@ export default async function JobDetailPage({ params }: PageProps) {
       {isCollected && <FeatureProjectCta jobName={job.name} jobId={job.id} />}
 
       {/* Phones: timeline first, then details. Desktop: details left, timeline right. */}
-      <div className="grid gap-6 lg:grid-cols-3">
+      <div className="grid gap-6 xl:grid-cols-3">
         {hasHistory && (
           <section
             aria-labelledby="status-history-heading"
-            className="rounded-lg border bg-card lg:col-start-3 lg:row-start-1"
+            className="rounded-lg border bg-card xl:col-start-3 xl:row-start-1"
           >
             <h2 id="status-history-heading" className="border-b px-5 py-3 text-base">
               Status history
@@ -86,7 +86,7 @@ export default async function JobDetailPage({ params }: PageProps) {
         )}
         <JobInfo
           job={job}
-          className={hasHistory ? 'lg:col-span-2 lg:row-start-1' : 'lg:col-span-3'}
+          className={hasHistory ? 'xl:col-span-2 xl:row-start-1' : 'xl:col-span-3'}
         />
       </div>
     </div>

@@ -152,7 +152,7 @@ export function TrainingAuditLog() {
           value={filters.to}
           onValueChange={(to) => update({ to })}
         />
-        <div className="flex items-end md:col-span-2 lg:col-span-5 lg:justify-end">
+        <div className="flex items-end md:col-span-2 lg:col-span-3 lg:justify-end xl:col-span-5">
           <Button
             type="button"
             variant="ghost"
