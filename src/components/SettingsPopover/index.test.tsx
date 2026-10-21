@@ -216,6 +216,24 @@ describe('SettingsPopover', () => {
     });
   });
 
+  describe('phone tap targets', () => {
+    it('makes the settings button 44 px on phones and 32 px from md up', () => {
+      render(<SettingsPopover />);
+
+      expect(screen.getByRole('button', { name: 'Settings' })).toHaveClass('size-11', 'md:size-8');
+    });
+
+    it('makes the menu items 44 px tall on phones', async () => {
+      const user = userEvent.setup();
+      render(<SettingsPopover />);
+
+      await user.click(screen.getByRole('button', { name: 'Settings' }));
+
+      const logout = (await screen.findByText('Logout')).closest('button');
+      expect(logout).toHaveClass('py-3', 'md:py-1.5');
+    });
+  });
+
   describe('popover behavior', () => {
     it('popover can be opened and closed', async () => {
       const user = userEvent.setup();

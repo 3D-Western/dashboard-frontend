@@ -187,7 +187,7 @@ export function AppSidebar({ user }: AppSidebarProps) {
                       </Link>
                     </SidebarMenuButton>
                     <CollapsibleTrigger asChild>
-                      <SidebarMenuAction className="data-[state=open]:rotate-180">
+                      <SidebarMenuAction className="top-0! right-0! size-11! data-[state=open]:rotate-180 md:top-1.5! md:right-1! md:size-5!">
                         <ChevronDown />
                         <span className="sr-only">Toggle admin pages</span>
                       </SidebarMenuAction>
