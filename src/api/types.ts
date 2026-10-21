@@ -81,6 +81,9 @@ export interface ApiSignupRequest {
   // (e.g. "Engineering", "Beginner").
   faculty: string;
   experienceLevel: string;
+  // Optional phone number and separate texting consent (see lib/phone.ts). Omit both to skip.
+  phoneNumber?: string | null;
+  smsOptIn?: boolean;
 }
 
 export interface VerifyEmailResponse {

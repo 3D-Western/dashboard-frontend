@@ -27,7 +27,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, useWatch } from 'react-hook-form';
 import { toast } from 'sonner';
 import { z } from 'zod';
 import { EXPERIENCE_LEVEL_OPTIONS } from '@/constants/experience-levels';
@@ -35,36 +35,51 @@ import { FACULTY_OPTIONS } from '@/constants/faculties';
 import { transformFacultyToBackend } from '@/api/client/transformers';
 import type { UserFaculty } from '@/types/user';
 import { BrandMark } from '@/components/BrandLogo';
+import { TextConsentCheckbox } from '@/components/TextConsentCheckbox';
+import {
+  isAcceptablePhoneInput,
+  PHONE_NUMBER_ERROR,
+  phoneRequestFields,
+  SMS_OPT_IN_NEEDS_PHONE_ERROR,
+} from '@/lib/phone';
 
-const formSchema = z.object({
-  studentId: z
-    .string()
-    .min(1, 'Student ID is required')
-    .regex(/^\d+$/, 'Student ID must contain only numbers')
-    .refine((val) => {
-      const num = parseInt(val, 10);
-      return num >= 251000000 && num <= 251999999;
-    }, 'Student ID must be between 251000000 and 251999999'),
-  email: z
-    .string()
-    .trim()
-    .toLowerCase()
-    .min(1, 'Email is required')
-    .regex(
-      /^[a-z]+[0-9]*@uwo\.ca$/,
-      'Must be a valid UWO email (e.g., jdoe@uwo.ca or jdoe2@uwo.ca)',
-    ),
-  password: z
-    .string()
-    .min(10, 'Password must be at least 10 characters')
-    .regex(/[A-Z]/, 'Password must contain at least one uppercase letter')
-    .regex(/[a-z]/, 'Password must contain at least one lowercase letter')
-    .regex(/[0-9]/, 'Password must contain at least one number'),
-  faculty: z.string().min(1, 'Faculty is required'),
-  experienceLevel: z.string().min(1, 'Experience level is required'),
-  firstName: z.string().min(1, 'First name is required'),
-  lastName: z.string().min(1, 'Last name is required'),
-});
+const formSchema = z
+  .object({
+    studentId: z
+      .string()
+      .min(1, 'Student ID is required')
+      .regex(/^\d+$/, 'Student ID must contain only numbers')
+      .refine((val) => {
+        const num = parseInt(val, 10);
+        return num >= 251000000 && num <= 251999999;
+      }, 'Student ID must be between 251000000 and 251999999'),
+    email: z
+      .string()
+      .trim()
+      .toLowerCase()
+      .min(1, 'Email is required')
+      .regex(
+        /^[a-z]+[0-9]*@uwo\.ca$/,
+        'Must be a valid UWO email (e.g., jdoe@uwo.ca or jdoe2@uwo.ca)',
+      ),
+    // Optional. Blank is fine; anything typed must be a North American number.
+    phoneNumber: z.string().trim().refine(isAcceptablePhoneInput, PHONE_NUMBER_ERROR),
+    smsOptIn: z.boolean(),
+    password: z
+      .string()
+      .min(10, 'Password must be at least 10 characters')
+      .regex(/[A-Z]/, 'Password must contain at least one uppercase letter')
+      .regex(/[a-z]/, 'Password must contain at least one lowercase letter')
+      .regex(/[0-9]/, 'Password must contain at least one number'),
+    faculty: z.string().min(1, 'Faculty is required'),
+    experienceLevel: z.string().min(1, 'Experience level is required'),
+    firstName: z.string().min(1, 'First name is required'),
+    lastName: z.string().min(1, 'Last name is required'),
+  })
+  .refine((values) => !values.smsOptIn || values.phoneNumber !== '', {
+    message: SMS_OPT_IN_NEEDS_PHONE_ERROR,
+    path: ['smsOptIn'],
+  });
 type FormData = z.infer<typeof formSchema>;
 
 export function SignupForm({ className, ...props }: React.ComponentProps<'div'>) {
@@ -76,6 +91,8 @@ export function SignupForm({ className, ...props }: React.ComponentProps<'div'>)
     defaultValues: {
       studentId: '',
       email: '',
+      phoneNumber: '',
+      smsOptIn: false,
       password: '',
       faculty: '',
       experienceLevel: '',
@@ -83,6 +100,9 @@ export function SignupForm({ className, ...props }: React.ComponentProps<'div'>)
       lastName: '',
     },
   });
+
+  // Watched so the consent box can be disabled until a number is typed.
+  const phoneNumber = useWatch({ control: form.control, name: 'phoneNumber' });
 
   async function onSubmit(values: FormData) {
     try {
@@ -97,6 +117,7 @@ export function SignupForm({ className, ...props }: React.ComponentProps<'div'>)
         experienceLevel: values.experienceLevel,
         firstName: values.firstName,
         lastName: values.lastName,
+        ...phoneRequestFields(values.phoneNumber, values.smsOptIn),
       };
 
       // Call signup API endpoint
@@ -184,6 +205,50 @@ export function SignupForm({ className, ...props }: React.ComponentProps<'div'>)
                       <FormControl>
                         <Input placeholder="example@uwo.ca" {...field} />
                       </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="phoneNumber"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>
+                        Mobile number{' '}
+                        <span className="font-normal text-muted-foreground">(optional)</span>
+                      </FormLabel>
+                      <FormControl>
+                        <Input
+                          type="tel"
+                          autoComplete="tel"
+                          inputMode="tel"
+                          placeholder="519-555-1234"
+                          {...field}
+                          onChange={(event) => {
+                            field.onChange(event);
+                            // Consent needs a number: clearing the number clears the tick.
+                            if (event.target.value.trim() === '') form.setValue('smsOptIn', false);
+                          }}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="smsOptIn"
+                  render={({ field }) => (
+                    <FormItem>
+                      <TextConsentCheckbox
+                        id="signup-sms-opt-in"
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                        disabled={phoneNumber.trim() === ''}
+                      />
                       <FormMessage />
                     </FormItem>
                   )}

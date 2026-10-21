@@ -23,6 +23,7 @@ import { ApiError } from '@/api/client/errors';
 import { useRouter } from 'next/navigation';
 import { Routes } from '@/lib/routes';
 import { TrainingStatusCard } from './components/TrainingStatusCard';
+import { PhoneNumberCard } from './components/PhoneNumberCard';
 
 // Password change form schema
 const passwordSchema = z
@@ -169,6 +170,8 @@ export function SettingsContent() {
             </Form>
           </CardContent>
         </Card>
+
+        <PhoneNumberCard />
 
         {/* The Usage and Limits cards are hidden until GET /users/{id}/usage and /limits exist in the
             backend (roadmap, usage limits): they only ever showed errors. Components are kept. */}

@@ -1,4 +1,4 @@
-import { AccountStatus, AdminUserProfile, User } from '@/types/user';
+import { AccountStatus, AdminUserProfile, MyProfile, User } from '@/types/user';
 import { PaginatedResponse } from '@/types/common';
 import {
   PrintJobListResponse,
@@ -166,6 +166,33 @@ export const userApi = {
     return apiRequest<PrintJobListResponse>(url, {
       method: 'GET',
       credentials: 'include',
+      ...options,
+    });
+  },
+
+  /** The signed-in user's own profile (GET /api/v1/users/me/profile). */
+  getMyProfile: async (options?: RequestInit): Promise<MyProfile> => {
+    return apiRequest<MyProfile>(`${getBaseUrl()}${endpoints.users.myProfile}`, {
+      method: 'GET',
+      credentials: 'include',
+      ...options,
+    });
+  },
+
+  /**
+   * Sets the phone number and texting consent (PATCH /api/v1/users/me/profile). A null number
+   * removes it. The backend refuses smsOptIn: true without a number, and withdraws consent when
+   * the number changes, so send the consent the user can see on screen.
+   */
+  updatePhoneSettings: async (
+    settings: { phoneNumber: string | null; smsOptIn: boolean },
+    options?: RequestInit,
+  ): Promise<MyProfile> => {
+    return apiRequest<MyProfile>(`${getBaseUrl()}${endpoints.users.myProfile}`, {
+      method: 'PATCH',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(settings),
       ...options,
     });
   },

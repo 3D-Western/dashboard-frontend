@@ -27,6 +27,9 @@ export interface User {
   // set this field, aren't retroactively blocked from logging in. Only a newly mock-signed-up
   // user (explicitly `false`) is gated pending verification.
   emailVerified?: boolean;
+  // Mirrors the backend's phone_number and sms consent. smsOptIn is only ever true alongside a number.
+  phoneNumber?: string | null;
+  smsOptIn?: boolean;
 }
 
 export interface File {
