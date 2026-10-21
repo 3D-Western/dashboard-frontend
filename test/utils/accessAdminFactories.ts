@@ -17,6 +17,7 @@ export const createGatekeeper = (overrides: Partial<Gatekeeper> = {}): Gatekeepe
   maxOfflineTrustHours: null,
   nightlyResetTime: '03:00',
   tapDebounceSeconds: 3,
+  reconcileMinutes: 60,
   lastSeenAt: minutesAgo(2),
   healthReportedAt: minutesAgo(3),
   health: {
@@ -46,6 +47,7 @@ export const createDevice = (overrides: Partial<AccessDevice> = {}): AccessDevic
   idlePowerWatts: 12.5,
   idleMinutes: 15,
   maxSessionMinutes: null,
+  relayStartWindowSeconds: null,
   checkInRequired: true,
   networkAddress: null,
   lastHeartbeatAt: minutesAgo(1),

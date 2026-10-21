@@ -252,8 +252,8 @@ function GatekeeperCard({
       </section>
 
       <p className="text-xs text-muted-foreground">
-        Checks for changes every {gatekeeper.pollIntervalSeconds} s · resets nightly at{' '}
-        {gatekeeper.nightlyResetTime} ·{' '}
+        Checks for changes every {gatekeeper.pollIntervalSeconds} s · full copy every{' '}
+        {gatekeeper.reconcileMinutes} min · resets nightly at {gatekeeper.nightlyResetTime} ·{' '}
         {gatekeeper.maxOfflineTrustHours
           ? `stops trusting its copy after ${gatekeeper.maxOfflineTrustHours} h offline`
           : 'trusts its copy while offline'}{' '}
@@ -380,6 +380,15 @@ function GatekeeperDialog({
             help="So a double tap does not undo itself. 0 to 60."
             error={errorsFor('tapDebounceSeconds')}
           />
+          <TextField
+            label="Take a full copy at least every (minutes)"
+            inputMode="numeric"
+            value={form.reconcileMinutes}
+            onValueChange={(value) => set('reconcileMinutes', value)}
+            hint={`Default: ${GATEKEEPER_DEFAULTS.reconcileMinutes}`}
+            help="A safety net: even if a live change is missed, the PC rebuilds its copy this often. 5 to 1440."
+            error={errorsFor('reconcileMinutes')}
+          />
           {gatekeeper && (
             <CheckField
               label="Active"
@@ -397,6 +406,7 @@ function GatekeeperDialog({
               'maxOfflineTrustHours',
               'nightlyResetTime',
               'tapDebounceSeconds',
+              'reconcileMinutes',
             ]}
           />
         </div>

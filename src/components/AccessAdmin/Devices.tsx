@@ -34,8 +34,10 @@ import {
   deviceFormFrom,
   deviceKeyFromName,
   DEVICE_KEY_HELP,
+  RELAY_START_WINDOW_DEFAULT,
   updateDeviceBodyFrom,
   usesIdleDetection,
+  usesRelayWindow,
   validateDeviceForm,
   type DeviceField,
   type DeviceForm,
@@ -360,6 +362,9 @@ function DeviceCard({
               value={device.lockMethod ? LOCK_METHOD_LABELS[device.lockMethod] : 'Not set'}
             />
             {idle && <Row label="Idle rule" value={idle} />}
+            {device.lockMethod === 'RELAY' && device.relayStartWindowSeconds !== null && (
+              <Row label="Start window" value={`${device.relayStartWindowSeconds} s after a tap`} />
+            )}
             <Row
               label="Session length"
               value={
@@ -412,6 +417,7 @@ const SERVER_FIELDS = [
   'idlePowerWatts',
   'idleMinutes',
   'maxSessionMinutes',
+  'relayStartWindowSeconds',
   'networkAddress',
 ];
 
@@ -525,6 +531,9 @@ function DeviceDialog({
                   <span className="text-muted-foreground">Machine:</span> {machineLabel}
                 </>
               )}
+              {' · '}
+              <span className="text-muted-foreground">Gatekeeper:</span>{' '}
+              {gatekeepers.find((g) => g.id === device?.gatekeeperId)?.name ?? 'Unknown'}
             </p>
           )}
 
@@ -540,15 +549,17 @@ function DeviceDialog({
             />
           )}
 
-          <SelectField
-            label="Gatekeeper"
-            value={form.gatekeeperId}
-            onValueChange={(value) => set('gatekeeperId', value)}
-            options={gatekeepers.map((g) => ({ value: String(g.id), label: g.name }))}
-            placeholder="Choose a gatekeeper"
-            help="The PC this device talks to."
-            error={errorsFor('gatekeeperId')}
-          />
+          {isNew && (
+            <SelectField
+              label="Gatekeeper"
+              value={form.gatekeeperId}
+              onValueChange={(value) => set('gatekeeperId', value)}
+              options={gatekeepers.map((g) => ({ value: String(g.id), label: g.name }))}
+              placeholder="Choose a gatekeeper"
+              help="The PC this device talks to. A gatekeeper only sees its own devices, and this cannot be changed later."
+              error={errorsFor('gatekeeperId')}
+            />
+          )}
 
           <TextField
             label="Name"
@@ -613,6 +624,17 @@ function DeviceDialog({
                     error={errorsFor('idleMinutes')}
                   />
                 </fieldset>
+              )}
+              {usesRelayWindow(form) && (
+                <TextField
+                  label="Start window (seconds)"
+                  inputMode="numeric"
+                  value={form.relayStartWindowSeconds}
+                  onValueChange={(value) => set('relayStartWindowSeconds', value)}
+                  hint={`Default: ${RELAY_START_WINDOW_DEFAULT}`}
+                  help="After an allowed tap, the start button works for this many seconds; the machine keeps running once started."
+                  error={errorsFor('relayStartWindowSeconds')}
+                />
               )}
               <div className="space-y-3">
                 <CheckField

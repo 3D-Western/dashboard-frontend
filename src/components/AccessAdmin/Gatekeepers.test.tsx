@@ -90,6 +90,7 @@ describe('Gatekeepers registering', () => {
       pollIntervalSeconds: 30,
       nightlyResetTime: '03:00',
       tapDebounceSeconds: 3,
+      reconcileMinutes: 60,
     });
     const secret = await screen.findByRole('dialog', { name: /gatekeeper registered/i });
     expect(within(secret).getByLabelText('Gatekeeper token')).toHaveValue(TOKEN);
@@ -175,6 +176,7 @@ describe('Gatekeepers editing and rotating', () => {
         maxOfflineTrustHours: 0,
         nightlyResetTime: '03:00',
         tapDebounceSeconds: 3,
+        reconcileMinutes: 60,
         active: true,
       }),
     );

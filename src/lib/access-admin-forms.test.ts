@@ -35,6 +35,7 @@ describe('gatekeeper form', () => {
       maxOfflineTrustHours: '0',
       nightlyResetTime: '25:00',
       tapDebounceSeconds: '61',
+      reconcileMinutes: '2',
     };
 
     expect(Object.keys(validateGatekeeperForm(form)).sort()).toEqual([
@@ -42,6 +43,7 @@ describe('gatekeeper form', () => {
       'name',
       'nightlyResetTime',
       'pollIntervalSeconds',
+      'reconcileMinutes',
       'tapDebounceSeconds',
     ]);
     expect(validateGatekeeperForm({ ...form, name: 'x'.repeat(101) }).name).toMatch(/100/);
@@ -61,6 +63,7 @@ describe('gatekeeper form', () => {
       maxOfflineTrustHours: 48,
       nightlyResetTime: '03:00',
       tapDebounceSeconds: 3,
+      reconcileMinutes: 60,
     });
   });
 
@@ -222,6 +225,30 @@ describe('device form', () => {
     });
     expect(deviceFormFrom(existing).limitSession).toBe(true);
     expect(deviceFormFrom(createDevice()).limitSession).toBe(false);
+  });
+
+  it('asks for a start window only on relay stations, between 5 and 120 seconds', () => {
+    const relay = { ...station(), lockMethod: 'RELAY' as const };
+
+    expect(relay.relayStartWindowSeconds).toBe('20');
+    expect(validateDeviceForm(relay, { isNew: true })).toEqual({});
+    expect(
+      validateDeviceForm({ ...relay, relayStartWindowSeconds: '4' }, { isNew: true })
+        .relayStartWindowSeconds,
+    ).toBeDefined();
+    expect(
+      validateDeviceForm({ ...relay, relayStartWindowSeconds: '121' }, { isNew: true })
+        .relayStartWindowSeconds,
+    ).toBeDefined();
+    expect(createDeviceBodyFrom({ ...relay, relayStartWindowSeconds: '45' })).toMatchObject({
+      lockMethod: 'RELAY',
+      relayStartWindowSeconds: 45,
+    });
+    expect(createDeviceBodyFrom(station())).not.toHaveProperty('relayStartWindowSeconds');
+    expect(updateDeviceBodyFrom(relay)).toMatchObject({ relayStartWindowSeconds: 20 });
+    expect(
+      validateDeviceForm({ ...station(), relayStartWindowSeconds: 'x' }, { isNew: true }),
+    ).toEqual({});
   });
 
   it('does not send idle settings when the machine is not locked by a plug', () => {

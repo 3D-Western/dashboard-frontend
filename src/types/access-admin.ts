@@ -25,6 +25,8 @@ export interface Gatekeeper {
   maxOfflineTrustHours: number | null;
   nightlyResetTime: string;
   tapDebounceSeconds: number;
+  /** The gatekeeper takes a full snapshot at least this often (a backstop for missed pushes). */
+  reconcileMinutes: number;
   lastSeenAt: string | null;
   healthReportedAt: string | null;
   /** The raw report; use `healthOf` to read it safely. */
@@ -47,6 +49,7 @@ export interface GatekeeperBody {
   maxOfflineTrustHours?: number;
   nightlyResetTime?: string;
   tapDebounceSeconds?: number;
+  reconcileMinutes?: number;
 }
 
 export interface AccessDevice {
@@ -56,12 +59,14 @@ export interface AccessDevice {
   name: string;
   machineId: number | null;
   machineName: string | null;
-  gatekeeperId: number | null;
+  gatekeeperId: number;
   active: boolean;
   lockMethod: LockMethod | null;
   idlePowerWatts: number | null;
   idleMinutes: number | null;
   maxSessionMinutes: number | null;
+  /** Relay stations: how long the start button works after an allowed tap. */
+  relayStartWindowSeconds: number | null;
   checkInRequired: boolean;
   networkAddress: string | null;
   lastHeartbeatAt: string | null;
@@ -87,6 +92,7 @@ export interface CreateDeviceBody {
   idlePowerWatts?: number;
   idleMinutes?: number;
   maxSessionMinutes?: number;
+  relayStartWindowSeconds?: number;
   checkInRequired?: boolean;
   networkAddress?: string;
 }
@@ -94,12 +100,12 @@ export interface CreateDeviceBody {
 /** On update, 0 for `idleMinutes` or `maxSessionMinutes` clears it, and a blank `networkAddress` clears the address. */
 export interface UpdateDeviceBody {
   name?: string;
-  gatekeeperId?: number;
   active?: boolean;
   lockMethod?: LockMethod;
   idlePowerWatts?: number;
   idleMinutes?: number;
   maxSessionMinutes?: number;
+  relayStartWindowSeconds?: number;
   checkInRequired?: boolean;
   networkAddress?: string;
 }

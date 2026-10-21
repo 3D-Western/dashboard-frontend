@@ -143,6 +143,30 @@ describe('Devices adding', () => {
     expect(within(dialog).queryByText(/idle power level/i)).not.toBeInTheDocument();
   });
 
+  it('shows the start window only for relay machines, with its help text', async () => {
+    const dialog = await openAddDialog();
+    expect(
+      within(dialog).queryByRole('textbox', { name: /start window/i }),
+    ).not.toBeInTheDocument();
+
+    await userEvent.selectOptions(
+      within(dialog).getByRole('combobox', { name: /how the machine is locked/i }),
+      'RELAY',
+    );
+
+    expect(within(dialog).getByRole('textbox', { name: /start window/i })).toHaveValue('20');
+    expect(
+      within(dialog).getByText(
+        'After an allowed tap, the start button works for this many seconds; the machine keeps running once started.',
+      ),
+    ).toBeInTheDocument();
+    await userEvent.clear(within(dialog).getByRole('textbox', { name: /start window/i }));
+    await userEvent.type(within(dialog).getByRole('textbox', { name: /start window/i }), '500');
+    await userEvent.click(within(dialog).getByRole('button', { name: /add device/i }));
+    expect(within(dialog).getByText(/from 5 to 120/i)).toBeInTheDocument();
+    expect(api.registerDevice).not.toHaveBeenCalled();
+  });
+
   it('keeps the session limit off by default and says it never cuts a running machine', async () => {
     const dialog = await openAddDialog();
 
@@ -259,6 +283,9 @@ describe('Devices editing and rotating keys', () => {
 
     await userEvent.click(screen.getByRole('button', { name: 'Edit Laser 1 card reader' }));
     const dialog = await screen.findByRole('dialog');
+    // A device cannot move to another gatekeeper: it is shown, not offered.
+    expect(within(dialog).queryByRole('combobox', { name: 'Gatekeeper' })).not.toBeInTheDocument();
+    expect(dialog).toHaveTextContent('Gatekeeper: Makerspace PC');
     await userEvent.click(
       within(dialog).getByRole('checkbox', { name: /limit how long one session/i }),
     );
@@ -272,7 +299,6 @@ describe('Devices editing and rotating keys', () => {
           maxSessionMinutes: 600,
           idleMinutes: 15,
           idlePowerWatts: 12.5,
-          gatekeeperId: 1,
         }),
       ),
     );

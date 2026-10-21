@@ -14,7 +14,11 @@ export const GATEKEEPER_DEFAULTS = {
   pollIntervalSeconds: 30,
   nightlyResetTime: '03:00',
   tapDebounceSeconds: 3,
+  reconcileMinutes: 60,
 } as const;
+
+/** Relay stations: the start button works this long after an allowed tap (server default 20, allowed 5 to 120). */
+export const RELAY_START_WINDOW_DEFAULT = 20;
 
 /** The device key rule of the server: 2 to 63 characters, lowercase letters, digits, '.', '_' or '-'. */
 export const DEVICE_KEY_PATTERN = /^[a-z0-9][a-z0-9._-]{1,62}$/;
@@ -41,6 +45,7 @@ export interface GatekeeperForm {
   maxOfflineTrustHours: string;
   nightlyResetTime: string;
   tapDebounceSeconds: string;
+  reconcileMinutes: string;
 }
 
 export type GatekeeperField = keyof GatekeeperForm;
@@ -58,6 +63,7 @@ export function gatekeeperFormFrom(gatekeeper: Gatekeeper | null): GatekeeperFor
     tapDebounceSeconds: String(
       gatekeeper?.tapDebounceSeconds ?? GATEKEEPER_DEFAULTS.tapDebounceSeconds,
     ),
+    reconcileMinutes: String(gatekeeper?.reconcileMinutes ?? GATEKEEPER_DEFAULTS.reconcileMinutes),
   };
 }
 
@@ -82,6 +88,10 @@ export function validateGatekeeperForm(form: GatekeeperForm): FormErrors<Gatekee
   if (!WHOLE_NUMBER.test(debounce) || Number(debounce) > 60) {
     errors.tapDebounceSeconds = 'Enter a whole number of seconds from 0 to 60.';
   }
+  const reconcile = form.reconcileMinutes.trim();
+  if (!WHOLE_NUMBER.test(reconcile) || Number(reconcile) < 5 || Number(reconcile) > 1440) {
+    errors.reconcileMinutes = 'Enter a whole number of minutes from 5 to 1440.';
+  }
   return errors;
 }
 
@@ -96,6 +106,7 @@ export function gatekeeperBodyFrom(
     pollIntervalSeconds: Number(form.pollIntervalSeconds),
     nightlyResetTime: form.nightlyResetTime.trim(),
     tapDebounceSeconds: Number(form.tapDebounceSeconds),
+    reconcileMinutes: Number(form.reconcileMinutes),
   };
   if (trust !== '') body.maxOfflineTrustHours = Number(trust);
   else if (existing?.maxOfflineTrustHours != null) body.maxOfflineTrustHours = 0;
@@ -118,6 +129,7 @@ export interface DeviceForm {
   /** Off by default: a running machine is never cut by a timer. */
   limitSession: boolean;
   maxSessionMinutes: string;
+  relayStartWindowSeconds: string;
   checkInRequired: boolean;
   networkAddress: string;
 }
@@ -140,6 +152,7 @@ export function deviceFormFrom(
     idleMinutes: device?.idleMinutes != null ? String(device.idleMinutes) : '',
     limitSession: device?.maxSessionMinutes != null,
     maxSessionMinutes: device?.maxSessionMinutes != null ? String(device.maxSessionMinutes) : '',
+    relayStartWindowSeconds: String(device?.relayStartWindowSeconds ?? RELAY_START_WINDOW_DEFAULT),
     checkInRequired: device?.checkInRequired ?? true,
     networkAddress: device?.networkAddress ?? '',
   };
@@ -148,6 +161,11 @@ export function deviceFormFrom(
 /** Whether the idle level and idle time apply: only for machines locked by a smart plug. */
 export function usesIdleDetection(form: Pick<DeviceForm, 'kind' | 'lockMethod'>): boolean {
   return form.kind === 'STATION' && form.lockMethod === 'PLUG';
+}
+
+/** Whether the start window applies: only for machines whose start circuit is switched by a relay. */
+export function usesRelayWindow(form: Pick<DeviceForm, 'kind' | 'lockMethod'>): boolean {
+  return form.kind === 'STATION' && form.lockMethod === 'RELAY';
 }
 
 export function validateDeviceForm(
@@ -181,6 +199,12 @@ export function validateDeviceForm(
       errors.idleMinutes = 'Enter a whole number of minutes (1 or more).';
     }
   }
+  if (usesRelayWindow(form)) {
+    const window = form.relayStartWindowSeconds.trim();
+    if (!WHOLE_NUMBER.test(window) || Number(window) < 5 || Number(window) > 120) {
+      errors.relayStartWindowSeconds = 'Enter a whole number of seconds from 5 to 120.';
+    }
+  }
   if (form.kind === 'STATION' && form.limitSession) {
     const max = form.maxSessionMinutes.trim();
     if (!WHOLE_NUMBER.test(max) || Number(max) < 1) {
@@ -205,6 +229,7 @@ export function createDeviceBodyFrom(form: DeviceForm): CreateDeviceBody {
       body.idlePowerWatts = Number(form.idlePowerWatts);
       body.idleMinutes = Number(form.idleMinutes);
     }
+    if (usesRelayWindow(form)) body.relayStartWindowSeconds = Number(form.relayStartWindowSeconds);
     if (form.limitSession) body.maxSessionMinutes = Number(form.maxSessionMinutes);
   }
   if (form.kind === 'PLUG' && form.networkAddress.trim()) {
@@ -217,7 +242,6 @@ export function createDeviceBodyFrom(form: DeviceForm): CreateDeviceBody {
 export function updateDeviceBodyFrom(form: DeviceForm): UpdateDeviceBody {
   const body: UpdateDeviceBody = {
     name: form.name.trim(),
-    gatekeeperId: Number(form.gatekeeperId),
     active: form.active,
   };
   if (form.kind === 'STATION') {
@@ -227,6 +251,7 @@ export function updateDeviceBodyFrom(form: DeviceForm): UpdateDeviceBody {
       body.idlePowerWatts = Number(form.idlePowerWatts);
       body.idleMinutes = Number(form.idleMinutes);
     }
+    if (usesRelayWindow(form)) body.relayStartWindowSeconds = Number(form.relayStartWindowSeconds);
     body.maxSessionMinutes = form.limitSession ? Number(form.maxSessionMinutes) : 0;
   }
   if (form.kind === 'PLUG') body.networkAddress = form.networkAddress.trim();
