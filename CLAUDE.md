@@ -38,6 +38,13 @@ Part of the monorepo. Read the root `CLAUDE.md` first; it has the workflow, docs
 - The install card is `InstallPrompt` (`src/components/InstallPrompt/`). Rules live in `src/lib/pwa/install-prompt.ts`: it needs a **moment of value** (pass `moment`, or null for none), is never shown on desktop or once installed, and stays quiet for 30 days after "Not now". Current moments: orientation passed (dashboard, results note) and print submitted (My Jobs with `?submitted=1`).
 - **Web push**: the worker also handles `push` and `notificationclick` (still no caching). Browser-side rules and the permission flow are in `src/lib/pwa/push.ts` (the permission prompt is shown only by `enablePush`, called from the "Turn on notifications" button; iPhone not on the Home Screen gets the install steps instead), the state is `src/hooks/usePushNotifications.ts`, and the Settings card is `settings/components/NotificationsCard.tsx`. `logout()` first turns push off for the device. Spec: `docs/specs/notifications.md`.
 
+## Access system (admin UI)
+
+- Routes under `/admin/access` (all need `access:admin`, checked by `AccessAdminShell`; sidebar and admin home show it for that permission only): `/` live view, `devices`, `gatekeepers`, `card-links`. Components in `src/components/AccessAdmin/`, client `src/api/client/access-admin.ts`, contract `docs/specs/gatekeeper-contract.md` section 5.
+- Tokens and keys come back once from the register/rotate call and live only in `SecretDialog` state (no Escape, no outside tap); never put them in a list, a toast or storage.
+- Machine settings (lock method, idle level and time, session limit, check-in) belong to the machine's STATION device; the PLUG only has an address. Form rules are in `src/lib/access-admin-forms.ts`; 0 clears `idleMinutes`/`maxSessionMinutes` on update. Online status uses `STALE_AFTER_MINUTES` (`access-admin-format.ts`).
+- Tests mock `@/api/client/access-admin`; factories in `test/utils/accessAdminFactories.ts`.
+
 ## Legacy docs: verify before trusting
 
 `AGENTS.md`, `README.md`, `docs/FEATURES.md`, `docs/ARCHITECTURE.md` and `.env.example` came over from the old repo and are partly **stale** (Next 15, npm/Node 20, invite codes, routes that no longer exist). `docs/LAUNCH_SCOPE.md` and `docs/IAM.md` are the most accurate. Prefer the code, and fix a stale doc when you touch its area.
