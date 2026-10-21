@@ -3,7 +3,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { Check } from 'lucide-react';
-import { trainingAPI } from '@/api/client/training';
 import { trainingErrorMessage } from '@/api/client/training-errors';
 import {
   AlertDialog,
@@ -25,8 +24,11 @@ import type { Attempt, AttemptStep, QuizResult } from '@/types/training';
 import { AttemptResults } from './AttemptResults';
 import { AttestationStep } from './AttestationStep';
 import { PledgeScreen } from './PledgeScreen';
+import { PreviewBanner } from './PreviewBanner';
+import { PreviewFinished } from './PreviewFinished';
 import { QuizStep } from './QuizStep';
 import { ReadingStep } from './ReadingStep';
+import { useTrainingRuntime } from './TrainingRuntime';
 import { VideoStep } from './VideoStep';
 
 const STEP_LABELS: Record<AttemptStep['type'], string> = {
@@ -43,6 +45,17 @@ const KIND_NOTES: Record<Attempt['kind'], string | null> = {
 };
 
 export function TrainingPlayer({ attemptId }: { attemptId: number }) {
+  const { preview } = useTrainingRuntime();
+  return (
+    <div className="space-y-4">
+      {preview && <PreviewBanner preview={preview} />}
+      <PlayerBody attemptId={attemptId} />
+    </div>
+  );
+}
+
+function PlayerBody({ attemptId }: { attemptId: number }) {
+  const { api, preview } = useTrainingRuntime();
   const [attempt, setAttempt] = useState<Attempt | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [quizResult, setQuizResult] = useState<QuizResult | null>(null);
@@ -50,14 +63,14 @@ export function TrainingPlayer({ attemptId }: { attemptId: number }) {
 
   const load = useCallback(async () => {
     try {
-      setAttempt(await trainingAPI.getAttempt(attemptId));
+      setAttempt(await api.getAttempt(attemptId));
       setLoadError(null);
     } catch (error) {
       setLoadError(
         trainingErrorMessage(error, "We couldn't load this training. Please try again."),
       );
     }
-  }, [attemptId]);
+  }, [api, attemptId]);
 
   useEffect(() => {
     const runLoad = async () => {
@@ -84,7 +97,7 @@ export function TrainingPlayer({ attemptId }: { attemptId: number }) {
   const cancelAttempt = async () => {
     setCancelError(null);
     try {
-      setAttempt(await trainingAPI.abandonAttempt(attemptId));
+      setAttempt(await api.abandonAttempt(attemptId));
     } catch (error) {
       setCancelError(trainingErrorMessage(error));
     }
@@ -115,6 +128,20 @@ export function TrainingPlayer({ attemptId }: { attemptId: number }) {
         <Skeleton className="h-2 w-full" />
         <Skeleton className="aspect-video w-full rounded-xl" />
       </div>
+    );
+  }
+
+  if (preview && attempt.status !== 'IN_PROGRESS') {
+    return (
+      <PreviewFinished
+        attempt={attempt}
+        exitHref={preview.exitHref}
+        onRestart={() => {
+          preview.restart();
+          setQuizResult(null);
+          void load();
+        }}
+      />
     );
   }
 
@@ -236,36 +263,70 @@ export function TrainingPlayer({ attemptId }: { attemptId: number }) {
         </Alert>
       )}
 
-      <footer className="border-t pt-4">
-        <AlertDialog>
-          <AlertDialogTrigger asChild>
-            <Button type="button" variant="ghost" size="sm" className="text-muted-foreground">
-              Cancel this attempt
+      {preview ? (
+        <footer className="space-y-2 border-t pt-4">
+          <div className="flex flex-col gap-2 sm:flex-row">
+            <Button
+              type="button"
+              variant="outline"
+              className="min-h-11 sm:min-h-9"
+              onClick={() => {
+                preview.skipStep();
+                void load();
+              }}
+              disabled={!current}
+            >
+              Skip this step
             </Button>
-          </AlertDialogTrigger>
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>Cancel this attempt?</AlertDialogTitle>
-              <AlertDialogDescription>
-                Your progress in this attempt will be lost and you&apos;ll start from the beginning
-                next time. It won&apos;t count against your attempts. To just take a break, leave
-                this page instead: your place is saved.
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel>Keep going</AlertDialogCancel>
-              <AlertDialogAction onClick={() => void cancelAttempt()}>
-                Cancel attempt
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
-        {cancelError && (
-          <Alert variant="destructive" className="mt-3">
-            <AlertDescription>{cancelError}</AlertDescription>
-          </Alert>
-        )}
-      </footer>
+            <Button
+              type="button"
+              variant="ghost"
+              className="min-h-11 text-muted-foreground sm:min-h-9"
+              onClick={() => {
+                preview.restart();
+                setQuizResult(null);
+                void load();
+              }}
+            >
+              Start the preview over
+            </Button>
+          </div>
+          <p className="text-xs text-muted-foreground">
+            Skipping is for staff only: a student has to finish each step to reach the next.
+          </p>
+        </footer>
+      ) : (
+        <footer className="border-t pt-4">
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button type="button" variant="ghost" size="sm" className="text-muted-foreground">
+                Cancel this attempt
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Cancel this attempt?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  Your progress in this attempt will be lost and you&apos;ll start from the
+                  beginning next time. It won&apos;t count against your attempts. To just take a
+                  break, leave this page instead: your place is saved.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Keep going</AlertDialogCancel>
+                <AlertDialogAction onClick={() => void cancelAttempt()}>
+                  Cancel attempt
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+          {cancelError && (
+            <Alert variant="destructive" className="mt-3">
+              <AlertDescription>{cancelError}</AlertDescription>
+            </Alert>
+          )}
+        </footer>
+      )}
     </div>
   );
 }

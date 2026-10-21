@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { trainingAPI } from '@/api/client/training';
+import { useTrainingRuntime } from './TrainingRuntime';
 import { trainingErrorMessage } from '@/api/client/training-errors';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
@@ -16,6 +16,7 @@ interface ReadingStepProps {
 }
 
 export function ReadingStep({ attemptId, step, onStepCompleted }: ReadingStepProps) {
+  const { api } = useTrainingRuntime();
   const reading = step.reading!;
   const gate = reading.gateQuestion ?? null;
   const openedAt = useRef(0);
@@ -34,7 +35,7 @@ export function ReadingStep({ attemptId, step, onStepCompleted }: ReadingStepPro
     try {
       const dwellSeconds =
         reading.dwellSeconds + Math.round((Date.now() - openedAt.current) / 1000);
-      const result = await trainingAPI.completeReading(attemptId, step.stepId, {
+      const result = await api.completeReading(attemptId, step.stepId, {
         dwellSeconds,
         ...(gate ? { optionIds: selected } : {}),
       });

@@ -2,6 +2,7 @@ import { apiRequest } from './base';
 import { getBaseUrl } from './utils';
 import type { PaginatedResponse } from '@/types/common';
 import type { TrainingAuditEntry, TrainingAuditQuery } from '@/types/training-audit';
+import type { TrainingPreview } from '@/types/training-preview';
 import type {
   AdminQuestion,
   AdminStep,
@@ -60,6 +61,7 @@ export const trainingAdminPaths = {
   publishCheck: (versionId: number, impact: PublishImpact) =>
     `${ADMIN}/versions/${versionId}/publish-check?impact=${impact}`,
   publish: (versionId: number) => `${ADMIN}/versions/${versionId}/publish`,
+  preview: (versionId: number) => `${ADMIN}/versions/${versionId}/preview`,
   videoUploadUrl: '/api/v1/training/admin/videos/upload-url',
   stepPlayback: (versionId: number, stepId: number) =>
     `${ADMIN}/versions/${versionId}/steps/${stepId}/playback-url`,
@@ -185,6 +187,10 @@ export const trainingAdminAPI = {
     get<PublishCheck>(trainingAdminPaths.publishCheck(versionId, impact)),
   publish: (versionId: number, body: { impact: PublishImpact; reason: string }) =>
     post<PublishResult>(trainingAdminPaths.publish(versionId), body),
+
+  // ---- Preview as a student ----
+  /** A version in the learner's attempt shape, plus the quiz it would draw and the answer key. Records nothing. */
+  getPreview: (versionId: number) => get<TrainingPreview>(trainingAdminPaths.preview(versionId)),
 
   // ---- Corrections, re-scoring and the report ----
   listCorrections: (questionVersionId: number) =>

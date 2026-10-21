@@ -2,14 +2,16 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { ApiError } from '@/api/client/errors';
-import { trainingAPI } from '@/api/client/training';
 import { trainingErrorMessage } from '@/api/client/training-errors';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 import type { AttemptStep, Question, QuizAnswer, QuizResult } from '@/types/training';
+import type { QuizReveal } from '@/types/training-preview';
 import { QuestionCard } from './QuestionCard';
+import { QuizRevealView } from './QuizRevealView';
+import { useTrainingRuntime } from './TrainingRuntime';
 
 interface QuizStepProps {
   attemptId: number;
@@ -34,6 +36,7 @@ const toList = (answers: Answers): QuizAnswer[] =>
  * and never tells us which answers were right.
  */
 export function QuizStep({ attemptId, step, onSubmitted }: QuizStepProps) {
+  const { api, preview } = useTrainingRuntime();
   const stepId = step.stepId;
   const [questions, setQuestions] = useState<Question[] | null>(null);
   const [answers, setAnswers] = useState<Answers>({});
@@ -42,12 +45,14 @@ export function QuizStep({ attemptId, step, onSubmitted }: QuizStepProps) {
   const [saveState, setSaveState] = useState<'idle' | 'saving' | 'saved' | 'failed'>('idle');
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [reveal, setReveal] = useState<QuizReveal | null>(null);
+  const [retaking, setRetaking] = useState(false);
   const saveChain = useRef<Promise<unknown>>(Promise.resolve());
 
   const load = useCallback(async () => {
     setLoadError(null);
     try {
-      const quiz = await trainingAPI.openQuiz(attemptId, stepId);
+      const quiz = await api.openQuiz(attemptId, stepId);
       const restored: Answers = {};
       for (const question of quiz.questions) {
         if (question.selectedOptionIds?.length) {
@@ -62,7 +67,7 @@ export function QuizStep({ attemptId, step, onSubmitted }: QuizStepProps) {
     } catch (error) {
       setLoadError(trainingErrorMessage(error, "We couldn't load the quiz. Please try again."));
     }
-  }, [attemptId, stepId]);
+  }, [api, attemptId, stepId]);
 
   useEffect(() => {
     const runLoad = async () => {
@@ -77,7 +82,7 @@ export function QuizStep({ attemptId, step, onSubmitted }: QuizStepProps) {
       setSaveState('saving');
       const run = saveChain.current
         .catch(() => undefined)
-        .then(() => trainingAPI.saveQuizAnswers(attemptId, stepId, toList(next)));
+        .then(() => api.saveQuizAnswers(attemptId, stepId, toList(next)));
       saveChain.current = run;
       run.then(
         () => {
@@ -89,7 +94,7 @@ export function QuizStep({ attemptId, step, onSubmitted }: QuizStepProps) {
       );
       return run;
     },
-    [attemptId, stepId],
+    [api, attemptId, stepId],
   );
 
   if (loadError) {
@@ -133,7 +138,13 @@ export function QuizStep({ attemptId, step, onSubmitted }: QuizStepProps) {
     try {
       // Wait for any save still on its way, then send the answers with the submit as well
       await saveChain.current.catch(() => undefined);
-      const result = await trainingAPI.submitQuiz(attemptId, stepId, toList(answers));
+      const result = await api.submitQuiz(attemptId, stepId, toList(answers));
+      if (preview) {
+        // Staff preview: stay here and show which answers were right. Moving on is a separate tap.
+        setReveal(preview.quizReveal(stepId));
+        setSubmitting(false);
+        return;
+      }
       onSubmitted(result);
       // Stay locked after a successful submit: the player reloads the attempt and replaces this
       // screen, and until it has, a second tap must not submit again.
@@ -146,6 +157,29 @@ export function QuizStep({ attemptId, step, onSubmitted }: QuizStepProps) {
       }
     }
   };
+
+  if (preview && reveal) {
+    return (
+      <QuizRevealView
+        reveal={reveal}
+        retaking={retaking}
+        onRetake={() => {
+          setRetaking(true);
+          void preview
+            .retakeQuiz(stepId)
+            .then(load)
+            .finally(() => {
+              setReveal(null);
+              setRetaking(false);
+            });
+        }}
+        onContinue={() => {
+          preview.finishQuiz(stepId);
+          onSubmitted(reveal.result);
+        }}
+      />
+    );
+  }
 
   return (
     <div className="space-y-5">

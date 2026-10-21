@@ -1,7 +1,7 @@
 'use client';
 
 import { useId, useState } from 'react';
-import { trainingAPI } from '@/api/client/training';
+import { useTrainingRuntime } from './TrainingRuntime';
 import { trainingErrorMessage } from '@/api/client/training-errors';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
@@ -15,6 +15,7 @@ interface AttestationStepProps {
 }
 
 export function AttestationStep({ attemptId, step, onStepCompleted }: AttestationStepProps) {
+  const { api } = useTrainingRuntime();
   const checkboxId = useId();
   const [accepted, setAccepted] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -24,7 +25,7 @@ export function AttestationStep({ attemptId, step, onStepCompleted }: Attestatio
     setBusy(true);
     setError(null);
     try {
-      await trainingAPI.acceptAttestation(attemptId, step.stepId);
+      await api.acceptAttestation(attemptId, step.stepId);
       onStepCompleted();
     } catch (err) {
       setError(trainingErrorMessage(err));

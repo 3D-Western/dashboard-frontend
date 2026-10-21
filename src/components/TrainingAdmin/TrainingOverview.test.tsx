@@ -64,6 +64,31 @@ describe('TrainingOverview versions', () => {
   });
 });
 
+describe('TrainingOverview preview', () => {
+  it('links every version, published ones included, to its preview as a student', async () => {
+    await renderInTraining(<TrainingOverview />, {
+      training: createAdminTraining({
+        currentVersionId: 90,
+        versions: [
+          published,
+          draft,
+          createVersionSummary({ id: 80, versionNo: 0, status: 'RETIRED' }),
+        ],
+      }),
+    });
+
+    const links = within(screen.getByRole('region', { name: 'Versions' })).getAllByRole('link', {
+      name: /preview as student/i,
+    });
+
+    expect(links.map((link) => link.getAttribute('href'))).toEqual([
+      '/admin/training/1/preview/100',
+      '/admin/training/1/preview/90',
+      '/admin/training/1/preview/80',
+    ]);
+  });
+});
+
 describe('TrainingOverview drafts', () => {
   it('starts a draft from the published version and opens the draft editor', async () => {
     api.createDraft.mockResolvedValue(createVersionDetail([]));

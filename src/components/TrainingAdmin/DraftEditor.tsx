@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useCallback, useState } from 'react';
-import { ClipboardCheck, FileText, ListChecks, Plus, Rocket, Video } from 'lucide-react';
+import { ClipboardCheck, Eye, FileText, ListChecks, Plus, Rocket, Video } from 'lucide-react';
 import { toast } from 'sonner';
 import { trainingAdminAPI } from '@/api/client/training-admin';
 import { Badge } from '@/components/ui/badge';
@@ -158,25 +158,32 @@ function DraftEditorBody({
               </h3>
               <Badge variant="outline">Not visible to members</Badge>
             </div>
-            {canPublish ? (
-              <div className="flex flex-wrap gap-2">
-                <Button
-                  type="button"
-                  variant="outline"
-                  disabled={checking}
-                  onClick={() => void runCheck()}
-                >
-                  {checking ? 'Checking...' : 'Check before publishing'}
-                </Button>
-                <Button type="button" onClick={() => setPublishing(true)}>
-                  <Rocket /> Publish...
-                </Button>
-              </div>
-            ) : (
-              <p className="max-w-xs text-sm text-muted-foreground">
-                Publishing needs the &ldquo;publish trainings&rdquo; permission.
-              </p>
-            )}
+            <div className="flex flex-wrap items-center gap-2">
+              <Button asChild variant="outline">
+                <Link href={TrainingAdminRoutes.preview(training.id, draftId)}>
+                  <Eye /> Preview as student
+                </Link>
+              </Button>
+              {canPublish ? (
+                <>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    disabled={checking}
+                    onClick={() => void runCheck()}
+                  >
+                    {checking ? 'Checking...' : 'Check before publishing'}
+                  </Button>
+                  <Button type="button" onClick={() => setPublishing(true)}>
+                    <Rocket /> Publish...
+                  </Button>
+                </>
+              ) : (
+                <p className="max-w-xs text-sm text-muted-foreground">
+                  Publishing needs the &ldquo;publish trainings&rdquo; permission.
+                </p>
+              )}
+            </div>
           </div>
 
           <ErrorNote message={checkError} />

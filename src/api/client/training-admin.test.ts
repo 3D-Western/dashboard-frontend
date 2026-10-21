@@ -83,6 +83,17 @@ describe('trainingAdminAPI paths and bodies', () => {
     expect(JSON.parse(seen[1].body)).toEqual({ impact: 'FULL_RETAKE', reason: 'Unsafe' });
   });
 
+  it('reads the student preview of a version with a plain GET and sends nothing', async () => {
+    answer({ attempt: {}, quizzes: [], answerKey: [], videos: [] });
+    await trainingAdminAPI.getPreview(100);
+
+    expect(seen).toHaveLength(1);
+    expect(seen[0].method).toBe('GET');
+    expect(seen[0].url.pathname).toBe('/api/v1/admin/training/versions/100/preview');
+    expect(seen[0].body).toBe('');
+    expect(trainingAdminPaths.preview(100)).toBe('/api/v1/admin/training/versions/100/preview');
+  });
+
   it('asks for a video upload URL on the learner-side admin path', async () => {
     answer({ assetKey: 'videos/a.mp4' });
     await trainingAdminAPI.getVideoUploadUrl({ contentType: 'video/mp4', sizeBytes: 10 });

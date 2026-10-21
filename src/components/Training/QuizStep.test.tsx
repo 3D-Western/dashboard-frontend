@@ -178,6 +178,23 @@ describe('QuizStep', () => {
     ]);
   });
 
+  it('a real student gets no answer review after submitting, only the hand-off to the results', async () => {
+    const onSubmitted = vi.fn();
+    render(<QuizStep attemptId={1} step={quizStep} onSubmitted={onSubmitted} />);
+    await screen.findByText('First question?');
+
+    await userEvent.click(screen.getByLabelText('Alpha'));
+    await userEvent.click(screen.getByRole('button', { name: 'Question 2, not answered' }));
+    await userEvent.click(await screen.findByLabelText('Delta'));
+    await userEvent.click(screen.getByRole('button', { name: 'Question 3, not answered' }));
+    await userEvent.click(await screen.findByLabelText('False'));
+    await userEvent.click(screen.getByRole('button', { name: /submit quiz/i }));
+    await waitFor(() => expect(onSubmitted).toHaveBeenCalled());
+
+    expect(screen.queryByTestId('quiz-reveal')).not.toBeInTheDocument();
+    expect(screen.queryByText(/right answer|not right|a student would/i)).not.toBeInTheDocument();
+  });
+
   it('never shows which answers were right: there is no correctness marker on any option', async () => {
     render(<QuizStep attemptId={1} step={quizStep} onSubmitted={vi.fn()} />);
     await screen.findByText('First question?');

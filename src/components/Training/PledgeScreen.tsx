@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { HandHeart } from 'lucide-react';
-import { trainingAPI } from '@/api/client/training';
+import { useTrainingRuntime } from './TrainingRuntime';
 import { trainingErrorMessage } from '@/api/client/training-errors';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
@@ -16,6 +16,7 @@ interface PledgeScreenProps {
 
 /** The honour pledge, shown before the first step (D-16). Nothing else works until it's accepted. */
 export function PledgeScreen({ attempt, onAccepted }: PledgeScreenProps) {
+  const { api } = useTrainingRuntime();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -23,7 +24,7 @@ export function PledgeScreen({ attempt, onAccepted }: PledgeScreenProps) {
     setBusy(true);
     setError(null);
     try {
-      onAccepted(await trainingAPI.acceptPledge(attempt.attemptId));
+      onAccepted(await api.acceptPledge(attempt.attemptId));
     } catch (err) {
       setError(trainingErrorMessage(err));
     } finally {

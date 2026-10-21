@@ -32,6 +32,17 @@ export const TrainingErrorCodes = {
   ORIENTATION_REQUIRED: 'ORIENTATION_REQUIRED',
 } as const;
 
+/**
+ * Something a staff preview cannot show (an unfinished draft: a quiz with no questions, a video with
+ * no file). Its message is already plain language for staff.
+ */
+export class PreviewProblemError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'PreviewProblemError';
+  }
+}
+
 function detailsOf(error: ApiError): Record<string, unknown> {
   return typeof error.details === 'object' && error.details !== null
     ? (error.details as Record<string, unknown>)
@@ -71,6 +82,7 @@ export function trainingErrorMessage(
   fallback = 'Something went wrong. Please try again.',
   now: Date = new Date(),
 ): string {
+  if (error instanceof PreviewProblemError) return error.message;
   if (!(error instanceof ApiError)) return fallback;
 
   const details = detailsOf(error);

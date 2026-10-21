@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
+import { Eye } from 'lucide-react';
 import { toast } from 'sonner';
 import { trainingAdminAPI } from '@/api/client/training-admin';
 import {
@@ -188,6 +189,11 @@ export function TrainingOverview() {
                 {version.publishReason && (
                   <p className="text-sm text-muted-foreground">Reason: {version.publishReason}</p>
                 )}
+                <Button asChild variant="outline" size="sm" className="min-h-11 sm:min-h-8">
+                  <Link href={TrainingAdminRoutes.preview(training.id, version.id)}>
+                    <Eye /> Preview as student
+                  </Link>
+                </Button>
               </li>
             ))}
           </ul>
