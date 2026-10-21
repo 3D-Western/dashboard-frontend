@@ -13,7 +13,7 @@ Part of the monorepo. Read the root `CLAUDE.md` first; it has the workflow, docs
 - API contract: `docs/plans/training-v1.md`, "Learner API". Client: `src/api/client/training.ts`. Plain-language messages for every error code: `training-errors.ts`. The wire name is `addonScope` (not `isAddonScope`).
 - `VideoStep.tsx` is our own HTML5 player: it pauses on blur (counted, sent as `focusLossCount`), blocks forward seeking past the furthest watched point or an unanswered checkpoint, and sends a heartbeat every 10 s and on pause/end. The range and seek logic is in `src/lib/video-watch.ts`.
 - `Markdown` (`src/components/Markdown`) wraps react-markdown + remark-gfm: no raw HTML, default `urlTransform`, http(s)-only images. Hotspot questions are not v1; they show a notice.
-- For a browser walk-through, run `./dev/seed-training-video.sh` and use a throwaway database (`SPRING_MARIADB_DB=...`), not the shared `pipeline_dev`.
+- For a browser walk-through, run `./dev/seed-training-video.sh` and use a throwaway database (`SPRING_DB_NAME=...`, see the backend database section of `docs/dev-setup.md`), not the shared `pipeline_dev`.
 
 ## Supervisor sign-off (admin UI)
 
