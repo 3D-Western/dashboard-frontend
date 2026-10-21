@@ -37,7 +37,7 @@ const jersey = localFont({
 export const metadata: Metadata = {
   title: {
     default: '3D Western',
-    template: '%s | 3D Western',
+    template: '%s · 3D Western',
   },
   description: "Western's official 3D printing club dashboard",
   robots: {
