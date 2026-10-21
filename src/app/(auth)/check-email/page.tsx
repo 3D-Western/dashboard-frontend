@@ -1,9 +1,9 @@
 import type { Metadata } from 'next';
-import Image from 'next/image';
 import Link from 'next/link';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Routes } from '@/lib/routes';
+import { BrandMark } from '@/components/BrandLogo';
 
 export const metadata: Metadata = {
   title: 'Check Your Email',
@@ -43,12 +43,7 @@ export default function CheckEmailPage() {
                 </div>
               </div>
               <div className="relative hidden min-h-[500px] bg-muted md:block">
-                <Image
-                  src="/3dWesternLogo.png"
-                  alt="3D Western Logo"
-                  fill
-                  className="object-contain p-8"
-                />
+                <BrandMark className="p-12" />
               </div>
             </CardContent>
           </Card>

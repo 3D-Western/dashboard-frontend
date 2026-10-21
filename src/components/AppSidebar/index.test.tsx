@@ -89,7 +89,6 @@ describe('AppSidebar', () => {
       });
       renderSidebar(admin);
 
-      expect(screen.getByRole('link', { name: /admin dashboard/i })).toBeInTheDocument();
       expect(screen.getByRole('link', { name: /job management/i })).toBeInTheDocument();
       expect(screen.getByRole('link', { name: /invitation management/i })).toBeInTheDocument();
     });
@@ -101,13 +100,6 @@ describe('AppSidebar', () => {
       renderSidebar(member);
 
       expect(screen.queryByRole('link', { name: /job management/i })).not.toBeInTheDocument();
-    });
-
-    it('shows Admin Dashboard when user has any relevant admin permission', () => {
-      const admin = createMockAdmin({ permissions: [perm(PERMISSIONS.JOBS_UPDATE_STATUS)] });
-      renderSidebar(admin);
-
-      expect(screen.getByRole('link', { name: /admin dashboard/i })).toBeInTheDocument();
     });
 
     it('hides admin section when user has no admin permissions', () => {

@@ -28,9 +28,21 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-sans: var(--font-space-grotesk);
+  --font-body: var(--font-space-grotesk);
+  --font-heading: var(--font-chakra-petch);
+  --font-mono: var(--font-ibm-plex-mono);
   --font-jersey: var(--font-jersey);
+
+  /* Website (website-2.0) colour names, so markup copied from the website works unchanged.
+     Brand purples are fixed; the surface/text names follow the active light/dark theme. */
+  --color-purple-light: var(--purple-light);
+  --color-purple-dark: var(--purple-dark);
+  --color-black-bg: var(--background);
+  --color-grey-bg: var(--card);
+  --color-b-grey: var(--border);
+  --color-primary-text: var(--foreground);
+  --color-secondary-text: var(--muted-foreground);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -62,6 +74,12 @@
   --color-card: var(--card);
 
   /* Status colors for Tailwind utilities */
+  --color-status-purple: var(--status-purple);
+  --color-status-green: var(--status-green);
+  --color-status-blue: var(--status-blue);
+  --color-status-red: var(--status-red);
+  --color-status-yellow: var(--status-yellow);
+  --color-status-gray: var(--status-gray);
   --color-status-draft: var(--status-draft);
   --color-status-draft-foreground: var(--status-draft-foreground);
   --color-status-in-queue: var(--status-in-queue);
@@ -95,112 +113,128 @@
 }
 
 :root {
-  --radius: 0.625rem;
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
+  --radius: 0.5rem;
+
+  /* Brand purples (website --purple-light / --purple-dark), same in both themes */
+  --purple-light: #a63bdb;
+  --purple-dark: #582c83;
+
+  /* Light theme: our own derivation of the website palette (the website is dark-only) */
+  --background: #f6f5f8;
+  --foreground: #171717;
+  --card: #ffffff;
+  --card-foreground: #171717;
+  --popover: #ffffff;
+  --popover-foreground: #171717;
+  --primary: var(--purple-dark);
+  --primary-foreground: #ffffff;
+  --secondary: #eeecf1;
+  --secondary-foreground: #171717;
+  --muted: #eeecf1;
+  --muted-foreground: #5b6470;
+  --accent: #eeecf1;
+  --accent-foreground: #171717;
   --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
+  --border: #e2dee8;
+  --input: #e2dee8;
+  --ring: var(--purple-light);
   --chart-1: oklch(0.646 0.222 41.116);
   --chart-2: oklch(0.6 0.118 184.704);
   --chart-3: oklch(0.398 0.07 227.392);
   --chart-4: oklch(0.828 0.189 84.429);
   --chart-5: oklch(0.769 0.188 70.08);
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.205 0 0);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
+  --sidebar: #ffffff;
+  --sidebar-foreground: #171717;
+  --sidebar-primary: var(--purple-dark);
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: rgb(166 59 219 / 10%);
+  --sidebar-accent-foreground: var(--purple-dark);
+  --sidebar-border: #e2dee8;
+  --sidebar-ring: var(--purple-light);
 
-  /* Print Job Status Colors - Light Theme (WCAG AA compliant) */
-  --status-draft: oklch(0.85 0.01 264); /* Light gray */
-  --status-draft-foreground: oklch(0.35 0.02 264); /* Dark gray text */
-  --status-in-queue: oklch(0.85 0.08 240); /* Light blue */
-  --status-in-queue-foreground: oklch(0.35 0.12 240); /* Dark blue text */
-  --status-printing: oklch(0.85 0.12 290); /* Light purple */
-  --status-printing-foreground: oklch(0.35 0.18 290); /* Dark purple text */
-  --status-ready: oklch(0.85 0.12 140); /* Light green */
-  --status-ready-foreground: oklch(0.3 0.15 140); /* Dark green text */
-  --status-flagged: oklch(0.85 0.12 70); /* Light orange */
-  --status-flagged-foreground: oklch(0.35 0.15 60); /* Dark orange text */
-  --status-error: oklch(0.85 0.12 25); /* Light red */
-  --status-error-foreground: oklch(0.4 0.18 25); /* Dark red text */
-  --status-success: oklch(0.85 0.12 140); /* Light green (same as ready) */
-  --status-success-foreground: oklch(0.3 0.15 140); /* Dark green text */
-  --status-fail: oklch(0.85 0.12 25); /* Light red (same as error) */
-  --status-fail-foreground: oklch(0.4 0.18 25); /* Dark red text */
-  --status-cancelled: oklch(0.75 0.02 264); /* Muted gray */
-  --status-cancelled-foreground: oklch(0.35 0.02 264); /* Dark gray text */
+  /* Job status palette (Figma), identical in both themes. Use these directly for bars, dots
+     and fills: bg-status-green, border-l-status-purple, ... */
+  --status-purple: #8a38f5;
+  --status-green: #3fb950;
+  --status-blue: #58a6ff;
+  --status-red: #ef4444;
+  --status-yellow: #d29922;
+  --status-gray: #8b949e;
+
+  /* Status badges: a light tint of the status colour, with text darkened for contrast on light */
+  --status-draft: color-mix(in srgb, var(--status-gray) 14%, transparent);
+  --status-draft-foreground: color-mix(in srgb, var(--status-gray) 65%, black);
+  --status-in-queue: color-mix(in srgb, var(--status-blue) 14%, transparent);
+  --status-in-queue-foreground: color-mix(in srgb, var(--status-blue) 65%, black);
+  --status-printing: color-mix(in srgb, var(--status-green) 14%, transparent);
+  --status-printing-foreground: color-mix(in srgb, var(--status-green) 65%, black);
+  --status-ready: color-mix(in srgb, var(--status-purple) 14%, transparent);
+  --status-ready-foreground: color-mix(in srgb, var(--status-purple) 65%, black);
+  --status-flagged: color-mix(in srgb, var(--status-red) 14%, transparent);
+  --status-flagged-foreground: color-mix(in srgb, var(--status-red) 65%, black);
+  --status-error: color-mix(in srgb, var(--status-red) 14%, transparent);
+  --status-error-foreground: color-mix(in srgb, var(--status-red) 65%, black);
+  --status-success: color-mix(in srgb, var(--status-purple) 14%, transparent);
+  --status-success-foreground: color-mix(in srgb, var(--status-purple) 65%, black);
+  --status-fail: color-mix(in srgb, var(--status-red) 14%, transparent);
+  --status-fail-foreground: color-mix(in srgb, var(--status-red) 65%, black);
+  --status-cancelled: color-mix(in srgb, var(--status-gray) 14%, transparent);
+  --status-cancelled-foreground: color-mix(in srgb, var(--status-gray) 65%, black);
 }
 
 .dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
+  /* Dark theme: the website palette (website-2.0 src/app/(main)/globals.css) */
+  --background: #0b0d10; /* --black-bg */
+  --foreground: #e7e4df; /* --text-primary */
+  --card: #151a20; /* --grey-bg */
+  --card-foreground: #e7e4df;
+  --popover: #151a20;
+  --popover-foreground: #e7e4df;
+  --primary: var(--purple-light);
+  --primary-foreground: #ffffff;
+  --secondary: #1f252d;
+  --secondary-foreground: #e7e4df;
+  --muted: #1f252d;
+  --muted-foreground: #8b949e; /* --text-secondary */
+  --accent: #1f252d;
+  --accent-foreground: #e7e4df;
   --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
+  --border: #29323b; /* --b-grey */
+  --input: #29323b;
+  --ring: var(--purple-light);
   --chart-1: oklch(0.488 0.243 264.376);
   --chart-2: oklch(0.696 0.17 162.48);
   --chart-3: oklch(0.769 0.188 70.08);
   --chart-4: oklch(0.627 0.265 303.9);
   --chart-5: oklch(0.645 0.246 16.439);
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.556 0 0);
+  --sidebar: #151a20;
+  --sidebar-foreground: #e7e4df;
+  --sidebar-primary: var(--purple-light);
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: rgb(166 59 219 / 16%);
+  --sidebar-accent-foreground: #d29cf0;
+  --sidebar-border: #29323b;
+  --sidebar-ring: var(--purple-light);
 
-  /* Print Job Status Colors - Dark Theme (WCAG AA compliant) */
-  --status-draft: oklch(0.3 0.02 264); /* Dark gray */
-  --status-draft-foreground: oklch(0.8 0.01 264); /* Light gray text */
-  --status-in-queue: oklch(0.35 0.12 240); /* Dark blue */
-  --status-in-queue-foreground: oklch(0.85 0.08 240); /* Light blue text */
-  --status-printing: oklch(0.4 0.18 290); /* Dark purple */
-  --status-printing-foreground: oklch(0.85 0.12 290); /* Light purple text */
-  --status-ready: oklch(0.35 0.15 140); /* Dark green */
-  --status-ready-foreground: oklch(0.85 0.12 140); /* Light green text */
-  --status-flagged: oklch(0.4 0.15 60); /* Dark orange */
-  --status-flagged-foreground: oklch(0.88 0.12 70); /* Light orange text */
-  --status-error: oklch(0.45 0.18 25); /* Dark red */
-  --status-error-foreground: oklch(0.9 0.12 25); /* Light red text */
-  --status-success: oklch(0.35 0.15 140); /* Dark green (same as ready) */
-  --status-success-foreground: oklch(0.85 0.12 140); /* Light green text */
-  --status-fail: oklch(0.45 0.18 25); /* Dark red (same as error) */
-  --status-fail-foreground: oklch(0.9 0.12 25); /* Light red text */
-  --status-cancelled: oklch(0.4 0.02 264); /* Muted dark gray */
-  --status-cancelled-foreground: oklch(0.8 0.01 264); /* Light gray text */
+  /* Status badges: a dark tint of the status colour, with text lightened for contrast on dark */
+  --status-draft: color-mix(in srgb, var(--status-gray) 18%, transparent);
+  --status-draft-foreground: color-mix(in srgb, var(--status-gray) 70%, white);
+  --status-in-queue: color-mix(in srgb, var(--status-blue) 18%, transparent);
+  --status-in-queue-foreground: color-mix(in srgb, var(--status-blue) 70%, white);
+  --status-printing: color-mix(in srgb, var(--status-green) 18%, transparent);
+  --status-printing-foreground: color-mix(in srgb, var(--status-green) 70%, white);
+  --status-ready: color-mix(in srgb, var(--status-purple) 18%, transparent);
+  --status-ready-foreground: color-mix(in srgb, var(--status-purple) 70%, white);
+  --status-flagged: color-mix(in srgb, var(--status-red) 18%, transparent);
+  --status-flagged-foreground: color-mix(in srgb, var(--status-red) 70%, white);
+  --status-error: color-mix(in srgb, var(--status-red) 18%, transparent);
+  --status-error-foreground: color-mix(in srgb, var(--status-red) 70%, white);
+  --status-success: color-mix(in srgb, var(--status-purple) 18%, transparent);
+  --status-success-foreground: color-mix(in srgb, var(--status-purple) 70%, white);
+  --status-fail: color-mix(in srgb, var(--status-red) 18%, transparent);
+  --status-fail-foreground: color-mix(in srgb, var(--status-red) 70%, white);
+  --status-cancelled: color-mix(in srgb, var(--status-gray) 18%, transparent);
+  --status-cancelled-foreground: color-mix(in srgb, var(--status-gray) 70%, white);
 }
 
 @layer base {
@@ -209,6 +243,127 @@
   }
   body {
     @apply bg-background text-foreground;
+  }
+  /* Website heading voice. Sizes are intentionally not copied: the website's unlayered
+     h1-h6 font-size rules would override Tailwind size classes on every dashboard page. */
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    font-family: var(--font-chakra-petch);
+    font-weight: 600;
+    letter-spacing: -0.02em;
+  }
+}
+
+/* ---- Ported from the website (website-2.0 src/app/(main)/globals.css) ---- */
+
+/* Brand "instrument" voice: eyebrows, tags, captions, timestamps, status lines. */
+@utility eyebrow {
+  font-family: var(--font-ibm-plex-mono);
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+/* .gradient and .btn are plain (unlayered) CSS, exactly as on the website, so they win over Tailwind
+   utilities the same way they do there - e.g. the button's own `transition-all` (150ms) would
+   otherwise replace the website's slow 0.8s gradient sweep on hover. */
+.gradient {
+  --btn-bg-2: hsl(270.34, 49.71%, 34.31%);
+  --btn-bg-1: hsl(286.3, 61.35%, 59.41%);
+  --btn-bg-color: hsla(360 100% 100% / 1);
+  background-size: 280% auto;
+  background-image: linear-gradient(
+    325deg,
+    var(--btn-bg-2) 0%,
+    var(--btn-bg-1) 55%,
+    var(--btn-bg-2) 90%
+  );
+  border: none;
+  color: var(--btn-bg-color);
+}
+
+.btn {
+  --btn-bg-2: hsl(270.34, 49.71%, 34.31%);
+  --btn-bg-1: hsl(286.3, 61.35%, 59.41%);
+  --btn-bg-color: hsla(360 100% 100% / 1);
+  cursor: pointer;
+  transition: 0.8s;
+  background-size: 280% auto;
+  background-image: linear-gradient(
+    325deg,
+    var(--btn-bg-2) 0%,
+    var(--btn-bg-1) 55%,
+    var(--btn-bg-2) 90%
+  );
+  border: none;
+  color: var(--btn-bg-color);
+}
+.btn:hover {
+  background-position: right top;
+}
+
+@utility scrollbar-hide {
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+@utility clip-corners-sm {
+  clip-path: polygon(
+    14px 0%,
+    100% 0%,
+    100% calc(100% - 14px),
+    calc(100% - 14px) 100%,
+    0% 100%,
+    0% 14px
+  );
+}
+
+@utility clip-corners {
+  clip-path: polygon(
+    32px 0%,
+    100% 0%,
+    100% calc(100% - 32px),
+    calc(100% - 32px) 100%,
+    0% 100%,
+    0% 32px
+  );
+
+  @media (width >= 64rem) {
+    clip-path: polygon(
+      48px 0%,
+      100% 0%,
+      100% calc(100% - 48px),
+      calc(100% - 48px) 100%,
+      0% 100%,
+      0% 48px
+    );
+  }
+}
+
+@utility clip-corners-lg {
+  clip-path: polygon(
+    40px 0%,
+    100% 0%,
+    100% calc(100% - 40px),
+    calc(100% - 40px) 100%,
+    0% 100%,
+    0% 40px
+  );
+
+  @media (width >= 64rem) {
+    clip-path: polygon(
+      56px 0%,
+      100% 0%,
+      100% calc(100% - 56px),
+      calc(100% - 56px) 100%,
+      0% 100%,
+      0% 56px
+    );
   }
 }
 

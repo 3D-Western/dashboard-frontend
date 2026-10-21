@@ -1,79 +1,27 @@
 'use client';
 
-import { SearchFilter } from '@/components/Filters';
-import { StatusFilter } from '@/components/PrintJobsTable/filters';
+import { FilterToolbar, StatusOption } from '@/components/Filters';
 import { PrintJobStatus } from '@/types/jobs';
-import { useRouter, useSearchParams } from 'next/navigation';
-import { useCallback } from 'react';
 
-const ADMIN_STATUS_OPTIONS: PrintJobStatus[] = [
-  'PendingFile',
-  'InQueue',
-  'Printing',
-  'Ready',
-  'Flagged',
-  'Error',
-  'Succeeded',
-  'Failed',
-  'Cancelled',
+// Admins see the backend's own status names
+const ADMIN_STATUS_OPTIONS: StatusOption<PrintJobStatus>[] = [
+  { value: 'PendingFile', label: 'Pending File', dotClassName: 'bg-status-gray' },
+  { value: 'InQueue', label: 'In Queue', dotClassName: 'bg-status-blue' },
+  { value: 'Printing', label: 'Printing', dotClassName: 'bg-status-green' },
+  { value: 'Ready', label: 'Ready', dotClassName: 'bg-status-purple' },
+  { value: 'Flagged', label: 'Flagged', dotClassName: 'bg-status-red' },
+  { value: 'Error', label: 'Error', dotClassName: 'bg-status-red' },
+  { value: 'Succeeded', label: 'Succeeded', dotClassName: 'bg-status-purple' },
+  { value: 'Failed', label: 'Failed', dotClassName: 'bg-status-red' },
+  { value: 'Cancelled', label: 'Cancelled', dotClassName: 'bg-status-gray' },
 ];
 
 export function AdminJobFilters() {
-  const router = useRouter();
-  const searchParams = useSearchParams();
-
-  const currentStatus = (searchParams.get('status') as PrintJobStatus) || null;
-  const currentSearch = searchParams.get('search') || '';
-
-  const updateFilters = useCallback(
-    (updates: Record<string, string | null>) => {
-      const params = new URLSearchParams(searchParams.toString());
-
-      // Update or remove parameters
-      Object.entries(updates).forEach(([key, value]) => {
-        if (value) {
-          params.set(key, value);
-        } else {
-          params.delete(key);
-        }
-      });
-
-      // Reset to page 1 when filters change
-      params.set('page', '1');
-
-      router.push(`?${params.toString()}`, { scroll: false });
-    },
-    [router, searchParams],
-  );
-
-  const handleStatusChange = useCallback(
-    (status: PrintJobStatus | null) => {
-      updateFilters({ status });
-    },
-    [updateFilters],
-  );
-
-  const handleSearchChange = useCallback(
-    (search: string) => {
-      updateFilters({ search: search || null });
-    },
-    [updateFilters],
-  );
-
   return (
-    <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
-      <StatusFilter
-        value={currentStatus}
-        onChange={handleStatusChange}
-        options={ADMIN_STATUS_OPTIONS}
-        label="Filter by status"
-      />
-      <SearchFilter
-        value={currentSearch}
-        onChange={handleSearchChange}
-        placeholder="Search jobs..."
-        label="Search jobs"
-      />
-    </div>
+    <FilterToolbar
+      searchPlaceholder="Search jobs..."
+      searchLabel="Search jobs"
+      statusOptions={ADMIN_STATUS_OPTIONS}
+    />
   );
 }

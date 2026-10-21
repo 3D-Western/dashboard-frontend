@@ -52,7 +52,7 @@ export function DataTable<TData, TValue>({
 
   return (
     <div className="space-y-4">
-      <div className="overflow-hidden rounded-md border">
+      <div className="overflow-hidden rounded-lg border bg-card">
         <Table aria-label="Users table" aria-describedby="users-table-caption">
           <caption id="users-table-caption" className="sr-only">
             Users with account status, email, and student ID. Sortable by name.

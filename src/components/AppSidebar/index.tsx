@@ -21,12 +21,12 @@ import {
   Printer,
   Users,
   Settings,
-  Shield,
   FilePlus,
   TicketPlus,
   History,
 } from 'lucide-react';
 import Link from 'next/link';
+import { BrandLockup } from '@/components/BrandLogo';
 import { usePathname } from 'next/navigation';
 import { Routes } from '@/lib/routes';
 
@@ -59,12 +59,6 @@ const navigationItems = [
 
 const adminNavigationItems = [
   {
-    title: 'Admin Dashboard',
-    url: '/admin',
-    icon: Shield,
-    permission: null, // visible to all admins
-  },
-  {
     title: 'User Management',
     url: Routes.adminUsersManagement,
     icon: Users,
@@ -93,19 +87,18 @@ interface AppSidebarProps {
 
 export function AppSidebar({ user }: AppSidebarProps) {
   const pathname = usePathname();
+  const visibleAdminItems = adminNavigationItems.filter((item) =>
+    hasPermission(user, item.permission),
+  );
 
   return (
     <Sidebar>
-      <SidebarHeader className="border-b p-4">
-        <div className="flex items-center gap-3">
-          {/* Placeholder for company icon */}
-          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
-            <span className="text-lg font-bold text-primary">W3D</span>
-          </div>
-          <div className="flex flex-col">
-            <span className="text-sm font-semibold">Western 3D Print Club</span>
-          </div>
-        </div>
+      {/* Same height as the page header beside it, so their bottom borders line up */}
+      <SidebarHeader className="h-16 justify-center border-b px-4 py-0">
+        {/* At this height the "MAKERSPACES" letters match the page title's capitals */}
+        <Link href={Routes.dashboard} className="relative block h-11 w-full">
+          <BrandLockup priority className="object-left" />
+        </Link>
       </SidebarHeader>
 
       <SidebarContent>
@@ -126,27 +119,24 @@ export function AppSidebar({ user }: AppSidebarProps) {
           </SidebarGroupContent>
         </SidebarGroup>
 
-        {adminNavigationItems.some(
-          (item) => item.permission !== null && hasPermission(user, item.permission),
-        ) && (
+        {visibleAdminItems.length > 0 && (
           <SidebarGroup>
             <SidebarGroupLabel>Admin</SidebarGroupLabel>
             <SidebarGroupContent>
               <SidebarMenu>
-                {adminNavigationItems
-                  .filter(
-                    (item) => item.permission === null || hasPermission(user, item.permission),
-                  )
-                  .map((item) => (
-                    <SidebarMenuItem key={item.title}>
-                      <SidebarMenuButton asChild isActive={pathname === item.url}>
-                        <Link href={item.url}>
-                          <item.icon className="h-4 w-4" />
-                          <span>{item.title}</span>
-                        </Link>
-                      </SidebarMenuButton>
-                    </SidebarMenuItem>
-                  ))}
+                {visibleAdminItems.map((item) => (
+                  <SidebarMenuItem key={item.title}>
+                    <SidebarMenuButton
+                      asChild
+                      isActive={pathname === item.url || pathname.startsWith(`${item.url}/`)}
+                    >
+                      <Link href={item.url}>
+                        <item.icon className="h-4 w-4" />
+                        <span>{item.title}</span>
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                ))}
               </SidebarMenu>
             </SidebarGroupContent>
           </SidebarGroup>

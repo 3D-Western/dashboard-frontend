@@ -103,7 +103,7 @@ export function IamDataTable<TData, TValue>({
         <div className="ml-auto">{toolbar}</div>
       </div>
 
-      <div className="overflow-hidden rounded-md border">
+      <div className="overflow-hidden rounded-lg border bg-card">
         <Table
           aria-label={tableLabel}
           aria-describedby={`${tableLabel.toLowerCase().replace(/\s+/g, '-')}-caption`}
