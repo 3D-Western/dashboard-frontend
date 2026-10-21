@@ -56,7 +56,8 @@ export function LiveView() {
           <div className="space-y-6">
             <section aria-labelledby="live-people" className="space-y-2">
               <h2 id="live-people" className="text-lg font-semibold">
-                In the space now ({live.data.visits.length}{live.data.visitsTruncated ? '+' : ''})
+                In the space now ({live.data.visits.length}
+                {live.data.visitsTruncated ? '+' : ''})
               </h2>
               {live.data.visits.length === 0 ? (
                 <p className="rounded-xl border bg-card p-4 text-sm text-muted-foreground">
@@ -84,7 +85,8 @@ export function LiveView() {
 
             <section aria-labelledby="live-machines" className="space-y-2">
               <h2 id="live-machines" className="text-lg font-semibold">
-                Machines running ({live.data.sessions.length}{live.data.sessionsTruncated ? '+' : ''})
+                Machines running ({live.data.sessions.length}
+                {live.data.sessionsTruncated ? '+' : ''})
               </h2>
               {live.data.sessions.length === 0 ? (
                 <p className="rounded-xl border bg-card p-4 text-sm text-muted-foreground">

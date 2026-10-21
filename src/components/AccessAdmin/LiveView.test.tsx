@@ -54,7 +54,9 @@ describe('LiveView', () => {
     api.getLive.mockResolvedValue(createLive({ visitsTruncated: true, sessionsTruncated: true }));
     render(<LiveView />);
 
-    expect(await screen.findByRole('region', { name: /in the space now \(2\+\)/i })).toBeInTheDocument();
+    expect(
+      await screen.findByRole('region', { name: /in the space now \(2\+\)/i }),
+    ).toBeInTheDocument();
     expect(screen.getByRole('region', { name: /machines running \(1\+\)/i })).toBeInTheDocument();
   });
 
