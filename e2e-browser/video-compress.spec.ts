@@ -53,12 +53,18 @@ async function openHarness(page: Page) {
   );
   await page.goto('http://localhost/harness');
   await page.addScriptTag({ content: bundle });
-  const supported = await page.evaluate(
-    async () =>
-      (await (window as unknown as { harness: Harness }).harness.checkCompressionSupport())
-        .supported,
+  const support = await page.evaluate(() =>
+    (window as unknown as { harness: Harness }).harness.checkCompressionSupport(),
   );
-  test.skip(!supported, 'This browser has no H.264 encoder, so it cannot compress.');
+  if (!support.supported) {
+    // A skipped test must not look like a passed one: say so on the console, in the CI log as a
+    // warning, and in the report as an annotation.
+    const message = `NOT RUN: this browser cannot compress video (${support.reason ?? 'no reason given'}), so the real compression test did not run. Use Chrome (PLAYWRIGHT_CHANNEL=chrome).`;
+    console.warn(`\n!!! ${message}\n`);
+    if (process.env.CI) console.log(`::warning title=Video compression test skipped::${message}`);
+    test.info().annotations.push({ type: 'skipped-no-h264', description: message });
+    test.skip(true, message);
+  }
 }
 
 test('compresses a 1080p WebM into a playable 720p H.264/AAC MP4 with the index first', async ({

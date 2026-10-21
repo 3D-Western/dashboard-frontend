@@ -157,15 +157,44 @@ describe('VideoUploader compression', () => {
     expect(screen.getByLabelText('Video warnings')).toHaveTextContent('This is not an MP4');
   });
 
-  it('recommends the original when the compressed copy is not smaller', async () => {
+  it('uploads the original MP4 by itself, and says so, when compressing made it larger', async () => {
     probe.mockResolvedValue(info(1, 1920, 1080));
+    const original = fakeFile('a.mp4', 'video/mp4', 1000);
     compress.mockResolvedValue(fakeFile('a-720p.mp4', 'video/mp4', 2000));
+    upload.mockResolvedValue('videos/a.mp4');
+    const onUploaded = vi.fn();
+    const onLocalPreview = vi.fn();
+    render(
+      <VideoUploader assetKey={null} onUploaded={onUploaded} onLocalPreview={onLocalPreview} />,
+    );
+
+    await choose(original);
+
+    await waitFor(() => expect(onUploaded).toHaveBeenCalledWith('videos/a.mp4', 1));
+    expect(upload.mock.calls[0][0]).toBe(original);
+    expect(screen.getByText(/the original was kept/i)).toBeInTheDocument();
+    expect(screen.getByText(/did not make this video smaller/i)).toBeInTheDocument();
+    expect(onLocalPreview).toHaveBeenLastCalledWith('blob:a.mp4');
+    // Nothing to choose: no review step was shown.
+    expect(screen.queryByRole('button', { name: /upload compressed version/i })).toBeNull();
+  });
+
+  it('keeps a larger compressed file when the original is not an MP4, and warns', async () => {
+    probe.mockResolvedValue(info(1, 1280, 720));
+    const original = fakeFile('a.mov', 'video/quicktime', 1000);
+    const larger = fakeFile('a-720p.mp4', 'video/mp4', 2000);
+    compress.mockResolvedValue(larger);
+    upload.mockResolvedValue('videos/a.mp4');
     render(<VideoUploader assetKey={null} onUploaded={vi.fn()} />);
 
-    await choose(fakeFile('a.mp4', 'video/mp4', 1000));
+    await choose(original);
 
-    expect(await screen.findByText(/\(not smaller\)/)).toBeInTheDocument();
-    expect(screen.getByText(/uploading the original is fine/i)).toBeInTheDocument();
+    expect(await screen.findByText(/the compressed copy is not smaller/i)).toBeInTheDocument();
+    expect(screen.getByText(/only an mp4 can be published/i)).toBeInTheDocument();
+    expect(upload).not.toHaveBeenCalled();
+    await userEvent.click(screen.getByRole('button', { name: /upload compressed version/i }));
+    await waitFor(() => expect(upload).toHaveBeenCalled());
+    expect(upload.mock.calls[0][0]).toBe(larger);
   });
 
   it('cancels a compression, keeping the file so staff can retry or upload it as it is', async () => {
@@ -300,16 +329,33 @@ describe('VideoUploader compression', () => {
     expect(support).not.toHaveBeenCalled();
   });
 
-  it('does not compress a video too long for the browser, and says why', async () => {
+  it('does not compress a video whose result would be too large for the browser, and says why', async () => {
+    // 40 minutes would give about 640 MB at the target rate.
     probe.mockResolvedValue(info(2400));
     upload.mockResolvedValue('videos/long.mov');
     render(<VideoUploader assetKey={null} onUploaded={vi.fn()} />);
 
+    await choose(fakeFile('long.mov', 'video/quicktime', 900_000_000));
+
+    expect(await screen.findByText(/too big to compress safely/i)).toBeInTheDocument();
+    expect(screen.getByText(/too big to compress safely/i)).toHaveTextContent(
+      'scripts/encode-training-video.sh',
+    );
+    expect(compress).not.toHaveBeenCalled();
+    expect(support).not.toHaveBeenCalled();
+    await waitFor(() => expect(upload).toHaveBeenCalled());
+  });
+
+  it('re-encodes when the file is above the 2 Mbps target, even if only the container is wrong', async () => {
+    // 38 MB over 100 s is 3 Mbps: above the target, below the 5 Mbps that forces compression.
+    probe.mockResolvedValue(info(100));
+    compress.mockReturnValue(new Promise(() => {}));
+    render(<VideoUploader assetKey={null} onUploaded={vi.fn()} />);
+
     await choose(mov);
 
-    expect(await screen.findByText(/too long to compress safely/i)).toBeInTheDocument();
-    expect(compress).not.toHaveBeenCalled();
-    await waitFor(() => expect(upload).toHaveBeenCalled());
+    await screen.findByRole('progressbar', { name: /compression progress/i });
+    expect(compress).toHaveBeenCalledWith(mov, expect.objectContaining({ forceReencode: true }));
   });
 });
 

@@ -10,7 +10,10 @@ interface FakeConversion {
 /** What our code hands to Conversion.init, as far as these tests look. */
 interface InitOptions {
   tracks: string;
-  output: { format: { options: unknown } };
+  output: {
+    format: { options: unknown };
+    target: { options: unknown; writable: WritableStream<{ position: number; data: Uint8Array }> };
+  };
   video: {
     codec: string;
     width?: number;
@@ -39,7 +42,13 @@ const lib = vi.hoisted(() => {
     } | null,
     audioTrack: { numberOfChannels: 2 } as { numberOfChannels: number } | null,
     isValid: true,
-    buffer: new ArrayBuffer(1000) as ArrayBuffer | null,
+    /** What the stream target receives when the conversion finishes. */
+    outputChunks: [] as { position: number; data: Uint8Array }[],
+    /** The video's own average bitrate, as the library measures it; null when it cannot say. */
+    sourceBitrate: null as number | null,
+    cancelMs: 0,
+    /** In order: "cancel-start", "cancel-end", "dispose". */
+    events: [] as string[],
     execute: async (_conversion: FakeConversion) => {},
     initOptions: undefined as InitOptions | undefined,
     conversion: undefined as FakeConversion | undefined,
@@ -55,27 +64,38 @@ vi.mock('mediabunny', () => {
     constructor() {
       state.inputs++;
     }
-    getPrimaryVideoTrack = async () => state.videoTrack;
+    getPrimaryVideoTrack = async () =>
+      state.videoTrack && {
+        ...state.videoTrack,
+        computePacketStats: async () => {
+          if (state.sourceBitrate === null) throw new Error('no stats');
+          return { averageBitrate: state.sourceBitrate };
+        },
+      };
     getPrimaryAudioTrack = async () => state.audioTrack;
     dispose = () => {
       state.disposed++;
+      state.events.push('dispose');
     };
   }
+  class StreamTarget {
+    constructor(
+      public writable: WritableStream,
+      public options: unknown,
+    ) {}
+  }
   class Output {
-    target: { buffer: ArrayBuffer | null };
     format: { options: unknown };
-    constructor(options: { format: { options: unknown }; target: { buffer: ArrayBuffer | null } }) {
+    target: StreamTarget;
+    constructor(options: { format: { options: unknown }; target: StreamTarget }) {
       this.format = options.format;
       this.target = options.target;
-      this.target.buffer = state.buffer;
     }
   }
   return {
     ALL_FORMATS: [],
     BlobSource: class {},
-    BufferTarget: class {
-      buffer: ArrayBuffer | null = null;
-    },
+    StreamTarget,
     Mp4OutputFormat: class {
       constructor(public options: unknown) {}
     },
@@ -94,10 +114,19 @@ vi.mock('mediabunny', () => {
         const conversion: FakeConversion = {
           isValid: state.isValid,
           cancel: vi.fn(async () => {
+            state.events.push('cancel-start');
+            await new Promise((resolve) => setTimeout(resolve, state.cancelMs));
             conversion.canceled = true;
+            state.events.push('cancel-end');
           }),
           canceled: false,
-          execute: () => state.execute(conversion),
+          execute: async () => {
+            await state.execute(conversion);
+            // Like the real library, hand the finished file to the stream target and close it.
+            const writer = (options.output.target.writable as WritableStream).getWriter();
+            for (const chunk of state.outputChunks) await writer.write(chunk);
+            await writer.close();
+          },
         };
         state.conversion = conversion;
         return conversion;
@@ -113,12 +142,16 @@ vi.mock('@mediabunny/aac-encoder', () => ({
 }));
 
 import {
-  MAX_COMPRESS_SECONDS,
+  MAX_COMPRESS_OUTPUT_BYTES,
+  MAX_COMPRESS_SOURCE_BYTES,
   VideoCompressError,
+  aboveTargetBitrate,
   checkCompressionSupport,
+  chunksToParts,
   compressVideo,
   compressedName,
   compressionAdvice,
+  compressionLimit,
   resetCompressionSupportCheck,
   targetBitrate,
   unsupported,
@@ -224,7 +257,7 @@ describe('names and bitrates', () => {
   });
 
   it('has a plain message for each reason it cannot compress, naming the script', () => {
-    for (const reason of ['no-webcodecs', 'no-h264', 'no-aac', 'too-long', 'error'] as const) {
+    for (const reason of ['no-webcodecs', 'no-h264', 'no-aac', 'too-large', 'error'] as const) {
       const result = unsupported(reason);
       expect(result.supported).toBe(false);
       if (!result.supported) {
@@ -232,7 +265,84 @@ describe('names and bitrates', () => {
         expect(result.message).toMatch(/upload the original/i);
       }
     }
-    expect(MAX_COMPRESS_SECONDS).toBe(1800);
+  });
+});
+
+describe('compressionLimit', () => {
+  it('allows an ordinary ten minute video', () => {
+    expect(compressionLimit({ size: 300 * MB }, { durationSeconds: 600 })).toBeNull();
+  });
+
+  it('refuses a source over the size limit, however short it is', () => {
+    expect(compressionLimit({ size: MAX_COMPRESS_SOURCE_BYTES + 1 }, { durationSeconds: 60 })).toBe(
+      'too-large',
+    );
+    // Exactly at the limit is still allowed.
+    expect(
+      compressionLimit({ size: MAX_COMPRESS_SOURCE_BYTES }, { durationSeconds: 60 }),
+    ).toBeNull();
+  });
+
+  it('refuses when the expected result is over the output limit, judged by length', () => {
+    // 40 minutes at the target rate is about 640 MB, even from a 900 MB source.
+    expect(compressionLimit({ size: 900 * MB }, { durationSeconds: 2400 })).toBe('too-large');
+    // 20 minutes is about 320 MB.
+    expect(compressionLimit({ size: 900 * MB }, { durationSeconds: 1200 })).toBeNull();
+  });
+
+  it('does not count a result larger than the source it comes from', () => {
+    expect(compressionLimit({ size: 100 * MB }, { durationSeconds: 3600 })).toBeNull();
+  });
+
+  it('uses the source size when the length is unknown', () => {
+    expect(
+      compressionLimit({ size: MAX_COMPRESS_OUTPUT_BYTES + 1 }, { durationSeconds: null }),
+    ).toBe('too-large');
+    expect(compressionLimit({ size: 100 * MB }, { durationSeconds: null })).toBeNull();
+  });
+});
+
+describe('aboveTargetBitrate', () => {
+  it('is true above the target rate (video plus audio) and false at or below it', () => {
+    // 20 MB over 60 s is 2.67 Mbps; 15 MB over 60 s is 2.0 Mbps.
+    expect(aboveTargetBitrate({ size: 20 * MB }, { durationSeconds: 60 })).toBe(true);
+    expect(aboveTargetBitrate({ size: 15 * MB }, { durationSeconds: 60 })).toBe(false);
+  });
+
+  it('is false when the length is unknown', () => {
+    expect(aboveTargetBitrate({ size: 500 * MB }, { durationSeconds: null })).toBe(false);
+  });
+});
+
+describe('chunksToParts', () => {
+  const chunk = (position: number, ...bytes: number[]) => ({
+    type: 'write' as const,
+    position,
+    data: new Uint8Array(bytes),
+  });
+
+  it('uses chunks that arrive in order as they are, without joining them', () => {
+    const chunks = [chunk(0, 1, 2), chunk(2, 3)];
+
+    const parts = chunksToParts(chunks);
+
+    expect(parts).toHaveLength(2);
+    expect(parts[0]).toBe(chunks[0].data);
+  });
+
+  it('puts chunks that arrive out of order in place', () => {
+    const parts = chunksToParts([chunk(2, 3), chunk(0, 1, 2)]);
+
+    expect(parts.map((part) => [...part])).toEqual([[1, 2], [3]]);
+  });
+
+  it('lays out one buffer if there is a gap or an overlap, so the file is still right', () => {
+    expect(chunksToParts([chunk(0, 1), chunk(3, 4)]).map((part) => [...part])).toEqual([
+      [1, 0, 0, 4],
+    ]);
+    expect(chunksToParts([chunk(0, 1, 2, 3), chunk(2, 9)]).map((part) => [...part])).toEqual([
+      [1, 2, 9],
+    ]);
   });
 });
 
@@ -295,7 +405,13 @@ describe('compressVideo', () => {
       videoTrack: { displayWidth: 1920, displayHeight: 1080 },
       audioTrack: { numberOfChannels: 2 },
       isValid: true,
-      buffer: new ArrayBuffer(1000),
+      outputChunks: [
+        { position: 0, data: new Uint8Array(600) },
+        { position: 600, data: new Uint8Array(400) },
+      ],
+      sourceBitrate: null,
+      cancelMs: 0,
+      events: [],
       execute: async () => {},
       disposed: 0,
     });
@@ -319,8 +435,21 @@ describe('compressVideo', () => {
     expect(options.audio).toMatchObject({ codec: 'aac' });
     expect(options.audio.quality.options.bitrate).toBe(128_000);
     expect(options.output.format.options).toEqual({ fastStart: 'in-memory' });
+    // Through the streaming target, in chunks, so no whole-file buffer is built.
+    expect(options.output.target.options).toEqual({ chunked: true });
     expect(options.tracks).toBe('primary');
     expect(lib.state.disposed).toBe(1);
+  });
+
+  it('builds the file from the chunks, in order, with their bytes', async () => {
+    lib.state.outputChunks = [
+      { position: 3, data: new Uint8Array([4, 5]) },
+      { position: 0, data: new Uint8Array([1, 2, 3]) },
+    ];
+
+    const result = await compressVideo(source);
+
+    expect([...new Uint8Array(await result.arrayBuffer())]).toEqual([1, 2, 3, 4, 5]);
   });
 
   it('keeps the shape of a portrait picture and makes the sides even', async () => {
@@ -341,6 +470,24 @@ describe('compressVideo', () => {
     expect(video.width).toBeUndefined();
     expect(video.height).toBeUndefined();
     expect(video.forceTranscode).toBe(false);
+  });
+
+  it('re-encodes whenever the picture own bitrate is above the 2 Mbps target', async () => {
+    lib.state.videoTrack = { displayWidth: 1280, displayHeight: 720 };
+    lib.state.sourceBitrate = 2_500_000;
+
+    await compressVideo(source);
+
+    expect(lib.state.initOptions!.video.forceTranscode).toBe(true);
+  });
+
+  it('copies a small picture at or below the target bitrate', async () => {
+    lib.state.videoTrack = { displayWidth: 1280, displayHeight: 720 };
+    lib.state.sourceBitrate = 1_800_000;
+
+    await compressVideo(source);
+
+    expect(lib.state.initOptions!.video.forceTranscode).toBe(false);
   });
 
   it('re-encodes a picture that is small enough but heavy, when asked', async () => {
@@ -393,6 +540,61 @@ describe('compressVideo', () => {
     expect(lib.state.disposed).toBe(1);
   });
 
+  it('waits for the cancellation to finish before letting go of the input', async () => {
+    const controller = new AbortController();
+    lib.state.cancelMs = 20;
+    lib.state.execute = (conversion) =>
+      new Promise((_resolve, reject) => {
+        const original = conversion.cancel;
+        conversion.cancel = async () => {
+          await original();
+          reject(new lib.ConversionCanceledError());
+        };
+        controller.abort();
+      });
+
+    await expect(compressVideo(source, { signal: controller.signal })).rejects.toMatchObject({
+      kind: 'aborted',
+    });
+
+    expect(lib.state.events).toEqual(['cancel-start', 'cancel-end', 'dispose']);
+  });
+
+  it('cancels, once, even when the abort comes before the conversion is running', async () => {
+    const controller = new AbortController();
+    lib.state.execute = async () => {};
+    const original = lib.state.videoTrack;
+    // Abort while the input is still being read.
+    Object.defineProperty(lib.state, 'videoTrack', {
+      configurable: true,
+      get() {
+        controller.abort();
+        return original;
+      },
+    });
+
+    try {
+      await expect(compressVideo(source, { signal: controller.signal })).rejects.toMatchObject({
+        kind: 'aborted',
+      });
+    } finally {
+      Object.defineProperty(lib.state, 'videoTrack', {
+        configurable: true,
+        writable: true,
+        value: original,
+      });
+    }
+
+    expect(lib.state.events.filter((e) => e === 'cancel-start')).toHaveLength(1);
+    expect(lib.state.events.at(-1)).toBe('dispose');
+  });
+
+  it('lets go of the input after a successful run too', async () => {
+    await compressVideo(source);
+
+    expect(lib.state.events).toEqual(['dispose']);
+  });
+
   it('does not start when already aborted', async () => {
     const controller = new AbortController();
     controller.abort();
@@ -431,7 +633,7 @@ describe('compressVideo', () => {
   });
 
   it('refuses an empty result', async () => {
-    lib.state.buffer = new ArrayBuffer(0);
+    lib.state.outputChunks = [];
 
     await expect(compressVideo(source)).rejects.toThrow(/empty file/i);
   });

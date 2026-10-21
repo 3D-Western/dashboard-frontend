@@ -7,10 +7,11 @@ import { Button } from '@/components/ui/button';
 import { adminErrorMessage } from '@/lib/training-admin-errors';
 import { formatBytes } from '@/lib/training-admin-format';
 import {
-  MAX_COMPRESS_SECONDS,
   VideoCompressError,
+  aboveTargetBitrate,
   checkCompressionSupport,
   compressionAdvice,
+  compressionLimit,
   compressVideo,
   unsupported,
   type CompressionReason,
@@ -75,6 +76,8 @@ export function VideoUploader({ assetKey, onUploaded, onLocalPreview }: VideoUpl
   const [warnings, setWarnings] = useState<VideoWarning[]>([]);
   /** Why this browser could not compress, when it was needed. */
   const [cannotCompress, setCannotCompress] = useState<string | null>(null);
+  /** Said when compressing did not help and the original MP4 was chosen automatically. */
+  const [keptOriginal, setKeptOriginal] = useState<string | null>(null);
   const abort = useRef<AbortController | null>(null);
   const input = useRef<HTMLInputElement>(null);
   const blobUrl = useRef<string | null>(null);
@@ -148,13 +151,21 @@ export function VideoUploader({ assetKey, onUploaded, onLocalPreview }: VideoUpl
     try {
       const compressed = await compressVideo(file, {
         signal: controller.signal,
-        // A file that is only in the wrong container can be copied; a heavy one must be re-encoded.
-        forceReencode: reasons.includes('bitrate'),
+        // A file only in the wrong container can be copied; anything above the target rate cannot.
+        forceReencode: info.current ? aboveTargetBitrate(file, info.current) : false,
         onProgress: (fraction) =>
           setState((current) =>
             current.phase === 'compressing' ? { ...current, fraction } : current,
           ),
       });
+      if (compressed.size >= file.size && videoTypeOf(file) === 'video/mp4') {
+        // Nothing gained, and the original is already what we want: no need to ask.
+        setKeptOriginal(
+          `Compressing did not make this video smaller (${formatBytes(file.size)} became ${formatBytes(compressed.size)}), so the original MP4 was uploaded instead.`,
+        );
+        sendOriginal(file);
+        return;
+      }
       pair.current = { original: file, compressed };
       showLocal(compressed);
       setState({ phase: 'review', original: file, compressed });
@@ -183,6 +194,7 @@ export function VideoUploader({ assetKey, onUploaded, onLocalPreview }: VideoUpl
     setChosen(file);
     setWarnings([]);
     setCannotCompress(null);
+    setKeptOriginal(null);
     pair.current = null;
     info.current = null;
     const problem = videoFileProblem(file);
@@ -211,9 +223,10 @@ export function VideoUploader({ assetKey, onUploaded, onLocalPreview }: VideoUpl
       return;
     }
 
-    const tooLong =
-      probed.durationSeconds !== null && probed.durationSeconds > MAX_COMPRESS_SECONDS;
-    const support = tooLong ? unsupported('too-long') : await checkCompressionSupport();
+    const support =
+      compressionLimit(file, probed) === 'too-large'
+        ? unsupported('too-large')
+        : await checkCompressionSupport();
     if (controller.signal.aborted) {
       setState({ phase: 'idle' });
       return;
@@ -388,6 +401,13 @@ export function VideoUploader({ assetKey, onUploaded, onLocalPreview }: VideoUpl
           </span>
         </div>
       )}
+      {keptOriginal && (
+        <Alert role="note">
+          <AlertTitle>The original was kept</AlertTitle>
+          <AlertDescription>{keptOriginal}</AlertDescription>
+        </Alert>
+      )}
+
       {cannotCompress && (
         <Alert variant="warning" role="note">
           <AlertTitle>This browser cannot compress the video</AlertTitle>
@@ -424,33 +444,29 @@ function ReviewPanel({
   const { original, compressed } = state;
   const smaller = compressed.size < original.size;
   const saved = Math.round((1 - compressed.size / original.size) * 100);
-  // A copy that is not smaller is only worth it when the original cannot be used as it is.
-  const preferOriginal = !smaller && videoTypeOf(original) === 'video/mp4';
   return (
     <div className="space-y-2 text-sm">
       <p className="font-medium" role="status">
         Compressed: {formatBytes(original.size)} to {formatBytes(compressed.size)}
         {smaller ? ` (${saved}% smaller)` : ' (not smaller)'}.
       </p>
+      {!smaller && (
+        // Only reached when the original is not an MP4 (an MP4 would have been kept already).
+        <Alert variant="warning" role="note">
+          <AlertTitle>The compressed copy is not smaller</AlertTitle>
+          <AlertDescription>
+            It is kept because the original is not an MP4, and only an MP4 can be published.
+          </AlertDescription>
+        </Alert>
+      )}
       <p className="text-muted-foreground">
-        {preferOriginal
-          ? 'The compressed copy is not smaller than the original, so uploading the original is fine. '
-          : ''}
         Play it below to check that it looks and sounds right before you upload it.
       </p>
       <div className="flex flex-wrap gap-2">
-        <Button
-          type="button"
-          variant={preferOriginal ? 'outline' : 'default'}
-          onClick={() => onUpload(compressed)}
-        >
+        <Button type="button" onClick={() => onUpload(compressed)}>
           Upload compressed version
         </Button>
-        <Button
-          type="button"
-          variant={preferOriginal ? 'default' : 'outline'}
-          onClick={() => onOriginal(original)}
-        >
+        <Button type="button" variant="outline" onClick={() => onOriginal(original)}>
           Upload original instead
         </Button>
       </div>
