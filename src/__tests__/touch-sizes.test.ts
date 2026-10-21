@@ -12,7 +12,7 @@ const GLOBALS = path.join(SRC, 'app', 'globals.css');
 
 // Width-based classes that make a control or its text smaller.
 const WIDTH_SHRINK =
-  /\b(?:md|sm):(?:min-h-0|px-0|size-\d+|h-\d+(?:\.\d+)?|min-h-\d+|items-start|py-1\.5|text-xs|text-sm|text-\[[^\]]+\]|\[--btn-h:[^\]]+\]|\[--input-h:[^\]]+\])(?=[\s"'`])/g;
+  /\b(?:md|sm):(?:w-(?:[0-9]|1[0-6])|min-h-0|px-0|size-\d+|h-\d+(?:\.\d+)?|min-h-\d+|items-start|py-1\.5|text-xs|text-sm|text-\[[^\]]+\]|\[--btn-h:[^\]]+\]|\[--input-h:[^\]]+\])(?=[\s"'`])/g;
 
 // Not controls: loading skeletons.
 const IGNORED_FILES = ['DashboardStats.tsx'];
@@ -35,6 +35,16 @@ describe('touch sizes by pointer', () => {
     expect(match![1]).toContain('(min-width: 48rem)');
     expect(match![1]).toContain('(hover: hover)');
     expect(match![1]).toContain('(pointer: fine)');
+  });
+
+  it('the width pattern catches a width-only shrink and leaves expansions alone', () => {
+    expect('h-11 w-11 md:w-8 '.match(WIDTH_SHRINK)).toEqual(['md:w-8']);
+    expect('md:w-6 sm:size-8 md:h-9 '.match(WIDTH_SHRINK)).toEqual([
+      'md:w-6',
+      'sm:size-8',
+      'md:h-9',
+    ]);
+    expect('w-full md:w-64 sm:w-48 md:w-auto md:w-1/2 '.match(WIDTH_SHRINK)).toBeNull();
   });
 
   it('shrinks no control by width: every compact size sits behind the fine variant', () => {

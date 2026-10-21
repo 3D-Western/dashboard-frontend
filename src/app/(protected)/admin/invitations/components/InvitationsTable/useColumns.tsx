@@ -155,7 +155,7 @@ export const useColumns = (opts: UseColumnsOptions = {}) => {
                 <DropdownMenuTrigger asChild>
                   <Button
                     variant="ghost"
-                    className="h-11 w-11 p-0 md:w-8 fine:h-8"
+                    className="h-11 w-11 p-0 fine:h-8 fine:w-8"
                     aria-label={`Actions for invitation to ${invitation.email}`}
                     aria-haspopup="menu"
                   >

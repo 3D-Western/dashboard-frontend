@@ -61,7 +61,7 @@ describe('ThemeToggle', () => {
     render(<ThemeToggle />);
     const button = await screen.findByLabelText(/light mode/i);
 
-    expect(button).toHaveClass('h-11', 'w-11', 'fine:h-8', 'md:w-8');
+    expect(button).toHaveClass('h-11', 'w-11', 'fine:h-8', 'fine:w-8');
   });
 
   it('provides an accessible button label', async () => {

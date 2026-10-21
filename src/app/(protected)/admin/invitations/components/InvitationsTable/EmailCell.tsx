@@ -27,7 +27,7 @@ export const EmailCell = memo(function EmailCell({ email }: EmailCellProps) {
       <Button
         variant="ghost"
         size="sm"
-        className="h-11 w-11 shrink-0 p-0 md:w-6 fine:h-6"
+        className="h-11 w-11 shrink-0 p-0 fine:h-6 fine:w-6"
         onClick={handleCopy}
         aria-label="Copy email"
       >
