@@ -157,7 +157,7 @@ export function CorrectionDialog({ row, mode, onClose, onRecorded }: CorrectionD
 
   return (
     <Dialog open onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="max-h-[92vh] overflow-y-auto sm:max-w-2xl">
+      <DialogContent className="max-h-[92dvh] overflow-y-auto sm:max-w-2xl">
         <DialogHeader>
           <DialogTitle>
             {mode === 'rescore' ? 'Re-score attempts' : 'Correct this question'}
@@ -248,7 +248,7 @@ export function CorrectionDialog({ row, mode, onClose, onRecorded }: CorrectionD
         )}
         {rescore && <RescoreResult rescore={rescore} />}
 
-        <DialogFooter>
+        <DialogFooter stickyFooter>
           <Button type="button" variant="outline" onClick={onClose}>
             {showForm ? 'Cancel' : 'Close'}
           </Button>

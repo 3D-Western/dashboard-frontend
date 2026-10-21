@@ -176,7 +176,7 @@ export function StepDialog({
   return (
     <>
       <Dialog open onOpenChange={(open) => !open && requestClose()}>
-        <DialogContent className="max-h-[92vh] overflow-y-auto sm:max-w-3xl">
+        <DialogContent className="max-h-[92dvh] overflow-y-auto sm:max-w-3xl">
           <DialogHeader>
             <DialogTitle>
               {isNew
@@ -447,7 +447,7 @@ export function StepDialog({
             <ErrorNote message={issues.length === 0 ? failure : null} />
           </div>
 
-          <DialogFooter>
+          <DialogFooter stickyFooter>
             <Button type="button" variant="outline" onClick={requestClose}>
               {saved && !step ? 'Done' : 'Cancel'}
             </Button>

@@ -152,7 +152,7 @@ export function QuestionDialog({
 
   return (
     <Dialog open onOpenChange={(open) => !open && requestClose()}>
-      <DialogContent className="max-h-[92vh] overflow-y-auto sm:max-w-2xl">
+      <DialogContent className="max-h-[92dvh] overflow-y-auto sm:max-w-2xl">
         <DialogHeader>
           <DialogTitle>{isEdit ? 'Edit question' : 'Add a question'}</DialogTitle>
           <DialogDescription>
@@ -326,7 +326,7 @@ export function QuestionDialog({
           <ErrorNote message={serverIssues.length === 0 ? failure : null} />
         </div>
 
-        <DialogFooter>
+        <DialogFooter stickyFooter>
           <Button type="button" variant="outline" onClick={requestClose}>
             Cancel
           </Button>
