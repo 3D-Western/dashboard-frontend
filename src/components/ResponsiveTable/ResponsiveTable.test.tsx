@@ -1,12 +1,7 @@
-import { describe, it, expect, afterEach } from 'vitest';
+import type { ReactNode } from 'react';
+import { describe, it, expect, vi } from 'vitest';
 import { render, screen, within } from '@testing-library/react';
 import { CardDateLine, ResponsiveTable, RowCard } from './index';
-
-const DESKTOP_WIDTH = window.innerWidth;
-
-function setViewportWidth(width: number) {
-  Object.defineProperty(window, 'innerWidth', { configurable: true, writable: true, value: width });
-}
 
 const items = [
   { id: 'a', name: 'Alpha' },
@@ -16,9 +11,13 @@ const items = [
 function Harness({
   list = items,
   cardsBelow,
+  renderCard = (item: (typeof items)[number]) => (
+    <RowCard title={item.name} actions={<button>Open {item.name}</button>} />
+  ),
 }: {
   list?: typeof items;
   cardsBelow?: 'md' | 'lg' | 'xl';
+  renderCard?: (item: (typeof items)[number]) => ReactNode;
 }) {
   return (
     <ResponsiveTable
@@ -26,9 +25,7 @@ function Harness({
       getKey={(item) => item.id}
       emptyMessage="Nothing here."
       cardsBelow={cardsBelow}
-      renderCard={(item) => (
-        <RowCard title={item.name} actions={<button>Open {item.name}</button>} />
-      )}
+      renderCard={renderCard}
     >
       <table>
         <tbody>
@@ -41,58 +38,49 @@ function Harness({
   );
 }
 
+// jsdom does not load Tailwind, so the layout is checked through the classes that CSS acts on.
 describe('ResponsiveTable', () => {
-  afterEach(() => setViewportWidth(DESKTOP_WIDTH));
-
-  it('shows the table, and no cards, at md and up', () => {
-    setViewportWidth(1024);
+  it('renders the cards and the table, and CSS shows one of them (md)', () => {
     render(<Harness />);
 
-    expect(screen.getByRole('table')).toBeInTheDocument();
-    expect(screen.queryByRole('list')).not.toBeInTheDocument();
+    expect(screen.getByRole('list').parentElement).toHaveClass('md:hidden');
+    expect(screen.getByRole('table').parentElement).toHaveClass('hidden', 'md:block');
   });
 
-  it('shows one card per item below md, with its actions, and no table', () => {
-    setViewportWidth(390);
+  it('renders one card per item, with its actions', () => {
     render(<Harness />);
 
-    expect(screen.queryByRole('table')).not.toBeInTheDocument();
     const cards = within(screen.getByRole('list')).getAllByRole('listitem');
     expect(cards).toHaveLength(2);
     expect(within(cards[0]).getByText('Alpha')).toBeInTheDocument();
     expect(within(cards[1]).getByRole('button', { name: 'Open Bravo' })).toBeInTheDocument();
   });
 
-  it('keeps cards up to 1023 px and shows the table from 1024 px with cardsBelow="lg"', () => {
-    setViewportWidth(1000);
+  it('renders each item card once, so the rows are not built twice', () => {
+    const renderCard = vi.fn((item: (typeof items)[number]) => <RowCard title={item.name} />);
+    render(<Harness renderCard={renderCard} />);
+
+    expect(renderCard).toHaveBeenCalledTimes(items.length);
+  });
+
+  it('switches at lg and xl when asked', () => {
     const { unmount } = render(<Harness cardsBelow="lg" />);
-    expect(screen.queryByRole('table')).not.toBeInTheDocument();
+    expect(screen.getByRole('list').parentElement).toHaveClass('lg:hidden');
+    expect(screen.getByRole('table').parentElement).toHaveClass('hidden', 'lg:block');
     unmount();
 
-    setViewportWidth(1024);
-    render(<Harness cardsBelow="lg" />);
-    expect(screen.getByRole('table')).toBeInTheDocument();
-  });
-
-  it('keeps cards up to 1279 px and shows the table from 1280 px with cardsBelow="xl"', () => {
-    setViewportWidth(1180);
-    const { unmount } = render(<Harness cardsBelow="xl" />);
-    expect(screen.queryByRole('table')).not.toBeInTheDocument();
-    expect(within(screen.getByRole('list')).getAllByRole('listitem')).toHaveLength(2);
-    unmount();
-
-    setViewportWidth(1280);
     render(<Harness cardsBelow="xl" />);
-    expect(screen.getByRole('table')).toBeInTheDocument();
-    expect(screen.queryByRole('list')).not.toBeInTheDocument();
+    expect(screen.getByRole('list').parentElement).toHaveClass('xl:hidden');
+    expect(screen.getByRole('table').parentElement).toHaveClass('hidden', 'xl:block');
   });
 
-  it('shows the empty message below md when there are no items', () => {
-    setViewportWidth(390);
+  it('shows the empty message in the card layout, and still renders the table', () => {
     render(<Harness list={[]} />);
 
-    expect(screen.getByText('Nothing here.')).toBeInTheDocument();
+    const message = screen.getByText('Nothing here.');
+    expect(message.parentElement).toHaveClass('md:hidden');
     expect(screen.queryByRole('list')).not.toBeInTheDocument();
+    expect(screen.getByText('Desktop table')).toBeInTheDocument();
   });
 });
 

@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { render, screen, userEvent } from '@test/utils/render';
 import { within } from '@testing-library/react';
 import { createMockAdmin, perm } from '@test/utils/mockFactories';
@@ -50,7 +50,10 @@ describe('UsersTable account status actions', () => {
     const user = userEvent.setup();
     render(<UsersTable users={users} pagination={pagination} />, { user: admin });
 
-    await user.click(screen.getByRole('button', { name: /actions for other student/i }));
+    // The cards are in the DOM too (hidden by CSS below md), so look inside the table
+    await user.click(
+      within(screen.getByRole('table')).getByRole('button', { name: /actions for other student/i }),
+    );
 
     expect(screen.getByRole('menuitem', { name: /change account status/i })).toBeEnabled();
   });
@@ -59,7 +62,9 @@ describe('UsersTable account status actions', () => {
     const user = userEvent.setup();
     render(<UsersTable users={users} pagination={pagination} />, { user: admin });
 
-    await user.click(screen.getByRole('button', { name: /actions for admin self/i }));
+    await user.click(
+      within(screen.getByRole('table')).getByRole('button', { name: /actions for admin self/i }),
+    );
 
     expect(
       screen.queryByRole('menuitem', { name: /change account status/i }),
@@ -88,19 +93,13 @@ describe('UsersTable on a phone', () => {
     }),
   ];
 
-  beforeEach(() => {
-    Object.defineProperty(window, 'innerWidth', { configurable: true, value: 390 });
-  });
-
-  afterEach(() => {
-    Object.defineProperty(window, 'innerWidth', { configurable: true, value: 1024 });
-  });
-
   it('shows each user as a card with status, email, student ID and the actions menu', async () => {
     const user = userEvent.setup();
     render(<UsersTable users={users} pagination={pagination} />, { user: admin });
 
-    expect(screen.queryByRole('table')).not.toBeInTheDocument();
+    // jsdom applies no CSS: the cards wrapper hides from md up, the table wrapper below it
+    expect(screen.getByRole('list').parentElement).toHaveClass('md:hidden');
+    expect(screen.getByRole('table').closest('[class~="md:block"]')).toHaveClass('hidden');
     const cards = within(screen.getByRole('list')).getAllByRole('listitem');
     expect(cards).toHaveLength(2);
 

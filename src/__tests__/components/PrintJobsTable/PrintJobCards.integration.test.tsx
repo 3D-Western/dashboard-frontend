@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { render, screen, within } from '@test/utils/render';
 import userEvent from '@testing-library/user-event';
 import PrintJobsTable from '@/components/PrintJobsTable';
@@ -30,15 +30,14 @@ const withUser = (name: string, firstName: string, lastName: string) => {
   });
 };
 
+// jsdom applies no CSS, so the switch is checked through the classes that CSS acts on: the cards
+// wrapper hides from md up, the table wrapper hides below it.
+function expectCardsBelowMd() {
+  expect(screen.getByRole('list').parentElement).toHaveClass('md:hidden');
+  expect(screen.getByRole('table').closest('[class~="md:block"]')).toHaveClass('hidden');
+}
+
 describe('PrintJobsTable on a phone (admin)', () => {
-  beforeEach(() => {
-    Object.defineProperty(window, 'innerWidth', { configurable: true, value: 390 });
-  });
-
-  afterEach(() => {
-    Object.defineProperty(window, 'innerWidth', { configurable: true, value: 1024 });
-  });
-
   it('shows each job as a card with the user, print date and actions menu', async () => {
     const user = userEvent.setup();
     const jobs = [
@@ -48,7 +47,7 @@ describe('PrintJobsTable on a phone (admin)', () => {
 
     render(<PrintJobsTable printJobs={jobs} pagination={pagination} mode="admin" />);
 
-    expect(screen.queryByRole('table')).not.toBeInTheDocument();
+    expectCardsBelowMd();
     const cards = within(screen.getByRole('list')).getAllByRole('listitem');
     expect(cards).toHaveLength(2);
     expect(within(cards[0]).getByText('User: Jordan Lee')).toBeInTheDocument();

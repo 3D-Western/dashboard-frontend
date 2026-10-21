@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeAll, beforeEach } from 'vitest';
-import { render, screen, waitFor } from '@test/utils/render';
+import { render, screen, waitFor, within } from '@test/utils/render';
 import userEvent from '@testing-library/user-event';
 import InvitationsTable from '@/app/(protected)/admin/invitations/components/InvitationsTable';
 import {
@@ -15,6 +15,10 @@ import { http, HttpResponse } from 'msw';
 import { mockServer } from '@/api/mocks';
 import { endpoints } from '@/api/client/endpoints';
 import { PERMISSIONS } from '@/constants/permissions';
+
+// Below xl the cards are in the DOM too (CSS shows one copy, and jsdom applies no CSS), so the
+// table tests look inside the table. Menus and dialogs are portals and stay on `screen`.
+const inTable = () => within(screen.getByRole('table'));
 
 const mockAdminUser = createMockUser({
   permissions: [perm(PERMISSIONS.INVITATIONS_READ), perm(PERMISSIONS.INVITATIONS_REVOKE)],
@@ -156,7 +160,7 @@ describe('InvitationsTable Integration', () => {
         />,
       );
 
-      expect(screen.getByText('Pending')).toBeInTheDocument();
+      expect(inTable().getByText('Pending')).toBeInTheDocument();
     });
 
     it('displays ACCEPTED status correctly', () => {
@@ -176,7 +180,7 @@ describe('InvitationsTable Integration', () => {
         />,
       );
 
-      expect(screen.getByText('Accepted')).toBeInTheDocument();
+      expect(inTable().getByText('Accepted')).toBeInTheDocument();
     });
 
     it('displays EXPIRED status correctly', () => {
@@ -196,7 +200,7 @@ describe('InvitationsTable Integration', () => {
         />,
       );
 
-      expect(screen.getByText('Expired')).toBeInTheDocument();
+      expect(inTable().getByText('Expired')).toBeInTheDocument();
     });
 
     it('displays REVOKED status correctly', () => {
@@ -216,7 +220,7 @@ describe('InvitationsTable Integration', () => {
         />,
       );
 
-      expect(screen.getByText('Revoked')).toBeInTheDocument();
+      expect(inTable().getByText('Revoked')).toBeInTheDocument();
     });
   });
 
@@ -238,7 +242,7 @@ describe('InvitationsTable Integration', () => {
         />,
       );
 
-      const moreButton = screen.getByRole('button', { name: /Actions for invitation/i });
+      const moreButton = inTable().getByRole('button', { name: /Actions for invitation/i });
       expect(moreButton).toBeInTheDocument();
     });
 
@@ -272,7 +276,7 @@ describe('InvitationsTable Integration', () => {
       );
 
       // Open dropdown menu
-      const moreButton = screen.getByRole('button', { name: /Actions for invitation/i });
+      const moreButton = inTable().getByRole('button', { name: /Actions for invitation/i });
       await user.click(moreButton);
 
       // Click revoke
@@ -289,7 +293,7 @@ describe('InvitationsTable Integration', () => {
 
       // Status should update to REVOKED
       await waitFor(() => {
-        expect(screen.getByText('Revoked')).toBeInTheDocument();
+        expect(inTable().getByText('Revoked')).toBeInTheDocument();
       });
     });
 
@@ -318,7 +322,7 @@ describe('InvitationsTable Integration', () => {
         user: mockAdminUser,
       });
 
-      const moreButton = screen.getByRole('button', {
+      const moreButton = inTable().getByRole('button', {
         name: `Actions for invitation to ${pendingInvitation.email}`,
       });
       await user.click(moreButton);
@@ -330,8 +334,8 @@ describe('InvitationsTable Integration', () => {
       await user.click(confirmButton);
 
       await waitFor(() => {
-        expect(screen.getByText('Revoked')).toBeInTheDocument();
-        expect(screen.getByText('Accepted')).toBeInTheDocument();
+        expect(inTable().getByText('Revoked')).toBeInTheDocument();
+        expect(inTable().getByText('Accepted')).toBeInTheDocument();
       });
     });
 
@@ -364,7 +368,7 @@ describe('InvitationsTable Integration', () => {
         { user: mockAdminUser },
       );
 
-      const moreButton = screen.getByRole('button', { name: /Actions for invitation/i });
+      const moreButton = inTable().getByRole('button', { name: /Actions for invitation/i });
       await user.click(moreButton);
 
       const revokeButton = screen.getByRole('menuitem', { name: /revoke/i });
@@ -415,7 +419,7 @@ describe('InvitationsTable Integration', () => {
         { user: mockAdminUser },
       );
 
-      const moreButton = screen.getByRole('button', { name: /Actions for invitation/i });
+      const moreButton = inTable().getByRole('button', { name: /Actions for invitation/i });
       await user.click(moreButton);
 
       const revokeButton = screen.getByRole('menuitem', { name: /revoke/i });
@@ -433,7 +437,7 @@ describe('InvitationsTable Integration', () => {
       expect(mockOnRevokeSuccess).not.toHaveBeenCalled();
 
       // Status should remain PENDING
-      expect(screen.getByText('Pending')).toBeInTheDocument();
+      expect(inTable().getByText('Pending')).toBeInTheDocument();
     });
   });
 
@@ -459,7 +463,7 @@ describe('InvitationsTable Integration', () => {
         />,
       );
 
-      expect(screen.getAllByText(/251000/)).toHaveLength(1);
+      expect(inTable().getAllByText(/251000/)).toHaveLength(1);
 
       rerender(
         <InvitationsTable
@@ -469,7 +473,7 @@ describe('InvitationsTable Integration', () => {
         />,
       );
 
-      expect(screen.getAllByText(/251000/)).toHaveLength(2);
+      expect(inTable().getAllByText(/251000/)).toHaveLength(2);
     });
   });
 
@@ -492,7 +496,7 @@ describe('InvitationsTable Integration', () => {
         />,
       );
 
-      const moreButton = screen.getByRole('button', { name: /Actions for invitation/i });
+      const moreButton = inTable().getByRole('button', { name: /Actions for invitation/i });
       await user.click(moreButton);
 
       expect(screen.getByRole('menuitem', { name: /more info/i })).toBeInTheDocument();
@@ -518,7 +522,7 @@ describe('InvitationsTable Integration', () => {
         { user: mockAdminUser },
       );
 
-      const moreButton = screen.getByRole('button', { name: /Actions for invitation/i });
+      const moreButton = inTable().getByRole('button', { name: /Actions for invitation/i });
       await user.click(moreButton);
 
       const infoButton = screen.getByRole('menuitem', { name: /more info/i });
@@ -545,7 +549,7 @@ describe('InvitationsTable Integration', () => {
         />,
       );
 
-      const moreButton = screen.getByRole('button', { name: /Actions for invitation/i });
+      const moreButton = inTable().getByRole('button', { name: /Actions for invitation/i });
       await user.click(moreButton);
 
       const revokeButton = screen.getByRole('menuitem', { name: /revoke invitation/i });
@@ -570,7 +574,7 @@ describe('InvitationsTable Integration', () => {
           { user: userWithoutRevokePermission },
         );
 
-        const moreButton = screen.getByRole('button', { name: /Actions for invitation/i });
+        const moreButton = inTable().getByRole('button', { name: /Actions for invitation/i });
         await user.click(moreButton);
 
         const revokeButton = screen.getByRole('menuitem', { name: /revoke invitation/i });
@@ -594,7 +598,7 @@ describe('InvitationsTable Integration', () => {
           { user: userWithoutRevokePermission },
         );
 
-        const moreButton = screen.getByRole('button', { name: /Actions for invitation/i });
+        const moreButton = inTable().getByRole('button', { name: /Actions for invitation/i });
         await user.click(moreButton);
         await user.click(screen.getByRole('menuitem', { name: /revoke invitation/i }));
 
@@ -619,7 +623,7 @@ describe('InvitationsTable Integration', () => {
           { user: userWithoutReadPermission },
         );
 
-        const moreButton = screen.getByRole('button', { name: /Actions for invitation/i });
+        const moreButton = inTable().getByRole('button', { name: /Actions for invitation/i });
         await user.click(moreButton);
 
         const infoButton = screen.getByRole('menuitem', { name: /more info/i });
@@ -643,7 +647,7 @@ describe('InvitationsTable Integration', () => {
           { user: userWithoutReadPermission },
         );
 
-        const moreButton = screen.getByRole('button', { name: /Actions for invitation/i });
+        const moreButton = inTable().getByRole('button', { name: /Actions for invitation/i });
         await user.click(moreButton);
         await user.click(screen.getByRole('menuitem', { name: /more info/i }));
 

@@ -2,13 +2,19 @@
 
 import type { ReactNode } from 'react';
 import { flexRender, type Row } from '@tanstack/react-table';
-import { useBelowWidth } from '@/hooks/useBelowWidth';
 import { useLocalTime } from '@/hooks/useLocalTime';
 
-/** Tailwind breakpoints, in px, at which a table takes over from cards. */
-const CARDS_BELOW_PX = { md: 768, lg: 1024, xl: 1280 } as const;
+export type CardsBelow = 'md' | 'lg' | 'xl';
 
-export type CardsBelow = keyof typeof CARDS_BELOW_PX;
+/**
+ * Which layout shows at each width: the cards below the breakpoint, the table from it up. The
+ * class names are written out in full so Tailwind generates them.
+ */
+const LAYOUT_CLASSES: Record<CardsBelow, { cards: string; table: string }> = {
+  md: { cards: 'md:hidden', table: 'hidden md:block' },
+  lg: { cards: 'lg:hidden', table: 'hidden lg:block' },
+  xl: { cards: 'xl:hidden', table: 'hidden xl:block' },
+};
 
 /** Renders one column's cell for a row, the same way the desktop table does. */
 export function renderCell<TData>(row: Row<TData>, columnId: string): ReactNode {
@@ -31,10 +37,10 @@ interface ResponsiveTableProps<T> {
 }
 
 /**
- * Below `cardsBelow` (default md, 768 px) each item is a card; from there up the table is shown.
- * The switch is made in JS so the table is not in the DOM on phones at all (no duplicate buttons
- * or dialogs). Server rendering and first paint use the table, then the cards appear after
- * hydration.
+ * Both layouts are in the markup and CSS shows one of them, so the first paint (server render
+ * included) is already right and the table never flashes before the cards. Each item's card is
+ * rendered once from the same list the table uses, so nothing is fetched twice. The hidden copy
+ * is display:none, so its buttons and dialogs are not reachable or announced.
  */
 export function ResponsiveTable<T>({
   items,
@@ -44,26 +50,25 @@ export function ResponsiveTable<T>({
   cardsBelow = 'md',
   children,
 }: ResponsiveTableProps<T>) {
-  const showCards = useBelowWidth(CARDS_BELOW_PX[cardsBelow]);
-
-  if (!showCards) {
-    return <>{children}</>;
-  }
-
-  if (items.length === 0) {
-    return (
-      <p className="rounded-lg border bg-card p-6 text-center text-sm text-muted-foreground">
-        {emptyMessage}
-      </p>
-    );
-  }
+  const layout = LAYOUT_CLASSES[cardsBelow];
 
   return (
-    <ul className="space-y-3">
-      {items.map((item) => (
-        <li key={getKey(item)}>{renderCard(item)}</li>
-      ))}
-    </ul>
+    <>
+      <div className={layout.cards}>
+        {items.length === 0 ? (
+          <p className="rounded-lg border bg-card p-6 text-center text-sm text-muted-foreground">
+            {emptyMessage}
+          </p>
+        ) : (
+          <ul className="space-y-3">
+            {items.map((item) => (
+              <li key={getKey(item)}>{renderCard(item)}</li>
+            ))}
+          </ul>
+        )}
+      </div>
+      <div className={layout.table}>{children}</div>
+    </>
   );
 }
 
