@@ -1,5 +1,6 @@
 import { formatClock } from '@/lib/training-format';
-import { videoTypeOf, type VideoInfo } from '@/lib/video-upload';
+import { videoTypeOf } from '@/lib/video-type';
+import type { VideoInfo } from '@/lib/video-upload';
 
 /** Training videos should be this long or shorter (D-16). Longer ones are allowed, with a warning. */
 export const MAX_VIDEO_SECONDS = 600;

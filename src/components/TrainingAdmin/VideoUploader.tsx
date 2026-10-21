@@ -2,20 +2,52 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { CheckCircle2, Upload } from 'lucide-react';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { adminErrorMessage } from '@/lib/training-admin-errors';
 import { formatBytes } from '@/lib/training-admin-format';
-import { prepareVideo } from '@/lib/video-prepare';
-import { VideoUploadError, readVideoInfo, uploadVideo, videoFileProblem } from '@/lib/video-upload';
+import {
+  VideoCompressError,
+  aboveTargetBitrate,
+  checkCompressionSupport,
+  compressionAdvice,
+  compressionLimit,
+  compressVideo,
+  unsupported,
+  type CompressionReason,
+} from '@/lib/video-compress';
+import {
+  VideoUploadError,
+  readVideoInfo,
+  uploadVideo,
+  videoFileProblem,
+  videoTypeOf,
+  type VideoInfo,
+} from '@/lib/video-upload';
 import { videoWarnings, type VideoWarning } from '@/lib/video-warnings';
 import { ErrorNote } from './feedback';
 import { VideoWarnings } from './VideoWarnings';
 
 type UploadState =
   | { phase: 'idle' }
+  /** Reading the file's length and size, and asking the browser what it can do. */
+  | { phase: 'checking'; file: File }
+  | { phase: 'compressing'; file: File; fraction: number }
+  /** Compression is on offer, was cancelled, or did not work: staff choose what to upload. */
+  | { phase: 'choice'; file: File; reasons: CompressionReason[]; note: string | null }
+  /** Compressed: play it, then choose which one to upload. */
+  | { phase: 'review'; original: File; compressed: File }
   | { phase: 'uploading'; file: File; fraction: number }
   | { phase: 'failed'; file: File; message: string; retryable: boolean }
-  | { phase: 'done'; file: File };
+  | { phase: 'done'; file: File; original: File | null };
+
+const REASON_TEXT: Record<CompressionReason, string> = {
+  format: 'it is not an MP4',
+  resolution: 'it is taller than 720p',
+  bitrate: 'it is heavier than a phone on mobile data handles well',
+};
+
+const percentOf = (fraction: number) => Math.round(fraction * 100);
 
 interface VideoUploaderProps {
   /** The file already attached to the step, if any. */
@@ -24,23 +56,35 @@ interface VideoUploaderProps {
   onUploaded: (assetKey: string, durationSeconds: number | null) => void;
   /**
    * Called with a local address the chosen file can be played from, as soon as it is chosen and
-   * before it is uploaded, or with null when there is none. The caller only plays it.
+   * before it is uploaded, or with null when there is none. After compression it is the address of
+   * the compressed copy, so it can be checked before uploading. The caller only plays it.
    */
   onLocalPreview?: (url: string | null) => void;
 }
 
 /**
- * Uploads a video straight to storage with a presigned PUT, showing progress. The chosen file can
- * be played locally while it uploads. The step stores only the returned asset key; saving the
- * step is a separate action.
+ * Uploads a video straight to storage with a presigned PUT, showing progress. A video that is not
+ * a 720p MP4 is first compressed in this browser (nothing leaves the computer, and it costs us
+ * nothing), with progress, a cancel button and a preview of the result; staff can always upload
+ * the original instead. A browser that cannot compress says so and uploads the original: nothing
+ * here ever blocks an upload. The step stores only the returned asset key; saving the step is a
+ * separate action.
  */
 export function VideoUploader({ assetKey, onUploaded, onLocalPreview }: VideoUploaderProps) {
   const [state, setState] = useState<UploadState>({ phase: 'idle' });
   const [chosen, setChosen] = useState<File | null>(null);
   const [warnings, setWarnings] = useState<VideoWarning[]>([]);
+  /** Why this browser could not compress, when it was needed. */
+  const [cannotCompress, setCannotCompress] = useState<string | null>(null);
+  /** Said when compressing did not help and the original MP4 was chosen automatically. */
+  const [keptOriginal, setKeptOriginal] = useState<string | null>(null);
   const abort = useRef<AbortController | null>(null);
   const input = useRef<HTMLInputElement>(null);
   const blobUrl = useRef<string | null>(null);
+  const info = useRef<VideoInfo | null>(null);
+  const allWarnings = useRef<VideoWarning[]>([]);
+  /** The compressed copy and the file it came from, while both are in play. */
+  const pair = useRef<{ original: File; compressed: File } | null>(null);
 
   const showLocal = (file: File | null) => {
     if (blobUrl.current) URL.revokeObjectURL(blobUrl.current);
@@ -49,7 +93,7 @@ export function VideoUploader({ assetKey, onUploaded, onLocalPreview }: VideoUpl
     onLocalPreview?.(blobUrl.current);
   };
 
-  // Leaving the screen must not leave a large upload running in the background.
+  // Leaving the screen must not leave a large upload, or a long compression, running behind it.
   useEffect(
     () => () => {
       abort.current?.abort();
@@ -58,42 +102,37 @@ export function VideoUploader({ assetKey, onUploaded, onLocalPreview }: VideoUpl
     [],
   );
 
-  const start = async (file: File) => {
-    setChosen(file);
-    setWarnings([]);
-    const problem = videoFileProblem(file);
-    if (problem) {
-      showLocal(null);
-      setState({ phase: 'failed', file, message: problem, retryable: false });
-      return;
-    }
-    showLocal(file);
+  const newController = () => {
+    abort.current?.abort();
     const controller = new AbortController();
     abort.current = controller;
+    return controller;
+  };
+
+  /** Sends [file] to storage. */
+  const send = async (file: File) => {
+    const controller = newController();
     setState({ phase: 'uploading', file, fraction: 0 });
     try {
-      // Look at the file first: its length and size draw warnings, but never stop the upload.
-      const info = await readVideoInfo(file);
-      if (controller.signal.aborted) {
-        setState({ phase: 'idle' });
-        return;
-      }
-      const found = videoWarnings(file, info);
-      setWarnings(found);
-      const toSend = await prepareVideo(file, info, found, controller.signal);
       const key = await uploadVideo(
-        toSend,
+        file,
         (fraction) =>
           setState((current) =>
             current.phase === 'uploading' ? { ...current, fraction } : current,
           ),
         controller.signal,
       );
-      setState({ phase: 'done', file: toSend });
-      onUploaded(key, info.durationSeconds);
+      const original = pair.current?.compressed === file ? pair.current.original : null;
+      setState({ phase: 'done', file, original });
+      onUploaded(key, info.current?.durationSeconds ?? null);
     } catch (error) {
       if (error instanceof VideoUploadError && error.kind === 'aborted') {
-        setState({ phase: 'idle' });
+        // Cancelled: go back to where the choice was, so nothing has to be redone.
+        if (pair.current?.compressed === file) {
+          setState({ phase: 'review', ...pair.current });
+        } else {
+          setState({ phase: 'idle' });
+        }
         return;
       }
       const message =
@@ -104,13 +143,121 @@ export function VideoUploader({ assetKey, onUploaded, onLocalPreview }: VideoUpl
     }
   };
 
+  /** Compresses [file] here, then lets staff look at the result before anything is uploaded. */
+  const compress = async (file: File, reasons: CompressionReason[]) => {
+    const controller = newController();
+    setState({ phase: 'compressing', file, fraction: 0 });
+    showLocal(file);
+    try {
+      const compressed = await compressVideo(file, {
+        signal: controller.signal,
+        // A file only in the wrong container can be copied; anything above the target rate cannot.
+        forceReencode: info.current ? aboveTargetBitrate(file, info.current) : false,
+        onProgress: (fraction) =>
+          setState((current) =>
+            current.phase === 'compressing' ? { ...current, fraction } : current,
+          ),
+      });
+      if (compressed.size >= file.size && videoTypeOf(file) === 'video/mp4') {
+        // Nothing gained, and the original is already what we want: no need to ask.
+        setKeptOriginal(
+          `Compressing did not make this video smaller (${formatBytes(file.size)} became ${formatBytes(compressed.size)}), so the original MP4 was uploaded instead.`,
+        );
+        sendOriginal(file);
+        return;
+      }
+      pair.current = { original: file, compressed };
+      showLocal(compressed);
+      setState({ phase: 'review', original: file, compressed });
+    } catch (error) {
+      const cancelled = error instanceof VideoCompressError && error.kind === 'aborted';
+      setState({
+        phase: 'choice',
+        file,
+        reasons,
+        note: cancelled
+          ? 'Compression was cancelled.'
+          : `${error instanceof VideoCompressError ? error.message : 'Compression failed.'} You can try again, or upload the original.`,
+      });
+    }
+  };
+
+  /** Sends the original, with every warning it deserves now that nothing fixes them. */
+  const sendOriginal = (file: File) => {
+    setWarnings(allWarnings.current);
+    showLocal(file);
+    pair.current = null;
+    void send(file);
+  };
+
+  const start = async (file: File) => {
+    setChosen(file);
+    setWarnings([]);
+    setCannotCompress(null);
+    setKeptOriginal(null);
+    pair.current = null;
+    info.current = null;
+    const problem = videoFileProblem(file);
+    if (problem) {
+      showLocal(null);
+      setState({ phase: 'failed', file, message: problem, retryable: false });
+      return;
+    }
+    showLocal(file);
+    const controller = newController();
+    setState({ phase: 'checking', file });
+
+    // Look at the file first: its length and size draw warnings, but never stop the upload.
+    const probed = await readVideoInfo(file);
+    if (controller.signal.aborted) {
+      setState({ phase: 'idle' });
+      return;
+    }
+    info.current = probed;
+    const found = videoWarnings(file, probed);
+    allWarnings.current = found;
+    const advice = compressionAdvice(file, probed);
+    if (advice.mode === 'unneeded') {
+      setWarnings(found);
+      await send(file);
+      return;
+    }
+
+    const support =
+      compressionLimit(file, probed) === 'too-large'
+        ? unsupported('too-large')
+        : await checkCompressionSupport();
+    if (controller.signal.aborted) {
+      setState({ phase: 'idle' });
+      return;
+    }
+    if (!support.supported) {
+      // Explain why, and upload as it is. Only say so when compressing was actually needed.
+      setWarnings(found);
+      if (advice.mode === 'required') setCannotCompress(support.message);
+      await send(file);
+      return;
+    }
+
+    // Compression fixes size, format and weight; only the length is left for the author to judge.
+    setWarnings(found.filter((warning) => warning.id === 'long'));
+    if (advice.mode === 'required') {
+      await compress(file, advice.reasons);
+    } else {
+      setState({ phase: 'choice', file, reasons: advice.reasons, note: null });
+    }
+  };
+
   const choose = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     event.target.value = '';
     if (file) void start(file);
   };
 
-  const percent = state.phase === 'uploading' ? Math.round(state.fraction * 100) : 0;
+  const busy =
+    state.phase === 'checking' || state.phase === 'compressing' || state.phase === 'uploading';
+  const percent =
+    state.phase === 'uploading' || state.phase === 'compressing' ? percentOf(state.fraction) : 0;
 
   return (
     <div className="space-y-3 rounded-lg border p-3">
@@ -118,7 +265,9 @@ export function VideoUploader({ assetKey, onUploaded, onLocalPreview }: VideoUpl
         {state.phase === 'done' ? (
           <p className="flex items-center gap-2 font-medium text-green-700 dark:text-green-400">
             <CheckCircle2 className="size-4" /> Uploaded {state.file.name} (
-            {formatBytes(state.file.size)}). Save the step to keep it.
+            {formatBytes(state.file.size)}
+            {state.original ? `, compressed from ${formatBytes(state.original.size)}` : ''}). Save
+            the step to keep it.
           </p>
         ) : assetKey ? (
           <p>
@@ -129,7 +278,71 @@ export function VideoUploader({ assetKey, onUploaded, onLocalPreview }: VideoUpl
         )}
       </div>
 
-      {state.phase === 'uploading' ? (
+      {state.phase === 'checking' && (
+        <p className="text-sm text-muted-foreground" role="status">
+          Looking at {state.file.name}...
+        </p>
+      )}
+
+      {state.phase === 'compressing' && (
+        <div className="space-y-2">
+          <div
+            role="progressbar"
+            aria-label="Compression progress"
+            aria-valuemin={0}
+            aria-valuemax={100}
+            aria-valuenow={percent}
+            className="h-2.5 w-full overflow-hidden rounded-full bg-muted"
+          >
+            <div
+              className="h-full bg-primary transition-[width]"
+              style={{ width: `${percent}%` }}
+            />
+          </div>
+          <div className="flex flex-wrap items-center justify-between gap-2 text-sm">
+            <span>
+              Compressing {state.file.name} ({formatBytes(state.file.size)}): {percent}%
+            </span>
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              onClick={() => abort.current?.abort()}
+            >
+              Cancel compression
+            </Button>
+          </div>
+          <p className="text-xs text-muted-foreground">
+            This runs on your computer, not on a server, and can take a few minutes. Keep this tab
+            open. You can watch the original below meanwhile.
+          </p>
+        </div>
+      )}
+
+      {state.phase === 'choice' && (
+        <div className="space-y-2 text-sm">
+          <p>
+            {state.note ??
+              (state.reasons.length > 0
+                ? `Compressing this video is recommended because ${state.reasons.map((r) => REASON_TEXT[r]).join(' and ')}. It makes a 720p MP4 that starts quickly on a phone.`
+                : 'We could not read this video well enough to tell if it needs compressing. You can compress it to a 720p MP4, or upload it as it is.')}
+          </p>
+          <div className="flex flex-wrap gap-2">
+            <Button type="button" onClick={() => void compress(state.file, state.reasons)}>
+              {state.note ? 'Try compressing again' : 'Compress first'}
+            </Button>
+            <Button type="button" variant="outline" onClick={() => sendOriginal(state.file)}>
+              Upload original
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {state.phase === 'review' && (
+        <ReviewPanel state={state} onUpload={send} onOriginal={sendOriginal} />
+      )}
+
+      {state.phase === 'uploading' && (
         <div className="space-y-2">
           <div
             role="progressbar"
@@ -161,7 +374,9 @@ export function VideoUploader({ assetKey, onUploaded, onLocalPreview }: VideoUpl
             You can watch the video below while it uploads.
           </p>
         </div>
-      ) : (
+      )}
+
+      {!busy && (
         <div className="flex flex-wrap items-center gap-2">
           <input
             ref={input}
@@ -181,9 +396,23 @@ export function VideoUploader({ assetKey, onUploaded, onLocalPreview }: VideoUpl
             </Button>
           )}
           <span className="text-xs text-muted-foreground">
-            MP4 is best. Up to 1 GB; about 10 minutes or less.
+            MP4 is best. Up to 1 GB; about 10 minutes or less. Other videos are compressed to 720p
+            here in your browser.
           </span>
         </div>
+      )}
+      {keptOriginal && (
+        <Alert role="note">
+          <AlertTitle>The original was kept</AlertTitle>
+          <AlertDescription>{keptOriginal}</AlertDescription>
+        </Alert>
+      )}
+
+      {cannotCompress && (
+        <Alert variant="warning" role="note">
+          <AlertTitle>This browser cannot compress the video</AlertTitle>
+          <AlertDescription>{cannotCompress}</AlertDescription>
+        </Alert>
       )}
 
       <VideoWarnings warnings={warnings} />
@@ -192,17 +421,55 @@ export function VideoUploader({ assetKey, onUploaded, onLocalPreview }: VideoUpl
         <div className="space-y-2">
           <ErrorNote message={state.message} />
           {state.retryable && (
-            <Button
-              type="button"
-              size="sm"
-              variant="outline"
-              onClick={() => void start(state.file)}
-            >
+            <Button type="button" size="sm" variant="outline" onClick={() => void send(state.file)}>
               Try the upload again
             </Button>
           )}
         </div>
       )}
+    </div>
+  );
+}
+
+/** Before and after, with the choice of which to upload. The compressed copy is playing below. */
+function ReviewPanel({
+  state,
+  onUpload,
+  onOriginal,
+}: {
+  state: Extract<UploadState, { phase: 'review' }>;
+  onUpload: (file: File) => void;
+  onOriginal: (file: File) => void;
+}) {
+  const { original, compressed } = state;
+  const smaller = compressed.size < original.size;
+  const saved = Math.round((1 - compressed.size / original.size) * 100);
+  return (
+    <div className="space-y-2 text-sm">
+      <p className="font-medium" role="status">
+        Compressed: {formatBytes(original.size)} to {formatBytes(compressed.size)}
+        {smaller ? ` (${saved}% smaller)` : ' (not smaller)'}.
+      </p>
+      {!smaller && (
+        // Only reached when the original is not an MP4 (an MP4 would have been kept already).
+        <Alert variant="warning" role="note">
+          <AlertTitle>The compressed copy is not smaller</AlertTitle>
+          <AlertDescription>
+            It is kept because the original is not an MP4, and only an MP4 can be published.
+          </AlertDescription>
+        </Alert>
+      )}
+      <p className="text-muted-foreground">
+        Play it below to check that it looks and sounds right before you upload it.
+      </p>
+      <div className="flex flex-wrap gap-2">
+        <Button type="button" onClick={() => onUpload(compressed)}>
+          Upload compressed version
+        </Button>
+        <Button type="button" variant="outline" onClick={() => onOriginal(original)}>
+          Upload original instead
+        </Button>
+      </div>
     </div>
   );
 }

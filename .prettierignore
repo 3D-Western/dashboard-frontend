@@ -17,3 +17,5 @@ out/
 
 # Config files
 eslint.config.mjs
+test-results/
+playwright-report/
