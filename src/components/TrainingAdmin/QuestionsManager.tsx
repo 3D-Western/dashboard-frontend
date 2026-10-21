@@ -159,7 +159,7 @@ export function QuestionsManager() {
                   {data.topics.map((topic) => (
                     <li
                       key={topic.id}
-                      className="flex flex-wrap items-center justify-between gap-2 p-3"
+                      className="flex flex-col gap-2 p-3 md:flex-row md:flex-wrap md:items-center md:justify-between"
                     >
                       <div className="min-w-0">
                         <p className="font-medium">{topic.name}</p>
@@ -168,11 +168,13 @@ export function QuestionsManager() {
                           active {topic.questionCount === 1 ? 'question' : 'questions'}
                         </p>
                       </div>
-                      <div className="flex gap-1">
+                      {/* Actions sit on their own row below the text; Delete is pushed to the far end, away from Rename */}
+                      <div className="flex items-center justify-between gap-1 md:justify-end">
                         <Button
                           type="button"
                           size="sm"
                           variant="ghost"
+                          className="min-h-11 md:min-h-0"
                           aria-label={`Rename ${topic.name}`}
                           onClick={() => setEditingTopic(topic)}
                         >
@@ -182,6 +184,7 @@ export function QuestionsManager() {
                           type="button"
                           size="icon-sm"
                           variant="ghost"
+                          className="size-11 md:size-8"
                           aria-label={`Delete topic ${topic.name}`}
                           onClick={() => setDeletingTopic(topic)}
                         >
@@ -261,6 +264,7 @@ export function QuestionsManager() {
                                 type="button"
                                 size="sm"
                                 variant="outline"
+                                className="min-h-11 md:min-h-0"
                                 aria-label={`Edit question: ${promptPreview(question.latest.promptMarkdown, 40)}`}
                                 onClick={() => setEditingQuestion(question)}
                               >
@@ -270,6 +274,7 @@ export function QuestionsManager() {
                                 type="button"
                                 size="icon-sm"
                                 variant="ghost"
+                                className="size-11 md:size-8"
                                 aria-label={`Delete question: ${promptPreview(question.latest.promptMarkdown, 40)}`}
                                 onClick={() => setDeletingQuestion(question)}
                               >

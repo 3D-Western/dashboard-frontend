@@ -147,6 +147,28 @@ describe('TrainingAuditLog', () => {
     );
   });
 
+  it('folds the filters behind a Filters button on phones, and says how many are set', async () => {
+    const user = userEvent.setup();
+    render(<TrainingAuditLog />);
+    await screen.findAllByRole('listitem');
+
+    const toggle = screen.getByRole('button', { name: 'Filters' });
+    expect(toggle).toHaveAttribute('aria-expanded', 'false');
+    expect(toggle).toHaveAttribute('aria-controls', 'audit-filters');
+    expect(document.getElementById('audit-filters')).toHaveClass('hidden');
+
+    await user.click(toggle);
+    expect(toggle).toHaveAttribute('aria-expanded', 'true');
+    expect(document.getElementById('audit-filters')).toHaveClass('grid');
+    expect(screen.getByLabelText('Training')).toBeInTheDocument();
+
+    await user.selectOptions(screen.getByLabelText('Training'), '3');
+    expect(screen.getByRole('button', { name: 'Filters (1 set)' })).toHaveAttribute(
+      'aria-expanded',
+      'true',
+    );
+  });
+
   it('turns a date range into local day boundaries, with the last day included', async () => {
     render(<TrainingAuditLog />);
     await screen.findAllByRole('listitem');

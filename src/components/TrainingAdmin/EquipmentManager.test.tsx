@@ -127,21 +127,42 @@ describe('EquipmentManager groups', () => {
     );
   });
 
-  it('deactivates and reactivates a group without losing its other fields', async () => {
+  it('asks before deactivating a group, then deactivates it without losing its other fields', async () => {
     api.updateGroup.mockResolvedValue(groups[0]);
     await open();
 
     await userEvent.click(screen.getByRole('button', { name: 'Deactivate' }));
+    const ask = await screen.findByRole('alertdialog');
+    expect(ask).toHaveTextContent(/deactivate laser cutters\?/i);
+    expect(ask).toHaveTextContent(/hidden from new trainings/i);
+    expect(ask).toHaveTextContent(/nothing is deleted/i);
+    expect(api.updateGroup).not.toHaveBeenCalled();
+
+    await userEvent.click(within(ask).getByRole('button', { name: 'Deactivate' }));
     await waitFor(() =>
       expect(api.updateGroup).toHaveBeenCalledWith(
         5,
         expect.objectContaining({ active: false, name: 'Laser cutters' }),
       ),
     );
+  });
+
+  it('asks before reactivating a group, then reactivates it', async () => {
+    api.updateGroup.mockResolvedValue(groups[1]);
+    await open();
 
     await userEvent.click(screen.getByRole('button', { name: 'Reactivate' }));
+    const ask = await screen.findByRole('alertdialog');
+    expect(ask).toHaveTextContent(/reactivate sewing\?/i);
+    expect(ask).toHaveTextContent(/shows up again when you create new trainings/i);
+    expect(api.updateGroup).not.toHaveBeenCalled();
+
+    await userEvent.click(within(ask).getByRole('button', { name: 'Reactivate' }));
     await waitFor(() =>
-      expect(api.updateGroup).toHaveBeenCalledWith(6, expect.objectContaining({ active: true })),
+      expect(api.updateGroup).toHaveBeenCalledWith(
+        6,
+        expect.objectContaining({ active: true, name: 'Sewing' }),
+      ),
     );
   });
 
@@ -215,11 +236,15 @@ describe('EquipmentManager machines', () => {
     );
   });
 
-  it('deactivates a machine', async () => {
+  it('asks before deactivating a machine, then deactivates it', async () => {
     api.updateMachine.mockResolvedValue(machines[0]);
     await open();
 
     await userEvent.click(screen.getByRole('button', { name: 'Deactivate Epilog 1' }));
+    const ask = await screen.findByRole('alertdialog');
+    expect(ask).toHaveTextContent(/deactivate epilog 1\?/i);
+    expect(api.updateMachine).not.toHaveBeenCalled();
+    await userEvent.click(within(ask).getByRole('button', { name: 'Deactivate' }));
 
     await waitFor(() =>
       expect(api.updateMachine).toHaveBeenCalledWith(
@@ -229,11 +254,27 @@ describe('EquipmentManager machines', () => {
     );
   });
 
+  it('does nothing when a deactivation is cancelled', async () => {
+    await open();
+
+    await userEvent.click(screen.getByRole('button', { name: 'Deactivate Epilog 1' }));
+    await userEvent.click(
+      within(await screen.findByRole('alertdialog')).getByRole('button', { name: 'Cancel' }),
+    );
+
+    await waitFor(() => expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument());
+    expect(api.updateMachine).not.toHaveBeenCalled();
+    expect(api.updateGroup).not.toHaveBeenCalled();
+  });
+
   it('says why a change failed', async () => {
     api.updateMachine.mockRejectedValue(new ApiError('CONFLICT', 'That group is inactive'));
     await open();
 
     await userEvent.click(screen.getByRole('button', { name: 'Reactivate Old Epilog' }));
+    await userEvent.click(
+      within(await screen.findByRole('alertdialog')).getByRole('button', { name: 'Reactivate' }),
+    );
 
     expect(await screen.findByText('That group is inactive')).toBeInTheDocument();
   });

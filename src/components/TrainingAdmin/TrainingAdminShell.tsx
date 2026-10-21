@@ -51,7 +51,10 @@ export function TrainingAdminShell({ children }: { children: ReactNode }) {
           </AlertDescription>
         </Alert>
       )}
-      <nav aria-label="Training editor sections" className="flex flex-wrap gap-2">
+      <nav
+        aria-label="Training editor sections"
+        className="flex flex-nowrap gap-2 overflow-x-auto [mask-image:linear-gradient(to_right,#000_calc(100%_-_2rem),transparent)] md:flex-wrap md:overflow-visible md:[mask-image:none]"
+      >
         {sections.map((section) => {
           const active = isActive(pathname, section.href);
           return (
@@ -60,7 +63,7 @@ export function TrainingAdminShell({ children }: { children: ReactNode }) {
               href={section.href}
               aria-current={active ? 'page' : undefined}
               className={cn(
-                'rounded-full border px-4 py-2 text-sm font-medium transition-colors',
+                'flex min-h-11 shrink-0 items-center rounded-full border px-3 py-2 text-sm font-medium whitespace-nowrap transition-colors md:min-h-0 md:px-4',
                 active
                   ? 'border-primary bg-primary/10 text-foreground'
                   : 'text-muted-foreground hover:bg-muted hover:text-foreground',
