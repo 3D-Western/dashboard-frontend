@@ -10,14 +10,9 @@ import {
   SidebarGroupLabel,
   SidebarHeader,
   SidebarMenu,
-  SidebarMenuAction,
   SidebarMenuButton,
   SidebarMenuItem,
-  SidebarMenuSub,
-  SidebarMenuSubButton,
-  SidebarMenuSubItem,
 } from '@/components/ui/sidebar';
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { SettingsPopover } from '@/components/SettingsPopover';
 import { User, hasPermission } from '@/types/user';
 import { PERMISSIONS } from '@/constants/permissions';
@@ -26,9 +21,7 @@ import {
   Printer,
   Users,
   Settings,
-  Shield,
   FilePlus,
-  ChevronDown,
   TicketPlus,
   History,
 } from 'lucide-react';
@@ -63,13 +56,6 @@ const navigationItems = [
     icon: FilePlus,
   },
 ];
-
-// The admin pages all live under /admin, so they're nested under Admin Dashboard in the sidebar
-const adminDashboardItem = {
-  title: 'Admin Dashboard',
-  url: '/admin',
-  icon: Shield,
-};
 
 const adminNavigationItems = [
   {
@@ -138,41 +124,19 @@ export function AppSidebar({ user }: AppSidebarProps) {
             <SidebarGroupLabel>Admin</SidebarGroupLabel>
             <SidebarGroupContent>
               <SidebarMenu>
-                <Collapsible asChild defaultOpen>
-                  <SidebarMenuItem>
-                    <SidebarMenuButton asChild isActive={pathname === adminDashboardItem.url}>
-                      <Link href={adminDashboardItem.url}>
-                        <adminDashboardItem.icon className="h-4 w-4" />
-                        <span>{adminDashboardItem.title}</span>
+                {visibleAdminItems.map((item) => (
+                  <SidebarMenuItem key={item.title}>
+                    <SidebarMenuButton
+                      asChild
+                      isActive={pathname === item.url || pathname.startsWith(`${item.url}/`)}
+                    >
+                      <Link href={item.url}>
+                        <item.icon className="h-4 w-4" />
+                        <span>{item.title}</span>
                       </Link>
                     </SidebarMenuButton>
-                    <CollapsibleTrigger asChild>
-                      <SidebarMenuAction className="data-[state=open]:rotate-180">
-                        <ChevronDown />
-                        <span className="sr-only">Toggle admin pages</span>
-                      </SidebarMenuAction>
-                    </CollapsibleTrigger>
-                    <CollapsibleContent>
-                      <SidebarMenuSub>
-                        {visibleAdminItems.map((item) => (
-                          <SidebarMenuSubItem key={item.title}>
-                            <SidebarMenuSubButton
-                              asChild
-                              isActive={
-                                pathname === item.url || pathname.startsWith(`${item.url}/`)
-                              }
-                            >
-                              <Link href={item.url}>
-                                <item.icon />
-                                <span>{item.title}</span>
-                              </Link>
-                            </SidebarMenuSubButton>
-                          </SidebarMenuSubItem>
-                        ))}
-                      </SidebarMenuSub>
-                    </CollapsibleContent>
                   </SidebarMenuItem>
-                </Collapsible>
+                ))}
               </SidebarMenu>
             </SidebarGroupContent>
           </SidebarGroup>
