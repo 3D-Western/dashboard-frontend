@@ -383,13 +383,13 @@ describe('NotificationsCard: other states', () => {
     expect(await turnOnButton()).toBeInTheDocument();
   });
 
-  it('always says that password changes and login codes stay on email', async () => {
+  it('says that login codes and reset links stay on email only', async () => {
     setBrowser();
     serverReady();
 
     render(<NotificationsCard />);
 
-    expect(await screen.findByText(/always come by email/i)).toBeInTheDocument();
+    expect(await screen.findByText(/come by email only/i)).toBeInTheDocument();
   });
 
   it('shows "off" when the browser holds a subscription the server no longer knows (after signing out)', async () => {

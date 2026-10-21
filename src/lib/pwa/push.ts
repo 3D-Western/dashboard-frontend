@@ -152,6 +152,36 @@ export async function disablePush(registration: ServiceWorkerRegistration): Prom
 }
 
 /**
+ * Called right after signing in. If this browser still holds a push subscription that is not on the
+ * signed-in person's list of devices, it belongs to someone who used this phone before (their
+ * session simply expired, so sign-out never ran): forget it here and tell the server, so that
+ * person's notifications stop appearing for this one. Costs nothing for the many browsers that
+ * have no subscription (no request is made). Best effort and quick; never throws.
+ */
+export async function dropOtherUsersSubscription(
+  nav: Pick<Navigator, 'serviceWorker'> | { serviceWorker?: undefined } = typeof navigator ===
+  'undefined'
+    ? {}
+    : navigator,
+  timeoutMs = 3000,
+): Promise<void> {
+  if (!nav.serviceWorker) return;
+  const work = (async () => {
+    const registration = await nav.serviceWorker!.getRegistration();
+    const subscription = await registration?.pushManager.getSubscription();
+    if (!subscription) return;
+    const mine = await notificationsApi.listDevices();
+    const id = await endpointId(subscription.endpoint);
+    if (mine.some((device) => device.endpointId === id)) return;
+    await subscription.unsubscribe().catch(() => false);
+    await notificationsApi.unsubscribe(subscription.endpoint);
+  })().catch(() => {
+    // Offline or not signed in after all: the next sign-in tries again
+  });
+  await Promise.race([work, new Promise<void>((resolve) => setTimeout(resolve, timeoutMs))]);
+}
+
+/**
  * Called when someone signs out: stop this device receiving that person's notifications, so the
  * next person on a shared phone or laptop doesn't see them. Best effort and quick: signing out
  * never waits on it for long and never fails because of it.

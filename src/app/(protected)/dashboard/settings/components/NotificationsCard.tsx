@@ -30,7 +30,7 @@ export function NotificationsCard() {
       <CardContent className="space-y-4">
         <CardBody push={push} />
         <p className="text-sm text-muted-foreground">
-          Password changes and login codes always come by email, never as a notification.
+          Login codes and password reset links come by email only, never as a notification.
         </p>
       </CardContent>
     </Card>

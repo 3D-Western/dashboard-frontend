@@ -74,9 +74,16 @@ self.addEventListener('activate', (event) => {
 // a generic one rather than being dropped (a silent push can get the subscription revoked).
 const PUSH_FALLBACK = { title: '3D Western', body: 'You have a new notification.', url: '/dashboard', tag: 'general' };
 
-// A tap may only ever go to a page inside this site: a path, never another site (not //host, nor a backslash after the slash, which browsers treat the same way).
+// A tap may only ever go to a page inside this site: a path, never another site. Not //host, and no backslash or control
+// character (tab, newline...) anywhere: browsers strip tabs and newlines from URLs, so a slash, a tab and another slash would
+// become //host, and a backslash is treated like a slash.
 function safePath(value) {
-  return typeof value === 'string' && value.charAt(0) === '/' && value.charAt(1) !== '/' && value.charCodeAt(1) !== 92 ? value : PUSH_FALLBACK.url;
+  if (typeof value !== 'string' || value.charAt(0) !== '/' || value.charAt(1) === '/') return PUSH_FALLBACK.url;
+  for (let i = 0; i < value.length; i++) {
+    const code = value.charCodeAt(i);
+    if (code < 32 || code === 127 || code === 92) return PUSH_FALLBACK.url;
+  }
+  return value;
 }
 
 function text(value, fallback, max) {

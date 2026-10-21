@@ -23,6 +23,7 @@ import { useState } from 'react';
 import { sessionApi } from '@/api/client/session';
 import { ApiError, ErrorCodes } from '@/api/client/errors';
 import { BrandMark } from '@/components/BrandLogo';
+import { dropOtherUsersSubscription } from '@/lib/pwa/push';
 
 const formSchema = z.object({
   otp: z.string().min(6, 'Please enter the complete OTP code').max(6),
@@ -52,6 +53,9 @@ export function MFAForm({
       // Short on purpose: the toast outlives the navigation (the Toaster is in the root layout) and
       // used to linger over the next screen.
       toast.success('OTP verified successfully! Redirecting...', { duration: 1500 });
+      // Signed in: if this phone still holds the previous person's push subscription, drop it. Not awaited:
+      // signing in never waits on it.
+      void dropOtherUsersSubscription();
       router.refresh();
       router.push(Routes.dashboard);
     } catch (error) {

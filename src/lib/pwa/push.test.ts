@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { notificationsApi } from '@/api/client/notifications';
 import {
   disablePush,
+  dropOtherUsersSubscription,
   enablePush,
   endpointId,
   getPushRegistration,
@@ -12,7 +13,7 @@ import {
 } from './push';
 
 vi.mock('@/api/client/notifications', () => ({
-  notificationsApi: { subscribe: vi.fn(), unsubscribe: vi.fn() },
+  notificationsApi: { subscribe: vi.fn(), unsubscribe: vi.fn(), listDevices: vi.fn() },
 }));
 
 const capable: AvailabilityInput = {
@@ -298,6 +299,73 @@ describe('unsubscribeThisDeviceQuietly (sign-out)', () => {
     const started = Date.now();
     await unsubscribeThisDeviceQuietly(nav, 30);
 
+    expect(Date.now() - started).toBeLessThan(1000);
+  });
+});
+
+describe('dropOtherUsersSubscription (after sign-in)', () => {
+  beforeEach(() => vi.clearAllMocks());
+
+  const navWith = (registration: unknown) =>
+    ({
+      serviceWorker: { getRegistration: vi.fn().mockResolvedValue(registration) },
+    }) as unknown as Navigator;
+
+  const device = (endpointIdValue: string) => ({
+    id: 1,
+    label: 'x',
+    endpointId: endpointIdValue,
+    createdAt: '2026-10-20T12:00:00Z',
+    lastSuccessAt: null,
+  });
+
+  it('forgets a subscription that is not on my list, and tells the server', async () => {
+    const subscription = fakeSubscription('https://fcm.googleapis.com/fcm/send/previous-person');
+    vi.mocked(notificationsApi.listDevices).mockResolvedValue([device('some-other-hash')]);
+    vi.mocked(notificationsApi.unsubscribe).mockResolvedValue(null);
+
+    await dropOtherUsersSubscription(navWith(fakeRegistration(subscription)));
+
+    expect(subscription.unsubscribe).toHaveBeenCalled();
+    expect(notificationsApi.unsubscribe).toHaveBeenCalledWith(
+      'https://fcm.googleapis.com/fcm/send/previous-person',
+    );
+  });
+
+  it('keeps a subscription that is mine', async () => {
+    const subscription = fakeSubscription();
+    vi.mocked(notificationsApi.listDevices).mockResolvedValue([
+      device(await endpointId(subscription.endpoint)),
+    ]);
+
+    await dropOtherUsersSubscription(navWith(fakeRegistration(subscription)));
+
+    expect(subscription.unsubscribe).not.toHaveBeenCalled();
+    expect(notificationsApi.unsubscribe).not.toHaveBeenCalled();
+  });
+
+  it('makes no request at all when the browser has no subscription', async () => {
+    const registration = fakeRegistration();
+    registration.pushManager.getSubscription.mockResolvedValue(null);
+
+    await dropOtherUsersSubscription(navWith(registration));
+
+    expect(notificationsApi.listDevices).not.toHaveBeenCalled();
+  });
+
+  it('does nothing without a service worker or a registration', async () => {
+    await expect(dropOtherUsersSubscription({})).resolves.toBeUndefined();
+    await expect(dropOtherUsersSubscription(navWith(undefined))).resolves.toBeUndefined();
+    expect(notificationsApi.listDevices).not.toHaveBeenCalled();
+  });
+
+  it('never throws, and gives up after the time limit', async () => {
+    vi.mocked(notificationsApi.listDevices).mockRejectedValue(new Error('offline'));
+    await expect(dropOtherUsersSubscription(navWith(fakeRegistration()))).resolves.toBeUndefined();
+
+    vi.mocked(notificationsApi.listDevices).mockReturnValue(new Promise(() => {}));
+    const started = Date.now();
+    await dropOtherUsersSubscription(navWith(fakeRegistration()), 30);
     expect(Date.now() - started).toBeLessThan(1000);
   });
 });
