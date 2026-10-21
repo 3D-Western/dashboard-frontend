@@ -447,7 +447,7 @@ function TopicDialog({
           />
           <ServerProblems issues={problems} failure={failure} claimedFields={['name', 'slug']} />
         </div>
-        <DialogFooter>
+        <DialogFooter stickyFooter>
           <Button type="button" variant="outline" onClick={requestClose}>
             Cancel
           </Button>

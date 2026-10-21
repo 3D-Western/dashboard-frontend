@@ -77,7 +77,7 @@ function TrainingFrame({ training, children }: { training: AdminTraining; childr
       <div className="space-y-2">
         <Link
           href={TrainingAdminRoutes.home}
-          className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
+          className="inline-flex min-h-11 items-center gap-1 text-sm text-muted-foreground hover:text-foreground md:min-h-0"
         >
           <ArrowLeft className="size-4" /> All trainings
         </Link>

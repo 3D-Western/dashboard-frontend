@@ -234,14 +234,17 @@ export function QuestionDialog({
             <ul className="space-y-2">
               {values.options.map((option, index) => (
                 <li key={option.uid} className="flex items-center gap-2">
-                  <input
-                    type={values.type === 'MULTI' ? 'checkbox' : 'radio'}
-                    name="correct-option"
-                    checked={option.correct}
-                    onChange={(event) => setOption(option.uid, { correct: event.target.checked })}
-                    aria-label={`Option ${index + 1} is correct`}
-                    className="size-5 shrink-0 accent-[var(--color-primary)]"
-                  />
+                  {/* Phones: the label is the 44 px tap target; desktop keeps the 20 px box */}
+                  <label className="inline-flex size-11 shrink-0 cursor-pointer items-center justify-center md:size-5">
+                    <input
+                      type={values.type === 'MULTI' ? 'checkbox' : 'radio'}
+                      name="correct-option"
+                      checked={option.correct}
+                      onChange={(event) => setOption(option.uid, { correct: event.target.checked })}
+                      aria-label={`Option ${index + 1} is correct`}
+                      className="size-5 shrink-0 accent-[var(--color-primary)]"
+                    />
+                  </label>
                   <input
                     type="text"
                     value={option.label}

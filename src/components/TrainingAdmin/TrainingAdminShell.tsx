@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import type { ReactNode } from 'react';
+import { useEffect, useRef, type ReactNode } from 'react';
 import UnauthorizedPage from '@/components/UnauthorizedPage';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { useTrainingPermissions } from '@/hooks/useTrainingPermissions';
@@ -32,6 +32,23 @@ function isActive(pathname: string, href: string) {
 export function TrainingAdminShell({ children }: { children: ReactNode }) {
   const { canAuthor, canSee } = useTrainingPermissions();
   const pathname = usePathname();
+  const navRef = useRef<HTMLElement>(null);
+
+  // On a phone the pills scroll sideways. Bring the current one into view, so "Audit log" is not
+  // hidden under the fade on the right. Scrolls only the strip, never the page.
+  useEffect(() => {
+    const nav = navRef.current;
+    const active = nav?.querySelector<HTMLElement>('[aria-current="page"]');
+    if (!nav || !active) return;
+    const navBox = nav.getBoundingClientRect();
+    const activeBox = active.getBoundingClientRect();
+    const fade = 32; // the 2rem fade on the right edge
+    if (activeBox.right > navBox.right - fade) {
+      nav.scrollLeft += activeBox.right - (navBox.right - fade);
+    } else if (activeBox.left < navBox.left) {
+      nav.scrollLeft -= navBox.left - activeBox.left;
+    }
+  }, [pathname]);
 
   if (!canSee) return <UnauthorizedPage title="the training editor" />;
 
@@ -52,6 +69,7 @@ export function TrainingAdminShell({ children }: { children: ReactNode }) {
         </Alert>
       )}
       <nav
+        ref={navRef}
         aria-label="Training editor sections"
         className="flex flex-nowrap gap-2 overflow-x-auto [mask-image:linear-gradient(to_right,#000_calc(100%_-_2rem),transparent)] md:flex-wrap md:overflow-visible md:[mask-image:none]"
       >
