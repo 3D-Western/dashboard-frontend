@@ -8,6 +8,11 @@ import { SettingsContent } from './settings-content';
 vi.mock('@/api/client/training', () => ({
   trainingAPI: { getMyTrainings: vi.fn() },
 }));
+vi.mock('@/api/client/notifications', () => ({
+  notificationsApi: {
+    getConfig: vi.fn().mockResolvedValue({ enabled: false, publicKey: null }),
+  },
+}));
 vi.mock('@/api/client/usage', () => ({
   usageAPI: { getUsageSummary: vi.fn(), getAccountLimits: vi.fn() },
 }));

@@ -72,13 +72,13 @@ describe('InstallPrompt on an iPhone', () => {
     expect(screen.queryByRole('button', { name: /install/i })).not.toBeInTheDocument();
   });
 
-  it('does not promise notifications that do not exist yet', () => {
+  it('points to the notification setting instead of saying notifications are coming', () => {
     render(<InstallPrompt moment="print-submitted" />);
     expect(
       screen.getByRole('heading', { name: 'Keep 3D Western on your home screen' }),
     ).toBeInTheDocument();
-    expect(screen.getByText(/notifications for your prints are coming soon/i)).toBeInTheDocument();
-    expect(screen.queryByText(/get notified|is how you/i)).not.toBeInTheDocument();
+    expect(screen.getByText(/turn on notifications \(in Settings\)/i)).toBeInTheDocument();
+    expect(screen.queryByText(/coming soon/i)).not.toBeInTheDocument();
   });
 
   it('keeps the steps a real list for screen readers', () => {
