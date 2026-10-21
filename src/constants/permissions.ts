@@ -39,6 +39,7 @@ export const PERMISSIONS = {
   TRAINING_PUBLISH: 'training:publish',
   AUDIT_READ: 'audit:read',
   TRAINING_SIGNOFF: 'training:signoff',
+  ACCESS_ADMIN: 'access:admin',
 } as const;
 
 export type PermissionKey = (typeof PERMISSIONS)[keyof typeof PERMISSIONS];
@@ -246,6 +247,13 @@ export const PERMISSION_CATALOG: PermissionDefinition[] = [
     action: 'signoff',
     description: 'Approve in-person training sign-offs',
   },
+  {
+    key: PERMISSIONS.ACCESS_ADMIN,
+    resource: 'access',
+    action: 'admin',
+    description: 'Manage the access gatekeepers, card readers, plugs and card links',
+    isDangerous: true,
+  },
 
   {
     key: PERMISSIONS.BOOKINGS_LIST,
@@ -311,4 +319,6 @@ export const ADMIN_SECTION_PERMISSIONS: PermissionKey[] = [
   PERMISSIONS.BOOKINGS_CANCEL,
   // Supervisors who only sign students off still need to get into /admin
   PERMISSIONS.TRAINING_SIGNOFF,
+  // The access system (gatekeepers, devices, live view, card links)
+  PERMISSIONS.ACCESS_ADMIN,
 ];

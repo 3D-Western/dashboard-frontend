@@ -144,6 +144,21 @@ describe('AppSidebar', () => {
       expect(screen.queryByRole('link', { name: /training sign-offs/i })).not.toBeInTheDocument();
     });
 
+    it('shows Access System only when user has access:admin', () => {
+      renderSidebar(createMockAdmin({ permissions: [perm(PERMISSIONS.ACCESS_ADMIN)] }));
+
+      expect(screen.getByRole('link', { name: /access system/i })).toHaveAttribute(
+        'href',
+        '/admin/access',
+      );
+    });
+
+    it('hides Access System from admins who lack access:admin', () => {
+      renderSidebar(createMockAdmin({ permissions: [perm(PERMISSIONS.USERS_LIST)] }));
+
+      expect(screen.queryByRole('link', { name: /access system/i })).not.toBeInTheDocument();
+    });
+
     it('shows all admin items when user has all relevant permissions', () => {
       const admin = createMockAdmin({
         permissions: [perm(PERMISSIONS.JOBS_UPDATE_STATUS), perm(PERMISSIONS.INVITATIONS_LIST)],

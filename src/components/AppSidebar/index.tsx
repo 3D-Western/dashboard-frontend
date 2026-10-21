@@ -32,12 +32,14 @@ import {
   ChevronDown,
   TicketPlus,
   PenSquare,
+  DoorOpen,
   type LucideIcon,
 } from 'lucide-react';
 import Link from 'next/link';
 import { BrandLockup } from '@/components/BrandLogo';
 import { usePathname } from 'next/navigation';
 import { Routes } from '@/lib/routes';
+import { AccessAdminRoutes } from '@/lib/access-admin-routes';
 
 // NOTE: Equipment Booking, IAM Management, Audit Log, and the booking-admin pages (Equipment
 // Bookings / Booking Requests / Equipment Management) are intentionally left out of this list
@@ -119,6 +121,12 @@ const adminNavigationItems: AdminNavItem[] = [
     // Either permission opens the editor (publishing alone gets an explanation inside).
     permission: PERMISSIONS.TRAINING_AUTHOR,
     alsoPermission: PERMISSIONS.TRAINING_PUBLISH,
+  },
+  {
+    title: 'Access System',
+    url: AccessAdminRoutes.home,
+    icon: DoorOpen,
+    permission: PERMISSIONS.ACCESS_ADMIN,
   },
 ];
 
