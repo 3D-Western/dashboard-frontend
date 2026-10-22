@@ -4,10 +4,12 @@ import { loadPendingAgreements } from '@/lib/agreements';
 import { PageHeader } from '@/components/PageHeader';
 import { SidebarInset, SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
 import { validateSession } from '@/lib/auth';
+import { isBackendUnavailableError } from '@/api/client/errors';
 import { onboardingAPI } from '@/api/client/onboarding';
 import { Routes } from '@/lib/routes';
 import { UserProvider } from '@/providers/user-provider';
 import { redirect } from 'next/navigation';
+import type { User } from '@/types/user';
 
 // Disable entire protected layout from being statically optimized. Since it will always
 // need to validate the user session on each request.
@@ -16,10 +18,21 @@ export const dynamic = 'force-dynamic';
 export default async function ProtectedLayout({ children }: { children: React.ReactNode }) {
   // The agreements check runs alongside the session check (it needs the same cookies), so it adds
   // no extra wait. It never throws: see loadPendingAgreements.
-  const [currentUser, pendingAgreements] = await Promise.all([
-    validateSession(),
-    loadPendingAgreements(),
-  ]);
+  const pendingAgreementsPromise = loadPendingAgreements();
+
+  let currentUser: User | null;
+  try {
+    currentUser = await validateSession();
+  } catch (error) {
+    // Backend down: nothing is known about the session, so keep the cookies and show the error page
+    if (isBackendUnavailableError(error)) throw error;
+    // The backend rejected this session some other way (user deleted, account locked, ...). Drop the
+    // cookies, or every page load would fail on them again.
+    console.error('[auth] The backend rejected this session; clearing its cookies.', error);
+    redirect(Routes.sessionReset);
+  }
+
+  const pendingAgreements = await pendingAgreementsPromise;
 
   if (!currentUser) {
     redirect('/login?error=unauthenticated');

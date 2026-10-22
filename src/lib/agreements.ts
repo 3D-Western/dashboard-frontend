@@ -1,15 +1,9 @@
-import { ApiError, ErrorCodes } from '@/api/client/errors';
+import { isNoSessionError } from '@/api/client/errors';
 import { trainingAPI } from '@/api/client/training';
 import type { Agreement } from '@/types/training';
 
 /** How long the dashboard waits for the agreements check before letting the member through. */
 export const AGREEMENTS_TIMEOUT_MS = 3000;
-
-const NO_SESSION = new Set<string>([
-  ErrorCodes.UNAUTHORIZED,
-  ErrorCodes.SESSION_INVALID,
-  ErrorCodes.SESSION_EXPIRED,
-]);
 
 /**
  * The agreements the signed-in member still has to accept (server side). The layout runs this in
@@ -28,7 +22,7 @@ export async function loadPendingAgreements(): Promise<Agreement[]> {
     });
   } catch (error) {
     // Not signed in: the layout redirects to login, so there is nothing to report
-    if (error instanceof ApiError && NO_SESSION.has(error.code)) return [];
+    if (isNoSessionError(error)) return [];
     console.error(
       '[agreements] Could not check pending agreements; FAILING OPEN, so this member was not asked to accept them on this page load.',
       error,

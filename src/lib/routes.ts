@@ -10,6 +10,8 @@ export const Routes = {
   checkEmail: '/check-email',
   verifyEmail: '/verify-email',
   onboarding: '/onboarding',
+  /** Deletes this browser's auth cookies, then goes to login. For sessions the backend rejects. */
+  sessionReset: '/session/reset',
 
   // Admin routes
   adminUsersManagement: '/admin/users',

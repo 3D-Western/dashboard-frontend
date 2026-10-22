@@ -26,6 +26,10 @@ describe('Routes', () => {
     it('defines onboarding route', () => {
       expect(Routes.onboarding).toBe('/onboarding');
     });
+
+    it('defines session reset route', () => {
+      expect(Routes.sessionReset).toBe('/session/reset');
+    });
   });
 
   describe('user dashboard routes', () => {

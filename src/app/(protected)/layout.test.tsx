@@ -4,6 +4,8 @@ import { validateSession } from '@/lib/auth';
 import { onboardingAPI } from '@/api/client/onboarding';
 import { trainingAPI } from '@/api/client/training';
 import { AgreementsGate } from '@/components/Agreements/AgreementsGate';
+import { ApiError, ErrorCodes } from '@/api/client/errors';
+import { Routes } from '@/lib/routes';
 import { createMockUser } from '@test/utils/mockFactories';
 import { createAgreement } from '@test/utils/trainingFactories';
 import ProtectedLayout from './layout';
@@ -94,5 +96,31 @@ describe('ProtectedLayout agreements gate', () => {
 
     expect(result.type).not.toBe(AgreementsGate);
     consoleError.mockRestore();
+  });
+});
+
+describe('ProtectedLayout session check failures', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    pending.mockResolvedValue([]);
+  });
+
+  it('clears the cookies of a session the backend rejects', async () => {
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    (validateSession as Mock).mockRejectedValue(new ApiError(ErrorCodes.USER_NOT_FOUND));
+
+    await expect(ProtectedLayout({ children: <div /> })).rejects.toThrow('REDIRECT');
+
+    expect(redirect).toHaveBeenCalledWith(Routes.sessionReset);
+    consoleError.mockRestore();
+  });
+
+  it('keeps the cookies and shows the error page when the backend is down', async () => {
+    const error = new ApiError(ErrorCodes.REQUEST_FAILED);
+    (validateSession as Mock).mockRejectedValue(error);
+
+    await expect(ProtectedLayout({ children: <div /> })).rejects.toBe(error);
+
+    expect(redirect).not.toHaveBeenCalled();
   });
 });

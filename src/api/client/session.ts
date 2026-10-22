@@ -9,7 +9,7 @@ import {
 import { apiRequest } from './base';
 import { endpoints } from './endpoints';
 import { getBaseUrl } from './utils';
-import { ApiError, ErrorCodes } from './errors';
+import { isNoSessionError } from './errors';
 import { transformUserResponse } from './transformers';
 import { User } from '@/types/user';
 
@@ -39,12 +39,7 @@ export const sessionApi = {
       };
     } catch (error) {
       // Auth/session errors mean no valid session — expected when checking login state
-      if (
-        error instanceof ApiError &&
-        [ErrorCodes.UNAUTHORIZED, ErrorCodes.SESSION_INVALID, ErrorCodes.SESSION_EXPIRED].includes(
-          error.code,
-        )
-      ) {
+      if (isNoSessionError(error)) {
         return { user: null };
       }
       throw error;

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { ApiError, ErrorCodes } from './errors';
+import { ApiError, ErrorCodes, isBackendUnavailableError, isNoSessionError } from './errors';
 
 describe('ApiError', () => {
   it('creates an ApiError with code and message', () => {
@@ -125,5 +125,41 @@ describe('ErrorCodes', () => {
 
   it('is a frozen object', () => {
     expect(Object.isFrozen(ErrorCodes)).toBe(false); // Object literals are not frozen by default
+  });
+});
+
+describe('isNoSessionError', () => {
+  it.each([ErrorCodes.UNAUTHORIZED, ErrorCodes.SESSION_INVALID, ErrorCodes.SESSION_EXPIRED])(
+    'is true for %s',
+    (code) => {
+      expect(isNoSessionError(new ApiError(code))).toBe(true);
+    },
+  );
+
+  it('is false for other API errors', () => {
+    expect(isNoSessionError(new ApiError(ErrorCodes.USER_NOT_FOUND))).toBe(false);
+  });
+
+  it('is false for errors that are not API errors', () => {
+    expect(isNoSessionError(new Error(ErrorCodes.UNAUTHORIZED))).toBe(false);
+  });
+});
+
+describe('isBackendUnavailableError', () => {
+  it.each([
+    ErrorCodes.REQUEST_FAILED,
+    ErrorCodes.RESPONSE_INVALID_CONTENT_TYPE,
+    ErrorCodes.INTERNAL_SERVER_ERROR,
+  ])('is true for %s', (code) => {
+    expect(isBackendUnavailableError(new ApiError(code))).toBe(true);
+  });
+
+  it('is true for errors that are not API errors', () => {
+    expect(isBackendUnavailableError(new TypeError('fetch failed'))).toBe(true);
+  });
+
+  it('is false when the backend answered with a rejection', () => {
+    expect(isBackendUnavailableError(new ApiError(ErrorCodes.USER_NOT_FOUND))).toBe(false);
+    expect(isBackendUnavailableError(new ApiError(ErrorCodes.ACCOUNT_LOCKED))).toBe(false);
   });
 });

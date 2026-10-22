@@ -6,7 +6,12 @@ import { ThemeToggle } from '@/components/ThemeToggle';
 export const dynamic = 'force-dynamic';
 
 export default async function AuthLayout({ children }: { children: React.ReactNode }) {
-  const currentUser = await validateSession();
+  // FAILS OPEN: these pages are how a member gets a working session back, so they must render even
+  // when the session check breaks (a stale cookie the backend rejects, the backend being down, ...).
+  const currentUser = await validateSession().catch((error: unknown) => {
+    console.error('[auth] Could not check the session; showing the page as logged out.', error);
+    return null;
+  });
 
   // If user is already authenticated, redirect to dashboard
   if (currentUser) {

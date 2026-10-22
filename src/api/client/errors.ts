@@ -40,3 +40,30 @@ export const ErrorCodes = {
   TOO_MANY_OTP_ATTEMPTS: 'TOO_MANY_OTP_ATTEMPTS',
   ACCOUNT_LOCKED: 'ACCOUNT_LOCKED',
 };
+
+/** Codes the backend returns when a request carries no usable session. */
+const NO_SESSION_CODES = new Set<string>([
+  ErrorCodes.UNAUTHORIZED,
+  ErrorCodes.SESSION_INVALID,
+  ErrorCodes.SESSION_EXPIRED,
+]);
+
+/** Codes meaning the backend could not be reached or failed, as opposed to rejecting the request. */
+const BACKEND_UNAVAILABLE_CODES = new Set<string>([
+  ErrorCodes.REQUEST_FAILED,
+  ErrorCodes.RESPONSE_INVALID_CONTENT_TYPE,
+  ErrorCodes.INTERNAL_SERVER_ERROR,
+]);
+
+/** The request had no session, or an expired or invalid one: the visitor is logged out. */
+export function isNoSessionError(error: unknown): error is ApiError {
+  return error instanceof ApiError && NO_SESSION_CODES.has(error.code);
+}
+
+/**
+ * The backend was down, unreachable or broken, so nothing is known about the session. Anything
+ * that is not an ApiError counts too, since it did not come from a backend answer.
+ */
+export function isBackendUnavailableError(error: unknown): boolean {
+  return !(error instanceof ApiError) || BACKEND_UNAVAILABLE_CODES.has(error.code);
+}

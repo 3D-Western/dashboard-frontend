@@ -1,4 +1,4 @@
-import { ApiError } from '@/api/client/errors';
+import { isNoSessionError } from '@/api/client/errors';
 import { redirect } from 'next/navigation';
 
 /**
@@ -19,12 +19,7 @@ export async function withSessionErrorHandling<T>(fn: () => Promise<T>): Promise
     return await fn();
   } catch (error) {
     // If this is a session error, redirect to login
-    if (
-      error instanceof ApiError &&
-      (error.code === 'SESSION_INVALID' ||
-        error.code === 'SESSION_EXPIRED' ||
-        error.code === 'UNAUTHORIZED')
-    ) {
+    if (isNoSessionError(error)) {
       redirect('/login?error=unauthenticated');
     }
     // Re-throw other errors to be caught by error boundaries
