@@ -1,4 +1,3 @@
-import { TrainingLevel } from '@/types/training';
 import { OnboardingAnswers } from '@/types/onboarding';
 import { AccountStatus } from '@/types/user';
 
@@ -9,17 +8,13 @@ export interface User {
   password: string;
   email: string;
   groups: string[]; // group keys, e.g. ['members'] or ['super_admins']
-  experience: string;
   createdDate?: string;
-  trainingLevel?: TrainingLevel;
   // Mirrors backend's real AccountStatus enum/column. Absent/undefined is treated as 'Active'
   // (see db.ts) so existing seeded users, which never set this field, aren't retroactively locked.
   accountStatus?: AccountStatus;
   accountStatusReason?: string | null;
-  // Raw backend-shaped values (e.g. 'Undeclared', 'Beginner') for the AdminUserProfile mock
-  // responses — separate from the unrelated, unused `experience` field above.
+  // Raw backend-shaped value (e.g. 'Undeclared') for the AdminUserProfile mock responses.
   faculty?: string;
-  experienceLevel?: string | null;
   // Absent/undefined is treated as completed (see db.ts), matching the emailVerified convention
   // below — existing seeded users, which never set this field, aren't retroactively sent back
   // through onboarding. Only a newly mock-signed-up user starts with this explicitly `false`.
@@ -29,6 +24,9 @@ export interface User {
   // set this field, aren't retroactively blocked from logging in. Only a newly mock-signed-up
   // user (explicitly `false`) is gated pending verification.
   emailVerified?: boolean;
+  // Mirrors the backend's phone_number and sms consent. smsOptIn is only ever true alongside a number.
+  phoneNumber?: string | null;
+  smsOptIn?: boolean;
 }
 
 export interface File {
@@ -122,10 +120,15 @@ export interface InvitationCreator {
   lastName: string;
 }
 
+export type MemberType = 'STAFF' | 'ALUMNI' | 'COMMUNITY' | 'ORGANISATION';
+
 export interface Invitation {
   id: number;
   studentId: number;
   email: string;
+  firstName: string | null;
+  lastName: string | null;
+  memberType: MemberType;
   invitationCode: string;
   status: InvitationStatus;
   createdAt: string;

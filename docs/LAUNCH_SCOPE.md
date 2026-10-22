@@ -2,8 +2,8 @@
 
 For the initial launch, this dashboard intentionally only exposes:
 
-- **User-facing**: Dashboard, Print History, My Jobs, New Job (all 4 forms), Settings
-- **Admin-facing**: Admin Dashboard, Job Management, Invitation Management, User Management
+- **User-facing**: Dashboard, My Jobs (which replaced Print History and the New Job picker), the 3D print job form, Settings
+- **Admin-facing**: Admin Dashboard, Job Management, User Management (with the Invitations tab and "Add a non-Western member")
 
 Everything else already exists in the codebase and works — it's just hidden from navigation
 and blocked from direct access until it's ready for a future launch:
@@ -14,6 +14,9 @@ and blocked from direct access until it's ready for a future launch:
 - Equipment Bookings admin (`/admin/bookings`)
 - Booking Requests (`/admin/requests`)
 - Equipment Management (`/admin/equipment` and `/admin/equipment/[id]/capacity`)
+- CNC, Laser Cutting and Water Jet jobs (`/dashboard/jobs/cnc/new`, `/dashboard/jobs/laser-cutting/new`,
+  `/dashboard/jobs/water-jet/new`) and the job-type picker (`/dashboard/jobs/new`). These redirect to
+  the 3D print form.
 
 Nothing about permissions, data, or the pages themselves changed — this is purely a
 nav-visibility + route-access gate, applied to every user regardless of permission level
@@ -28,14 +31,18 @@ When a held-back feature is ready to ship, reverse both parts for that feature:
 Each blocked route has a `layout.tsx` at the root of its subtree containing a `// TEMP:` comment
 and nothing but a `redirect(...)` call. Delete the whole file:
 
-| Feature                    | File to delete                                      |
-| -------------------------- | --------------------------------------------------- |
-| Equipment Booking          | `src/app/(protected)/dashboard/bookings/layout.tsx` |
-| IAM Management             | `src/app/(protected)/admin/iam/layout.tsx`          |
-| Audit Log                  | `src/app/(protected)/admin/audit/layout.tsx`        |
-| Equipment Bookings (admin) | `src/app/(protected)/admin/bookings/layout.tsx`     |
-| Booking Requests           | `src/app/(protected)/admin/requests/layout.tsx`     |
-| Equipment Management       | `src/app/(protected)/admin/equipment/layout.tsx`    |
+| Feature                    | File to delete                                                                              |
+| -------------------------- | ------------------------------------------------------------------------------------------- |
+| Equipment Booking          | `src/app/(protected)/dashboard/bookings/layout.tsx`                                         |
+| IAM Management             | `src/app/(protected)/admin/iam/layout.tsx`                                                  |
+| Audit Log                  | `src/app/(protected)/admin/audit/layout.tsx`                                                |
+| Equipment Bookings (admin) | `src/app/(protected)/admin/bookings/layout.tsx`                                             |
+| Booking Requests           | `src/app/(protected)/admin/requests/layout.tsx`                                             |
+| Equipment Management       | `src/app/(protected)/admin/equipment/layout.tsx`                                            |
+| CNC jobs                   | `src/app/(protected)/dashboard/jobs/cnc/layout.tsx`                                         |
+| Laser Cutting jobs         | `src/app/(protected)/dashboard/jobs/laser-cutting/layout.tsx`                               |
+| Water Jet jobs             | `src/app/(protected)/dashboard/jobs/water-jet/layout.tsx`                                   |
+| Job-type picker            | `src/app/(protected)/dashboard/jobs/new/layout.tsx` (delete once any second job type ships) |
 
 ### 2. Re-add its nav entry
 
@@ -52,6 +59,11 @@ and nothing but a `redirect(...)` call. Delete the whole file:
   `permission` values and tile JSX for each are in the git history of both files — check out the
   version just before this launch-scope change landed (`git log -p -- src/components/AppSidebar/index.tsx`)
   and copy the relevant block back in, rather than reconstructing from scratch.
+
+- **Other job types** — there's no nav entry to re-add. Delete the job-type guard(s) above, point the
+  "Create job" button on My Jobs (`src/app/(protected)/dashboard/jobs/page.tsx`) back at
+  `Routes.jobs.newJob`, and add the new statuses/categories to
+  `src/app/(protected)/dashboard/jobs/lib/job-stages.ts` if they need their own wording.
 
 ### 3. Update tests
 

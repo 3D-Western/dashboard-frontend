@@ -1,4 +1,5 @@
 'use client';
+import { PageContainer } from '@/components/PageContainer';
 
 import { useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
@@ -41,7 +42,7 @@ export default function BookingsPage() {
   }, [bookings, selectedEquipment]);
 
   return (
-    <div className="container space-y-8 p-6">
+    <PageContainer className="space-y-8 p-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <PageTitle
           title="Equipment Schedule"
@@ -60,7 +61,7 @@ export default function BookingsPage() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
+      <div className="grid grid-cols-1 gap-8 xl:grid-cols-3">
         {/* Main Calendar Section */}
         <div className="space-y-4 lg:col-span-2">
           <div className="flex items-center justify-between">
@@ -119,6 +120,6 @@ export default function BookingsPage() {
           </div>
         </div>
       </div>
-    </div>
+    </PageContainer>
   );
 }

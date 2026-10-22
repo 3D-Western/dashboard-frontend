@@ -1,15 +1,8 @@
-import * as React from 'react';
+import { useBelowWidth } from './useBelowWidth';
 
-const MOBILE_BREAKPOINT = 768;
+/** Phone-sized window (below Tailwind `md`, 768 px): table rows become cards, lists switch layout. */
+export const MOBILE_BREAKPOINT = 768;
 
 export function useIsMobile() {
-  return React.useSyncExternalStore(
-    (onStoreChange) => {
-      const mediaQuery = window.matchMedia(`(max-width: ${MOBILE_BREAKPOINT - 1}px)`);
-      mediaQuery.addEventListener('change', onStoreChange);
-      return () => mediaQuery.removeEventListener('change', onStoreChange);
-    },
-    () => window.innerWidth < MOBILE_BREAKPOINT,
-    () => false,
-  );
+  return useBelowWidth(MOBILE_BREAKPOINT);
 }

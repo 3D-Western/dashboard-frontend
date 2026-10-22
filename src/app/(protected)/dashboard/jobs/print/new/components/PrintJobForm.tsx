@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { z } from 'zod';
@@ -18,35 +19,29 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { UnsavedChangesDialog } from '@/components/UnsavedChangesDialog';
-import { ProjectPurposeField } from '@/components/ProjectPurposeField';
 import { jobApi } from '@/api/client/job';
+import { ApiError, ErrorCodes } from '@/api/client/errors';
 import { calculateFileChecksum } from '@/lib/file-utils';
 import { Routes } from '@/lib/routes';
 import { toast } from 'sonner';
 import { CreateJobRequest } from '@/api/types';
-
-// Type definitions for form options
-type MaterialOption = {
-  readonly value: string;
-  readonly label: string;
-};
-
-const DESIGN_INTENT_OPTIONS: readonly MaterialOption[] = [
-  { value: 'functional', label: 'Optimized for standard fit, practical use, and assemblies' },
-  { value: 'visual', label: 'Optimized for appearance, aesthetics, and non-functional display' },
-  { value: 'structural', label: 'Optimized for load-bearing, high-stress, or tool-like use' },
-] as const;
+import { PurposeChips } from './PurposeChips';
+import { DesignIntentCards } from './DesignIntentCards';
+import { OrientationLockNotice } from '@/components/Training/OrientationLockNotice';
+import { TrainingErrorCodes } from '@/api/client/training-errors';
 
 const formSchema = z.object({
-  jobName: z.string().min(1, { message: 'Must have a name for the print request' }).max(30),
+  jobName: z
+    .string()
+    .min(1, { message: 'Must have a name for the print request' })
+    .max(30, { message: 'Keep it to 30 characters or fewer' }),
   description: z
     .string()
     .min(2, { message: 'Must have a description for the print request' })
     .max(200),
-  purpose: z.string().min(1, { message: 'Select a purpose' }),
-  design_intent: z.string().min(1, { message: 'Select a design intent' }),
+  purpose: z.string().min(1, { message: "Select what it's for" }),
+  design_intent: z.string().min(1, { message: 'Select how it will be used' }),
   file: z.any().refine((f) => f instanceof File, { message: 'Please upload an STL file' }),
 });
 
@@ -56,6 +51,8 @@ type NewPrintFormProps = {
 
 export default function NewPrintForm({ mockMode = false }: NewPrintFormProps = {}) {
   const router = useRouter();
+  // Set when the server refuses the submit because Maker Orientation isn't done
+  const [orientationRequired, setOrientationRequired] = useState(false);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -112,9 +109,20 @@ export default function NewPrintForm({ mockMode = false }: NewPrintFormProps = {
       toast.success('Print request submitted successfully');
 
       // Navigate to dashboard and force refresh to show new data
-      router.push(Routes.jobs.home);
+      router.push(Routes.jobs.printSubmitted);
       router.refresh();
     } catch (err) {
+      if (err instanceof ApiError && err.code === TrainingErrorCodes.ORIENTATION_REQUIRED) {
+        setOrientationRequired(true);
+        toast.error('Finish Maker Orientation to submit prints.');
+        return;
+      }
+      if (err instanceof ApiError && err.code === ErrorCodes.RATE_LIMIT_EXCEEDED) {
+        toast.error(
+          "You've reached your print limit for now. You can submit again once it resets.",
+        );
+        return;
+      }
       toast.error(
         'Failed to submit print request. ' + (err instanceof Error ? err.message : 'Unknown error'),
       );
@@ -123,18 +131,30 @@ export default function NewPrintForm({ mockMode = false }: NewPrintFormProps = {
 
   return (
     <div className="w-full max-w-5xl">
+      {orientationRequired && <OrientationLockNotice interrupt className="mb-8" />}
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
           <FormField
             control={form.control}
             name="jobName"
             render={({ field }) => (
               <FormItem>
-                <FormLabel className="text-lg">Project Title</FormLabel>
+                <FormLabel className="text-lg">Project title</FormLabel>
                 <FormControl>
-                  <Input placeholder="e.g. Robot Arm Gear – Revision B" {...field} />
+                  <Input placeholder="e.g. Robot Arm Gear – Revision B" maxLength={30} {...field} />
                 </FormControl>
-                <FormMessage />
+                <div className="flex items-center justify-between">
+                  <FormMessage />
+                  <span
+                    className={`text-sm ${
+                      (field.value?.length || 0) >= 27
+                        ? 'text-amber-600 dark:text-amber-500'
+                        : 'text-muted-foreground'
+                    }`}
+                  >
+                    {field.value?.length || 0}/30
+                  </span>
+                </div>
               </FormItem>
             )}
           />
@@ -143,7 +163,7 @@ export default function NewPrintForm({ mockMode = false }: NewPrintFormProps = {
             name="file"
             render={({ field }) => (
               <FormItem>
-                <FormLabel className="text-lg">Upload STL</FormLabel>
+                <FormLabel className="text-lg">STL file</FormLabel>
                 <FormControl>
                   <FileUploadDropzone
                     initialFile={field.value as File | undefined}
@@ -172,9 +192,8 @@ export default function NewPrintForm({ mockMode = false }: NewPrintFormProps = {
 
               return (
                 <FormItem>
-                  <FormLabel className="text-lg">Print Description</FormLabel>
-
-                  <FormDescription>Describe what you are making (1-2 sentences).*</FormDescription>
+                  <FormLabel className="text-lg">Description</FormLabel>
+                  <FormDescription>What are you making? One or two sentences.</FormDescription>
                   <FormControl>
                     <Textarea
                       placeholder="e.g. A replacement gear for a robot arm in my MME 4499 capstone project."
@@ -202,38 +221,17 @@ export default function NewPrintForm({ mockMode = false }: NewPrintFormProps = {
             }}
           />
 
-          <ProjectPurposeField />
-          <FormField
-            control={form.control}
-            name="design_intent"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel className="text-lg">Design Intent</FormLabel>
-                <FormDescription>How would you classify this object?*</FormDescription>
-                <FormControl>
-                  <RadioGroup onValueChange={field.onChange} value={field.value ?? 'grid'}>
-                    <div className="mt-2 flex flex-col space-y-2">
-                      {DESIGN_INTENT_OPTIONS.map((option) => (
-                        <div key={option.value} className="flex items-center space-x-2">
-                          <RadioGroupItem value={option.value} id={option.value} />
-                          <label htmlFor={option.value}>{option.label}</label>
-                        </div>
-                      ))}
-                    </div>
-                  </RadioGroup>
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <div className="flex justify-end border-t pt-6">
+          <PurposeChips />
+          <DesignIntentCards />
+          {/* Phones: the submit stays in reach at the bottom of a long form. Desktop: inline. */}
+          <div className="sticky bottom-0 z-10 flex justify-end border-t bg-background py-3 md:static md:bg-transparent md:pt-6 md:pb-0">
             <Button
               type="submit"
               size="default"
               variant="default"
-              disabled={form.formState.isSubmitting}
+              disabled={form.formState.isSubmitting || orientationRequired}
               aria-busy={form.formState.isSubmitting}
-              className="min-w-[120px]"
+              className="min-h-11 w-full md:w-auto md:min-w-[120px] fine:min-h-0"
             >
               {form.formState.isSubmitting ? (
                 <span className="inline-flex items-center">
@@ -241,7 +239,7 @@ export default function NewPrintForm({ mockMode = false }: NewPrintFormProps = {
                   Submitting...
                 </span>
               ) : (
-                'Submit'
+                'Submit job'
               )}
             </Button>
           </div>

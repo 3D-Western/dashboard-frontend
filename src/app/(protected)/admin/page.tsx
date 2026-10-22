@@ -1,9 +1,11 @@
+import { PageContainer } from '@/components/PageContainer';
 import type { Metadata } from 'next';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Printer, TicketPlus, Users } from 'lucide-react';
+import { ClipboardCheck, DoorOpen, PenSquare, Printer, Users } from 'lucide-react';
 import Link from 'next/link';
 import PageTitle from '@/components/PageTitle';
 import { Routes } from '@/lib/routes';
+import { AccessAdminRoutes } from '@/lib/access-admin-routes';
 import { validateSession } from '@/lib/auth';
 import { hasPermission } from '@/types/user';
 import { PERMISSIONS } from '@/constants/permissions';
@@ -20,7 +22,7 @@ export default async function AdminDashboardPage() {
   const user = await validateSession();
 
   return (
-    <div className="container space-y-6 p-6">
+    <PageContainer className="space-y-6 p-6">
       <PageTitle title="Admin Dashboard" description="Administrative dashboard for 3D Western" />
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
@@ -36,7 +38,8 @@ export default async function AdminDashboardPage() {
               </CardHeader>
               <CardContent>
                 <p className="text-sm text-muted-foreground">
-                  View and manage all user accounts, roles, and access levels.
+                  View and manage all user accounts, add staff, alumni, community and organisation
+                  members without a Western email, and manage their invitations.
                 </p>
               </CardContent>
             </Card>
@@ -62,25 +65,66 @@ export default async function AdminDashboardPage() {
           </Link>
         )}
 
-        {user && hasPermission(user, PERMISSIONS.INVITATIONS_LIST) && (
-          <Link href={Routes.adminInvitationManagement}>
+        {user && hasPermission(user, PERMISSIONS.TRAINING_SIGNOFF) && (
+          <Link href={Routes.adminSignoffs}>
             <Card className="cursor-pointer transition-colors hover:bg-accent">
               <CardHeader>
                 <div className="flex items-center gap-2">
-                  <TicketPlus className="h-5 w-5 text-muted-foreground" />
-                  <CardTitle>Invitation Management</CardTitle>
+                  <ClipboardCheck className="h-5 w-5 text-muted-foreground" />
+                  <CardTitle>Training Sign-offs</CardTitle>
                 </div>
-                <CardDescription>Manage user invitations</CardDescription>
+                <CardDescription>Check students off in person</CardDescription>
               </CardHeader>
               <CardContent>
                 <p className="text-sm text-muted-foreground">
-                  Create, view, and revoke invitations for new users.
+                  See who passed a machine training online and approve their in-person sign-off.
+                </p>
+              </CardContent>
+            </Card>
+          </Link>
+        )}
+
+        {user &&
+          (hasPermission(user, PERMISSIONS.TRAINING_AUTHOR) ||
+            hasPermission(user, PERMISSIONS.TRAINING_PUBLISH)) && (
+            <Link href="/admin/training">
+              <Card className="cursor-pointer transition-colors hover:bg-accent">
+                <CardHeader>
+                  <div className="flex items-center gap-2">
+                    <PenSquare className="h-5 w-5 text-muted-foreground" />
+                    <CardTitle>Training Editor</CardTitle>
+                  </div>
+                  <CardDescription>Create, edit and publish trainings</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-sm text-muted-foreground">
+                    Edit videos, readings and quizzes, manage equipment, import a training and
+                    correct questions.
+                  </p>
+                </CardContent>
+              </Card>
+            </Link>
+          )}
+        {user && hasPermission(user, PERMISSIONS.ACCESS_ADMIN) && (
+          <Link href={AccessAdminRoutes.home}>
+            <Card className="cursor-pointer transition-colors hover:bg-accent">
+              <CardHeader>
+                <div className="flex items-center gap-2">
+                  <DoorOpen className="h-5 w-5 text-muted-foreground" />
+                  <CardTitle>Access System</CardTitle>
+                </div>
+                <CardDescription>Who is in, card readers and plugs</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-muted-foreground">
+                  See who is checked in and which machines are running, register gatekeepers and
+                  devices, and unlink lost cards.
                 </p>
               </CardContent>
             </Card>
           </Link>
         )}
       </div>
-    </div>
+    </PageContainer>
   );
 }

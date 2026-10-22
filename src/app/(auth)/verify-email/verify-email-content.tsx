@@ -163,7 +163,7 @@ export function VerifyEmailContent({ className, ...props }: React.ComponentProps
               )}
             </div>
           </div>
-          <div className="relative hidden min-h-[500px] bg-muted md:block">
+          <div className="relative hidden min-h-[500px] md:block">
             <BrandMark className="p-12" />
           </div>
         </CardContent>

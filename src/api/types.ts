@@ -36,7 +36,6 @@ export interface AdminUserProfileResponse {
   lastName: string;
   createdAt: string;
   updatedAt: string;
-  experienceLevel: string | null;
   faculty: string;
   accountStatus: string;
   accountStatusReason: string | null;
@@ -72,15 +71,19 @@ export interface ApiVerifyMfaResponse {
 }
 
 export interface ApiSignupRequest {
-  studentId: number;
+  // Left out when signing up with an invitationCode (the invitation carries the student number)
+  studentId?: number;
   email: string;
+  // For people without a @uwo.ca email: the code an admin sent to that exact address
+  invitationCode?: string;
   password: string;
   firstName: string;
   lastName: string;
-  // Backend RegisterRequest requires both — sent as the backend enum names
-  // (e.g. "Engineering", "Beginner").
+  // Sent as the backend enum name (e.g. "Engineering").
   faculty: string;
-  experienceLevel: string;
+  // Optional phone number and separate texting consent (see lib/phone.ts). Omit both to skip.
+  phoneNumber?: string | null;
+  smsOptIn?: boolean;
 }
 
 export interface VerifyEmailResponse {

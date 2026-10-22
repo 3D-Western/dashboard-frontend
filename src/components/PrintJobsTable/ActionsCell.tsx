@@ -16,6 +16,7 @@ import {
 import { ChangeStatusDialog } from './ChangeStatusDialog';
 import { DeleteJobDialog } from './DeleteJobDialog';
 import { ReorderJobDialog } from './ReorderJobDialog';
+import { copyToClipboard } from '@/lib/clipboard';
 
 interface ActionsCellProps {
   printJob: PrintJob;
@@ -58,7 +59,7 @@ export function ActionsCell({ printJob, mode, onStatusChanged, onJobDeleted }: A
         <DropdownMenuTrigger asChild>
           <Button
             variant="ghost"
-            className="h-8 w-8 p-0"
+            className="h-11 w-11 p-0 fine:h-8 fine:w-8"
             aria-label={`Actions for ${printJob.name}`}
             aria-haspopup="menu"
           >
@@ -70,7 +71,7 @@ export function ActionsCell({ printJob, mode, onStatusChanged, onJobDeleted }: A
           <DropdownMenuItem
             onSelect={async () => {
               try {
-                await navigator.clipboard.writeText(printJob.id);
+                await copyToClipboard(printJob.id);
               } catch (error) {
                 console.error('Failed to copy Job ID to clipboard', error);
               }

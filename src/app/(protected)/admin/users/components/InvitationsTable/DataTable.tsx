@@ -1,0 +1,118 @@
+'use client';
+
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+import {
+  ColumnDef,
+  ColumnFiltersState,
+  Row,
+  SortingState,
+  flexRender,
+  getCoreRowModel,
+  getFilteredRowModel,
+  getSortedRowModel,
+  useReactTable,
+} from '@tanstack/react-table';
+import type { ReactNode } from 'react';
+import { useState } from 'react';
+import { DataTablePagination } from '@/components/DataTablePagination';
+import { ResponsiveTable } from '@/components/ResponsiveTable';
+import { PaginationMetadata } from '@/types/common';
+
+interface DataTableProps<TData, TValue> {
+  columns: ColumnDef<TData, TValue>[];
+  data: TData[];
+  // Accept either the full PaginationMetadata or a lightweight partial
+  // shape (used by some tests) for compatibility.
+  pagination: PaginationMetadata | Partial<PaginationMetadata>;
+  /** The phone (below md) version of one row. */
+  renderCard: (row: Row<TData>) => ReactNode;
+}
+
+export function DataTable<TData, TValue>({
+  columns,
+  data,
+  pagination,
+  renderCard,
+}: DataTableProps<TData, TValue>) {
+  'use no memo';
+  const [sorting, setSorting] = useState<SortingState>([]);
+  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
+
+  // eslint-disable-next-line react-hooks/incompatible-library -- TanStack Table is known to be incompatible with React Compiler
+  const table = useReactTable({
+    data,
+    columns,
+    getCoreRowModel: getCoreRowModel(),
+    onSortingChange: setSorting,
+    getSortedRowModel: getSortedRowModel(),
+    onColumnFiltersChange: setColumnFilters,
+    getFilteredRowModel: getFilteredRowModel(),
+    state: { sorting, columnFilters },
+    manualPagination: true,
+  });
+
+  return (
+    <div className="space-y-4">
+      {/* The table is about 900 px wide with its six columns: cards until it fits beside the sidebar */}
+      <ResponsiveTable
+        items={table.getRowModel().rows}
+        getKey={(row) => row.id}
+        renderCard={renderCard}
+        emptyMessage="No invitations found."
+        cardsBelow="xl"
+      >
+        <div className="overflow-hidden rounded-lg border bg-card">
+          <Table aria-label="Invitations table" aria-describedby="invitations-table-caption">
+            <caption id="invitations-table-caption" className="sr-only">
+              Invitations with status, email, student ID, and creation information. Sortable by
+              date.
+            </caption>
+            <TableHeader>
+              {table.getHeaderGroups().map((headerGroup) => (
+                <TableRow key={headerGroup.id}>
+                  {headerGroup.headers.map((header) => {
+                    return (
+                      <TableHead key={header.id}>
+                        {header.isPlaceholder
+                          ? null
+                          : flexRender(header.column.columnDef.header, header.getContext())}
+                      </TableHead>
+                    );
+                  })}
+                </TableRow>
+              ))}
+            </TableHeader>
+            <TableBody>
+              {table.getRowModel().rows?.length ? (
+                table.getRowModel().rows.map((row) => (
+                  <TableRow key={row.id}>
+                    {row.getVisibleCells().map((cell) => (
+                      <TableCell key={cell.id}>
+                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                ))
+              ) : (
+                <TableRow>
+                  <TableCell colSpan={columns.length} className="h-24 text-center">
+                    No invitations found.
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </div>
+      </ResponsiveTable>
+
+      <DataTablePagination table={table} pagination={pagination} />
+    </div>
+  );
+}

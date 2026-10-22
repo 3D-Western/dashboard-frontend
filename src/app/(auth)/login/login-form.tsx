@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { FieldDescription } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
+import { PasswordInput } from '@/components/ui/password-input';
 import {
   Form,
   FormControl,
@@ -32,9 +33,9 @@ const formSchema = z.object({
     .refine(
       (val) => {
         const num = parseInt(val, 10);
-        return num >= 251000000 && num <= 251999999;
+        return num >= 100000000 && num <= 999999999;
       },
-      { message: 'Student ID must be between 251000000 and 251999999' },
+      { message: 'Student ID must be exactly 9 digits' },
     ),
   password: z.string().min(1, 'Password is required'),
 });
@@ -206,9 +207,15 @@ export function LoginForm({
       )}
 
       <Card className="overflow-hidden p-0">
-        <CardContent className="grid p-0 md:grid-cols-2">
+        <CardContent className="grid p-0 lg:grid-cols-2 short:grid-cols-1">
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="p-6 md:p-8">
+            {/* method="post": if someone submits before the page's JavaScript has loaded, the
+                browser's fallback submit must not put the password in the URL */}
+            <form
+              method="post"
+              onSubmit={form.handleSubmit(onSubmit)}
+              className="flex flex-col justify-center p-6 md:p-8"
+            >
               <div className="grid gap-6">
                 <div className="flex flex-col items-center gap-2 text-center">
                   <h1 className="text-2xl font-bold">Welcome back</h1>
@@ -224,7 +231,12 @@ export function LoginForm({
                     <FormItem>
                       <FormLabel>Student ID</FormLabel>
                       <FormControl>
-                        <Input placeholder="251000000" {...field} />
+                        <Input
+                          placeholder="251000000"
+                          inputMode="numeric"
+                          autoComplete="username"
+                          {...field}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -236,42 +248,54 @@ export function LoginForm({
                   name="password"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Password</FormLabel>
+                      <div className="flex items-center justify-between gap-2">
+                        <FormLabel>Password</FormLabel>
+                        <a
+                          href={Routes.forgotPassword}
+                          className="inline-flex min-h-11 items-center px-1 text-sm text-muted-foreground underline-offset-2 hover:text-purple-light hover:underline fine:min-h-0 fine:px-0 fine:text-xs"
+                        >
+                          Forgot password?
+                        </a>
+                      </div>
                       <FormControl>
-                        <Input type="password" {...field} />
+                        <PasswordInput autoComplete="current-password" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
 
-                <div className="text-right">
-                  <a
-                    href={`${Routes.forgotPassword}`}
-                    className="text-sm underline-offset-2 hover:underline"
-                  >
-                    Forgot your password?
-                  </a>
-                </div>
-
                 <Button type="submit" disabled={isLoading}>
                   {isLoading ? 'Logging in...' : 'Login'}
                 </Button>
 
                 <FieldDescription className="text-center">
-                  Don&apos;t have an account? <a href={`${Routes.signup}`}>Sign up</a>
+                  Don&apos;t have an account?{' '}
+                  <a
+                    href={`${Routes.signup}`}
+                    className="inline-flex min-h-11 items-center px-1 fine:min-h-0 fine:px-0"
+                  >
+                    Sign up
+                  </a>
                 </FieldDescription>
               </div>
             </form>
           </Form>
-          <div className="relative hidden min-h-[500px] bg-muted md:block">
+          <div className="relative hidden min-h-[500px] lg:block short:hidden">
             <BrandMark className="p-12" />
           </div>
         </CardContent>
       </Card>
       <FieldDescription className="px-6 text-center">
-        By clicking continue, you agree to our <a href="#">Terms of Service</a> and{' '}
-        <a href="#">Privacy Policy</a>.
+        By clicking continue, you agree to our{' '}
+        <a href="#" className="inline-flex min-h-11 items-center px-1 fine:min-h-0 fine:px-0">
+          Terms of Service
+        </a>{' '}
+        and{' '}
+        <a href="#" className="inline-flex min-h-11 items-center px-1 fine:min-h-0 fine:px-0">
+          Privacy Policy
+        </a>
+        .
       </FieldDescription>
     </div>
   );

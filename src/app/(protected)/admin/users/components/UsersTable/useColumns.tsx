@@ -16,6 +16,7 @@ import { ArrowUpDown, MoreHorizontal } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { AccountStatusBadge } from '@/components/AccountStatusBadge';
 import { ChangeAccountStatusDialog } from './ChangeAccountStatusDialog';
+import { copyToClipboard } from '@/lib/clipboard';
 
 interface UseColumnsOptions {
   onStatusChanged?: (studentId: number, updated: AdminUserProfile) => void;
@@ -98,7 +99,7 @@ export const useColumns = (opts: UseColumnsOptions = {}) => {
                 <DropdownMenuTrigger asChild>
                   <Button
                     variant="ghost"
-                    className="h-8 w-8 p-0"
+                    className="h-11 w-11 p-0 fine:h-8 fine:w-8"
                     aria-label={`Actions for ${fullName}`}
                     aria-haspopup="menu"
                   >
@@ -110,7 +111,7 @@ export const useColumns = (opts: UseColumnsOptions = {}) => {
                   <DropdownMenuItem
                     onSelect={async () => {
                       try {
-                        await navigator.clipboard.writeText(adminUser.studentId.toString());
+                        await copyToClipboard(adminUser.studentId.toString());
                       } catch (error) {
                         console.error('Failed to copy Student ID to clipboard', error);
                       }

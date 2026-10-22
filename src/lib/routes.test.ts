@@ -40,6 +40,10 @@ describe('Routes', () => {
     it('defines jobs home route', () => {
       expect(Routes.jobs.home).toBe('/dashboard/jobs');
     });
+
+    it('defines the jobs route used right after a print is submitted', () => {
+      expect(Routes.jobs.printSubmitted).toBe('/dashboard/jobs?submitted=1');
+    });
   });
 
   describe('admin routes', () => {

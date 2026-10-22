@@ -1,3 +1,4 @@
+import { PageContainer } from '@/components/PageContainer';
 import type { Metadata } from 'next';
 import PageTitle from '@/components/PageTitle';
 import { validateSession } from '@/lib/auth';
@@ -23,12 +24,12 @@ export default async function CapacityManagementPage({ params }: CapacityPagePro
   const { id } = await params;
 
   return (
-    <div className="container space-y-6 p-6">
+    <PageContainer className="space-y-6 p-6">
       <PageTitle
         title="Capacity & Restrictions"
         description="Manage booking capacity and restrictions for a piece of equipment"
       />
       <CapacityManagementClient equipmentId={id} />
-    </div>
+    </PageContainer>
   );
 }

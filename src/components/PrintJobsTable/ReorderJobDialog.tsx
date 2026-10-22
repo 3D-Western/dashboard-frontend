@@ -20,7 +20,7 @@ import { Button } from '@/components/ui/button';
 import { Loader2 } from 'lucide-react';
 
 interface ReorderJobDialogProps {
-  printJob: PrintJob;
+  printJob: Pick<PrintJob, 'id' | 'name' | 'description'>;
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
@@ -50,7 +50,7 @@ function ReorderJobDialogContent({ printJob, onOpenChange }: ReorderJobDialogCon
     try {
       await jobApi.reorder(printJob.id, { name: name.trim(), description: description.trim() });
 
-      toast.success('Job cloned successfully', {
+      toast.success('New job created', {
         description: `"${name.trim()}" was added to your jobs.`,
       });
 
@@ -58,8 +58,8 @@ function ReorderJobDialogContent({ printJob, onOpenChange }: ReorderJobDialogCon
       router.refresh();
     } catch (error) {
       console.error('Failed to reorder job:', error);
-      toast.error('Failed to clone job', {
-        description: error instanceof Error ? error.message : 'An error occurred while cloning',
+      toast.error("Couldn't create the new job", {
+        description: error instanceof Error ? error.message : 'An error occurred while copying',
       });
     } finally {
       setIsSubmitting(false);
@@ -75,9 +75,10 @@ function ReorderJobDialogContent({ printJob, onOpenChange }: ReorderJobDialogCon
   return (
     <DialogContent>
       <DialogHeader>
-        <DialogTitle>Reorder Job</DialogTitle>
+        <DialogTitle>Print again</DialogTitle>
         <DialogDescription>
-          Clone &quot;{printJob.name}&quot; using the same file with a new name and description.
+          Create a new job from &quot;{printJob.name}&quot; using the same file. You can change the
+          name and description first.
         </DialogDescription>
       </DialogHeader>
 
@@ -109,7 +110,7 @@ function ReorderJobDialogContent({ printJob, onOpenChange }: ReorderJobDialogCon
         </Button>
         <Button onClick={handleConfirm} disabled={isSubmitting || !name.trim()}>
           {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-          {isSubmitting ? 'Cloning...' : 'Clone Job'}
+          {isSubmitting ? 'Creating...' : 'Create job'}
         </Button>
       </DialogFooter>
     </DialogContent>

@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { render, screen } from '@test/utils/render';
-import { InvitationInfoDialog } from '@/app/(protected)/admin/invitations/components/InvitationsTable/InvitationInfoDialog';
+import { InvitationInfoDialog } from '@/app/(protected)/admin/users/components/InvitationsTable/InvitationInfoDialog';
 import { createMockInvitation } from '@test/utils/mockFactories';
 import type { InvitationCreator } from '@/types/invitation';
 

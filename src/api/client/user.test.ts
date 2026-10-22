@@ -108,34 +108,6 @@ describe('userApi', () => {
       expect(capturedUrl).toContain('status=active');
     });
 
-    it('includes trainingLevel query parameter when provided', async () => {
-      let capturedUrl: string | null = null;
-      mockServer.use(
-        http.get('*' + endpoints.users.list, ({ request }) => {
-          capturedUrl = request.url;
-          return HttpResponse.json({
-            success: true,
-            data: {
-              data: [],
-              pagination: {
-                page: 1,
-                pageSize: 10,
-                totalItems: 0,
-                totalPages: 0,
-                hasNext: false,
-                hasPrevious: false,
-                snapshotCreatedBefore: new Date().toISOString(),
-              },
-            },
-          });
-        }),
-      );
-
-      await userApi.listAllUsers({ trainingLevel: 'advanced' });
-
-      expect(capturedUrl).toContain('trainingLevel=advanced');
-    });
-
     it('includes page query parameter when provided', async () => {
       let capturedUrl: string | null = null;
       mockServer.use(

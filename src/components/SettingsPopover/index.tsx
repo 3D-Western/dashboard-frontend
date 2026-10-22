@@ -2,14 +2,14 @@
 
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { logout } from '@/lib/auth';
-import { LogOut, Settings, Moon, Sun, Monitor } from 'lucide-react';
+import { LogOut, Settings, Moon, Sun } from 'lucide-react';
 import { useTheme } from 'next-themes';
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
 
 export function SettingsPopover() {
   const [open, setOpen] = useState(false);
-  const { theme, setTheme } = useTheme();
+  const { theme, resolvedTheme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -22,49 +22,26 @@ export function SettingsPopover() {
     window.location.href = '/login';
   };
 
-  const cycleTheme = () => {
-    if (theme === 'light') {
-      setTheme('dark');
-    } else if (theme === 'dark') {
-      setTheme('system');
-    } else {
-      setTheme('light');
-    }
-  };
+  // Light <-> dark, based on what's on screen. Like ThemeToggle, the row names the mode a tap
+  // switches TO (a sun and "Light mode" while dark), not the current one.
+  const isDark = (resolvedTheme ?? theme) === 'dark';
+  const cycleTheme = () => setTheme(isDark ? 'light' : 'dark');
 
   const getThemeIcon = () => {
     if (!mounted) return <Sun className="h-4 w-4" />;
-    switch (theme) {
-      case 'light':
-        return <Sun className="h-4 w-4" />;
-      case 'dark':
-        return <Moon className="h-4 w-4" />;
-      case 'system':
-        return <Monitor className="h-4 w-4" />;
-      default:
-        return <Sun className="h-4 w-4" />;
-    }
+    return isDark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />;
   };
 
   const getThemeLabel = () => {
     if (!mounted) return 'Theme';
-    switch (theme) {
-      case 'light':
-        return 'Light';
-      case 'dark':
-        return 'Dark';
-      case 'system':
-        return 'System';
-      default:
-        return 'Theme';
-    }
+    return isDark ? 'Light mode' : 'Dark mode';
   };
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
         <button
-          className="flex h-8 w-8 items-center justify-center rounded-md transition-colors hover:bg-accent hover:text-accent-foreground"
+          className="flex size-11 items-center justify-center rounded-md transition-colors hover:bg-accent hover:text-accent-foreground fine:size-8"
           title="Settings"
           aria-label="Settings"
         >
@@ -75,7 +52,7 @@ export function SettingsPopover() {
         <div className="flex flex-col">
           <button
             onClick={cycleTheme}
-            className="flex items-center gap-2 rounded-sm px-2 py-1.5 text-sm transition-colors hover:bg-accent hover:text-accent-foreground"
+            className="flex items-center gap-2 rounded-sm px-2 py-3 text-sm transition-colors hover:bg-accent hover:text-accent-foreground fine:py-1.5"
           >
             {getThemeIcon()}
             <span>{getThemeLabel()}</span>
@@ -83,7 +60,7 @@ export function SettingsPopover() {
 
           <Link
             href="/dashboard/settings"
-            className="flex items-center gap-2 rounded-sm px-2 py-1.5 text-sm transition-colors hover:bg-accent hover:text-accent-foreground"
+            className="flex items-center gap-2 rounded-sm px-2 py-3 text-sm transition-colors hover:bg-accent hover:text-accent-foreground fine:py-1.5"
             onClick={() => setOpen(false)}
           >
             <Settings className="h-4 w-4" />
@@ -94,7 +71,7 @@ export function SettingsPopover() {
 
           <button
             onClick={handleLogout}
-            className="flex items-center gap-2 rounded-sm px-2 py-1.5 text-sm transition-colors hover:bg-accent hover:text-accent-foreground"
+            className="flex items-center gap-2 rounded-sm px-2 py-3 text-sm transition-colors hover:bg-accent hover:text-accent-foreground fine:py-1.5"
           >
             <LogOut className="h-4 w-4" />
             <span>Logout</span>

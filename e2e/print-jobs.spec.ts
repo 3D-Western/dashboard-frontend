@@ -148,28 +148,14 @@ test.describe('Print Jobs E2E', () => {
       await page.goto('/dashboard/jobs/print/new');
 
       // Should see form title
-      await expect(page.getByText(/create new print request/i)).toBeVisible();
+      await expect(page.getByRole('heading', { name: /create 3d print job/i })).toBeVisible();
 
       // Fill in required fields
       await page.getByLabel(/project title/i).fill('E2E Test Print');
-      await page.getByLabel(/print description/i).fill('This is an E2E test print job');
-
-      // Select material 1
-      const materialSelects = page.getByRole('combobox');
-      await materialSelects.nth(0).click();
-      await page.getByText('PLA').click();
-
-      // Select color 1
-      await materialSelects.nth(1).click();
-      await page.getByText('Black').click();
-
-      // Select material 2
-      await materialSelects.nth(2).click();
-      await page.getByText('ABS').click();
-
-      // Select color 2
-      await materialSelects.nth(3).click();
-      await page.getByText('White').click();
+      await page.getByLabel(/^description$/i).fill('This is an E2E test print job');
+      await page.getByRole('radio', { name: 'School Project' }).click();
+      await page.getByRole('radio', { name: 'Functional' }).click();
+      await expect(page.getByRole('radio', { name: 'Functional' })).toBeChecked();
 
       // Note: File upload would require createing a test file
       // For now, verify form structure is correct

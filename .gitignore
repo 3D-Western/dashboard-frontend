@@ -47,3 +47,7 @@ package-lock.json
 
 # local worktrees for parallel sessions
 .claude/worktrees/
+
+# Playwright output
+/test-results/
+/playwright-report/

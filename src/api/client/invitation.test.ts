@@ -517,11 +517,17 @@ describe('invitationApi', () => {
   describe('createInvitation', () => {
     it('creates invitation successfully', async () => {
       const requestData = {
+        firstName: 'Jane',
+        lastName: 'Roe',
+        memberType: 'COMMUNITY' as const,
         studentId: 251000001,
         email: 'newuser@uwo.ca',
         expiresInDays: 7,
       };
       const mockInvitation = createMockPendingInvitation({
+        firstName: 'Jane',
+        lastName: 'Roe',
+        memberType: 'COMMUNITY' as const,
         studentId: 251000001,
         email: 'newuser@uwo.ca',
       });
@@ -545,6 +551,9 @@ describe('invitationApi', () => {
     it('sends correct request body', async () => {
       let capturedBody: string | null = null;
       const requestData = {
+        firstName: 'Jane',
+        lastName: 'Roe',
+        memberType: 'COMMUNITY' as const,
         studentId: 251000001,
         email: 'test@uwo.ca',
         expiresInDays: 14,
@@ -578,6 +587,9 @@ describe('invitationApi', () => {
       );
 
       await invitationApi.createInvitation({
+        firstName: 'Jane',
+        lastName: 'Roe',
+        memberType: 'COMMUNITY' as const,
         studentId: 251000001,
         email: 'test@uwo.ca',
       });
@@ -606,6 +618,9 @@ describe('invitationApi', () => {
       );
 
       await invitationApi.createInvitation({
+        firstName: 'Jane',
+        lastName: 'Roe',
+        memberType: 'COMMUNITY' as const,
         studentId: 251000001,
         email: 'test@uwo.ca',
       });
@@ -630,6 +645,9 @@ describe('invitationApi', () => {
 
       await expect(
         invitationApi.createInvitation({
+          firstName: 'Jane',
+          lastName: 'Roe',
+          memberType: 'COMMUNITY' as const,
           studentId: 251000001,
           email: 'invalid-email',
         }),
@@ -653,6 +671,9 @@ describe('invitationApi', () => {
 
       await expect(
         invitationApi.createInvitation({
+          firstName: 'Jane',
+          lastName: 'Roe',
+          memberType: 'COMMUNITY' as const,
           studentId: 251000001,
           email: 'test@uwo.ca',
         }),
@@ -676,6 +697,9 @@ describe('invitationApi', () => {
 
       await expect(
         invitationApi.createInvitation({
+          firstName: 'Jane',
+          lastName: 'Roe',
+          memberType: 'COMMUNITY' as const,
           studentId: 251000001,
           email: 'existing@uwo.ca',
         }),
@@ -698,6 +722,9 @@ describe('invitationApi', () => {
 
       await invitationApi.createInvitation(
         {
+          firstName: 'Jane',
+          lastName: 'Roe',
+          memberType: 'COMMUNITY' as const,
           studentId: 251000001,
           email: 'test@uwo.ca',
         },
@@ -848,6 +875,48 @@ describe('invitationApi', () => {
       });
 
       expect((capturedHeaders as Headers | null)?.get('X-Custom-Header')).toBe('test');
+    });
+  });
+
+  describe('resendInvitation', () => {
+    it('posts to the resend endpoint and returns the invitation', async () => {
+      let capturedMethod: string | null = null;
+      mockServer.use(
+        http.post('*' + endpoints.invitations.resend(7), ({ request }) => {
+          capturedMethod = request.method;
+          return HttpResponse.json({
+            success: true,
+            data: createMockPendingInvitation({ id: 7 }),
+          });
+        }),
+      );
+
+      const result = await invitationApi.resendInvitation(7);
+
+      expect(capturedMethod).toBe('POST');
+      expect(result.id).toBe(7);
+      expect(result.status).toBe('PENDING');
+    });
+
+    it('throws INVITATION_CANNOT_BE_RESENT for a used or revoked invitation', async () => {
+      mockServer.use(
+        http.post('*' + endpoints.invitations.resend(7), () => {
+          return HttpResponse.json(
+            {
+              success: false,
+              error: {
+                code: 'INVITATION_CANNOT_BE_RESENT',
+                message: 'Only pending or expired invitations can be sent again',
+              },
+            },
+            { status: 409 },
+          );
+        }),
+      );
+
+      await expect(invitationApi.resendInvitation(7)).rejects.toMatchObject({
+        code: 'INVITATION_CANNOT_BE_RESENT',
+      });
     });
   });
 });

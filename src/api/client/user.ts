@@ -1,4 +1,4 @@
-import { AccountStatus, AdminUserProfile, User } from '@/types/user';
+import { AccountStatus, AdminUserProfile, MyProfile, User } from '@/types/user';
 import { PaginatedResponse } from '@/types/common';
 import {
   PrintJobListResponse,
@@ -31,9 +31,6 @@ export const userApi = {
     if (params?.status !== undefined) {
       searchParams.append('status', params.status);
     }
-    if (params?.trainingLevel !== undefined) {
-      searchParams.append('trainingLevel', params.trainingLevel);
-    }
     if (params?.page !== undefined) {
       searchParams.append('page', params.page.toString());
     }
@@ -58,7 +55,7 @@ export const userApi = {
 
   /**
    * Lists users for the admin Users Management table. Deliberately separate from
-   * `listAllUsers` above: that function's `search`/`status`/`trainingLevel` params don't
+   * `listAllUsers` above: that function's `search`/`status` params don't
    * correspond to anything the real `GET /api/v1/users` endpoint supports (pre-existing drift,
    * see AdminUserListParams doc comment) — this one only sends params backend actually accepts.
    */
@@ -79,9 +76,6 @@ export const userApi = {
     }
     if (params?.lastName !== undefined) {
       searchParams.append('lastName', params.lastName);
-    }
-    if (params?.experienceLevel !== undefined) {
-      searchParams.append('experienceLevel', params.experienceLevel);
     }
     if (params?.page !== undefined) {
       searchParams.append('page', params.page.toString());
@@ -169,6 +163,33 @@ export const userApi = {
     return apiRequest<PrintJobListResponse>(url, {
       method: 'GET',
       credentials: 'include',
+      ...options,
+    });
+  },
+
+  /** The signed-in user's own profile (GET /api/v1/users/me/profile). */
+  getMyProfile: async (options?: RequestInit): Promise<MyProfile> => {
+    return apiRequest<MyProfile>(`${getBaseUrl()}${endpoints.users.myProfile}`, {
+      method: 'GET',
+      credentials: 'include',
+      ...options,
+    });
+  },
+
+  /**
+   * Sets the phone number and texting consent (PATCH /api/v1/users/me/profile). A null number
+   * removes it. The backend refuses smsOptIn: true without a number, and withdraws consent when
+   * the number changes, so send the consent the user can see on screen.
+   */
+  updatePhoneSettings: async (
+    settings: { phoneNumber: string | null; smsOptIn: boolean },
+    options?: RequestInit,
+  ): Promise<MyProfile> => {
+    return apiRequest<MyProfile>(`${getBaseUrl()}${endpoints.users.myProfile}`, {
+      method: 'PATCH',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(settings),
       ...options,
     });
   },

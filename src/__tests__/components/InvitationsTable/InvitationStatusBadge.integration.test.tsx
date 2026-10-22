@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { render, screen } from '@test/utils/render';
-import { InvitationStatusBadge } from '@/app/(protected)/admin/invitations/components/InvitationsTable/InvitationStatusBadge';
+import { InvitationStatusBadge } from '@/app/(protected)/admin/users/components/InvitationsTable/InvitationStatusBadge';
 import type { InvitationStatus } from '@/types/invitation';
 
 describe('InvitationStatusBadge Integration', () => {
@@ -15,7 +15,7 @@ describe('InvitationStatusBadge Integration', () => {
   it('renders ACCEPTED status correctly', () => {
     render(<InvitationStatusBadge status="ACCEPTED" />);
 
-    const badge = screen.getByText('Accepted');
+    const badge = screen.getByText('Used');
     expect(badge).toBeInTheDocument();
     expect(badge).toHaveAttribute('role', 'status');
   });

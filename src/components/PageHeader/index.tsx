@@ -3,6 +3,8 @@
 import { Fragment } from 'react';
 import Link from 'next/link';
 import { Routes } from '@/lib/routes';
+import { TrainingAdminRoutes } from '@/lib/training-admin-routes';
+import { AccessAdminRoutes } from '@/lib/access-admin-routes';
 import { usePathname } from 'next/navigation';
 import {
   Breadcrumb,
@@ -15,6 +17,7 @@ import {
 const pageTitles: Record<string, string> = {
   [Routes.dashboard]: 'Dashboard',
   [Routes.jobs.home]: 'My Jobs',
+  [Routes.training.home]: 'Training',
   [Routes.jobs.newJob]: 'Create New Job',
   [Routes.jobs.newPrintJob]: 'Create 3D Print Job',
   [Routes.jobs.newCncJob]: 'Create CNC Machining Job',
@@ -24,7 +27,15 @@ const pageTitles: Record<string, string> = {
   ['/admin']: 'Admin Dashboard',
   [Routes.adminUsersManagement]: 'User Management',
   [Routes.adminJobsManagement]: 'Job Management',
-  [Routes.adminInvitationManagement]: 'Invitation Management',
+  [Routes.adminSignoffs]: 'Training Sign-offs',
+  [TrainingAdminRoutes.home]: 'Training Editor',
+  [TrainingAdminRoutes.equipment]: 'Training Equipment',
+  [TrainingAdminRoutes.import]: 'Import a Training',
+  [TrainingAdminRoutes.auditLog]: 'Training Audit Log',
+  [AccessAdminRoutes.home]: 'Access System',
+  [AccessAdminRoutes.gatekeepers]: 'Gatekeepers',
+  [AccessAdminRoutes.devices]: 'Devices',
+  [AccessAdminRoutes.cardLinks]: 'Card Links',
 };
 
 // The titled pages above this one in the URL, e.g. /admin/users → [Admin Dashboard]
@@ -39,8 +50,30 @@ function getParentPages(pathname: string) {
 
 export function PageHeader() {
   const pathname = usePathname();
-  const title = pageTitles[pathname] || 'Dashboard';
-  const parents = pageTitles[pathname] ? getParentPages(pathname) : [];
+  const isJobDetail = pathname.startsWith(`${Routes.jobs.home}/`) && !pageTitles[pathname];
+  const isTrainingSession =
+    pathname.startsWith(`${Routes.training.home}/`) && !pageTitles[pathname];
+  // A training being edited, e.g. /admin/training/12/draft
+  const isTrainingEdit =
+    pathname.startsWith(`${TrainingAdminRoutes.home}/`) && !pageTitles[pathname];
+  // One sign-off, e.g. /admin/signoffs/12
+  const isSignoffDetail = pathname.startsWith(`${Routes.adminSignoffs}/`) && !pageTitles[pathname];
+  const title =
+    pageTitles[pathname] ||
+    (isJobDetail
+      ? 'Job Details'
+      : isTrainingSession
+        ? 'Training Session'
+        : isTrainingEdit
+          ? 'Edit Training'
+          : isSignoffDetail
+            ? 'Training Sign-off'
+            : 'Dashboard');
+  // A job's details page (or a training session) has no fixed title, but still sits under its list
+  const parents =
+    pageTitles[pathname] || isJobDetail || isTrainingSession || isTrainingEdit || isSignoffDetail
+      ? getParentPages(pathname)
+      : [];
 
   return (
     <Breadcrumb className="min-w-0">

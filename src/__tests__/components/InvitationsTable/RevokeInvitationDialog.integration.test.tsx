@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, waitFor } from '@test/utils/render';
 import userEvent from '@testing-library/user-event';
-import { RevokeInvitationDialog } from '@/app/(protected)/admin/invitations/components/InvitationsTable/RevokeInvitationDialog';
+import { RevokeInvitationDialog } from '@/app/(protected)/admin/users/components/InvitationsTable/RevokeInvitationDialog';
 
 describe('RevokeInvitationDialog Integration', () => {
   const mockOnOpenChange = vi.fn();

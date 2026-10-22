@@ -3,6 +3,15 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/* Control size follows the pointer, not the width (R01 in docs/responsive-audit-2026-10.md).
+   Controls are 44 px tall with 16 px input text by default. They shrink only when the device has
+   a mouse-like pointer that can hover AND the window is at least md (48rem) wide, so iPads and
+   phones on their side (touch, but wider than 768 px) keep full-size targets. */
+@custom-variant fine (@media (min-width: 48rem) and (hover: hover) and (pointer: fine));
+
+/* A phone held on its side: wide but very short. Used to give height back to content. */
+@custom-variant short (@media (orientation: landscape) and (max-height: 500px));
+
 @utility container {
   margin-inline: auto;
   padding-inline: 2rem;
@@ -58,6 +67,7 @@
   --color-chart-1: var(--chart-1);
   --color-ring: var(--ring);
   --color-input: var(--input);
+  --color-control-border: var(--control-border);
   --color-border: var(--border);
   --color-destructive: var(--destructive);
   --color-accent-foreground: var(--accent-foreground);
@@ -80,6 +90,14 @@
   --color-status-red: var(--status-red);
   --color-status-yellow: var(--status-yellow);
   --color-status-gray: var(--status-gray);
+  --color-status-pink: var(--status-pink);
+  --color-status-purple-foreground: var(--status-purple-foreground);
+  --color-status-green-foreground: var(--status-green-foreground);
+  --color-status-blue-foreground: var(--status-blue-foreground);
+  --color-status-red-foreground: var(--status-red-foreground);
+  --color-status-yellow-foreground: var(--status-yellow-foreground);
+  --color-status-gray-foreground: var(--status-gray-foreground);
+  --color-status-pink-foreground: var(--status-pink-foreground);
   --color-status-draft: var(--status-draft);
   --color-status-draft-foreground: var(--status-draft-foreground);
   --color-status-in-queue: var(--status-in-queue);
@@ -136,7 +154,19 @@
   --accent-foreground: #171717;
   --destructive: oklch(0.577 0.245 27.325);
   --border: #e2dee8;
-  --input: #e2dee8;
+  /* Field and outlined-button edges: 3:1 against the card and the page (WCAG 1.4.11). The soft
+     --border stays for cards and dividers, which are decoration. */
+  --input: #8a8494;
+  --control-border: #8a8494;
+  /* Primary button fill, light theme only: a same-depth hue shift from deep violet to deep magenta
+     (both about 10:1 with white, so the label passes WCAG AA across the whole button). Hover
+     darkens both stops. Dark theme sets both to none and uses the solid --primary. */
+  --primary-gradient: linear-gradient(135deg, #582c83, #761e6a);
+  --primary-gradient-hover: linear-gradient(
+    135deg,
+    color-mix(in srgb, #582c83 85%, black),
+    color-mix(in srgb, #761e6a 85%, black)
+  );
   --ring: var(--purple-light);
   --chart-1: oklch(0.646 0.222 41.116);
   --chart-2: oklch(0.6 0.118 184.704);
@@ -160,26 +190,37 @@
   --status-red: #ef4444;
   --status-yellow: #d29922;
   --status-gray: #8b949e;
+  /* A clear pink, so Ready doesn't get mistaken for Collected (purple) or Issue (red) */
+  --status-pink: #ec4899;
+
+  /* Readable text shade of each status colour (labels, small text) */
+  --status-purple-foreground: color-mix(in srgb, var(--status-purple) 50%, black);
+  --status-green-foreground: color-mix(in srgb, var(--status-green) 50%, black);
+  --status-blue-foreground: color-mix(in srgb, var(--status-blue) 50%, black);
+  --status-red-foreground: color-mix(in srgb, var(--status-red) 50%, black);
+  --status-yellow-foreground: color-mix(in srgb, var(--status-yellow) 50%, black);
+  --status-gray-foreground: color-mix(in srgb, var(--status-gray) 50%, black);
+  --status-pink-foreground: color-mix(in srgb, var(--status-pink) 50%, black);
 
   /* Status badges: a light tint of the status colour, with text darkened for contrast on light */
   --status-draft: color-mix(in srgb, var(--status-gray) 14%, transparent);
-  --status-draft-foreground: color-mix(in srgb, var(--status-gray) 65%, black);
+  --status-draft-foreground: color-mix(in srgb, var(--status-gray) 50%, black);
   --status-in-queue: color-mix(in srgb, var(--status-blue) 14%, transparent);
-  --status-in-queue-foreground: color-mix(in srgb, var(--status-blue) 65%, black);
+  --status-in-queue-foreground: color-mix(in srgb, var(--status-blue) 50%, black);
   --status-printing: color-mix(in srgb, var(--status-green) 14%, transparent);
-  --status-printing-foreground: color-mix(in srgb, var(--status-green) 65%, black);
+  --status-printing-foreground: color-mix(in srgb, var(--status-green) 50%, black);
   --status-ready: color-mix(in srgb, var(--status-purple) 14%, transparent);
-  --status-ready-foreground: color-mix(in srgb, var(--status-purple) 65%, black);
+  --status-ready-foreground: color-mix(in srgb, var(--status-purple) 50%, black);
   --status-flagged: color-mix(in srgb, var(--status-red) 14%, transparent);
-  --status-flagged-foreground: color-mix(in srgb, var(--status-red) 65%, black);
+  --status-flagged-foreground: color-mix(in srgb, var(--status-red) 50%, black);
   --status-error: color-mix(in srgb, var(--status-red) 14%, transparent);
-  --status-error-foreground: color-mix(in srgb, var(--status-red) 65%, black);
+  --status-error-foreground: color-mix(in srgb, var(--status-red) 50%, black);
   --status-success: color-mix(in srgb, var(--status-purple) 14%, transparent);
-  --status-success-foreground: color-mix(in srgb, var(--status-purple) 65%, black);
+  --status-success-foreground: color-mix(in srgb, var(--status-purple) 50%, black);
   --status-fail: color-mix(in srgb, var(--status-red) 14%, transparent);
-  --status-fail-foreground: color-mix(in srgb, var(--status-red) 65%, black);
+  --status-fail-foreground: color-mix(in srgb, var(--status-red) 50%, black);
   --status-cancelled: color-mix(in srgb, var(--status-gray) 14%, transparent);
-  --status-cancelled-foreground: color-mix(in srgb, var(--status-gray) 65%, black);
+  --status-cancelled-foreground: color-mix(in srgb, var(--status-gray) 50%, black);
 }
 
 .dark {
@@ -201,6 +242,9 @@
   --destructive: oklch(0.704 0.191 22.216);
   --border: #29323b; /* --b-grey */
   --input: #29323b;
+  --control-border: color-mix(in oklab, var(--foreground) 18%, transparent);
+  --primary-gradient: none;
+  --primary-gradient-hover: none;
   --ring: var(--purple-light);
   --chart-1: oklch(0.488 0.243 264.376);
   --chart-2: oklch(0.696 0.17 162.48);
@@ -215,6 +259,15 @@
   --sidebar-accent-foreground: #d29cf0;
   --sidebar-border: #29323b;
   --sidebar-ring: var(--purple-light);
+
+  /* Readable text shade of each status colour (labels, small text) */
+  --status-purple-foreground: color-mix(in srgb, var(--status-purple) 70%, white);
+  --status-green-foreground: color-mix(in srgb, var(--status-green) 70%, white);
+  --status-blue-foreground: color-mix(in srgb, var(--status-blue) 70%, white);
+  --status-red-foreground: color-mix(in srgb, var(--status-red) 70%, white);
+  --status-yellow-foreground: color-mix(in srgb, var(--status-yellow) 70%, white);
+  --status-gray-foreground: color-mix(in srgb, var(--status-gray) 70%, white);
+  --status-pink-foreground: color-mix(in srgb, var(--status-pink) 70%, white);
 
   /* Status badges: a dark tint of the status colour, with text lightened for contrast on dark */
   --status-draft: color-mix(in srgb, var(--status-gray) 18%, transparent);
@@ -268,42 +321,67 @@
   text-transform: uppercase;
 }
 
-/* .gradient and .btn are plain (unlayered) CSS, exactly as on the website, so they win over Tailwind
-   utilities the same way they do there - e.g. the button's own `transition-all` (150ms) would
-   otherwise replace the website's slow 0.8s gradient sweep on hover. */
-.gradient {
-  --btn-bg-2: hsl(270.34, 49.71%, 34.31%);
-  --btn-bg-1: hsl(286.3, 61.35%, 59.41%);
-  --btn-bg-color: hsla(360 100% 100% / 1);
-  background-size: 280% auto;
-  background-image: linear-gradient(
-    325deg,
-    var(--btn-bg-2) 0%,
-    var(--btn-bg-1) 55%,
-    var(--btn-bg-2) 90%
-  );
+/* Primary buttons: in light mode a same-depth fade (--primary-gradient, see :root); in dark mode one
+   solid fill (--primary). The solid colour is the fallback and the hover goes a slightly darker
+   shade of it. White text is about 4.9:1 on the dark theme's purple and about 10:1 on the light
+   one (WCAG AA). .gradient and .btn are plain (unlayered) CSS, exactly as on the website, so they
+   win over Tailwind utilities; the button's own `transition-all` (150ms) handles the hover fade. */
+.gradient,
+.btn {
+  cursor: pointer;
+  background-color: var(--primary);
+  background-image: var(--primary-gradient);
   border: none;
-  color: var(--btn-bg-color);
+  color: var(--primary-foreground);
+}
+.gradient:hover,
+.btn:hover {
+  background-color: color-mix(in srgb, var(--primary) 85%, black);
+  background-image: var(--primary-gradient-hover);
 }
 
-.btn {
-  --btn-bg-2: hsl(270.34, 49.71%, 34.31%);
-  --btn-bg-1: hsl(286.3, 61.35%, 59.41%);
-  --btn-bg-color: hsla(360 100% 100% / 1);
-  cursor: pointer;
-  transition: 0.8s;
-  background-size: 280% auto;
-  background-image: linear-gradient(
-    325deg,
-    var(--btn-bg-2) 0%,
-    var(--btn-bg-1) 55%,
-    var(--btn-bg-2) 90%
-  );
-  border: none;
-  color: var(--btn-bg-color);
+/* Light theme only: a disabled button used to be the normal button at 50% opacity, which washed
+   the purple out to pale lavender with white text and the outlined ones into near-invisible
+   grey. Instead it is a flat, clearly "off" surface whose label is still readable (about 5:1).
+   Plain CSS (not a utility) so it also beats the unlayered .btn background. Dark is unchanged. */
+:root:not(.dark) [data-slot='button']:disabled {
+  opacity: 1;
+  color: #6b6577;
+  background-image: none;
+  background-color: #ebe8f0;
+  border: 1px solid #cfc9d8;
 }
-.btn:hover {
-  background-position: right top;
+:root:not(.dark) [data-slot='button'][data-variant='ghost']:disabled,
+:root:not(.dark) [data-slot='button'][data-variant='link']:disabled {
+  background-color: transparent;
+  border-color: transparent;
+}
+
+/* Scroll cue for lists inside a fixed-height panel (the sidebar): a soft shadow appears on the
+   edge that has more content behind it, and goes away at the end. Overlay scrollbars on touch
+   screens hide themselves, so this is the only hint that the list scrolls. Needs a --scroll-bg
+   matching the panel colour. */
+@utility scroll-shadow-y {
+  --scroll-bg: var(--sidebar);
+  --scroll-shade: color-mix(in oklab, var(--sidebar-foreground) 22%, transparent);
+  background-color: var(--scroll-bg);
+  background-repeat: no-repeat;
+  background-image:
+    linear-gradient(var(--scroll-bg) 30%, transparent),
+    linear-gradient(transparent, var(--scroll-bg) 70%),
+    radial-gradient(farthest-side at 50% 0, var(--scroll-shade), transparent),
+    radial-gradient(farthest-side at 50% 100%, var(--scroll-shade), transparent);
+  background-position:
+    center top,
+    center bottom,
+    center top,
+    center bottom;
+  background-size:
+    100% 2.5rem,
+    100% 2.5rem,
+    100% 0.75rem,
+    100% 0.75rem;
+  background-attachment: local, local, scroll, scroll;
 }
 
 @utility scrollbar-hide {

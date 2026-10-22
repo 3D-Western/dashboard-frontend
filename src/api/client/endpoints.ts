@@ -11,6 +11,7 @@ export const endpoints = {
   },
   users: {
     me: '/api/v1/users/me',
+    myProfile: '/api/v1/users/me/profile',
     list: '/api/v1/users',
     byId: (userId: number) => `/api/v1/users/${userId}`,
     updateStatus: (userId: number) => `/api/v1/users/${userId}/status`,
@@ -44,6 +45,7 @@ export const endpoints = {
     create: '/api/v1/admin/invitations',
     byId: (invitationId: number) => `/api/v1/admin/invitations/${invitationId}`,
     revoke: (invitationId: number) => `/api/v1/admin/invitations/${invitationId}/revoke`,
+    resend: (invitationId: number) => `/api/v1/admin/invitations/${invitationId}/resend`,
   },
   iam: {
     permissions: '/api/v1/admin/iam/permissions',
@@ -87,8 +89,38 @@ export const endpoints = {
     adminRestrictions: (equipmentId: string) =>
       `/api/v1/admin/equipment/${equipmentId}/restrictions`,
   },
+  signoff: {
+    // Supervisor sign-off (docs/plans/training-v1.md, "Sign-off API"); needs training:signoff
+    list: '/api/v1/admin/training/signoffs',
+    byId: (signoffId: number) => `/api/v1/admin/training/signoffs/${signoffId}`,
+    approve: (signoffId: number) => `/api/v1/admin/training/signoffs/${signoffId}/approve`,
+    reject: (signoffId: number) => `/api/v1/admin/training/signoffs/${signoffId}/reject`,
+  },
   training: {
-    level: '/api/v1/users/me/training-level', //get users level
+    // Learner training API (docs/plans/training-v1.md, "Learner API")
+    list: '/api/v1/training/trainings',
+    detail: (slug: string) => `/api/v1/training/trainings/${slug}`,
+    start: (slug: string) => `/api/v1/training/trainings/${slug}/attempts`,
+    attempt: (attemptId: number) => `/api/v1/training/attempts/${attemptId}`,
+    pledge: (attemptId: number) => `/api/v1/training/attempts/${attemptId}/pledge`,
+    abandon: (attemptId: number) => `/api/v1/training/attempts/${attemptId}/abandon`,
+    // Read-only review of a failed attempt's material
+    review: (attemptId: number) => `/api/v1/training/attempts/${attemptId}/review`,
+    reviewPlaybackUrl: (attemptId: number, stepId: number) =>
+      `/api/v1/training/attempts/${attemptId}/review/steps/${stepId}/video/playback-url`,
+    step: (attemptId: number, stepId: number) =>
+      `/api/v1/training/attempts/${attemptId}/steps/${stepId}`,
+    pendingAgreements: '/api/v1/training/agreements/pending',
+    acceptAgreement: (agreementId: number) => `/api/v1/training/agreements/${agreementId}/accept`,
+  },
+  notifications: {
+    // Web push devices and notification preferences (docs/specs/notifications.md)
+    pushConfig: '/api/v1/notifications/push/config',
+    devices: '/api/v1/notifications/push/subscriptions',
+    device: (id: number) => `/api/v1/notifications/push/subscriptions/${id}`,
+    unsubscribe: '/api/v1/notifications/push/unsubscribe',
+    test: '/api/v1/notifications/push/test',
+    preferences: '/api/v1/notifications/preferences',
   },
   onboarding: {
     status: '/api/v1/users/me/onboarding',

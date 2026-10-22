@@ -42,14 +42,10 @@ describe('DashboardStats', () => {
 
     render(<DashboardStats />);
 
-    await waitFor(() => {
-      expect(screen.queryByText('...')).not.toBeInTheDocument();
-    });
-
     // Active Prints = Printing (2)
     // Pending Prints = PendingFile (1) + InQueue (3) = 4
     // Total Prints = unfiltered total (10)
-    expect(screen.getByText('2')).toBeInTheDocument();
+    expect(await screen.findByText('2')).toBeInTheDocument();
     expect(screen.getByText('4')).toBeInTheDocument();
     expect(screen.getByText('10')).toBeInTheDocument();
   });
@@ -60,7 +56,7 @@ describe('DashboardStats', () => {
     render(<DashboardStats />);
 
     await waitFor(() => {
-      expect(screen.queryByText('...')).not.toBeInTheDocument();
+      expect(screen.queryByLabelText(/loading/i)).not.toBeInTheDocument();
     });
 
     expect(screen.getAllByText('0').length).toBe(3);

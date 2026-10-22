@@ -1,3 +1,4 @@
+import { PageContainer } from '@/components/PageContainer';
 import type { Metadata } from 'next';
 import PrintJobsTable from '@/components/PrintJobsTable';
 import { jobApi } from '@/api/client/job';
@@ -36,7 +37,7 @@ export default async function JobManagementPage({ searchParams }: JobManagementP
   );
 
   return (
-    <div className="container space-y-6 p-6">
+    <PageContainer className="space-y-6 p-6">
       <PageTitle title="Job Management" description="Manage all jobs across users" />
 
       <AdminJobFilters />
@@ -44,6 +45,6 @@ export default async function JobManagementPage({ searchParams }: JobManagementP
       <div>
         <PrintJobsTable printJobs={printJobs} pagination={pagination} mode="admin" />
       </div>
-    </div>
+    </PageContainer>
   );
 }

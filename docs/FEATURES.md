@@ -47,7 +47,7 @@ This document catalogs all implemented features in the 3D Western Dashboard. Use
 **File:** `src/app/(auth)/signup/`
 
 - Multi-step form (two pages: account details → profile details)
-- Fields: Student ID, UWO email (`*@uwo.ca`), password, invite code, first/last name, experience level, faculty, public profile toggle
+- Fields: Student ID, UWO email (`*@uwo.ca`), password, invite code, first/last name, faculty, public profile toggle
 - Password requirements: min 8 chars, uppercase, lowercase, digit
 - Invite-code requirement — registration is gated by a valid invitation
 - On success, redirects to `/check-email`
@@ -229,7 +229,6 @@ IAM is split into two tabs — **Roles** and **Groups**.
 **Permission:** authenticated user (any)
 
 - **Change password**: current password + new password + confirmation; optional "invalidate all other sessions" checkbox; enforces min 10 chars + complexity rules
-- **Experience level**: dropdown to update the user's self-reported skill level
 
 ---
 

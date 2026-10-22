@@ -4,7 +4,6 @@ export const Routes = {
   signup: '/signup',
   mfa: '/mfa',
   dashboardUserSettings: '/dashboard/settings',
-  dashboardSubmissionHistory: '/dashboard/jobs/print-submission-history',
   bookings: '/dashboard/bookings',
   forgotPassword: '/forgot-password',
   resetPassword: '/reset-password',
@@ -15,15 +14,26 @@ export const Routes = {
   // Admin routes
   adminUsersManagement: '/admin/users',
   adminJobsManagement: '/admin/jobs',
-  adminInvitationManagement: '/admin/invitations',
   adminIamManagement: '/admin/iam',
-  adminAuditLog: '/admin/audit',
   adminBookingsManagement: '/admin/bookings',
   adminBookingRequests: '/admin/requests',
   adminEquipmentManagement: '/admin/equipment',
+  adminSignoffs: '/admin/signoffs',
+  adminSignoff: (signoffId: number) => `/admin/signoffs/${signoffId}`,
+
+  training: {
+    home: '/dashboard/training',
+    attempt: (attemptId: number) => `/dashboard/training/attempt/${attemptId}`,
+    /** Read-only review of a failed attempt's material; `stepId` opens on that section. */
+    review: (attemptId: number, stepId?: number) =>
+      `/dashboard/training/attempt/${attemptId}/review${stepId ? `?step=${stepId}` : ''}`,
+  },
 
   jobs: {
     home: '/dashboard/jobs',
+    detail: (jobId: string) => `/dashboard/jobs/${jobId}`,
+    /** My Jobs right after a print is submitted: it offers the home-screen install card. */
+    printSubmitted: '/dashboard/jobs?submitted=1',
     newJob: '/dashboard/jobs/new',
     newCncJob: '/dashboard/jobs/cnc/new',
     newPrintJob: '/dashboard/jobs/print/new',

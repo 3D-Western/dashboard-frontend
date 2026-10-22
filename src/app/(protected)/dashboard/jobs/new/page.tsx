@@ -1,3 +1,4 @@
+import { PageContainer } from '@/components/PageContainer';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -73,7 +74,7 @@ export default function NewJobPage() {
   };
 
   return (
-    <div className="container mx-auto px-4 py-8">
+    <PageContainer className="px-4 py-8">
       <div className="text-center">
         <PageTitle
           title="Create New Job"
@@ -124,6 +125,6 @@ export default function NewJobPage() {
           );
         })}
       </div>
-    </div>
+    </PageContainer>
   );
 }

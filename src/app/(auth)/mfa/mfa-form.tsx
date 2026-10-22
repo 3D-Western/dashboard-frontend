@@ -19,10 +19,12 @@ import { useForm, useWatch } from 'react-hook-form';
 import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
 import { Routes } from '@/lib/routes';
+import { CONTACT_EMAIL } from '@/constants/website';
 import { useState } from 'react';
 import { sessionApi } from '@/api/client/session';
 import { ApiError, ErrorCodes } from '@/api/client/errors';
 import { BrandMark } from '@/components/BrandLogo';
+import { dropOtherUsersSubscription } from '@/lib/pwa/push';
 
 const formSchema = z.object({
   otp: z.string().min(6, 'Please enter the complete OTP code').max(6),
@@ -49,7 +51,12 @@ export function MFAForm({
     setIsLoading(true);
     try {
       await sessionApi.verifyMfa(challengeId, values.otp);
-      toast.success('OTP verified successfully! Redirecting...');
+      // Short on purpose: the toast outlives the navigation (the Toaster is in the root layout) and
+      // used to linger over the next screen.
+      toast.success('OTP verified successfully! Redirecting...', { duration: 1500 });
+      // Signed in: if this phone still holds the previous person's push subscription, drop it. Not awaited:
+      // signing in never waits on it.
+      void dropOtherUsersSubscription();
       router.refresh();
       router.push(Routes.dashboard);
     } catch (error) {
@@ -100,9 +107,10 @@ export function MFAForm({
   return (
     <div className={cn('flex flex-col gap-6 md:min-h-112.5', className)} {...props}>
       <Card className="flex-1 overflow-hidden p-0">
-        <CardContent className="grid flex-1 p-0 md:grid-cols-2">
+        <CardContent className="grid flex-1 p-0 lg:grid-cols-2 short:grid-cols-1">
           <Form {...form}>
             <form
+              method="post"
               onSubmit={form.handleSubmit(onSubmit)}
               className="flex flex-col items-center justify-center p-6 md:p-8"
             >
@@ -147,7 +155,7 @@ export function MFAForm({
                     type="button"
                     onClick={handleResend}
                     disabled={isResending}
-                    className="underline-offset-2 hover:underline disabled:cursor-not-allowed disabled:opacity-50"
+                    className="inline-flex min-h-11 items-center px-1 underline-offset-2 hover:underline disabled:cursor-not-allowed disabled:opacity-50 fine:min-h-0 fine:px-0"
                   >
                     {isResending ? 'Sending...' : 'Resend code'}
                   </button>
@@ -155,13 +163,19 @@ export function MFAForm({
               </div>
             </form>
           </Form>
-          <div className="relative hidden min-h-[500px] bg-muted md:block">
+          <div className="relative hidden min-h-[500px] lg:block short:hidden">
             <BrandMark className="p-12" />
           </div>
         </CardContent>
       </Card>
       <FieldDescription className="px-6 text-center">
-        Having trouble? <a href="#">Contact support</a>
+        Having trouble?{' '}
+        <a
+          href={`mailto:${CONTACT_EMAIL}`}
+          className="inline-flex min-h-11 items-center px-1 fine:min-h-0 fine:px-0"
+        >
+          Contact support
+        </a>
       </FieldDescription>
     </div>
   );

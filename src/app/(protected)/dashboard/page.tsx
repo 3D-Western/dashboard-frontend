@@ -1,11 +1,15 @@
 import type { Metadata } from 'next';
-import { Button } from '@/components/ui/button';
-import { Printer, AlertCircle } from 'lucide-react';
-import Link from 'next/link';
+import { AlertCircle } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import PageTitle from '@/components/PageTitle';
-import { Routes } from '@/lib/routes';
 import DashboardStats from '@/components/DashboardStats';
+import { PageContainer } from '@/components/PageContainer';
+import { DashboardGreeting } from './components/DashboardGreeting';
+import { DashboardSection } from './components/DashboardSection';
+import { QuickActions } from './components/QuickActions';
+import { TrainingSummary } from './components/TrainingSummary';
+import { OrientationInstallPrompt } from '@/components/InstallPrompt/OrientationInstallPrompt';
+import { OrientationPrompt } from '@/components/Training/OrientationPrompt';
+import { TrainingsProvider } from '@/providers/trainings-provider';
 
 export const metadata: Metadata = {
   title: 'Dashboard',
@@ -27,8 +31,7 @@ export default async function DashboardPage({
   const { error } = await searchParams;
 
   return (
-    <div className="container space-y-6 p-6">
-      {/* Error Alert */}
+    <PageContainer className="space-y-6 p-6">
       {error && ERROR_MESSAGES[error] && (
         <Alert variant="destructive">
           <AlertCircle className="h-4 w-4" />
@@ -37,23 +40,29 @@ export default async function DashboardPage({
         </Alert>
       )}
 
-      <PageTitle title="Dashboard" description="Welcome to Western 3D Print Club Dashboard" />
+      <DashboardGreeting />
 
-      {/* Dashboard Stats*/}
-      <DashboardStats />
+      <TrainingsProvider>
+        {/* Until orientation is done this leads there first, on every screen size */}
+        <OrientationPrompt />
+        {/* After orientation is passed: offer to add the app to the home screen (phones only) */}
+        <OrientationInstallPrompt />
 
-      {/* Quick Actions */}
-      <div className="space-y-4">
-        <h2 className="text-lg font-semibold">Quick Actions</h2>
-        <div className="flex gap-4">
-          <Button asChild>
-            <Link href={Routes.jobs.home}>
-              <Printer className="mr-2 h-4 w-4" />
-              View All Jobs
-            </Link>
-          </Button>
+        {/* Two columns from xl (prints + actions | training), stacked below. The sidebar takes 256 px
+            of a 1024 px screen, so lg would leave the training card too narrow. min-w-0 keeps a
+            grid item from growing past the page. */}
+        <div className="grid items-start gap-6 xl:grid-cols-3">
+          <div className="min-w-0 space-y-6 xl:col-span-2">
+            <DashboardSection id="prints" title="Your prints">
+              <DashboardStats />
+            </DashboardSection>
+            <DashboardSection id="quick-actions" title="Quick actions">
+              <QuickActions />
+            </DashboardSection>
+          </div>
+          <TrainingSummary className="min-w-0" />
         </div>
-      </div>
-    </div>
+      </TrainingsProvider>
+    </PageContainer>
   );
 }

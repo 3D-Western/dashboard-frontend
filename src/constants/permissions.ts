@@ -35,7 +35,11 @@ export const PERMISSIONS = {
   IAM_ASSIGN_PERMISSIONS: 'iam:assign_permissions',
   IAM_ASSIGN_ROLES: 'iam:assign_roles',
   IAM_MANAGE_GROUPS: 'iam:manage_groups',
+  TRAINING_AUTHOR: 'training:author',
+  TRAINING_PUBLISH: 'training:publish',
   AUDIT_READ: 'audit:read',
+  TRAINING_SIGNOFF: 'training:signoff',
+  ACCESS_ADMIN: 'access:admin',
 } as const;
 
 export type PermissionKey = (typeof PERMISSIONS)[keyof typeof PERMISSIONS];
@@ -219,10 +223,36 @@ export const PERMISSION_CATALOG: PermissionDefinition[] = [
     isDangerous: true,
   },
   {
+    key: PERMISSIONS.TRAINING_AUTHOR,
+    resource: 'training',
+    action: 'author',
+    description: 'Create and edit trainings, questions, equipment and imports',
+  },
+  {
+    key: PERMISSIONS.TRAINING_PUBLISH,
+    resource: 'training',
+    action: 'publish',
+    description: 'Publish trainings and correct questions after publishing',
+    isDangerous: true,
+  },
+  {
     key: PERMISSIONS.AUDIT_READ,
     resource: 'audit',
     action: 'read',
     description: 'Read the audit log',
+  },
+  {
+    key: PERMISSIONS.TRAINING_SIGNOFF,
+    resource: 'training',
+    action: 'signoff',
+    description: 'Approve in-person training sign-offs',
+  },
+  {
+    key: PERMISSIONS.ACCESS_ADMIN,
+    resource: 'access',
+    action: 'admin',
+    description: 'Manage the access gatekeepers, card readers, plugs and card links',
+    isDangerous: true,
   },
 
   {
@@ -280,9 +310,15 @@ export const ADMIN_SECTION_PERMISSIONS: PermissionKey[] = [
   PERMISSIONS.USERS_LIST,
   PERMISSIONS.INVITATIONS_LIST,
   PERMISSIONS.IAM_READ,
+  PERMISSIONS.TRAINING_AUTHOR,
+  PERMISSIONS.TRAINING_PUBLISH,
   PERMISSIONS.AUDIT_READ,
   PERMISSIONS.BOOKINGS_LIST,
   PERMISSIONS.BOOKINGS_UPDATE_STATUS,
   PERMISSIONS.BOOKINGS_CREATE,
   PERMISSIONS.BOOKINGS_CANCEL,
+  // Supervisors who only sign students off still need to get into /admin
+  PERMISSIONS.TRAINING_SIGNOFF,
+  // The access system (gatekeepers, devices, live view, card links)
+  PERMISSIONS.ACCESS_ADMIN,
 ];

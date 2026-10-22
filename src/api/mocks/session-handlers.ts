@@ -9,6 +9,11 @@ import {
 } from './utils';
 import { endpoints } from '../client/endpoints';
 import { ErrorCodes } from '../client/errors';
+import {
+  normalizePhoneNumber,
+  PHONE_NUMBER_ERROR,
+  SMS_OPT_IN_NEEDS_PHONE_ERROR,
+} from '@/lib/phone';
 
 const apiUrl = process.env.API_URL;
 
@@ -82,7 +87,33 @@ export const sessionHandlers = [
       password: string;
       firstName: string;
       lastName: string;
+      phoneNumber?: string | null;
+      smsOptIn?: boolean;
     };
+
+    // Same rules as the backend's phone check, done before the account exists.
+    const phoneInput = body.phoneNumber?.trim() ?? '';
+    const phone = phoneInput === '' ? null : normalizePhoneNumber(phoneInput);
+    if (phoneInput !== '' && phone === null) {
+      return HttpResponse.json(
+        generateErrorResponse({
+          code: 'VALIDATION_FAILED',
+          message: PHONE_NUMBER_ERROR,
+          details: { phoneNumber: PHONE_NUMBER_ERROR },
+        }),
+        { status: 400 },
+      );
+    }
+    if (body.smsOptIn === true && phone === null) {
+      return HttpResponse.json(
+        generateErrorResponse({
+          code: 'VALIDATION_FAILED',
+          message: SMS_OPT_IN_NEEDS_PHONE_ERROR,
+          details: { smsOptIn: SMS_OPT_IN_NEEDS_PHONE_ERROR },
+        }),
+        { status: 400 },
+      );
+    }
 
     const result = db.createUser(body);
 
@@ -105,6 +136,7 @@ export const sessionHandlers = [
       );
     }
 
+    db.setPhoneSettings(result.studentId, phone, body.smsOptIn === true && phone !== null);
     db.createVerificationToken(result.studentId);
 
     return HttpResponse.json(

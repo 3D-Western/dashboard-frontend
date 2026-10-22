@@ -1,4 +1,6 @@
+import { AgreementsGate } from '@/components/Agreements/AgreementsGate';
 import { AppSidebar } from '@/components/AppSidebar';
+import { loadPendingAgreements } from '@/lib/agreements';
 import { PageHeader } from '@/components/PageHeader';
 import { SidebarInset, SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
 import { validateSession } from '@/lib/auth';
@@ -12,7 +14,12 @@ import { redirect } from 'next/navigation';
 export const dynamic = 'force-dynamic';
 
 export default async function ProtectedLayout({ children }: { children: React.ReactNode }) {
-  const currentUser = await validateSession();
+  // The agreements check runs alongside the session check (it needs the same cookies), so it adds
+  // no extra wait. It never throws: see loadPendingAgreements.
+  const [currentUser, pendingAgreements] = await Promise.all([
+    validateSession(),
+    loadPendingAgreements(),
+  ]);
 
   if (!currentUser) {
     redirect('/login?error=unauthenticated');
@@ -30,13 +37,18 @@ export default async function ProtectedLayout({ children }: { children: React.Re
     }
   }
 
+  // Agreements (terms, waiver, ...) must be accepted before anything else in the dashboard.
+  if (pendingAgreements.length > 0) {
+    return <AgreementsGate agreements={pendingAgreements} />;
+  }
+
   return (
     <SidebarProvider>
       <AppSidebar user={currentUser} />
       {/* min-w-0 lets wide tables scroll inside their own box instead of widening the page */}
       <SidebarInset className="min-w-0">
-        <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
-          <SidebarTrigger className="-ml-1" />
+        <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4 short:h-12">
+          <SidebarTrigger className="-ml-1 size-11 fine:size-7" />
           <PageHeader />
         </header>
         <div className="flex-1">

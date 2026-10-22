@@ -6,10 +6,11 @@ import { ThemeToggle } from './index';
 import { renderToString } from 'react-dom/server';
 
 const setThemeSpy = vi.fn();
+let initialTheme: 'light' | 'dark' | 'system' = 'light';
 
 vi.mock('next-themes', () => ({
   useTheme: () => {
-    const [theme, setThemeState] = React.useState<'light' | 'dark' | 'system'>('light');
+    const [theme, setThemeState] = React.useState<'light' | 'dark' | 'system'>(initialTheme);
     const setTheme = (nextTheme: string) => {
       setThemeSpy(nextTheme);
       setThemeState(nextTheme as 'light' | 'dark' | 'system');
@@ -29,6 +30,7 @@ vi.mock('next-themes', () => ({
 describe('ThemeToggle', () => {
   beforeEach(() => {
     setThemeSpy.mockClear();
+    initialTheme = 'light';
   });
 
   it('shows loading state before mount (SSR safety)', () => {
@@ -37,34 +39,38 @@ describe('ThemeToggle', () => {
     expect(output).toContain('disabled');
   });
 
-  it('cycles through light -> dark -> system -> light', async () => {
+  it('switches straight between light and dark', async () => {
     const user = userEvent.setup();
     render(<ThemeToggle />);
 
-    const lightButton = await screen.findByLabelText(/light mode/i);
-    await user.click(lightButton);
+    await user.click(await screen.findByLabelText(/switch to dark mode/i));
     expect(setThemeSpy).toHaveBeenLastCalledWith('dark');
 
-    const darkButton = await screen.findByLabelText(/dark mode/i);
-    await user.click(darkButton);
-    expect(setThemeSpy).toHaveBeenLastCalledWith('system');
-
-    const systemButton = await screen.findByLabelText(/system mode/i);
-    await user.click(systemButton);
+    await user.click(await screen.findByLabelText(/switch to light mode/i));
     expect(setThemeSpy).toHaveBeenLastCalledWith('light');
   });
 
-  it('shows current theme label and title', async () => {
+  it('offers dark mode (a moon) while the page is light', async () => {
     render(<ThemeToggle />);
-    const button = await screen.findByLabelText(/light mode/i);
+    const button = await screen.findByRole('button', { name: 'Switch to dark mode' });
 
-    expect(button).toHaveAttribute('title', expect.stringContaining('Light mode'));
+    expect(button).toHaveAttribute('title', 'Switch to dark mode');
+    expect(button.querySelector('svg')).toHaveClass('lucide-moon');
   });
 
-  it('provides an accessible button label', async () => {
+  it('offers light mode (a sun) while the page is dark', async () => {
+    initialTheme = 'dark';
     render(<ThemeToggle />);
-    const button = await screen.findByLabelText(/light mode/i);
+    const button = await screen.findByRole('button', { name: 'Switch to light mode' });
 
-    expect(button).toBeInTheDocument();
+    expect(button).toHaveAttribute('title', 'Switch to light mode');
+    expect(button.querySelector('svg')).toHaveClass('lucide-sun');
+  });
+
+  it('is a 44 px tap target on phones and 32 px from md', async () => {
+    render(<ThemeToggle />);
+    const button = await screen.findByLabelText(/switch to dark mode/i);
+
+    expect(button).toHaveClass('h-11', 'w-11', 'fine:h-8', 'fine:w-8');
   });
 });

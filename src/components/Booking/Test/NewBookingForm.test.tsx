@@ -1,7 +1,6 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach, Mock } from 'vitest';
 import NewBookingForm from '../NewBookingForm';
-import { useTrainingLevel } from '@/hooks/useTraining';
 
 // Import the hooks so we can mock their return values dynamically
 import { useRouter } from 'next/navigation';
@@ -24,10 +23,6 @@ vi.mock('@/hooks/useBookings', () => ({
 
 vi.mock('@/api/client/base', () => ({
   apiRequest: vi.fn(),
-}));
-
-vi.mock('@/hooks/useTraining', () => ({
-  useTrainingLevel: vi.fn(),
 }));
 
 describe('NewBookingForm', () => {
@@ -67,13 +62,6 @@ describe('NewBookingForm', () => {
         restrictions: { requiresTraining: false },
       },
     });
-
-    (useTrainingLevel as Mock).mockReturnValue({
-      trainingLevel: 'LEVEL_2',
-      isLoading: false,
-      error: null,
-      refetch: vi.fn(),
-    });
   });
 
   it('renders all required form fields', () => {
@@ -112,7 +100,15 @@ describe('NewBookingForm', () => {
 
     // 2. Fill out the form
     fireEvent.change(equipmentSelect, { target: { value: 'laser-1' } });
-    fireEvent.change(dateInput, { target: { value: '2026-10-15' } });
+    // Always a future date: a hard-coded date started failing once it passed.
+    const future = new Date();
+    future.setDate(future.getDate() + 7);
+    const futureDate = [
+      future.getFullYear(),
+      String(future.getMonth() + 1).padStart(2, '0'),
+      String(future.getDate()).padStart(2, '0'),
+    ].join('-');
+    fireEvent.change(dateInput, { target: { value: futureDate } });
     fireEvent.change(timeSlotSelect, { target: { value: '10:00 AM - 12:00 PM' } });
     fireEvent.change(purposeInput, { target: { value: 'Capstone Prototyping' } });
 

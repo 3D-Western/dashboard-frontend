@@ -1,5 +1,5 @@
 import db from '@/api/mocks/database/db';
-import { Booking, RestrictionViolation, AlternativeSlot } from '@/types/booking';
+import { Booking, AlternativeSlot } from '@/types/booking';
 
 type BookingWindow = { startTime: string; endTime: string };
 
@@ -27,19 +27,6 @@ export function validateCapacity(
     remaining,
     capacity,
   };
-}
-
-export function validateRestrictions(equipmentId: string, userId: number): RestrictionViolation[] {
-  const settings = db.getCapacitySettings(equipmentId);
-  const user = db.getUserById(userId);
-  const violations: RestrictionViolation[] = [];
-  if (settings.restrictions.requiresTraining && user?.trainingLevel !== 'LEVEL_2') {
-    violations.push({
-      rule: 'TrainingRequired',
-      message: 'Level 1 training is required to book this equipment.',
-    });
-  }
-  return violations;
 }
 
 export function suggestAlternativeSlots(

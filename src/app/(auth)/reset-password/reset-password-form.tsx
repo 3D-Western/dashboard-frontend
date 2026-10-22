@@ -4,7 +4,7 @@ import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { FieldDescription } from '@/components/ui/field';
-import { Input } from '@/components/ui/input';
+import { PasswordInput } from '@/components/ui/password-input';
 import {
   Form,
   FormControl,
@@ -74,8 +74,8 @@ export function ResetPasswordForm({ className, ...props }: React.ComponentProps<
     return (
       <div className={cn('flex flex-col gap-6', className)} {...props}>
         <Card className="overflow-hidden p-0">
-          <CardContent className="grid p-0 md:grid-cols-2">
-            <div className="flex min-h-[500px] items-center p-6 md:p-8">
+          <CardContent className="grid p-0 lg:grid-cols-2 short:grid-cols-1">
+            <div className="flex items-center p-6 md:p-8 lg:min-h-[500px]">
               <div className="grid w-full gap-6">
                 <div className="flex flex-col items-center gap-2 text-center">
                   <h1 className="text-2xl font-bold">Invalid Reset Link</h1>
@@ -88,13 +88,16 @@ export function ResetPasswordForm({ className, ...props }: React.ComponentProps<
 
                 <FieldDescription className="text-center">
                   Remember your password?{' '}
-                  <a href={Routes.login} className="underline-offset-2 hover:underline">
+                  <a
+                    href={Routes.login}
+                    className="inline-flex min-h-11 items-center px-1 underline-offset-2 hover:underline fine:min-h-0 fine:px-0"
+                  >
                     Back to Login
                   </a>
                 </FieldDescription>
               </div>
             </div>
-            <div className="relative hidden min-h-[500px] bg-muted md:block">
+            <div className="relative hidden min-h-[500px] lg:block short:hidden">
               <BrandMark className="p-12" />
             </div>
           </CardContent>
@@ -106,11 +109,14 @@ export function ResetPasswordForm({ className, ...props }: React.ComponentProps<
   return (
     <div className={cn('flex flex-col gap-6', className)} {...props}>
       <Card className="overflow-hidden p-0">
-        <CardContent className="grid p-0 md:grid-cols-2">
+        <CardContent className="grid p-0 lg:grid-cols-2 short:grid-cols-1">
           <Form {...form}>
+            {/* method="post": if someone submits before the page's JavaScript has loaded, the
+                browser's fallback submit must not put the password in the URL */}
             <form
+              method="post"
               onSubmit={form.handleSubmit(onSubmit)}
-              className="flex min-h-[500px] items-center p-6 md:p-8"
+              className="flex items-center p-6 md:p-8 lg:min-h-[500px]"
             >
               <div className="grid w-full gap-6">
                 <div className="flex flex-col items-center gap-2 text-center">
@@ -127,7 +133,7 @@ export function ResetPasswordForm({ className, ...props }: React.ComponentProps<
                     <FormItem>
                       <FormLabel>New Password</FormLabel>
                       <FormControl>
-                        <Input type="password" {...field} />
+                        <PasswordInput autoComplete="new-password" {...field} />
                       </FormControl>
                       <FormMessage />
                       <FieldDescription>Must be at least 10 characters</FieldDescription>
@@ -142,7 +148,7 @@ export function ResetPasswordForm({ className, ...props }: React.ComponentProps<
                     <FormItem>
                       <FormLabel>Confirm Password</FormLabel>
                       <FormControl>
-                        <Input type="password" {...field} />
+                        <PasswordInput autoComplete="new-password" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -155,14 +161,17 @@ export function ResetPasswordForm({ className, ...props }: React.ComponentProps<
 
                 <FieldDescription className="text-center">
                   Remember your password?{' '}
-                  <a href={Routes.login} className="underline-offset-2 hover:underline">
+                  <a
+                    href={Routes.login}
+                    className="inline-flex min-h-11 items-center px-1 underline-offset-2 hover:underline fine:min-h-0 fine:px-0"
+                  >
                     Back to Login
                   </a>
                 </FieldDescription>
               </div>
             </form>
           </Form>
-          <div className="relative hidden min-h-[500px] bg-muted md:block">
+          <div className="relative hidden min-h-[500px] lg:block short:hidden">
             <BrandMark className="p-12" />
           </div>
         </CardContent>

@@ -10,8 +10,6 @@ import { newBookingSchema, NewBookingFormData } from '@/types/booking-schema';
 import { CapacitySettings } from '@/types/booking';
 import { EQUIPMENT_CATEGORY_OPTIONS } from '@/constants/equipment';
 import { useCreateBooking } from '@/hooks/useBookings';
-import { useTrainingLevel } from '@/hooks/useTraining';
-import { canAccessBooking } from '@/utils/usage-calculators';
 import { useUser } from '@/providers/user-provider';
 import { UnsavedChangesDialog } from '@/components/UnsavedChangesDialog';
 import { Button } from '@/components/ui/button';
@@ -32,8 +30,6 @@ const TIME_SLOTS = [
 export default function NewBookingForm() {
   const router = useRouter();
   const user = useUser();
-  const { trainingLevel, isLoading: isLoadingTraining } = useTrainingLevel();
-  const isBookingAllowed = canAccessBooking(trainingLevel);
   const { mutate: createBooking, isPending, error: hookError } = useCreateBooking();
   const [authError, setAuthError] = useState<string | null>(null);
 
@@ -137,16 +133,6 @@ export default function NewBookingForm() {
             <AlertCircle className="h-4 w-4" />
             <AlertTitle>Booking Failed</AlertTitle>
             <AlertDescription>{displayError}</AlertDescription>
-          </Alert>
-        )}
-
-        {!isLoadingTraining && !isBookingAllowed && (
-          <Alert variant="destructive">
-            <AlertCircle className="h-4 w-4" />
-            <AlertTitle>Training Required</AlertTitle>
-            <AlertDescription>
-              You must complete required training before you can book equipment.
-            </AlertDescription>
           </Alert>
         )}
 
@@ -270,13 +256,7 @@ export default function NewBookingForm() {
 
           <Button
             type="submit"
-            disabled={
-              isPending ||
-              isFetchingSettings ||
-              !selectedEquipmentId ||
-              isLoadingTraining ||
-              !isBookingAllowed
-            }
+            disabled={isPending || isFetchingSettings || !selectedEquipmentId}
             className="w-full bg-sky-500/75 text-white transition-colors hover:bg-sky-500"
           >
             <CalendarPlus className="mr-2 h-4 w-4" />

@@ -12,10 +12,8 @@ import { Booking, BookingStatus, PendingRequest } from '@/types/booking';
 import {
   checkOverlap,
   validateCapacity,
-  validateRestrictions,
   suggestAlternativeSlots,
 } from '@/utils/booking-validators';
-import { canAccessBooking } from '@/utils/usage-calculators';
 
 const apiUrl = process.env.API_URL;
 
@@ -50,13 +48,13 @@ function enrichPendingRequest(booking: Booking): PendingRequest {
     .getBookings({ equipmentId: booking.equipmentId })
     .filter((b) => b.id !== booking.id);
   const overlapping = checkOverlap(others, booking);
-  const violations = validateRestrictions(booking.equipmentId, booking.userInfo.studentId);
 
   return {
     ...booking,
     urgencyLevel: computeUrgency(booking.startTime),
     hasConflict: overlapping.length >= settings.maxSimultaneousBookings,
-    meetsRestrictions: violations.length === 0,
+    // No restriction rules until real certifications exist (D-16).
+    meetsRestrictions: true,
   };
 }
 
@@ -148,29 +146,7 @@ export const bookingHandlers = [
       return HttpResponse.json({ error: 'Equipment not found' }, { status: 404 });
     }
 
-    if (!canAccessBooking(user.trainingLevel)) {
-      return HttpResponse.json(
-        {
-          code: 'TRAINING_LEVEL_REQUIRED',
-          message: 'You must complete required training before booking equipment.',
-        },
-        { status: 403 },
-      );
-    }
-
     const settings = db.getCapacitySettings(body.equipmentId);
-
-    const violations = validateRestrictions(body.equipmentId, user.studentId);
-    if (violations.length > 0) {
-      return HttpResponse.json(
-        {
-          code: 'RESTRICTION_VIOLATED',
-          message: 'You do not meet the requirements to book this equipment.',
-          violations,
-        },
-        { status: 403 },
-      );
-    }
 
     const { withinCapacity, overlapping } = validateCapacity(
       body.equipmentId,

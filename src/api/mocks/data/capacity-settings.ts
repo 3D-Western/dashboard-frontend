@@ -6,7 +6,8 @@ export const UNLIMITED = Number.MAX_SAFE_INTEGER;
 // Every equipment category left in the booking domain (laser cutters, circuit machines, sewing
 // machines, soldering stations, waterjet) is here specifically because it needs controlled/booked
 // access rather than free-for-all use, so requiresTraining defaults to true in base() below instead
-// of being an opt-in override per unit.
+// of being an opt-in override per unit. The flag is kept for re-gating on real certifications; it
+// currently has no effect, because booking has no restriction rules yet (D-16).
 const overrides: Record<string, Partial<CapacitySettings>> = {
   'laser-1': { maxSimultaneousBookings: 1, requireAdminApproval: true },
   'laser-2': { maxSimultaneousBookings: 5 },

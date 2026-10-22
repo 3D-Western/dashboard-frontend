@@ -39,10 +39,16 @@ function DialogOverlay({
   );
 }
 
+/** True on phones and tablets (touch as the main pointer). */
+function isCoarsePointer(): boolean {
+  return typeof window !== 'undefined' && window.matchMedia?.('(pointer: coarse)').matches === true;
+}
+
 function DialogContent({
   className,
   children,
   showCloseButton = true,
+  onOpenAutoFocus,
   ...props
 }: React.ComponentProps<typeof DialogPrimitive.Content> & {
   showCloseButton?: boolean;
@@ -53,9 +59,19 @@ function DialogContent({
       <DialogPrimitive.Content
         data-slot="dialog-content"
         className={cn(
-          'fixed top-1/2 left-1/2 z-50 grid w-full max-w-[calc(100%-2rem)] -translate-x-1/2 -translate-y-1/2 gap-4 rounded-xl bg-popover p-4 text-sm text-popover-foreground ring-1 ring-foreground/10 duration-100 outline-none data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95 data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 sm:max-w-sm',
+          'fixed top-1/2 left-1/2 z-50 grid w-full max-w-[calc(100%-2rem)] -translate-x-1/2 -translate-y-1/2 gap-4 rounded-xl bg-popover p-4 text-sm text-popover-foreground ring-1 ring-foreground/10 duration-100 outline-none data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95 data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 sm:max-w-[min(24rem,calc(100%-2rem))]',
           className,
         )}
+        onOpenAutoFocus={(event) => {
+          onOpenAutoFocus?.(event);
+          if (event.defaultPrevented || !isCoarsePointer()) return;
+          // On a phone, focusing the first field raises the keyboard over the dialog before
+          // it has been read. Focus the title instead.
+          event.preventDefault();
+          const content = event.currentTarget as HTMLElement;
+          const title = content.querySelector<HTMLElement>('[data-slot="dialog-title"]');
+          (title ?? content).focus();
+        }}
         {...props}
       >
         {children}
@@ -81,16 +97,22 @@ function DialogHeader({ className, ...props }: React.ComponentProps<'div'>) {
 function DialogFooter({
   className,
   showCloseButton = false,
+  stickyFooter = false,
   children,
   ...props
 }: React.ComponentProps<'div'> & {
   showCloseButton?: boolean;
+  /** Keeps the buttons visible at the bottom while a long form scrolls (dialogs with max-h). */
+  stickyFooter?: boolean;
 }) {
   return (
     <div
       data-slot="dialog-footer"
       className={cn(
-        '-mx-4 -mb-4 flex flex-col-reverse gap-2 rounded-b-xl border-t bg-muted/50 p-4 sm:flex-row sm:justify-end',
+        '-mx-4 -mb-4 flex flex-col-reverse gap-3 rounded-b-xl border-t bg-muted/50 p-4 sm:flex-row sm:justify-end sm:gap-2',
+        // The shadow paints the dialog's bottom padding (the footer's -mb-4) in the dialog colour, so
+        // scrolled text never shows in the strip under the buttons.
+        stickyFooter && 'sticky bottom-0 bg-popover py-3 shadow-[0_1rem_0_var(--popover)]',
         className,
       )}
       {...props}
@@ -109,6 +131,7 @@ function DialogTitle({ className, ...props }: React.ComponentProps<typeof Dialog
   return (
     <DialogPrimitive.Title
       data-slot="dialog-title"
+      tabIndex={-1}
       className={cn('cn-font-heading text-base leading-none font-medium', className)}
       {...props}
     />

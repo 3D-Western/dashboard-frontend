@@ -22,9 +22,10 @@ import { userApi } from '@/api/client/user';
 import { ApiError } from '@/api/client/errors';
 import { useRouter } from 'next/navigation';
 import { Routes } from '@/lib/routes';
-import { UsageSummaryCard } from './components/UsageSummaryCard';
-import { LimitCard } from './components/LimitCard';
 import { TrainingStatusCard } from './components/TrainingStatusCard';
+import { PhoneNumberCard } from './components/PhoneNumberCard';
+import { NotificationsCard } from './components/NotificationsCard';
+import { PageContainer } from '@/components/PageContainer';
 
 // Password change form schema
 const passwordSchema = z
@@ -92,7 +93,7 @@ export function SettingsContent() {
   }
 
   return (
-    <div className="flex flex-1 flex-col gap-4 p-4">
+    <PageContainer className="flex flex-1 flex-col gap-4 p-4">
       <div className="grid gap-4">
         {/* Password Change Card */}
         <Card>
@@ -149,17 +150,22 @@ export function SettingsContent() {
                   control={passwordForm.control}
                   name="invalidateAllSessions"
                   render={({ field }) => (
-                    <FormItem className="flex flex-row items-start space-y-0 space-x-3 rounded-md border p-4">
-                      <FormControl>
-                        <Checkbox checked={field.value} onCheckedChange={field.onChange} />
-                      </FormControl>
-                      <div className="space-y-1 leading-none">
-                        <FormLabel>Sign out all active sessions</FormLabel>
-                        <FormDescription>
-                          After changing your password, you will be signed out from all devices and
-                          redirected to the login page.
-                        </FormDescription>
-                      </div>
+                    <FormItem className="space-y-0 rounded-md border p-4">
+                      {/* The label row is the tap target: checkbox plus text, 44 px tall on phones. */}
+                      <FormLabel className="flex min-h-11 cursor-pointer items-center gap-3 fine:min-h-0 fine:items-start">
+                        <FormControl>
+                          <Checkbox
+                            checked={field.value}
+                            onCheckedChange={field.onChange}
+                            className="md:mt-0.5"
+                          />
+                        </FormControl>
+                        Sign out all active sessions
+                      </FormLabel>
+                      <FormDescription className="max-w-[80ch] pl-8 md:pl-7">
+                        After changing your password, you will be signed out from all devices and
+                        redirected to the login page.
+                      </FormDescription>
                     </FormItem>
                   )}
                 />
@@ -172,10 +178,14 @@ export function SettingsContent() {
           </CardContent>
         </Card>
 
-        <UsageSummaryCard />
-        <LimitCard />
+        <NotificationsCard />
+
+        <PhoneNumberCard />
+
+        {/* The Usage and Limits cards are hidden until GET /users/{id}/usage and /limits exist in the
+            backend (roadmap, usage limits): they only ever showed errors. Components are kept. */}
         <TrainingStatusCard />
       </div>
-    </div>
+    </PageContainer>
   );
 }

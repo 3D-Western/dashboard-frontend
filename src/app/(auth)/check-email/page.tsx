@@ -12,7 +12,7 @@ export const metadata: Metadata = {
 
 export default function CheckEmailPage() {
   return (
-    <div className="flex min-h-svh flex-col items-center justify-center p-6 md:p-10">
+    <div className="flex min-h-svh flex-col items-center justify-center px-6 pt-16 pb-6 md:p-10">
       <div className="w-full max-w-sm md:max-w-4xl">
         <div className="flex flex-col gap-6">
           <Card className="overflow-hidden p-0">
@@ -42,7 +42,7 @@ export default function CheckEmailPage() {
                   </Button>
                 </div>
               </div>
-              <div className="relative hidden min-h-[500px] bg-muted md:block">
+              <div className="relative hidden min-h-[500px] md:block">
                 <BrandMark className="p-12" />
               </div>
             </CardContent>

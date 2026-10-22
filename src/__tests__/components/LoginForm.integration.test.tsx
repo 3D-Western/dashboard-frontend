@@ -60,20 +60,20 @@ describe('LoginForm Integration', () => {
       expect(await screen.findByText(/must be exactly 9 digits/i)).toBeInTheDocument();
     });
 
-    it('validates student ID must be in valid range (251000000-251999999)', async () => {
+    it('accepts any 9-digit student number, not only the 251 range (D-5 open signup)', async () => {
       const user = userEvent.setup();
       render(<LoginForm />);
 
       const studentIdInput = screen.getByLabelText(/student id/i);
       const submitButton = screen.getByRole('button', { name: /^login$/i });
 
-      // Out of range
-      await user.type(studentIdInput, '999999999');
+      // A 9-digit number outside 251xxxxxx is a valid student number now. The password is left blank,
+      // so the only validation error shown should be the password one.
+      await user.type(studentIdInput, '100000001');
       await user.click(submitButton);
 
-      expect(
-        await screen.findByText(/must be between 251000000 and 251999999/i),
-      ).toBeInTheDocument();
+      expect(await screen.findByText(/password is required/i)).toBeInTheDocument();
+      expect(screen.queryByText(/student id must/i)).not.toBeInTheDocument();
     });
 
     it('validates student ID with non-numeric characters', async () => {
@@ -337,9 +337,10 @@ describe('LoginForm Integration', () => {
     it('displays "Forgot password" link', () => {
       render(<LoginForm />);
 
-      const forgotPasswordLink = screen.getByText(/forgot your password/i);
-      expect(forgotPasswordLink).toBeInTheDocument();
-      expect(forgotPasswordLink.closest('a')).toHaveAttribute('href', '/forgot-password');
+      const forgotPasswordLink = screen.getByRole('link', { name: /forgot password/i });
+      expect(forgotPasswordLink).toHaveAttribute('href', '/forgot-password');
+      // Phone-sized tap target (44 px) that shrinks back on desktop
+      expect(forgotPasswordLink).toHaveClass('min-h-11', 'fine:min-h-0');
     });
 
     it('displays "Sign up" link', () => {
@@ -348,6 +349,7 @@ describe('LoginForm Integration', () => {
       const signupLink = screen.getByText(/sign up/i);
       expect(signupLink).toBeInTheDocument();
       expect(signupLink.closest('a')).toHaveAttribute('href', '/signup');
+      expect(signupLink.closest('a')).toHaveClass('min-h-11');
     });
 
     it('renders password input with type="password"', () => {

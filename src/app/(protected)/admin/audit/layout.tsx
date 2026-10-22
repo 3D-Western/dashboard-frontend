@@ -1,8 +1,9 @@
 import { redirect } from 'next/navigation';
+import { TrainingAdminRoutes } from '@/lib/training-admin-routes';
 
-// TEMP: Audit Log is out of scope for the initial launch — remove this guard (and re-add the
-// "Audit Log" tile/nav entry) when it's ready to ship. See docs/LAUNCH_SCOPE.md.
+// The audit log lives in the training editor now (/admin/training/audit-log). This old address
+// had only a placeholder page, so it sends people to the real log.
 export default function AdminAuditLayout({ children }: { children: React.ReactNode }) {
-  redirect('/admin');
+  redirect(TrainingAdminRoutes.auditLog);
   return children;
 }

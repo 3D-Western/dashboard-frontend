@@ -1,11 +1,15 @@
 'use client';
 
-import { Moon, Sun, Monitor } from 'lucide-react';
+import { Moon, Sun } from 'lucide-react';
 import { useTheme } from 'next-themes';
 import { useEffect, useState } from 'react';
 
+// Switches straight between light and dark. It used to cycle light -> dark -> system, but with
+// dark as the default the first tap went dark -> system, which often changed nothing on screen.
+// The button shows (and says) what a tap switches TO: a sun while dark, a moon while light.
+// Showing the current mode instead read as inverted: a moon on a dark page looked like "go dark".
 export function ThemeToggle() {
-  const { theme, setTheme } = useTheme();
+  const { theme, resolvedTheme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
 
   // Prevent hydration mismatch
@@ -17,7 +21,7 @@ export function ThemeToggle() {
   if (!mounted) {
     return (
       <button
-        className="flex h-8 w-8 items-center justify-center rounded-md transition-colors hover:bg-accent hover:text-accent-foreground"
+        className="flex h-11 w-11 items-center justify-center rounded-md transition-colors hover:bg-accent hover:text-accent-foreground fine:h-8 fine:w-8"
         aria-label="Toggle theme"
         disabled
       >
@@ -26,51 +30,18 @@ export function ThemeToggle() {
     );
   }
 
-  const cycleTheme = () => {
-    // Cycle through: light -> dark -> system -> light
-    if (theme === 'light') {
-      setTheme('dark');
-    } else if (theme === 'dark') {
-      setTheme('system');
-    } else {
-      setTheme('light');
-    }
-  };
-
-  const getIcon = () => {
-    switch (theme) {
-      case 'light':
-        return <Sun className="h-4 w-4" />;
-      case 'dark':
-        return <Moon className="h-4 w-4" />;
-      case 'system':
-        return <Monitor className="h-4 w-4" />;
-      default:
-        return <Sun className="h-4 w-4" />;
-    }
-  };
-
-  const getLabel = () => {
-    switch (theme) {
-      case 'light':
-        return 'Light mode (click for dark)';
-      case 'dark':
-        return 'Dark mode (click for system)';
-      case 'system':
-        return 'System mode (click for light)';
-      default:
-        return 'Toggle theme';
-    }
-  };
+  // What's actually on screen (a saved "system" preference resolves to light or dark)
+  const isDark = (resolvedTheme ?? theme) === 'dark';
+  const label = isDark ? 'Switch to light mode' : 'Switch to dark mode';
 
   return (
     <button
-      onClick={cycleTheme}
-      className="flex h-8 w-8 items-center justify-center rounded-md transition-colors hover:bg-accent hover:text-accent-foreground"
-      title={getLabel()}
-      aria-label={getLabel()}
+      onClick={() => setTheme(isDark ? 'light' : 'dark')}
+      className="flex h-11 w-11 items-center justify-center rounded-md transition-colors hover:bg-accent hover:text-accent-foreground fine:h-8 fine:w-8"
+      title={label}
+      aria-label={label}
     >
-      {getIcon()}
+      {isDark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
     </button>
   );
 }
