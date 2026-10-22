@@ -10,14 +10,9 @@ import {
   SidebarGroupLabel,
   SidebarHeader,
   SidebarMenu,
-  SidebarMenuAction,
   SidebarMenuButton,
   SidebarMenuItem,
-  SidebarMenuSub,
-  SidebarMenuSubButton,
-  SidebarMenuSubItem,
 } from '@/components/ui/sidebar';
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { SettingsPopover } from '@/components/SettingsPopover';
 import { User, hasPermission } from '@/types/user';
 import { PERMISSIONS } from '@/constants/permissions';
@@ -28,8 +23,6 @@ import {
   Printer,
   Users,
   Settings,
-  Shield,
-  ChevronDown,
   PenSquare,
   DoorOpen,
   type LucideIcon,
@@ -62,13 +55,6 @@ const navigationItems = [
     icon: GraduationCap,
   },
 ];
-
-// The admin pages all live under /admin, so they're nested under Admin Dashboard in the sidebar
-const adminDashboardItem = {
-  title: 'Admin Dashboard',
-  url: '/admin',
-  icon: Shield,
-};
 
 // Highlight "My Jobs" on every page under it (a job's details, the new job form), and
 // "Training" while working through a training
@@ -138,8 +124,6 @@ export function AppSidebar({ user }: AppSidebarProps) {
       hasPermission(user, item.permission) ||
       (item.alsoPermission !== undefined && hasPermission(user, item.alsoPermission)),
   );
-  // The admin pages stay folded away on member pages, so the drawer shows the member links first
-  const onAdminPage = pathname === '/admin' || pathname.startsWith('/admin/');
 
   return (
     <Sidebar>
@@ -178,50 +162,20 @@ export function AppSidebar({ user }: AppSidebarProps) {
             <SidebarGroupLabel>Admin</SidebarGroupLabel>
             <SidebarGroupContent>
               <SidebarMenu>
-                {/* Keyed on the section, so entering an admin page opens it (the default is read again) */}
-                <Collapsible
-                  key={onAdminPage ? 'admin-page' : 'member-page'}
-                  asChild
-                  defaultOpen={onAdminPage}
-                >
-                  <SidebarMenuItem>
+                {visibleAdminItems.map((item) => (
+                  <SidebarMenuItem key={item.title}>
                     <SidebarMenuButton
                       asChild
-                      isActive={pathname === adminDashboardItem.url}
+                      isActive={pathname === item.url || pathname.startsWith(`${item.url}/`)}
                       className={NAV_BUTTON_CLASS}
                     >
-                      <Link href={adminDashboardItem.url}>
-                        <adminDashboardItem.icon className="h-4 w-4" />
-                        <span>{adminDashboardItem.title}</span>
+                      <Link href={item.url}>
+                        <item.icon className="h-4 w-4" />
+                        <span>{item.title}</span>
                       </Link>
                     </SidebarMenuButton>
-                    <CollapsibleTrigger asChild>
-                      <SidebarMenuAction className="top-0! right-0! size-11! data-[state=open]:rotate-180 fine:top-1.5! fine:right-1! fine:size-5!">
-                        <ChevronDown />
-                        <span className="sr-only">Toggle admin pages</span>
-                      </SidebarMenuAction>
-                    </CollapsibleTrigger>
-                    <CollapsibleContent>
-                      <SidebarMenuSub>
-                        {visibleAdminItems.map((item) => (
-                          <SidebarMenuSubItem key={item.title}>
-                            <SidebarMenuSubButton
-                              asChild
-                              isActive={
-                                pathname === item.url || pathname.startsWith(`${item.url}/`)
-                              }
-                            >
-                              <Link href={item.url}>
-                                <item.icon />
-                                <span>{item.title}</span>
-                              </Link>
-                            </SidebarMenuSubButton>
-                          </SidebarMenuSubItem>
-                        ))}
-                      </SidebarMenuSub>
-                    </CollapsibleContent>
                   </SidebarMenuItem>
-                </Collapsible>
+                ))}
               </SidebarMenu>
             </SidebarGroupContent>
           </SidebarGroup>

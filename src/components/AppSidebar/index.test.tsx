@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
 import { screen } from '@testing-library/react';
-import { render, userEvent } from '@test/utils/render';
+import { render } from '@test/utils/render';
 import { SidebarProvider } from '@/components/ui/sidebar';
 import { AppSidebar } from './index';
 import { createMockUser, createMockAdmin, perm } from '@test/utils/mockFactories';
@@ -151,7 +151,6 @@ describe('AppSidebar', () => {
         'href',
         '/admin/signoffs',
       );
-      expect(screen.getByRole('link', { name: /admin dashboard/i })).toBeInTheDocument();
       expect(screen.queryByRole('link', { name: /job management/i })).not.toBeInTheDocument();
     });
 
@@ -183,45 +182,22 @@ describe('AppSidebar', () => {
       });
       renderSidebar(admin);
 
-      expect(screen.getByRole('link', { name: /admin dashboard/i })).toBeInTheDocument();
       expect(screen.getByRole('link', { name: /job management/i })).toBeInTheDocument();
       expect(
         screen.queryByRole('link', { name: /invitation management/i }),
       ).not.toBeInTheDocument();
     });
 
-    it('nests the admin pages under Admin Dashboard and can collapse them', async () => {
-      const user = userEvent.setup();
-      const admin = createMockAdmin({ permissions: [perm(PERMISSIONS.USERS_LIST)] });
-      renderSidebar(admin);
+    it('lists the admin pages flat, with no Admin Dashboard link', () => {
+      renderSidebar(createMockAdmin({ permissions: [perm(PERMISSIONS.USERS_LIST)] }));
 
       expect(screen.getByRole('link', { name: /^user management$/i })).toBeInTheDocument();
-
-      await user.click(screen.getByRole('button', { name: /toggle admin pages/i }));
-
-      expect(screen.getByRole('link', { name: /admin dashboard/i })).toBeInTheDocument();
-      expect(screen.queryByRole('link', { name: /^user management$/i })).not.toBeInTheDocument();
+      expect(screen.queryByRole('link', { name: /admin dashboard/i })).not.toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: /toggle admin pages/i })).not.toBeInTheDocument();
     });
 
-    it('folds the admin links away on a member page, behind Admin Dashboard', async () => {
-      const user = userEvent.setup();
+    it('shows the admin links on member pages too', () => {
       renderSidebar(createMockAdmin({ permissions: [perm(PERMISSIONS.USERS_LIST)] }), '/dashboard');
-
-      expect(screen.getByRole('link', { name: /admin dashboard/i })).toBeInTheDocument();
-      expect(screen.queryByRole('link', { name: /^user management$/i })).not.toBeInTheDocument();
-
-      await user.click(screen.getByRole('button', { name: /toggle admin pages/i }));
-
-      expect(screen.getByRole('link', { name: /^user management$/i })).toBeInTheDocument();
-    });
-
-    it('opens the admin links when the admin pages are reached from a member page', () => {
-      const admin = createMockAdmin({ permissions: [perm(PERMISSIONS.USERS_LIST)] });
-      const { rerender } = renderSidebar(admin, '/dashboard');
-      expect(screen.queryByRole('link', { name: /^user management$/i })).not.toBeInTheDocument();
-
-      nav.pathname = '/admin/users';
-      rerender(sidebar(admin));
 
       expect(screen.getByRole('link', { name: /^user management$/i })).toBeInTheDocument();
     });
@@ -233,13 +209,6 @@ describe('AppSidebar', () => {
       renderSidebar(member);
 
       expect(screen.queryByRole('link', { name: /job management/i })).not.toBeInTheDocument();
-    });
-
-    it('shows Admin Dashboard when user has any relevant admin permission', () => {
-      const admin = createMockAdmin({ permissions: [perm(PERMISSIONS.JOBS_UPDATE_STATUS)] });
-      renderSidebar(admin);
-
-      expect(screen.getByRole('link', { name: /admin dashboard/i })).toBeInTheDocument();
     });
 
     it('hides admin section when user has no admin permissions', () => {
@@ -284,16 +253,14 @@ describe('AppSidebar', () => {
   });
 
   describe('phone tap targets', () => {
-    it('makes the admin sub-links and the collapse chevron 44 px on phones', () => {
+    it('makes the admin links 44 px on phones, like the member links', () => {
       const admin = createMockAdmin({ permissions: [perm(PERMISSIONS.USERS_LIST)] });
       renderSidebar(admin);
 
       expect(screen.getByRole('link', { name: /^user management$/i })).toHaveClass(
         'h-11',
-        'fine:h-7',
+        'fine:h-9',
       );
-      const chevron = screen.getByRole('button', { name: /toggle admin pages/i });
-      expect(chevron).toHaveClass('size-11!', 'fine:size-5!');
     });
   });
 
