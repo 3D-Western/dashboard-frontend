@@ -121,6 +121,7 @@ Server-side validation happens in protected routes:
 
 ```typescript
 UserRole = 'user' | 'admin';
+UserExperienceLevel = 'beginner' | 'advanced' | 'no-experience';
 ```
 
 **Print Job Types** (`src/types/jobs.ts`):
