@@ -19,3 +19,6 @@ out/
 eslint.config.mjs
 test-results/
 playwright-report/
+
+# Golden grading cases, kept byte-identical to the copy in dashboard-backend
+test/fixtures/training-grader-cases.json

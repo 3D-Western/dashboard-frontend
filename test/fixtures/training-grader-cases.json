@@ -1,0 +1,161 @@
+{
+  "_about": "Golden cases for the quiz grader. Read by the backend QuizGrader (QuizGraderParityTest) and by the staff preview's in-browser grader (training-preview-grade.test.ts), so the two cannot drift. Each question is {id, type, critical, correct, accepted, dropped, remediation, selected}; selected null means unanswered. expected.correctByQuestion lists scored questions only (a dropped question is absent). Scores are percentages with two decimals.",
+  "cases": [
+    {
+      "name": "single choice: the right pick passes",
+      "passMarkPercent": 90,
+      "questions": [
+        { "id": 1, "type": "SINGLE", "correct": [10], "selected": [10] }
+      ],
+      "expected": { "scorePercent": 100, "correctCount": 1, "totalCount": 1, "criticalAllCorrect": true, "passed": true, "correctByQuestion": { "1": true }, "reviewStepPositions": [] }
+    },
+    {
+      "name": "single choice: a wrong pick, two picks and no answer are all wrong",
+      "passMarkPercent": 90,
+      "questions": [
+        { "id": 1, "type": "SINGLE", "correct": [10], "selected": [11] },
+        { "id": 2, "type": "SINGLE", "correct": [20], "selected": [20, 21] },
+        { "id": 3, "type": "SINGLE", "correct": [30], "selected": null },
+        { "id": 4, "type": "SINGLE", "correct": [40], "selected": [] }
+      ],
+      "expected": { "scorePercent": 0, "correctCount": 0, "totalCount": 4, "criticalAllCorrect": true, "passed": false, "correctByQuestion": { "1": false, "2": false, "3": false, "4": false }, "reviewStepPositions": [] }
+    },
+    {
+      "name": "true/false behaves like single choice",
+      "passMarkPercent": 50,
+      "questions": [
+        { "id": 1, "type": "TRUE_FALSE", "correct": [10], "selected": [10] },
+        { "id": 2, "type": "TRUE_FALSE", "correct": [20], "selected": [21] }
+      ],
+      "expected": { "scorePercent": 50, "correctCount": 1, "totalCount": 2, "criticalAllCorrect": true, "passed": true, "correctByQuestion": { "1": true, "2": false }, "reviewStepPositions": [] }
+    },
+    {
+      "name": "multi select: every correct option and nothing else, in any order",
+      "passMarkPercent": 50,
+      "questions": [
+        { "id": 1, "type": "MULTI", "correct": [1, 2], "selected": [1, 2] },
+        { "id": 2, "type": "MULTI", "correct": [1, 2], "selected": [1] },
+        { "id": 3, "type": "MULTI", "correct": [1, 2], "selected": [1, 2, 3] },
+        { "id": 4, "type": "MULTI", "correct": [1, 2], "selected": [2, 1] }
+      ],
+      "expected": { "scorePercent": 50, "correctCount": 2, "totalCount": 4, "criticalAllCorrect": true, "passed": true, "correctByQuestion": { "1": true, "2": false, "3": false, "4": true }, "reviewStepPositions": [] }
+    },
+    {
+      "name": "accepted extra options count as right, but never replace a required one",
+      "passMarkPercent": 50,
+      "questions": [
+        { "id": 1, "type": "SINGLE", "correct": [10], "accepted": [11], "selected": [11] },
+        { "id": 2, "type": "SINGLE", "correct": [20], "accepted": [21], "selected": [22] },
+        { "id": 3, "type": "MULTI", "correct": [1, 2], "accepted": [3], "selected": [1, 2, 3] },
+        { "id": 4, "type": "MULTI", "correct": [1, 2], "accepted": [3], "selected": [3] },
+        { "id": 5, "type": "MULTI", "correct": [1, 2], "accepted": [3], "selected": [1, 2, 4] }
+      ],
+      "expected": { "scorePercent": 40, "correctCount": 2, "totalCount": 5, "criticalAllCorrect": true, "passed": false, "correctByQuestion": { "1": true, "2": false, "3": true, "4": false, "5": false }, "reviewStepPositions": [] }
+    },
+    {
+      "name": "a missed critical question fails whatever the score",
+      "passMarkPercent": 50,
+      "questions": [
+        { "id": 1, "type": "SINGLE", "critical": true, "correct": [10], "selected": [11] },
+        { "id": 2, "type": "SINGLE", "correct": [20], "selected": [20] },
+        { "id": 3, "type": "SINGLE", "correct": [30], "selected": [30] }
+      ],
+      "expected": { "scorePercent": 66.67, "correctCount": 2, "totalCount": 3, "criticalAllCorrect": false, "passed": false, "correctByQuestion": { "1": false, "2": true, "3": true }, "reviewStepPositions": [] }
+    },
+    {
+      "name": "critical questions all right and the mark reached passes",
+      "passMarkPercent": 60,
+      "questions": [
+        { "id": 1, "type": "SINGLE", "critical": true, "correct": [10], "selected": [10] },
+        { "id": 2, "type": "SINGLE", "correct": [20], "selected": [21] },
+        { "id": 3, "type": "SINGLE", "correct": [30], "selected": [30] }
+      ],
+      "expected": { "scorePercent": 66.67, "correctCount": 2, "totalCount": 3, "criticalAllCorrect": true, "passed": true, "correctByQuestion": { "1": true, "2": false, "3": true }, "reviewStepPositions": [] }
+    },
+    {
+      "name": "a dropped question is neither scored nor critical",
+      "passMarkPercent": 100,
+      "questions": [
+        { "id": 1, "type": "SINGLE", "critical": true, "dropped": true, "correct": [10], "selected": [11] },
+        { "id": 2, "type": "SINGLE", "correct": [20], "selected": [20] }
+      ],
+      "expected": { "scorePercent": 100, "correctCount": 1, "totalCount": 1, "criticalAllCorrect": true, "passed": true, "correctByQuestion": { "2": true }, "reviewStepPositions": [] }
+    },
+    {
+      "name": "a quiz with nothing left to grade never passes",
+      "passMarkPercent": 90,
+      "questions": [
+        { "id": 1, "type": "SINGLE", "dropped": true, "correct": [10], "selected": [10] }
+      ],
+      "expected": { "scorePercent": 0, "correctCount": 0, "totalCount": 0, "criticalAllCorrect": true, "passed": false, "correctByQuestion": {}, "reviewStepPositions": [] }
+    },
+    {
+      "name": "pass mark: 2 of 3 is short of 67%",
+      "passMarkPercent": 67,
+      "questions": [
+        { "id": 1, "type": "SINGLE", "correct": [10], "selected": [10] },
+        { "id": 2, "type": "SINGLE", "correct": [20], "selected": [20] },
+        { "id": 3, "type": "SINGLE", "correct": [30], "selected": [31] }
+      ],
+      "expected": { "scorePercent": 66.67, "correctCount": 2, "totalCount": 3, "criticalAllCorrect": true, "passed": false, "correctByQuestion": { "1": true, "2": true, "3": false }, "reviewStepPositions": [] }
+    },
+    {
+      "name": "pass mark: 2 of 3 is enough for 66%",
+      "passMarkPercent": 66,
+      "questions": [
+        { "id": 1, "type": "SINGLE", "correct": [10], "selected": [10] },
+        { "id": 2, "type": "SINGLE", "correct": [20], "selected": [20] },
+        { "id": 3, "type": "SINGLE", "correct": [30], "selected": [31] }
+      ],
+      "expected": { "scorePercent": 66.67, "correctCount": 2, "totalCount": 3, "criticalAllCorrect": true, "passed": true, "correctByQuestion": { "1": true, "2": true, "3": false }, "reviewStepPositions": [] }
+    },
+    {
+      "name": "pass mark 100 needs every question right",
+      "passMarkPercent": 100,
+      "questions": [
+        { "id": 1, "type": "SINGLE", "correct": [10], "selected": [10] },
+        { "id": 2, "type": "SINGLE", "correct": [20], "selected": [20] },
+        { "id": 3, "type": "SINGLE", "correct": [30], "selected": [30] },
+        { "id": 4, "type": "SINGLE", "correct": [40], "selected": [41] },
+        { "id": 5, "type": "SINGLE", "correct": [50], "selected": [50] },
+        { "id": 6, "type": "SINGLE", "correct": [60], "selected": [60] }
+      ],
+      "expected": { "scorePercent": 83.33, "correctCount": 5, "totalCount": 6, "criticalAllCorrect": true, "passed": false, "correctByQuestion": { "1": true, "2": true, "3": true, "4": false, "5": true, "6": true }, "reviewStepPositions": [] }
+    },
+    {
+      "name": "one of six rounds to 16.67",
+      "passMarkPercent": 10,
+      "questions": [
+        { "id": 1, "type": "SINGLE", "correct": [10], "selected": [10] },
+        { "id": 2, "type": "SINGLE", "correct": [20], "selected": [21] },
+        { "id": 3, "type": "SINGLE", "correct": [30], "selected": [31] },
+        { "id": 4, "type": "SINGLE", "correct": [40], "selected": [41] },
+        { "id": 5, "type": "SINGLE", "correct": [50], "selected": [51] },
+        { "id": 6, "type": "SINGLE", "correct": [60], "selected": [61] }
+      ],
+      "expected": { "scorePercent": 16.67, "correctCount": 1, "totalCount": 6, "criticalAllCorrect": true, "passed": true, "correctByQuestion": { "1": true, "2": false, "3": false, "4": false, "5": false, "6": false }, "reviewStepPositions": [] }
+    },
+    {
+      "name": "missed questions point at the steps to review, once each and sorted",
+      "passMarkPercent": 50,
+      "questions": [
+        { "id": 1, "type": "SINGLE", "correct": [10], "remediation": 3, "selected": [11] },
+        { "id": 2, "type": "SINGLE", "correct": [20], "remediation": 1, "selected": [21] },
+        { "id": 3, "type": "SINGLE", "correct": [30], "remediation": 3, "selected": [31] },
+        { "id": 4, "type": "SINGLE", "correct": [40], "remediation": 2, "selected": [40] },
+        { "id": 5, "type": "SINGLE", "dropped": true, "correct": [50], "remediation": 5, "selected": [51] },
+        { "id": 6, "type": "SINGLE", "correct": [60], "selected": [61] }
+      ],
+      "expected": { "scorePercent": 20, "correctCount": 1, "totalCount": 5, "criticalAllCorrect": true, "passed": false, "correctByQuestion": { "1": false, "2": false, "3": false, "4": true, "6": false }, "reviewStepPositions": [1, 3] }
+    },
+    {
+      "name": "a hotspot question cannot be answered in v1 and is never right",
+      "passMarkPercent": 50,
+      "questions": [
+        { "id": 1, "type": "HOTSPOT", "correct": [10], "selected": [10] },
+        { "id": 2, "type": "SINGLE", "correct": [20], "selected": [20] }
+      ],
+      "expected": { "scorePercent": 50, "correctCount": 1, "totalCount": 2, "criticalAllCorrect": true, "passed": true, "correctByQuestion": { "1": false, "2": true }, "reviewStepPositions": [] }
+    }
+  ]
+}

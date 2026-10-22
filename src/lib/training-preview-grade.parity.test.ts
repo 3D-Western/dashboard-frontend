@@ -6,9 +6,10 @@ import type { Question, QuestionType } from '@/types/training';
 import { gradePreviewQuiz } from './training-preview-grade';
 
 /**
- * The preview grades in the browser with a port of the server's `QuizGrader`. Both are run against
- * the same golden file (the backend side is `QuizGraderParityTest`), so a rule cannot change on one
- * side only.
+ * The preview grades in the browser with a port of the server's `QuizGrader`. Both run the same
+ * golden cases: `test/fixtures/training-grader-cases.json` here and
+ * `src/test/resources/training/training-grader-cases.json` in dashboard-backend (`QuizGraderParityTest`).
+ * The two copies must stay identical, so change a grading rule in both.
  */
 interface GoldenQuestion {
   id: number;
@@ -35,7 +36,7 @@ interface GoldenCase {
   };
 }
 
-const file = path.resolve(__dirname, '../../../dev/fixtures/training-grader-cases.json');
+const file = path.resolve(__dirname, '../../test/fixtures/training-grader-cases.json');
 const { cases } = JSON.parse(readFileSync(file, 'utf8')) as { cases: GoldenCase[] };
 
 describe('preview grader parity with the server grader', () => {
