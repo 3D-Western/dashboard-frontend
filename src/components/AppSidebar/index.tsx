@@ -20,7 +20,7 @@ import {
   ClipboardCheck,
   GraduationCap,
   LayoutDashboard,
-  Printer,
+  // Printer, // TEMP: re-add with the My Jobs nav entry below
   Users,
   Settings,
   PenSquare,
@@ -43,12 +43,13 @@ const navigationItems = [
     url: Routes.dashboard,
     icon: LayoutDashboard,
   },
+  // TEMP: print jobs aren't supported at launch — see docs/LAUNCH_SCOPE.md.
   // "My Jobs" also covers the old Print History and New Job pages (merged in the jobs redesign)
-  {
-    title: 'My Jobs',
-    url: Routes.jobs.home,
-    icon: Printer,
-  },
+  // {
+  //   title: 'My Jobs',
+  //   url: Routes.jobs.home,
+  //   icon: Printer,
+  // },
   {
     title: 'Training',
     url: Routes.training.home,

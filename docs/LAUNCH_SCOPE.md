@@ -78,6 +78,21 @@ This spec exercises the booking flow through `/dashboard/bookings` and was left 
 when this restriction was introduced (the route redirected away). Once Equipment Booking's guard
 is removed, re-enable and re-verify this spec.
 
+## Print jobs (My Jobs + Quick actions)
+
+Print jobs aren't supported at launch, so their entry points are commented out (each marked
+`// TEMP:`). Unlike the features above, the routes are **not** guarded — `/dashboard/jobs` is
+still reachable by direct URL.
+
+| File                                        | What's commented out                                              |
+| ------------------------------------------- | ----------------------------------------------------------------- |
+| `src/components/AppSidebar/index.tsx`       | The "My Jobs" entry in `navigationItems` and the `Printer` import |
+| `src/app/(protected)/dashboard/page.tsx`    | The "Quick actions" `DashboardSection` and `QuickActions` import  |
+| `src/app/(protected)/dashboard/loading.tsx` | The Quick actions loading skeleton                                |
+
+To restore, uncomment those blocks and swap the "never shows the My Jobs link" test in
+`src/components/AppSidebar/index.test.tsx` back to asserting the link is shown.
+
 ## Onboarding (backend not implemented yet)
 
 Unlike the features above, onboarding isn't held back by choice — the backend hasn't built

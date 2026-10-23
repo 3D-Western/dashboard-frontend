@@ -26,7 +26,7 @@ export default function DashboardLoading() {
         </div>
       </div>
 
-      {/* Quick actions skeleton */}
+      {/* Quick actions skeleton — TEMP: hidden with the Quick actions panel, see docs/LAUNCH_SCOPE.md
       <div className={SECTION_CLASS}>
         <Skeleton className="h-6 w-32" />
         <div className="grid gap-3 sm:grid-cols-3">
@@ -35,6 +35,7 @@ export default function DashboardLoading() {
           ))}
         </div>
       </div>
+      */}
     </div>
   );
 }

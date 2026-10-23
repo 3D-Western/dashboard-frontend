@@ -32,12 +32,19 @@ function renderSidebar(user: User, pathname = '/admin') {
 
 describe('AppSidebar', () => {
   describe('navigation items visible to all users', () => {
-    it('shows Dashboard and My Jobs links', () => {
+    it('shows the Dashboard link', () => {
       const user = createMockUser();
       renderSidebar(user);
 
       expect(screen.getByRole('link', { name: /dashboard/i })).toBeInTheDocument();
-      expect(screen.getByRole('link', { name: /my jobs/i })).toBeInTheDocument();
+    });
+
+    // Launch-scope regression: print jobs aren't supported at launch — see docs/LAUNCH_SCOPE.md.
+    it('never shows the My Jobs link', () => {
+      const user = createMockUser();
+      renderSidebar(user);
+
+      expect(screen.queryByRole('link', { name: /my jobs/i })).not.toBeInTheDocument();
     });
 
     it('shows a Training link to the training page', () => {
