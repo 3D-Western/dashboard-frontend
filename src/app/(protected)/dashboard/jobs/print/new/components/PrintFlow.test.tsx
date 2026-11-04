@@ -27,6 +27,7 @@ vi.mock('@/api/client/pipeline', async (importOriginal) => ({
     report: vi.fn(),
     rate: vi.fn(),
     reportQuality: vi.fn(),
+    pendingRatings: vi.fn(),
   },
 }));
 
@@ -63,6 +64,7 @@ beforeEach(() => {
       new Promise<void>((resolve) => signal?.addEventListener('abort', () => resolve())),
   );
   pipeline.saveInputs.mockResolvedValue(undefined);
+  pipeline.pendingRatings.mockResolvedValue([]);
 });
 
 describe('PrintFlow', () => {
@@ -237,6 +239,61 @@ describe('PrintFlow', () => {
       expect(jobs.createJob).toHaveBeenCalledTimes(2);
       expect(screen.queryByTestId('rating-required')).not.toBeInTheDocument();
       expect(await screen.findByRole('heading', { name: /what's it for/i })).toBeVisible();
+    });
+
+    it('asks when the screen opens and shows the one-tap rating before any upload, then goes straight to the file', async () => {
+      pipeline.pendingRatings.mockResolvedValue([
+        { jobId: 'old-1', name: 'Hinge Pair', collectedAt: '2026-11-01T10:00:00Z' },
+      ]);
+      pipeline.rate.mockResolvedValue(createMockSnapshot());
+      const { container } = render(<PrintFlow />);
+
+      expect(await screen.findByTestId('rating-required')).toBeVisible();
+      expect(screen.getByRole('heading', { name: /how did hinge pair turn out/i })).toBeVisible();
+      // The file is not asked for until the rating is in
+      expect(screen.queryByRole('heading', { name: '1. Your file' })).not.toBeInTheDocument();
+      expect(screen.queryByText(/STL, STEP or 3MF/)).not.toBeInTheDocument();
+      expect(jobs.createJob).not.toHaveBeenCalled();
+
+      await setup().click(screen.getByRole('button', { name: 'Good' }));
+
+      expect(pipeline.rate).toHaveBeenCalledWith('old-1', 'up');
+      expect(await screen.findByRole('heading', { name: '1. Your file' })).toBeVisible();
+      expect(screen.queryByTestId('rating-required')).not.toBeInTheDocument();
+      // ...and then the upload goes ahead with no 409 in between
+      await chooseFile(container);
+      await waitFor(() => expect(jobs.completeUpload).toHaveBeenCalled());
+      expect(jobs.createJob).toHaveBeenCalledTimes(1);
+    });
+
+    it('goes straight to the file when nothing is waiting for a rating', async () => {
+      render(<PrintFlow />);
+
+      await waitFor(() => expect(pipeline.pendingRatings).toHaveBeenCalledTimes(1));
+      expect(screen.getByRole('heading', { name: '1. Your file' })).toBeVisible();
+      expect(screen.queryByTestId('rating-required')).not.toBeInTheDocument();
+    });
+
+    it('falls back to the 409 when the look-ahead fails', async () => {
+      pipeline.pendingRatings.mockRejectedValue(new Error('offline'));
+      jobs.createJob
+        .mockRejectedValueOnce(ratingRequired([{ jobId: 'old-1', name: 'Hinge Pair' }]))
+        .mockResolvedValue({
+          jobId: 'job-9',
+          createdAt: '2026-11-04T10:00:00Z',
+          fileId: 'file-9',
+          uploadUrl: 'https://storage.example/upload',
+          uploadExpiresIn: 900,
+        });
+      pipeline.rate.mockResolvedValue(createMockSnapshot());
+      const { container } = render(<PrintFlow />);
+
+      expect(screen.getByRole('heading', { name: '1. Your file' })).toBeVisible();
+      await chooseFile(container);
+
+      expect(await screen.findByTestId('rating-required')).toBeVisible();
+      await setup().click(screen.getByRole('button', { name: 'Good' }));
+      await waitFor(() => expect(jobs.completeUpload).toHaveBeenCalled());
     });
 
     it('has no way to skip it: the backend blocks the submission', async () => {

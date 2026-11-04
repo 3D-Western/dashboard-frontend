@@ -76,7 +76,7 @@ interface Session {
   inputs: StudentInputs | null;
   planVersion: number;
   collected: boolean;
-  rating: Rating | null;
+  rating: Rating | 'waived' | null;
   qualityReasons: string[] | null;
   answers: Map<number, FollowupAnswer>;
 }
@@ -266,7 +266,26 @@ function requireUser(cookies: Record<string, string>) {
 
 const sleep = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
 
+/** Staff waived a print's rating (P-20): it no longer blocks the student. Says why it could not be waived, if so. */
+export function mockWaiveRating(jobId: string): 'ok' | 'not-collected' | 'already-rated' {
+  const job = (db.getPrintJobs({}) as unknown as BasePrintJob[]).find((j) => j.id === jobId);
+  const session = sessionFor(jobId);
+  if (!job || (job.studentStatus !== 'collected' && !session.collected)) return 'not-collected';
+  if (session.rating === 'up' || session.rating === 'down') return 'already-rated';
+  session.rating = 'waived';
+  return 'ok';
+}
+
 export const pipelineHandlers = [
+  // Rate first (P-20), look-ahead for the new-print screen: the same list the 409 carries.
+  http.get(`${apiUrl}${endpoints.pipeline.pendingRatings}`, ({ cookies }) => {
+    const user = requireUser(cookies);
+    if (!user) return createInvalidSessionResponse();
+    return HttpResponse.json(
+      generateSuccessResponse({ unratedPrints: mockUnratedPrints(user.studentId) }),
+    );
+  }),
+
   http.get(`${apiUrl}/api/v1/jobs/:jobId/pipeline`, ({ cookies, params }) => {
     if (!requireUser(cookies)) return createInvalidSessionResponse();
     return HttpResponse.json(generateSuccessResponse(snapshotFor(String(params.jobId))));
@@ -399,7 +418,7 @@ export const pipelineHandlers = [
           { status: 400 },
         );
       }
-      if (session.rating && session.rating !== rating) {
+      if (session.rating && session.rating !== 'waived' && session.rating !== rating) {
         return conflict('This print was already rated.');
       }
       session.rating = rating;

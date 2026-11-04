@@ -45,6 +45,12 @@ export interface ClearQuarantineRequest {
   notes?: string;
 }
 
+/** POST .../farm/jobs/{jobId}/waive-rating: let one collected print through the rate-first gate (P-20). */
+export interface WaiveRatingRequest {
+  /** Always required, 3 to 1000 characters; kept in the job's audit log. */
+  reason: string;
+}
+
 /** What a farm action did. */
 export interface FarmActionResult {
   ok: boolean;

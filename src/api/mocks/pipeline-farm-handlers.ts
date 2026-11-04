@@ -6,9 +6,11 @@ import type {
   HeldFarmJob,
   QuarantinedPrinter,
   ResolveHeldRequest,
+  WaiveRatingRequest,
 } from '@/types/pipeline-farm';
 import { endpoints } from '../client/endpoints';
 import db from './database/db';
+import { mockWaiveRating } from './pipeline-handlers';
 import {
   createInvalidSessionResponse,
   generateSuccessResponse,
@@ -121,6 +123,29 @@ export const pipelineFarmHandlers = [
       return ok(
         body.retry ? 'The job will be printed again.' : 'The job was closed and the student told.',
       );
+    },
+  ),
+
+  http.post(
+    `${apiUrl}${endpoints.pipelineFarm.waiveRating(':jobId')}`,
+    async ({ cookies, params, request }) => {
+      const { response } = staff(cookies);
+      if (response) return response;
+      const body = (await request.json()) as Partial<WaiveRatingRequest>;
+      const invalid = textProblem('reason', body.reason);
+      if (invalid) return invalid;
+      const outcome = mockWaiveRating(String(params.jobId));
+      if (outcome === 'not-collected') {
+        return apiError(
+          409,
+          'CONFLICT',
+          'That print is not collected, so there is nothing to waive.',
+        );
+      }
+      if (outcome === 'already-rated') {
+        return apiError(409, 'CONFLICT', 'That print already has a rating.');
+      }
+      return ok('The rating is waived. The student can start a new print.');
     },
   ),
 

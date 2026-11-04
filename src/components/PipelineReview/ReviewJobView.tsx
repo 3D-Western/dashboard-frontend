@@ -13,6 +13,7 @@ import { formatAgo } from '@/lib/signoff-format';
 import type { StaffJobView } from '@/types/pipeline-review';
 import { DecisionPanel } from './DecisionPanel';
 import { JobDetails } from './JobDetails';
+import { WaiveRating } from './WaiveRating';
 import { StaffStatusBadge, reviewErrorMessage } from './ReviewBits';
 
 export const JOB_REFRESH_MS = 15_000;
@@ -148,6 +149,8 @@ export function ReviewJobView({
             releasable={releasableFindings(job.findings)}
             onDecided={() => void load()}
           />
+
+          {job.studentStatus === 'collected' && <WaiveRating key={job.jobId} jobId={job.jobId} />}
 
           <JobDetails job={job} onReportResolved={() => void load()} />
         </>

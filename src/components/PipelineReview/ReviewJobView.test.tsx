@@ -133,6 +133,20 @@ describe('ReviewJobView', () => {
     expect(screen.queryByRole('button', { name: /resolve escalation/i })).not.toBeInTheDocument();
   });
 
+  it('offers "Waive rating" only on a collected print', async () => {
+    api.job.mockResolvedValue(createStaffJobView({ studentStatus: 'preparing' }));
+    const { unmount } = render(<ReviewJobView jobId={HELD_JOB_ID} refreshMs={0} />, {
+      user: staff,
+    });
+    await screen.findByTestId('part-viewer');
+    expect(screen.queryByRole('button', { name: 'Waive rating' })).not.toBeInTheDocument();
+    unmount();
+
+    api.job.mockResolvedValue(createStaffJobView({ studentStatus: 'collected' }));
+    render(<ReviewJobView jobId={HELD_JOB_ID} refreshMs={0} />, { user: staff });
+    expect(await screen.findByRole('button', { name: 'Waive rating' })).toBeInTheDocument();
+  });
+
   it('explains when the job cannot be loaded', async () => {
     api.job.mockRejectedValue(new Error('Job not found'));
     render(<ReviewJobView jobId={HELD_JOB_ID} refreshMs={0} />, { user: staff });

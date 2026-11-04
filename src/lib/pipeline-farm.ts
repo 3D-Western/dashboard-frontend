@@ -8,6 +8,7 @@ import type {
   HeldFarmJob,
   QuarantinedPrinter,
   ResolveHeldRequest,
+  WaiveRatingRequest,
 } from '@/types/pipeline-farm';
 
 /** What a held job can be resolved to. */
@@ -31,6 +32,10 @@ export function validateReason(reason: string): string | null {
   if (trimmed.length > REASON_MAX) return `The reason can be at most ${REASON_MAX} characters.`;
   return null;
 }
+
+export const buildWaiveRequest = (reason: string): WaiveRatingRequest => ({
+  reason: reason.trim(),
+});
 
 export const buildResolveRequest = (choice: HeldChoice, reason: string): ResolveHeldRequest => ({
   retry: choice === 'retry',

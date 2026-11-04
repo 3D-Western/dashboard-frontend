@@ -15,10 +15,13 @@ import { RateButtons } from './RateButtons';
 export function RatingRequiredPrompt({
   prints,
   onDone,
+  fileChosen = true,
 }: {
   prints: UnratedPrint[];
   /** Every listed print is rated: try the submission again. */
   onDone: () => void;
+  /** False on the look-ahead, before any file is chosen: the upload follows the rating. */
+  fileChosen?: boolean;
 }) {
   const [index, setIndex] = useState(0);
   const [qualityFor, setQualityFor] = useState<string | null>(null);
@@ -28,7 +31,9 @@ export function RatingRequiredPrompt({
   if (!print) {
     return (
       <p role="status" className="text-sm text-muted-foreground">
-        Thanks. Continuing with your upload.
+        {fileChosen
+          ? 'Thanks. Continuing with your upload.'
+          : 'Thanks. You can choose your file now.'}
       </p>
     );
   }
@@ -61,7 +66,9 @@ export function RatingRequiredPrompt({
               <span className="break-words">{print.name || 'your last print'}</span> turn out?
             </h2>
             <p className="mt-1 text-sm text-muted-foreground">
-              One tap, then your file goes up.
+              {fileChosen
+                ? 'One tap, then your file goes up.'
+                : 'One tap, then you can choose your file.'}
               {prints.length > 1 && ` (${index + 1} of ${prints.length})`}
             </p>
           </div>

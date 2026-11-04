@@ -6,6 +6,7 @@ import {
   printerLabel,
   quarantinedOldestFirst,
   validateReason,
+  buildWaiveRequest,
 } from './pipeline-farm';
 
 describe('validateReason', () => {
@@ -19,6 +20,12 @@ describe('validateReason', () => {
 });
 
 describe('request bodies', () => {
+  it('a waiver carries only the trimmed reason', () => {
+    expect(buildWaiveRequest('  student left the club ')).toEqual({
+      reason: 'student left the club',
+    });
+  });
+
   it('retry and close differ only in `retry`, with the reason trimmed', () => {
     expect(buildResolveRequest('retry', '  bin was full ')).toEqual({
       retry: true,
