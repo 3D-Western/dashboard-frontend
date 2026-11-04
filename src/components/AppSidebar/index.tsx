@@ -24,6 +24,7 @@ import {
   Users,
   Settings,
   PenSquare,
+  ScanSearch,
   DoorOpen,
   type LucideIcon,
 } from 'lucide-react';
@@ -96,6 +97,12 @@ const adminNavigationItems: AdminNavItem[] = [
     // JOBS_LIST is also granted to regular members (own-scoped, for "My Jobs"), so it can't
     // distinguish admins here. JOBS_UPDATE_STATUS is the permission the actual admin job-status
     // override endpoint requires (PATCH /jobs/:jobId) and is never granted to members.
+    permission: PERMISSIONS.JOBS_UPDATE_STATUS,
+  },
+  {
+    title: 'Print Review',
+    url: Routes.adminReview,
+    icon: ScanSearch,
     permission: PERMISSIONS.JOBS_UPDATE_STATUS,
   },
   {
