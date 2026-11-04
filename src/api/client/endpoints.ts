@@ -54,6 +54,13 @@ export const endpoints = {
     submissions: '/api/v1/admin/pipeline/submissions',
     requeue: (jobId: string) => `/api/v1/admin/pipeline/submissions/${jobId}/requeue`,
   },
+  // Alerts centre of the admin section (dashboard-backend StaffAlertController; jobs:update_status)
+  staffAlerts: {
+    list: '/api/v1/admin/alerts',
+    summary: '/api/v1/admin/alerts/summary',
+    acknowledge: (alertId: number) => `/api/v1/admin/alerts/${alertId}/acknowledge`,
+    resolve: (alertId: number) => `/api/v1/admin/alerts/${alertId}/resolve`,
+  },
   // Print farm, staff side (dashboard-backend StaffFarmController): jobs the farm loop holds for a
   // person and quarantined printers. Needs jobs:update_status (any scope).
   pipelineFarm: {
