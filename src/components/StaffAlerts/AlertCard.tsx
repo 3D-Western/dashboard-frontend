@@ -120,7 +120,7 @@ export function AlertCard({
           {alert.details.map((detail) => (
             <div key={detail.label} className="contents">
               <dt className="text-muted-foreground">{detail.label}</dt>
-              <dd className="min-w-0 font-mono text-xs break-words sm:text-sm">{detail.value}</dd>
+              <dd className="min-w-0 font-mono text-xs break-words">{detail.value}</dd>
             </div>
           ))}
         </dl>
