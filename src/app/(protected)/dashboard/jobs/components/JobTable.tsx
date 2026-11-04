@@ -14,7 +14,7 @@ import { useLocalTime } from '@/hooks/useLocalTime';
 import { Routes } from '@/lib/routes';
 import { cn } from '@/lib/utils';
 import { StatusHistory } from '@/types/jobs';
-import { JOB_STAGES, TONE_CLASSES } from '../lib/job-stages';
+import { stageFor, TONE_CLASSES } from '../lib/job-stages';
 import { JobListEntry } from './JobListItem';
 import { JobRowMenu } from './JobRowMenu';
 import { PrintProgress } from './PrintProgress';
@@ -48,8 +48,8 @@ function ProgressCell({ job }: { job: JobListEntry }) {
 function JobTableRow({ job }: { job: JobListEntry }) {
   const router = useRouter();
   const href = Routes.jobs.detail(job.id);
-  const stage = JOB_STAGES[job.status];
-  const tone = TONE_CLASSES[stage?.tone ?? 'gray'];
+  const stage = stageFor(job);
+  const tone = TONE_CLASSES[stage.tone];
   const createdAt = useLocalTime(job.jobPlaced, 'MMM d, yyyy');
 
   return (
@@ -71,7 +71,7 @@ function JobTableRow({ job }: { job: JobListEntry }) {
       <TableCell>
         <span className={cn('inline-flex items-center gap-1.5 text-xs font-semibold', tone.text)}>
           <span aria-hidden="true" className={cn('size-1.5 rounded-full', tone.bar)} />
-          {stage?.label ?? job.status}
+          {stage.label}
         </span>
       </TableCell>
       <TableCell className="text-muted-foreground">

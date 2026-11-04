@@ -7,8 +7,8 @@ vi.mock('@/api/client/training', () => ({
   trainingAPI: { getMyTrainings: vi.fn() },
 }));
 
-// The form itself is covered by PrintJobForm.test.tsx
-vi.mock('./PrintJobForm', () => ({ default: () => <form aria-label="Print job form" /> }));
+// The flow itself is covered by PrintFlow.test.tsx
+vi.mock('./PrintFlow', () => ({ PrintFlow: () => <form aria-label="Print job form" /> }));
 
 const getMyTrainings = trainingAPI.getMyTrainings as Mock;
 

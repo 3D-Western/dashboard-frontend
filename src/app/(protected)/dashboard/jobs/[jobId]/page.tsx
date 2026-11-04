@@ -2,11 +2,13 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
 import { jobApi } from '@/api/client/job';
+import { ReportProblem } from '@/components/Pipeline/ReportProblem';
 import { Routes } from '@/lib/routes';
 import { JobDetail } from '@/types/jobs';
 import { FeatureProjectCta } from './components/FeatureProjectCta';
 import { JobDetailHeader } from './components/JobDetailHeader';
 import { JobInfo } from './components/JobInfo';
+import { PipelineJobView } from './components/PipelineJobView';
 import { StagePanel } from './components/StagePanel';
 import { StatusStepper } from './components/StatusStepper';
 
@@ -53,12 +55,16 @@ export default async function JobDetailPage({ params }: PageProps) {
     );
   }
 
+  // A job that went through the print pipeline has its own live page, worded and dated by
+  // studentStatus only
+  if (job.studentStatus) return <PipelineJobView job={job} initialStatus={job.studentStatus} />;
+
   const hasHistory = Boolean(job.statusHistory?.length);
   // Ask to feature the project once they've actually picked it up, not while it's waiting
   const isCollected = job.status === 'Succeeded';
 
   return (
-    <div className="mx-auto w-full max-w-5xl space-y-6 p-6">
+    <div className="mx-auto w-full max-w-5xl space-y-6 p-6 max-md:pr-11">
       <JobDetailHeader job={job} />
 
       <StagePanel job={job} />
@@ -89,6 +95,8 @@ export default async function JobDetailPage({ params }: PageProps) {
           className={hasHistory ? 'xl:col-span-2 xl:row-start-1' : 'xl:col-span-3'}
         />
       </div>
+
+      <ReportProblem jobId={job.id} />
     </div>
   );
 }

@@ -243,6 +243,8 @@ export const jobHandlers = [
 
       // Update job status to InQueue
       db.updatePrintJobStatus(jobId as string, 'InQueue');
+      // A 3D print goes straight to the pipeline (see pipeline-handlers.ts for what it says)
+      if (job.category === 'ThreeDPrint') Object.assign(job, { studentStatus: 'preparing' });
 
       return HttpResponse.json(generateSuccessResponse({ data: null }));
     },

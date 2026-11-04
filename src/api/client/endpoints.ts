@@ -26,6 +26,15 @@ export const endpoints = {
     retryUpload: (jobId: string) => `/api/v1/jobs/${jobId}/retry-upload`,
     reorder: (jobId: string) => `/api/v1/jobs/${jobId}/reorder`,
   },
+  // Print pipeline, browser side (slicing-pipeline/docs/design/dashboard-contract.md)
+  pipeline: {
+    state: (jobId: string) => `/api/v1/jobs/${jobId}/pipeline`,
+    stream: (jobId: string) => `/api/v1/jobs/${jobId}/pipeline/stream`,
+    inputs: (jobId: string) => `/api/v1/jobs/${jobId}/pipeline/inputs`,
+    confirm: (jobId: string) => `/api/v1/jobs/${jobId}/pipeline/confirm`,
+    choices: (jobId: string) => `/api/v1/jobs/${jobId}/pipeline/choices`,
+    report: (jobId: string) => `/api/v1/jobs/${jobId}/pipeline/report`,
+  },
   files: {
     list: '/api/v1/files',
     byId: (fileId: string) => `/api/v1/files/${fileId}`,

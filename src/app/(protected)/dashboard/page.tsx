@@ -5,8 +5,8 @@ import DashboardStats from '@/components/DashboardStats';
 import { PageContainer } from '@/components/PageContainer';
 import { DashboardGreeting } from './components/DashboardGreeting';
 import { DashboardSection } from './components/DashboardSection';
-// TEMP: print jobs aren't supported at launch — see docs/LAUNCH_SCOPE.md.
-// import { QuickActions } from './components/QuickActions';
+import { QuickActions } from './components/QuickActions';
+import { isJobCreationEnabled } from '@/lib/feature-flags';
 import { TrainingSummary } from './components/TrainingSummary';
 import { OrientationInstallPrompt } from '@/components/InstallPrompt/OrientationInstallPrompt';
 import { OrientationPrompt } from '@/components/Training/OrientationPrompt';
@@ -57,11 +57,12 @@ export default async function DashboardPage({
             <DashboardSection id="prints" title="Your prints">
               <DashboardStats />
             </DashboardSection>
-            {/* TEMP: print jobs aren't supported at launch — see docs/LAUNCH_SCOPE.md.
-            <DashboardSection id="quick-actions" title="Quick actions">
-              <QuickActions />
-            </DashboardSection>
-            */}
+            {/* Hidden while job creation is switched off — see src/lib/feature-flags.ts */}
+            {isJobCreationEnabled() && (
+              <DashboardSection id="quick-actions" title="Quick actions">
+                <QuickActions />
+              </DashboardSection>
+            )}
           </div>
           <TrainingSummary className="min-w-0" />
         </div>

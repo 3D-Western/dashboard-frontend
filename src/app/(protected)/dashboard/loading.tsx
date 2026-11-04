@@ -1,4 +1,5 @@
 import { Skeleton } from '@/components/ui/skeleton';
+import { isJobCreationEnabled } from '@/lib/feature-flags';
 
 const SECTION_CLASS = 'space-y-4 rounded-xl border bg-card p-5 sm:p-6';
 
@@ -26,16 +27,17 @@ export default function DashboardLoading() {
         </div>
       </div>
 
-      {/* Quick actions skeleton — TEMP: hidden with the Quick actions panel, see docs/LAUNCH_SCOPE.md
-      <div className={SECTION_CLASS}>
-        <Skeleton className="h-6 w-32" />
-        <div className="grid gap-3 sm:grid-cols-3">
-          {Array.from({ length: 3 }).map((_, i) => (
-            <Skeleton key={i} className="h-11 rounded-lg" />
-          ))}
+      {/* Quick actions skeleton: only while the panel itself is shown (src/lib/feature-flags.ts) */}
+      {isJobCreationEnabled() && (
+        <div className={SECTION_CLASS}>
+          <Skeleton className="h-6 w-32" />
+          <div className="grid gap-3 sm:grid-cols-3">
+            {Array.from({ length: 3 }).map((_, i) => (
+              <Skeleton key={i} className="h-11 rounded-lg" />
+            ))}
+          </div>
         </div>
-      </div>
-      */}
+      )}
     </div>
   );
 }

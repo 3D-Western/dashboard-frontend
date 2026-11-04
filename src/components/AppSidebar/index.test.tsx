@@ -39,12 +39,27 @@ describe('AppSidebar', () => {
       expect(screen.getByRole('link', { name: /dashboard/i })).toBeInTheDocument();
     });
 
-    // Launch-scope regression: print jobs aren't supported at launch — see docs/LAUNCH_SCOPE.md.
-    it('never shows the My Jobs link', () => {
+    it('shows the My Jobs link while job creation is on', () => {
       const user = createMockUser();
       renderSidebar(user);
 
-      expect(screen.queryByRole('link', { name: /my jobs/i })).not.toBeInTheDocument();
+      expect(screen.getByRole('link', { name: /my jobs/i })).toHaveAttribute(
+        'href',
+        '/dashboard/jobs',
+      );
+    });
+
+    // The launch-scope switch (src/lib/feature-flags.ts, docs/LAUNCH_SCOPE.md) hides it again.
+    it('hides the My Jobs link when NEXT_PUBLIC_JOB_CREATION_ENABLED is false', () => {
+      vi.stubEnv('NEXT_PUBLIC_JOB_CREATION_ENABLED', 'false');
+      try {
+        const user = createMockUser();
+        renderSidebar(user);
+
+        expect(screen.queryByRole('link', { name: /my jobs/i })).not.toBeInTheDocument();
+      } finally {
+        vi.unstubAllEnvs();
+      }
     });
 
     it('shows a Training link to the training page', () => {

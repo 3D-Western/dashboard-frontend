@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { render, screen, within } from '@test/utils/render';
 import { createMockPrintJob } from '@test/utils/mockFactories';
 import { PaginationMetadata } from '@/types/common';
@@ -132,5 +132,48 @@ describe('JobList without a date', () => {
     expect(within(item).getByText('Queued')).toBeInTheDocument();
     expect(item.textContent).not.toContain('·');
     expect(item.querySelector('time')).toBeNull();
+  });
+
+  describe('jobs that went through the print pipeline', () => {
+    it.each([
+      ['preparing', 'Preparing', /checking your part/i, 'View progress'],
+      ['needs_confirmation', 'Review needed', /say yes to send it to the printers/i, 'Review'],
+      ['needs_choice', 'Your choice needed', /choose how to handle/i, 'Choose'],
+      ['cannot_print', "Can't print", /see why and what to change/i, 'See why'],
+      ['reprinting', 'Printing again', /don't need to do anything/i, 'View details'],
+      ['ready_for_pickup', 'Ready', /ready for pickup/i, 'Pickup info'],
+    ] as const)('words %s in plain language', (studentStatus, label, message, action) => {
+      const job = createMockPrintJob({ name: 'Phone Stand', status: 'InQueue' });
+      renderList([{ ...job, studentStatus }]);
+
+      const item = screen.getByRole('listitem');
+      expect(within(item).getByText(label)).toBeInTheDocument();
+      expect(within(item).getByText(message)).toBeInTheDocument();
+      expect(
+        within(item).getByRole('link', { name: `${action}: Phone Stand` }),
+      ).toBeInTheDocument();
+    });
+
+    it('prefers studentStatus over the old status', () => {
+      const job = createMockPrintJob({ name: 'Phone Stand', status: 'Failed' });
+      renderList([{ ...job, studentStatus: 'needs_confirmation' }]);
+
+      expect(screen.getByText('Review needed')).toBeInTheDocument();
+      expect(screen.queryByText('Issue')).not.toBeInTheDocument();
+    });
+  });
+
+  describe('when job creation is switched off', () => {
+    it('does not invite the user to create a job', () => {
+      vi.stubEnv('NEXT_PUBLIC_JOB_CREATION_ENABLED', 'false');
+      try {
+        renderList([]);
+
+        expect(screen.getByText(/don't have any jobs yet/i)).toBeInTheDocument();
+        expect(screen.queryByRole('link', { name: /create new job/i })).not.toBeInTheDocument();
+      } finally {
+        vi.unstubAllEnvs();
+      }
+    });
   });
 });

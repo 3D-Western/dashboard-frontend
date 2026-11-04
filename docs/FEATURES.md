@@ -114,19 +114,12 @@ This document catalogs all implemented features in the 3D Western Dashboard. Use
 
 - Service picker with four cards: 3D Print (active), CNC, Laser Cutting, Water Jet (all three are disabled/coming-soon)
 
-### 3D Print Job Form
+### 3D Print Flow (print pipeline)
 
 **Route:** `/dashboard/jobs/print/new`  
-**File:** `src/app/(protected)/dashboard/jobs/print/new/components/PrintJobForm.tsx`
+**Files:** `src/app/(protected)/dashboard/jobs/print/new/components/PrintFlow.tsx`, `useJobUpload.ts`; shared live screens in `src/components/Pipeline/`
 
-Three-step upload flow:
-
-1. `jobApi.createJob()` — creates the job record and receives a presigned S3 URL
-2. `jobApi.uploadJobFile()` — PUT the STL file directly to the presigned URL
-3. `jobApi.completeUpload()` — sends filename, size, content-type, SHA-256 checksum
-
-Form fields: project title, STL file dropzone (`.stl` only), description (200-char limit with live counter), project purpose (select), design intent (radio group).  
-`UnsavedChangesDialog` warns before navigation if the form is dirty and not yet submitted.
+Upload first: the file goes up in the background the moment it is chosen (`createJob`, PUT to the presigned URL, `completeUpload`, which starts the pipeline), while the student picks a purpose (venture / class / personal / other, with a short sub-form remembered in the browser) and writes "tell us about your part". Both are saved to `/pipeline/inputs` in the background. "Preparing your print" streams the pipeline's steps live (`GET /pipeline/stream`, SSE, via `usePipelineJob`); the review (`ReviewPlan`) asks for an explicit yes (`/pipeline/confirm` with `planId`; a 409 shows the changed plan for a second yes). `PipelineJobPanel` shows the same states on the job page. The typed client is `src/api/client/pipeline.ts`. `PartViewerSlot` is the place for the later 3D viewer. Switch job creation off with `NEXT_PUBLIC_JOB_CREATION_ENABLED=false` (docs/LAUNCH_SCOPE.md).
 
 ### CNC / Laser Cutting / Water Jet Forms
 

@@ -20,7 +20,7 @@ import {
   ClipboardCheck,
   GraduationCap,
   LayoutDashboard,
-  // Printer, // TEMP: re-add with the My Jobs nav entry below
+  Printer,
   Users,
   Settings,
   PenSquare,
@@ -32,24 +32,34 @@ import { BrandLockup } from '@/components/BrandLogo';
 import { usePathname } from 'next/navigation';
 import { Routes } from '@/lib/routes';
 import { AccessAdminRoutes } from '@/lib/access-admin-routes';
+import { isJobCreationEnabled } from '@/lib/feature-flags';
 
 // NOTE: Equipment Booking, IAM Management, Audit Log, and the booking-admin pages (Equipment
 // Bookings / Booking Requests / Equipment Management) are intentionally left out of this list
 // for the initial launch — see docs/LAUNCH_SCOPE.md for what's held back and how to bring each
 // one back.
-const navigationItems = [
+interface NavItem {
+  title: string;
+  url: string;
+  icon: LucideIcon;
+  /** Left out while job creation is switched off (src/lib/feature-flags.ts). */
+  requiresJobCreation?: boolean;
+}
+
+const navigationItems: NavItem[] = [
   {
     title: 'Dashboard',
     url: Routes.dashboard,
     icon: LayoutDashboard,
   },
-  // TEMP: print jobs aren't supported at launch — see docs/LAUNCH_SCOPE.md.
-  // "My Jobs" also covers the old Print History and New Job pages (merged in the jobs redesign)
-  // {
-  //   title: 'My Jobs',
-  //   url: Routes.jobs.home,
-  //   icon: Printer,
-  // },
+  // "My Jobs" also covers the old Print History and New Job pages (merged in the jobs redesign).
+  // Hidden while job creation is switched off (src/lib/feature-flags.ts, docs/LAUNCH_SCOPE.md).
+  {
+    title: 'My Jobs',
+    url: Routes.jobs.home,
+    icon: Printer,
+    requiresJobCreation: true,
+  },
   {
     title: 'Training',
     url: Routes.training.home,
@@ -120,6 +130,9 @@ interface AppSidebarProps {
 
 export function AppSidebar({ user }: AppSidebarProps) {
   const pathname = usePathname();
+  const visibleNavItems = navigationItems.filter(
+    (item) => !item.requiresJobCreation || isJobCreationEnabled(),
+  );
   const visibleAdminItems = adminNavigationItems.filter(
     (item) =>
       hasPermission(user, item.permission) ||
@@ -140,7 +153,7 @@ export function AppSidebar({ user }: AppSidebarProps) {
         <SidebarGroup>
           <SidebarGroupContent>
             <SidebarMenu>
-              {navigationItems.map((item) => (
+              {visibleNavItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton
                     asChild

@@ -63,16 +63,24 @@ async function proxyRequest(request: NextRequest, params: { path: string[] }) {
     body = await request.text();
   }
 
+  // A live stream (the print pipeline's server-sent events) must end when the browser leaves
+  const wantsStream = (request.headers.get('accept') ?? '').includes('text/event-stream');
+
   // Make the proxied request with credentials
   const response = await fetch(url, {
     method: request.method,
     headers,
     body,
     credentials: 'include',
+    signal: wantsStream ? request.signal : undefined,
   });
 
+  // Server-sent events are passed through as they arrive; buffering them with text() would hold
+  // every event back until the stream closed, which for a live feed is never.
+  const isStream = (response.headers.get('content-type') ?? '').includes('text/event-stream');
+
   // Get response body (fetch transparently decodes gzip/deflate)
-  const responseBody = await response.text();
+  const responseBody = isStream ? response.body : await response.text();
 
   // Create the response
   const nextResponse = new NextResponse(responseBody, {
@@ -114,6 +122,12 @@ async function proxyRequest(request: NextRequest, params: { path: string[] }) {
       nextResponse.headers.set(key, value);
     }
   });
+
+  if (isStream) {
+    nextResponse.headers.set('Cache-Control', 'no-cache, no-transform');
+    // Tell nginx-style reverse proxies not to buffer it either
+    nextResponse.headers.set('X-Accel-Buffering', 'no');
+  }
 
   return nextResponse;
 }
