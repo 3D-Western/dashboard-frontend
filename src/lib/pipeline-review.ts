@@ -10,7 +10,6 @@ import type {
   QueueItem,
   StaffDecisionRequest,
   StaffDecisionType,
-  StaffEvent,
   StaffRender,
   StaffStatus,
 } from '@/types/pipeline-review';

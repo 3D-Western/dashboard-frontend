@@ -6,7 +6,6 @@ import {
   HELD_JOB_ID,
   createProblemReport,
   createStaffDecisionRecord,
-  createStaffEvent,
   createStaffJobView,
   createStaffUser,
   createSubmission,

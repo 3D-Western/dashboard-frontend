@@ -3,10 +3,9 @@ import {
   createFinding,
   createQueueItem,
   createReportQueueItem,
-  createStaffEvent,
   createStaffUser,
 } from '@test/utils/pipelineReviewFactories';
-import type { Finding, QueueItem, StaffEvent, StaffDecisionType } from '@/types/pipeline-review';
+import type { Finding, QueueItem, StaffDecisionType } from '@/types/pipeline-review';
 import {
   buildDecisionRequest,
   canResolveEscalation,
