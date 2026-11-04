@@ -41,7 +41,7 @@ describe('ReorderJobDialog', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Create job' }));
 
     await waitFor(() => expect(toast.error).toHaveBeenCalled());
-    const [title, options] = vi.mocked(toast.error).mock.calls[0] as [
+    const [title, options] = vi.mocked(toast.error).mock.calls[0] as unknown as [
       string,
       { description: string; action: { label: string } },
     ];
