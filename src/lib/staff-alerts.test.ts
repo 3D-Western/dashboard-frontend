@@ -1,6 +1,14 @@
 import { describe, it, expect } from 'vitest';
 import { createStaffAlert } from '@test/utils/staffAlertFactories';
-import { alertLink, badgeText, handledBy, queryOf, toggled } from './staff-alerts';
+import {
+  KIND_LABEL,
+  KIND_ORDER,
+  alertLink,
+  badgeText,
+  handledBy,
+  queryOf,
+  toggled,
+} from './staff-alerts';
 
 const JOB = '11111111-1111-4111-8111-000000000001';
 
@@ -67,5 +75,13 @@ describe('small helpers', () => {
     expect(handledBy(createStaffAlert({ state: 'resolved', autoResolved: true }))).toBe(
       'Closed automatically',
     );
+  });
+});
+
+describe('kinds', () => {
+  it('offers a filter for every kind the backend raises, farm alerts included', () => {
+    expect([...KIND_ORDER].sort()).toEqual(Object.keys(KIND_LABEL).sort());
+    expect(KIND_ORDER).toContain('farm_job_held');
+    expect(KIND_ORDER).toContain('printer_quarantined');
   });
 });

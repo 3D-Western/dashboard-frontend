@@ -4,7 +4,13 @@
 // staff-facing but carries no student identity (a job id and finding codes at most). Field names
 // are the backend's camelCase JSON; enum values are its wire strings.
 
-export type AlertKind = 'hold' | 'escalation' | 'pipeline_outage' | 'pipeline_recovered';
+export type AlertKind =
+  | 'hold'
+  | 'escalation'
+  | 'pipeline_outage'
+  | 'pipeline_recovered'
+  | 'farm_job_held'
+  | 'printer_quarantined';
 
 /** How urgent: info needs no action (stored already closed), critical is an escalation or outage. */
 export type AlertSeverity = 'info' | 'warning' | 'critical';
