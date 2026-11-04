@@ -2,6 +2,8 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
 import { jobApi } from '@/api/client/job';
+import { PipelineJobPanel } from '@/components/Pipeline/PipelineJobPanel';
+import { ReportProblem } from '@/components/Pipeline/ReportProblem';
 import { Routes } from '@/lib/routes';
 import { JobDetail } from '@/types/jobs';
 import { FeatureProjectCta } from './components/FeatureProjectCta';
@@ -61,7 +63,12 @@ export default async function JobDetailPage({ params }: PageProps) {
     <div className="mx-auto w-full max-w-5xl space-y-6 p-6">
       <JobDetailHeader job={job} />
 
-      <StagePanel job={job} />
+      {/* Jobs that went through the print pipeline show its live state; older jobs keep the old panel */}
+      {job.studentStatus ? (
+        <PipelineJobPanel jobId={job.id} jobName={job.name} initialStatus={job.studentStatus} />
+      ) : (
+        <StagePanel job={job} />
+      )}
 
       {isCollected && <FeatureProjectCta jobName={job.name} jobId={job.id} />}
 
@@ -89,6 +96,8 @@ export default async function JobDetailPage({ params }: PageProps) {
           className={hasHistory ? 'xl:col-span-2 xl:row-start-1' : 'xl:col-span-3'}
         />
       </div>
+
+      <ReportProblem jobId={job.id} />
     </div>
   );
 }

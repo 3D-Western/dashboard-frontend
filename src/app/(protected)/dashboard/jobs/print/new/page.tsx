@@ -12,10 +12,10 @@ export default function NewPrintJobPage() {
   const mockMode = process.env.MOCK_ENABLED === 'true';
 
   return (
-    <PageContainer className="px-6 py-8">
+    <PageContainer narrow className="px-6 py-8">
       <PageTitle
         title="Create 3D Print Job"
-        description="Upload your 3D model and specify your printing requirements"
+        description="Upload your 3D model first. We start checking it right away, while you tell us about it."
       />
 
       <PrintSubmissionGate mockMode={mockMode} />

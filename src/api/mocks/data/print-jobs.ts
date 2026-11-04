@@ -41,6 +41,21 @@ export const mockPrintJobs = [
     category: 'ThreeDPrint',
     pickupDetails: mockPickup,
   } as unknown as PrintJob),
+  // Print-pipeline jobs: ids are "job-pipeline-*", which pipeline-handlers.ts plays out
+  createMockPrintJob({
+    id: 'pipeline-review',
+    name: 'Phone Stand Bracket',
+    status: 'InQueue',
+    studentStatus: 'needs_confirmation',
+    category: 'ThreeDPrint',
+  } as unknown as PrintJob),
+  createMockPrintJob({
+    id: 'pipeline-cannot',
+    name: 'Thin Vase',
+    status: 'Failed',
+    studentStatus: 'cannot_print',
+    category: 'ThreeDPrint',
+  } as unknown as PrintJob),
   createMockCompletedPrintJob({
     name: 'Laser Engraved Coasters',
     status: 'Succeeded',

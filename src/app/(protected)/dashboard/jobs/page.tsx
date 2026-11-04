@@ -2,11 +2,13 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { cookies } from 'next/headers';
 import { Plus } from 'lucide-react';
+import { ReportProblem } from '@/components/Pipeline/ReportProblem';
 import { InstallPrompt } from '@/components/InstallPrompt/InstallPrompt';
 import { Button } from '@/components/ui/button';
 import { FilterToolbar } from '@/components/Filters';
 import { userApi } from '@/api/client/user';
 import { withSessionErrorHandling } from '@/lib/server-utils';
+import { isJobCreationEnabled } from '@/lib/feature-flags';
 import { Routes } from '@/lib/routes';
 import { PrintJobStatus } from '@/types/jobs';
 import { JobList } from './components/JobList';
@@ -50,15 +52,19 @@ export default async function MyJobsPage({ searchParams }: MyJobsPageProps) {
         <div>
           <h1 className="text-3xl font-bold">My Jobs</h1>
           <p className="mt-2 text-muted-foreground">
-            Create 3D print jobs and follow each one from submission to pickup.
+            {isJobCreationEnabled()
+              ? 'Create 3D print jobs and follow each one from submission to pickup.'
+              : 'Follow each of your jobs from submission to pickup.'}
           </p>
         </div>
-        <Button asChild size="pill" className="self-start tracking-wide uppercase">
-          <Link href={Routes.jobs.newPrintJob}>
-            <Plus aria-hidden="true" />
-            Create job
-          </Link>
-        </Button>
+        {isJobCreationEnabled() && (
+          <Button asChild size="pill" className="self-start tracking-wide uppercase">
+            <Link href={Routes.jobs.newPrintJob}>
+              <Plus aria-hidden="true" />
+              Create job
+            </Link>
+          </Button>
+        )}
       </div>
 
       {/* Just submitted a print: the moment to offer the home-screen app (phones only) */}
@@ -77,6 +83,8 @@ export default async function MyJobsPage({ searchParams }: MyJobsPageProps) {
         hasFilters={Boolean(status || search)}
         view={view}
       />
+
+      <ReportProblem />
     </div>
   );
 }

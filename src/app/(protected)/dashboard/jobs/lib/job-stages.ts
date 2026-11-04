@@ -1,5 +1,7 @@
 import type { StatusOption } from '@/components/Filters';
 import { PrintJobStatus } from '@/types/jobs';
+import type { StudentStatus } from '@/types/pipeline';
+import { studentStage } from '@/lib/student-status';
 
 // How each backend job status is presented to users. This is the one place to update when the
 // backend adds the Draft / Submitted (in review) statuses we've asked for.
@@ -77,6 +79,23 @@ export const JOB_STAGES: Record<PrintJobStatus, JobStage> = {
     actionLabel: 'View details',
   },
 };
+
+/**
+ * How a job is worded: by the pipeline's `studentStatus` when it has one (plain words for what
+ * the student can do next), otherwise by the old backend status.
+ */
+export function stageFor(job: { status: PrintJobStatus; studentStatus?: StudentStatus }): JobStage {
+  if (job.studentStatus) return studentStage(job.studentStatus);
+  return (
+    JOB_STAGES[job.status] ?? {
+      // A status the frontend doesn't know yet (the backend added one) still renders sensibly
+      label: job.status,
+      tone: 'gray',
+      message: '',
+      actionLabel: 'View details',
+    }
+  );
+}
 
 // Full class names (not built from strings) so Tailwind can find them.
 export const TONE_CLASSES: Record<StageTone, { bar: string; text: string; tint: string }> = {

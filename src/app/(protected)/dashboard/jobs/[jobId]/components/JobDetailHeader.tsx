@@ -7,13 +7,13 @@ import { useLocalTime } from '@/hooks/useLocalTime';
 import { Routes } from '@/lib/routes';
 import { cn } from '@/lib/utils';
 import { JobDetail } from '@/types/jobs';
-import { JOB_STAGES, TONE_CLASSES } from '../../lib/job-stages';
+import { stageFor, TONE_CLASSES } from '../../lib/job-stages';
 import { JobRowMenu } from '../../components/JobRowMenu';
 
 export function JobDetailHeader({ job }: { job: JobDetail }) {
   const router = useRouter();
-  const stage = JOB_STAGES[job.status];
-  const tone = TONE_CLASSES[stage?.tone ?? 'gray'];
+  const stage = stageFor(job);
+  const tone = TONE_CLASSES[stage.tone];
   const createdSource = job.dateSubmitted || job.jobPlaced;
   const createdAt = useLocalTime(createdSource, 'MMM d, yyyy');
 
@@ -32,7 +32,7 @@ export function JobDetailHeader({ job }: { job: JobDetail }) {
           <p className="flex flex-wrap items-center gap-x-2.5 gap-y-2 text-xs leading-none">
             <span className={cn('inline-flex items-center gap-1.5 eyebrow', tone.text)}>
               <span aria-hidden="true" className={cn('size-1.5 rounded-full', tone.bar)} />
-              {stage?.label ?? job.status}
+              {stage.label}
             </span>
             {/* Dot and date stay together so a wrap never leaves the dot dangling. No date, no dot */}
             {createdSource && createdAt && (

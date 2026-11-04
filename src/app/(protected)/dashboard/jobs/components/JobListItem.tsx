@@ -6,7 +6,7 @@ import { useLocalTime } from '@/hooks/useLocalTime';
 import { Routes } from '@/lib/routes';
 import { cn } from '@/lib/utils';
 import { JobDetail, PrintJob, StatusHistory } from '@/types/jobs';
-import { JOB_STAGES, JobStage, TONE_CLASSES } from '../lib/job-stages';
+import { JobStage, stageFor, TONE_CLASSES } from '../lib/job-stages';
 import { JobRowMenu } from './JobRowMenu';
 import { PrintProgress } from './PrintProgress';
 
@@ -18,13 +18,9 @@ const latestEntry = (history: StatusHistory[] | undefined, status: PrintJob['sta
   history ? [...history].reverse().find((entry) => entry.status === status) : undefined;
 
 function getStage(job: JobListEntry): JobStage {
-  const stage: JobStage = JOB_STAGES[job.status] ?? {
-    // A status the frontend doesn't know yet (the backend added one) still renders sensibly
-    label: job.status,
-    tone: 'gray',
-    message: '',
-    actionLabel: 'View details',
-  };
+  const stage: JobStage = stageFor(job);
+  // The pipeline's studentStatus already says everything; the old per-status messages are for old jobs
+  if (job.studentStatus) return stage;
 
   if (job.status === 'Ready' && job.pickupDetails?.location) {
     return { ...stage, message: `Ready to pick up at ${job.pickupDetails.location}.` };

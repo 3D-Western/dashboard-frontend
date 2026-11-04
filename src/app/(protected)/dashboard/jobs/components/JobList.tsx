@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { DataTablePagination } from '@/components/DataTablePagination';
 import { useIsMobile } from '@/hooks/useIsMobile';
+import { isJobCreationEnabled } from '@/lib/feature-flags';
 import { Routes } from '@/lib/routes';
 import { PaginationMetadata } from '@/types/common';
 import { JobsView } from '../lib/jobs-view';
@@ -32,15 +33,19 @@ export function JobList({ jobs, pagination, hasFilters, view = 'list' }: JobList
         <p className="text-sm text-muted-foreground">
           {hasFilters
             ? 'No jobs match your search or filter.'
-            : "Looks like you don't have any jobs yet. Want to get started?"}
+            : isJobCreationEnabled()
+              ? "Looks like you don't have any jobs yet. Want to get started?"
+              : "Looks like you don't have any jobs yet."}
         </p>
-        <Button asChild variant="outline" size="lg" className="px-4">
-          {hasFilters ? (
-            <Link href={Routes.jobs.home}>Clear filters</Link>
-          ) : (
-            <Link href={Routes.jobs.newPrintJob}>Create new job</Link>
-          )}
-        </Button>
+        {(hasFilters || isJobCreationEnabled()) && (
+          <Button asChild variant="outline" size="lg" className="px-4">
+            {hasFilters ? (
+              <Link href={Routes.jobs.home}>Clear filters</Link>
+            ) : (
+              <Link href={Routes.jobs.newPrintJob}>Create new job</Link>
+            )}
+          </Button>
+        )}
       </div>
     );
   }

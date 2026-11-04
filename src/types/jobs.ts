@@ -11,6 +11,8 @@ export interface UserInfo {
   email?: string;
 }
 
+import type { StudentStatus } from './pipeline';
+
 export type JobCategory = 'ThreeDPrint' | 'CNC' | 'Waterjet' | 'LaserCutting';
 
 export interface BasePrintJob {
@@ -24,6 +26,9 @@ export interface BasePrintJob {
   reprint?: string | null; // link to another print job if this is a reprint
   // Set for Ready/Succeeded/Failed/Cancelled, cleared when moved back to a non-terminal state
   completedAt?: string | null;
+  // What the student sees for a job that went through the print pipeline (absent on older jobs).
+  // When present it is what the screens word, in place of `status`.
+  studentStatus?: StudentStatus;
 }
 
 export type PrintJobStatus =

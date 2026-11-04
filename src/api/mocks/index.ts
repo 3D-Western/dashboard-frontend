@@ -11,6 +11,7 @@ import { FileSystemUtils } from './utils/fileSystem';
 import { bookingHandlers } from './booking-handlers';
 import { usageHandlers } from './usage-handlers';
 import { onboardingHandlers } from './onboarding-handlers';
+import { pipelineHandlers } from './pipeline-handlers';
 
 // Initialize tmp/ directory when server module loads
 FileSystemUtils.initTmpDirectory();
@@ -27,4 +28,5 @@ export const mockServer = setupServer(
   ...bookingHandlers,
   ...usageHandlers,
   ...onboardingHandlers,
+  ...pipelineHandlers,
 );
