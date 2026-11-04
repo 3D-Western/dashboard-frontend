@@ -1,4 +1,5 @@
 import { http, HttpResponse } from 'msw';
+import type { BasePrintJob } from '@/types/jobs';
 import { endpoints } from '../client/endpoints';
 import type {
   FollowupAnswer,
@@ -247,8 +248,7 @@ function snapshotFor(jobId: string): PipelineSnapshot {
  * have no rating yet, oldest first. Creating a 3D-print job answers 409 RATING_REQUIRED with them.
  */
 export function mockUnratedPrints(studentId: number) {
-  return db
-    .getPrintJobs({ userId: studentId })
+  return (db.getPrintJobs({ userId: studentId }) as unknown as BasePrintJob[])
     .filter((job) => job.studentStatus === 'collected' && sessionFor(job.id).rating === null)
     .map((job) => ({
       jobId: job.id,

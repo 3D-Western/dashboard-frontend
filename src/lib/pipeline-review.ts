@@ -11,6 +11,7 @@ import type {
   StaffDecisionRequest,
   StaffDecisionType,
   StaffEvent,
+  StaffRender,
   StaffStatus,
 } from '@/types/pipeline-review';
 
@@ -254,40 +255,21 @@ export function findingsAsCards(findings: readonly Finding[]): LessonCard[] {
 
 export interface ScreeningRender {
   name: string;
-  /** The short-lived link; missing when the backend only knows the storage key. */
-  url: string | null;
-  seq: number;
+  /** The short-lived link the backend issued. */
+  url: string;
 }
 
 /**
- * The renders the screening step stored for staff: the pipeline puts them in an event's
- * `data.staff_artifacts` (`kind: screening_png`, `view`, and the storage ref), and the backend
- * adds the short-lived `url` to each. Newest event wins per name.
+ * The renders the screening step stored for staff, as the backend serves them in the job view's
+ * `screeningRenders` (`{ kind, view?, url }`, one link each). A render without a `view` is named
+ * by its place in the list.
  */
-export function screeningRenders(events: readonly StaffEvent[]): ScreeningRender[] {
-  const byName = new Map<string, ScreeningRender>();
-  for (const event of [...events].sort((a, b) => a.seq - b.seq)) {
-    const artifacts = event.data?.staff_artifacts ?? event.data?.staffArtifacts;
-    if (!Array.isArray(artifacts)) continue;
-    artifacts.forEach((raw, index) => {
-      if (!raw || typeof raw !== 'object') return;
-      const item = raw as Record<string, unknown>;
-      const kind = item.kind;
-      if (kind !== undefined && kind !== 'screening_png') return;
-      const url = typeof item.url === 'string' && item.url ? item.url : null;
-      // The pipeline's own ref calls the view `view`; its storage key ends "<view>.png".
-      const fromKey =
-        typeof item.key === 'string'
-          ? item.key
-              .split('/')
-              .pop()
-              ?.replace(/\.png$/i, '')
-          : undefined;
-      const name = String(item.name ?? item.view ?? fromKey ?? `render ${index + 1}`);
-      byName.set(name, { name, url, seq: event.seq });
-    });
-  }
-  return [...byName.values()];
+export function screeningRendersOf(
+  renders: readonly StaffRender[] | null | undefined,
+): ScreeningRender[] {
+  return (renders ?? [])
+    .filter((render) => (render.kind ?? 'screening_png') === 'screening_png' && render.url)
+    .map((render, index) => ({ name: render.view || `render ${index + 1}`, url: render.url }));
 }
 
 /** The first eight characters of an id, enough to tell jobs apart in a list. */

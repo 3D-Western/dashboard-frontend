@@ -207,15 +207,14 @@ const jobs = new Map<string, StoredJob>(
             staffStatus: 'held',
             studentStatus: 'preparing',
             studentVisible: false,
-            data: {
-              staff_artifacts: ['front', 'side', 'top', 'iso'].map((name) => ({
-                kind: 'screening_png',
-                name,
-                url: svgUrl(renderSvg(name)),
-              })),
-            },
           }),
         ],
+        // The backend turns the pipeline's staff_artifacts into these short-lived links
+        screeningRenders: ['front', 'side', 'top', 'iso'].map((view) => ({
+          kind: 'screening_png',
+          view,
+          url: svgUrl(renderSvg(view)),
+        })),
       }),
     },
     {

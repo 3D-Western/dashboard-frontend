@@ -34,15 +34,21 @@ import {
 import { REASON_MAX, shortId } from '@/lib/pipeline-review';
 import { Routes } from '@/lib/routes';
 import { formatAgo } from '@/lib/signoff-format';
-import type { FarmOverview, HeldFarmJob, PrinterQuarantine } from '@/types/pipeline-farm';
+import type { HeldFarmJob, QuarantinedPrinter } from '@/types/pipeline-farm';
 import { reviewErrorMessage } from './ReviewBits';
 
 export const FARM_REFRESH_MS = 15_000;
 
+/** The two lists the screen shows, read together from the backend. */
+interface FarmOverview {
+  heldJobs: HeldFarmJob[];
+  quarantinedPrinters: QuarantinedPrinter[];
+}
+
 /** What the person is about to do, waiting for a reason and a yes. */
 type Pending =
   | { kind: 'held'; job: HeldFarmJob; choice: HeldChoice }
-  | { kind: 'printer'; printer: PrinterQuarantine };
+  | { kind: 'printer'; printer: QuarantinedPrinter };
 
 /**
  * The reason box every farm action needs: required, 3 to 1000 characters, checked before
@@ -141,17 +147,15 @@ function HeldJobCard({
           >
             {job.jobName ?? 'Untitled job'}
           </Link>
-          <Badge variant="secondary">Attempt {job.attempt}</Badge>
+          <Badge variant="secondary">Attempt {job.attemptNo}</Badge>
         </div>
         <p className="text-sm text-muted-foreground">
-          {job.studentName ?? 'Unnamed student'}
-          {job.studentId != null ? ` (${job.studentId})` : ''} · job {shortId(job.jobId)} · held{' '}
-          {formatAgo(job.heldSince, now)}
+          {job.studentName ?? 'Unnamed student'} · job {shortId(job.jobId)} · held{' '}
+          {formatAgo(job.since, now)}
           {job.printerId ? ` · printer ${job.printerId}` : ''}
-          {job.binNumber != null ? ` · bin ${job.binNumber}` : ''}
           {job.pickupTag ? ` · tag ${job.pickupTag}` : ''}
         </p>
-        <p className="text-sm">{job.reason}</p>
+        {job.needsPerson && <p className="text-sm">{job.needsPerson}</p>}
       </div>
 
       {active ? (
@@ -195,7 +199,7 @@ function QuarantineCard({
   onSubmit,
   onCancel,
 }: {
-  printer: PrinterQuarantine;
+  printer: QuarantinedPrinter;
   now: Date;
   active: boolean;
   busy: boolean;
@@ -213,9 +217,10 @@ function QuarantineCard({
         </div>
         <p className="text-sm text-muted-foreground">
           {printer.consecutiveFailures} {printer.consecutiveFailures === 1 ? 'failure' : 'failures'}{' '}
-          in a row · since {formatAgo(printer.quarantinedAt, now)}
+          in a row
+          {printer.quarantinedAt ? ` · since ${formatAgo(printer.quarantinedAt, now)}` : ''}
         </p>
-        <p className="text-sm">{printer.reason}</p>
+        {printer.reason && <p className="text-sm">{printer.reason}</p>}
       </div>
 
       {active ? (
@@ -267,7 +272,11 @@ export function FarmDesk({ now, refreshMs = FARM_REFRESH_MS }: { now?: Date; ref
   const load = useCallback(async () => {
     setRefreshing(true);
     try {
-      setOverview(await pipelineFarmApi.overview());
+      const [heldJobs, quarantinedPrinters] = await Promise.all([
+        pipelineFarmApi.heldJobs(),
+        pipelineFarmApi.quarantinedPrinters(),
+      ]);
+      setOverview({ heldJobs, quarantinedPrinters });
       setError(null);
       setLoadedAt(new Date());
     } catch (err) {
@@ -296,21 +305,24 @@ export function FarmDesk({ now, refreshMs = FARM_REFRESH_MS }: { now?: Date; ref
     setFailure(null);
     try {
       if (action.kind === 'held') {
-        await pipelineFarmApi.resolveHeld(
+        const result = await pipelineFarmApi.resolveHeld(
           action.job.jobId,
           buildResolveRequest(action.choice, action.reason),
         );
         setDone(
-          action.choice === 'retry'
-            ? `${action.job.jobName ?? 'The job'} will print again.`
-            : `${action.job.jobName ?? 'The job'} was closed and the student is told.`,
+          result?.message ||
+            (action.choice === 'retry'
+              ? `${action.job.jobName ?? 'The job'} will print again.`
+              : `${action.job.jobName ?? 'The job'} was closed and the student is told.`),
         );
       } else {
-        await pipelineFarmApi.clearQuarantine(
+        const result = await pipelineFarmApi.clearQuarantine(
           action.printer.printerId,
           buildClearRequest(action.reason),
         );
-        setDone(`${printerLabel(action.printer)} is back live. The cause is logged.`);
+        setDone(
+          result?.message || `${printerLabel(action.printer)} is back live. The cause is logged.`,
+        );
       }
       setConfirm(null);
       setChoosing(null);

@@ -1,12 +1,12 @@
 // The logic of the staff farm screens that needs no DOM: what a request must carry (mirrors the
-// pipeline's rule that resolving a held job or clearing a quarantine always has a person's
-// reason) and ordering. Staff only.
+// backend: a `reason` to resolve a held job, a `cause` to clear a quarantine, 3 to 1000
+// characters each) and ordering. Staff only.
 
 import { REASON_MAX, REASON_MIN } from '@/lib/pipeline-review';
 import type {
   ClearQuarantineRequest,
   HeldFarmJob,
-  PrinterQuarantine,
+  QuarantinedPrinter,
   ResolveHeldRequest,
 } from '@/types/pipeline-farm';
 
@@ -37,20 +37,19 @@ export const buildResolveRequest = (choice: HeldChoice, reason: string): Resolve
   reason: reason.trim(),
 });
 
-export const buildClearRequest = (reason: string): ClearQuarantineRequest => ({
-  reason: reason.trim(),
+export const buildClearRequest = (cause: string): ClearQuarantineRequest => ({
+  cause: cause.trim(),
 });
 
-const byOldest = <T>(items: readonly T[], when: (item: T) => string) =>
-  [...items].sort((a, b) => new Date(when(a)).getTime() - new Date(when(b)).getTime());
+const time = (iso: string | null | undefined) => (iso ? new Date(iso).getTime() : Infinity);
 
 /** Held jobs, the longest-waiting student first. */
 export const heldOldestFirst = (jobs: readonly HeldFarmJob[]) =>
-  byOldest(jobs, (job) => job.heldSince);
+  [...jobs].sort((a, b) => time(a.since) - time(b.since));
 
-/** Quarantined printers, the longest-idle printer first. */
-export const quarantinedOldestFirst = (printers: readonly PrinterQuarantine[]) =>
-  byOldest(printers, (printer) => printer.quarantinedAt);
+/** Quarantined printers, the longest-idle printer first (unknown times last). */
+export const quarantinedOldestFirst = (printers: readonly QuarantinedPrinter[]) =>
+  [...printers].sort((a, b) => time(a.quarantinedAt) - time(b.quarantinedAt));
 
-export const printerLabel = (printer: Pick<PrinterQuarantine, 'name' | 'printerId'>) =>
-  printer.name ? `${printer.name} (${printer.printerId})` : `Printer ${printer.printerId}`;
+export const printerLabel = (printer: Pick<QuarantinedPrinter, 'printerId'>) =>
+  `Printer ${printer.printerId}`;
