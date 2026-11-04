@@ -51,6 +51,11 @@ export function PickupCard({
           </p>
         </div>
       </div>
+      {jobId && onCollected && (
+        <div className="px-4 pb-4">
+          <CollectButton jobId={jobId} onCollected={onCollected} onConflict={onCollectConflict} />
+        </div>
+      )}
       {photo && (
         // A short-lived signed link from another origin, so next/image's optimiser doesn't apply.
         // eslint-disable-next-line @next/next/no-img-element
@@ -59,11 +64,6 @@ export function PickupCard({
           alt="Your finished print"
           className="aspect-[4/3] w-full border-t object-contain"
         />
-      )}
-      {jobId && onCollected && (
-        <div className="border-t p-4">
-          <CollectButton jobId={jobId} onCollected={onCollected} onConflict={onCollectConflict} />
-        </div>
       )}
     </section>
   );
