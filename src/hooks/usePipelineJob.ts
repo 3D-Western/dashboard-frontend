@@ -4,7 +4,7 @@ import { useCallback, useEffect, useReducer, useRef, useState } from 'react';
 import { pipelineApi } from '@/api/client/pipeline';
 import { isTerminalStatus } from '@/lib/student-status';
 import { initialPipelineState, pipelineReducer } from '@/lib/pipeline-state';
-import type { Plan, StudentStatus } from '@/types/pipeline';
+import type { Plan, Rating, StudentStatus } from '@/types/pipeline';
 
 export type StreamConnection = 'connecting' | 'live' | 'reconnecting' | 'closed';
 
@@ -104,5 +104,22 @@ export function usePipelineJob(
     [],
   );
 
-  return { ...state, connection, error, refresh, showPlan, setOptimisticStatus };
+  /** The server took a rating (so a late snapshot can't take it back). */
+  const markRated = useCallback((rating: Rating) => dispatch({ type: 'rated', rating }), []);
+  /** A follow-up question was answered or skipped. */
+  const markFollowupHandled = useCallback(
+    (questionId: number) => dispatch({ type: 'followup-handled', questionId }),
+    [],
+  );
+
+  return {
+    ...state,
+    connection,
+    error,
+    refresh,
+    showPlan,
+    setOptimisticStatus,
+    markRated,
+    markFollowupHandled,
+  };
 }

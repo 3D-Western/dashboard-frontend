@@ -89,6 +89,7 @@ export function JobDetails({
                 modelUrl={modelUrl}
                 highlightsUrl={highlightsUrl}
                 highlights={cards}
+                audience="staff"
               />
             )}
           </div>
@@ -104,14 +105,22 @@ export function JobDetails({
             {renders.map((render) => (
               <li key={render.name} className="space-y-1">
                 {render.url ? (
-                  <Image
-                    src={render.url}
-                    alt={`Screening render: ${render.name}`}
-                    width={320}
-                    height={320}
-                    unoptimized
-                    className="aspect-square w-full rounded-lg border bg-muted/30 object-contain"
-                  />
+                  <a
+                    href={render.url}
+                    target="_blank"
+                    rel="noreferrer"
+                    aria-label={`Open the ${render.name} render full size`}
+                    className="block rounded-lg outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
+                  >
+                    <Image
+                      src={render.url}
+                      alt={`Screening render: ${render.name}`}
+                      width={320}
+                      height={320}
+                      unoptimized
+                      className="aspect-square w-full rounded-lg border bg-muted/30 object-contain"
+                    />
+                  </a>
                 ) : (
                   <div className="flex aspect-square items-center justify-center rounded-lg border bg-muted/30 p-2 text-center text-xs text-muted-foreground">
                     Stored, but no link to show it

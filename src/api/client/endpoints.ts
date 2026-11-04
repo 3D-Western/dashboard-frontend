@@ -34,6 +34,11 @@ export const endpoints = {
     confirm: (jobId: string) => `/api/v1/jobs/${jobId}/pipeline/confirm`,
     choices: (jobId: string) => `/api/v1/jobs/${jobId}/pipeline/choices`,
     report: (jobId: string) => `/api/v1/jobs/${jobId}/pipeline/report`,
+    rating: (jobId: string) => `/api/v1/jobs/${jobId}/pipeline/rating`,
+    quality: (jobId: string) => `/api/v1/jobs/${jobId}/pipeline/quality`,
+    followup: (jobId: string, questionId: number | string) =>
+      `/api/v1/jobs/${jobId}/pipeline/followups/${questionId}`,
+    collected: (jobId: string) => `/api/v1/jobs/${jobId}/pipeline/collected`,
   },
   // Print pipeline, staff side (dashboard-backend entities/pipeline/staff; jobs:update_status)
   pipelineReview: {
@@ -46,6 +51,15 @@ export const endpoints = {
     health: '/api/v1/admin/pipeline/review/health',
     submissions: '/api/v1/admin/pipeline/submissions',
     requeue: (jobId: string) => `/api/v1/admin/pipeline/submissions/${jobId}/requeue`,
+  },
+  // Print farm, staff side: jobs the farm loop holds for a person and quarantined printers.
+  // Not in the backend yet (mocked); the shapes follow the pipeline's FarmLoop.resolve_held and
+  // clear_printer_quarantine. Needs jobs:update_status.
+  pipelineFarm: {
+    overview: '/api/v1/admin/pipeline/farm',
+    resolveHeld: (jobId: string) => `/api/v1/admin/pipeline/farm/jobs/${jobId}/resolve`,
+    clearQuarantine: (printerId: string) =>
+      `/api/v1/admin/pipeline/farm/printers/${encodeURIComponent(printerId)}/clear-quarantine`,
   },
   files: {
     list: '/api/v1/files',

@@ -1,4 +1,5 @@
 import { http, HttpResponse } from 'msw';
+import { withMockRating } from './pipeline-handlers';
 import { endpoints } from '../client/endpoints';
 import db from './database/db';
 import {
@@ -260,7 +261,7 @@ export const userHandlers = [
 
     return HttpResponse.json(
       generateSuccessResponse({
-        data: paginatedJobs,
+        data: paginatedJobs.map(withMockRating),
         pagination: {
           page,
           pageSize,

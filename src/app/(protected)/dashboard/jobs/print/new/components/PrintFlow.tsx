@@ -13,6 +13,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { FileUploadDropzone } from '@/components/FileUploadDropzone';
 import { OrientationLockNotice } from '@/components/Training/OrientationLockNotice';
 import { PipelineJobPanel } from '@/components/Pipeline/PipelineJobPanel';
+import { RateFirstGate } from '@/components/Pipeline/RateFirstGate';
 import { PreparingSteps } from '@/components/Pipeline/PreparingSteps';
 import { ReportProblem } from '@/components/Pipeline/ReportProblem';
 import {
@@ -52,6 +53,15 @@ type SaveState = 'idle' | 'saving' | 'saved' | 'error';
  * in the background, and each pipeline step shows up live under the form.
  */
 export function PrintFlow({ mockMode = false }: { mockMode?: boolean }) {
+  // Rate first (P-20): an unrated earlier print is rated with one tap before the upload opens.
+  return (
+    <RateFirstGate>
+      <PrintFlowBody mockMode={mockMode} />
+    </RateFirstGate>
+  );
+}
+
+function PrintFlowBody({ mockMode }: { mockMode: boolean }) {
   const upload = useJobUpload({ mockMode });
   const [file, setFile] = useState<File | null>(null);
   const [purpose, setPurpose] = useState<Purpose | null>(null);

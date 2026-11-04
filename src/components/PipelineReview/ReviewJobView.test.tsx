@@ -18,8 +18,18 @@ vi.mock('@/api/client/pipeline-review', () => ({
 }));
 // The 3D viewer is its own tested component; here only that it is given the regions matters.
 vi.mock('@/components/Pipeline/PartViewerSlot', () => ({
-  PartViewerSlot: ({ highlights }: { highlights?: { code: string }[] }) => (
-    <div data-testid="part-viewer" data-codes={(highlights ?? []).map((h) => h.code).join(',')} />
+  PartViewerSlot: ({
+    highlights,
+    audience,
+  }: {
+    highlights?: { code: string }[];
+    audience?: string;
+  }) => (
+    <div
+      data-testid="part-viewer"
+      data-audience={audience}
+      data-codes={(highlights ?? []).map((h) => h.code).join(',')}
+    />
   ),
 }));
 
@@ -127,5 +137,60 @@ describe('ReviewJobView', () => {
     api.job.mockRejectedValue(new Error('Job not found'));
     render(<ReviewJobView jobId={HELD_JOB_ID} refreshMs={0} />, { user: staff });
     expect(await screen.findByText('Job not found')).toBeInTheDocument();
+  });
+});
+
+describe('ReviewJobView screening renders from the real wire shape', () => {
+  it('shows each render from the url the backend added, named by the pipeline’s `view`, linked full size', async () => {
+    api.job.mockResolvedValue(
+      createStaffJobView({
+        events: [
+          createStaffEvent({
+            seq: 6,
+            data: {
+              // What the pipeline stores (kind, view, storage ref, sha256) plus the backend's link
+              staff_artifacts: [
+                {
+                  kind: 'screening_png',
+                  view: 'iso',
+                  bucket: 'artifacts',
+                  key: 'screening/job-1/1/iso.png',
+                  sha256: 'abc',
+                  content_type: 'image/png',
+                  url: 'https://files.example/iso.png?sig=1',
+                },
+                {
+                  kind: 'screening_png',
+                  bucket: 'artifacts',
+                  key: 'screening/job-1/1/top.png',
+                  sha256: 'def',
+                  url: 'https://files.example/top.png?sig=2',
+                },
+              ],
+            },
+          }),
+        ],
+      }),
+    );
+    render(<ReviewJobView jobId={HELD_JOB_ID} refreshMs={0} />, { user: staff });
+
+    const iso = await screen.findByRole('img', { name: 'Screening render: iso' });
+    expect(iso).toHaveAttribute('src', 'https://files.example/iso.png?sig=1');
+    expect(screen.getByRole('link', { name: /open the iso render full size/i })).toHaveAttribute(
+      'href',
+      'https://files.example/iso.png?sig=1',
+    );
+    // A ref with no `view` is still named, from the end of its storage key
+    expect(screen.getByRole('img', { name: 'Screening render: top' })).toHaveAttribute(
+      'src',
+      'https://files.example/top.png?sig=2',
+    );
+  });
+
+  it('asks the 3D viewer for its staff wording', async () => {
+    api.job.mockResolvedValue(createStaffJobView());
+    render(<ReviewJobView jobId={HELD_JOB_ID} refreshMs={0} />, { user: staff });
+
+    expect(await screen.findByTestId('part-viewer')).toHaveAttribute('data-audience', 'staff');
   });
 });

@@ -63,6 +63,14 @@ export const mockPrintJobs = [
     studentStatus: 'cannot_print',
     category: 'ThreeDPrint',
   } as unknown as PrintJob),
+  // Collected and not rated yet: the rate-first screen asks about it before the next upload
+  createMockCompletedPrintJob({
+    id: 'pipeline-collected',
+    name: 'Hinge Pair',
+    status: 'Succeeded',
+    studentStatus: 'collected',
+    category: 'ThreeDPrint',
+  } as unknown as Parameters<typeof createMockCompletedPrintJob>[0]),
   createMockCompletedPrintJob({
     name: 'Laser Engraved Coasters',
     status: 'Succeeded',

@@ -261,7 +261,8 @@ export interface ScreeningRender {
 
 /**
  * The renders the screening step stored for staff: the pipeline puts them in an event's
- * `data.staff_artifacts` (`kind: screening_png`). Newest event wins per name.
+ * `data.staff_artifacts` (`kind: screening_png`, `view`, and the storage ref), and the backend
+ * adds the short-lived `url` to each. Newest event wins per name.
  */
 export function screeningRenders(events: readonly StaffEvent[]): ScreeningRender[] {
   const byName = new Map<string, ScreeningRender>();
@@ -274,7 +275,15 @@ export function screeningRenders(events: readonly StaffEvent[]): ScreeningRender
       const kind = item.kind;
       if (kind !== undefined && kind !== 'screening_png') return;
       const url = typeof item.url === 'string' && item.url ? item.url : null;
-      const name = String(item.name ?? item.view ?? `render ${index + 1}`);
+      // The pipeline's own ref calls the view `view`; its storage key ends "<view>.png".
+      const fromKey =
+        typeof item.key === 'string'
+          ? item.key
+              .split('/')
+              .pop()
+              ?.replace(/\.png$/i, '')
+          : undefined;
+      const name = String(item.name ?? item.view ?? fromKey ?? `render ${index + 1}`);
       byName.set(name, { name, url, seq: event.seq });
     });
   }

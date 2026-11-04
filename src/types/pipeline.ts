@@ -136,6 +136,35 @@ export interface Pickup {
   artifacts?: PlanArtifact[];
 }
 
+/** The one-tap rating after collection (P-20). */
+export type Rating = 'up' | 'down';
+
+/**
+ * Why a print was not good: the pipeline's `QualityReason` values, which are all it accepts
+ * (`report_quality` with another value is 422).
+ */
+export type QualityReason =
+  | 'warping'
+  | 'stringing'
+  | 'rough_layers'
+  | 'rough_surface'
+  | 'wrong_size'
+  | 'weak'
+  | 'support_marks'
+  | 'detail_lost'
+  | 'broke_on_removal'
+  | 'other';
+
+export type FollowupAnswer = 'yes' | 'no' | 'unsure';
+
+/** One targeted follow-up question about something a check flagged (P-109). Reviewed wording. */
+export interface FollowupQuestion {
+  /** Quoted back in the answer. */
+  questionId: number;
+  /** Shown to the student as is. */
+  text: string;
+}
+
 /** GET /api/v1/jobs/{id}/pipeline */
 export interface PipelineSnapshot {
   studentStatus: StudentStatus;
@@ -143,9 +172,25 @@ export interface PipelineSnapshot {
   pickup?: Pickup | null;
   steps?: StepProgress[];
   message?: string | null;
+  /** Unanswered follow-up questions, in the order to ask them. */
+  followups?: FollowupQuestion[];
+  /**
+   * Whether the student already rated this print. Not in the contract table yet (assumed
+   * additive, written down in docs); when absent the screens fall back to what this browser
+   * remembers, so nobody is asked twice.
+   */
+  rated?: boolean;
+  rating?: Rating | null;
 }
 
-export type PipelineEventType = 'status' | 'step' | 'plan' | 'farm' | 'pickup' | 'notice';
+export type PipelineEventType =
+  | 'status'
+  | 'step'
+  | 'plan'
+  | 'farm'
+  | 'pickup'
+  | 'followup'
+  | 'notice';
 
 /** One server-sent event from GET /api/v1/jobs/{id}/pipeline/stream. */
 export interface PipelineStreamEvent {
@@ -155,6 +200,8 @@ export interface PipelineStreamEvent {
   step?: StepProgress | null;
   plan?: Plan | null;
   pickup?: Pickup | null;
+  /** On a `followup` event: the questions to ask (it carries no `message`). */
+  followups?: FollowupQuestion[];
   message?: string | null;
 }
 
@@ -167,4 +214,20 @@ export interface ChoiceRequest {
   planId: string;
   choiceId: string;
   optionId: string;
+}
+
+/** POST .../pipeline/rating body, and what comes back (`data.rating`). */
+export interface RatingRequest {
+  rating: Rating;
+}
+
+/** POST .../pipeline/quality body (P-102): the reasons ticked, and the student's own words. */
+export interface QualityReportRequest {
+  reasons: QualityReason[];
+  text?: string;
+}
+
+/** POST .../pipeline/followups/{questionId} body. */
+export interface FollowupAnswerRequest {
+  answer: FollowupAnswer;
 }

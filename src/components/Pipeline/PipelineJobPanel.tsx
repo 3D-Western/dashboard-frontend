@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { AlertTriangle, Loader2, Radio } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -12,11 +12,16 @@ import { studentStage } from '@/lib/student-status';
 import { TONE_CLASSES } from '@/app/(protected)/dashboard/jobs/lib/job-stages';
 import { cn } from '@/lib/utils';
 import type { Plan, StudentStatus } from '@/types/pipeline';
+import { AfterPickup } from './AfterPickup';
 import { CannotPrint } from './CannotPrint';
+import { CollectButton } from './CollectButton';
 import { PickupCard } from './PickupCard';
 import { PartViewerSlot } from './PartViewerSlot';
 import { PreparingSteps } from './PreparingSteps';
 import { highlightsUrlOf, modelUrlOf, PlanFacts, previewUrlOf, ReviewPlan } from './ReviewPlan';
+
+/** How long after "collected" the job is read again to pick up the follow-up questions. */
+const COLLECTED_REREAD_MS = 4000;
 
 const REVIEW_STATUSES: StudentStatus[] = ['needs_confirmation', 'needs_choice'];
 
@@ -67,6 +72,20 @@ export function PipelineJobPanel({
     setBaselinePlanId((current) => current ?? plan.planId);
   }, [reviewing, plan]);
   const planWasUpdated = reviewing && baselinePlanId !== null && plan?.planId !== baselinePlanId;
+
+  // The pipeline sends the follow-up questions a moment after "collected" and the live stream is
+  // closed by then, so the job is re-read a few times instead of leaving the questions unseen.
+  const refreshTimers = useRef<ReturnType<typeof setTimeout>[]>([]);
+  useEffect(() => {
+    const timers = refreshTimers.current;
+    return () => timers.forEach(clearTimeout);
+  }, []);
+  const { refresh, setOptimisticStatus } = pipeline;
+  const handleCollected = useCallback(() => {
+    setOptimisticStatus('collected');
+    refresh();
+    refreshTimers.current.push(setTimeout(refresh, COLLECTED_REREAD_MS));
+  }, [setOptimisticStatus, refresh]);
 
   const handlePlanChanged = (next: Plan | null) => {
     if (next) {
@@ -149,7 +168,29 @@ export function PipelineJobPanel({
           </h2>
           <p className="mt-2 text-sm text-muted-foreground">{message || stage.message}</p>
         </div>
-        {status === 'ready_for_pickup' && pickup && <PickupCard pickup={pickup} />}
+        {status === 'ready_for_pickup' && pickup && (
+          <PickupCard
+            pickup={pickup}
+            jobId={jobId}
+            onCollected={handleCollected}
+            onCollectConflict={refresh}
+          />
+        )}
+        {status === 'ready_for_pickup' && !pickup && (
+          <CollectButton jobId={jobId} onCollected={handleCollected} onConflict={refresh} />
+        )}
+        {status === 'collected' && (
+          <AfterPickup
+            jobId={jobId}
+            jobName={jobName}
+            rated={pipeline.rated}
+            rating={pipeline.rating}
+            followups={pipeline.followups}
+            handledFollowups={pipeline.handledFollowups}
+            onRated={pipeline.markRated}
+            onFollowupHandled={pipeline.markFollowupHandled}
+          />
+        )}
         {plan && !(status === 'ready_for_pickup' && pickup) && (
           <PartViewerSlot
             previewUrl={previewUrlOf(plan)}

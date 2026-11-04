@@ -1,8 +1,10 @@
 import type {
+  FollowupQuestion,
   PipelineSnapshot,
   PipelineStreamEvent,
   Pickup,
   Plan,
+  Rating,
   StepProgress,
   StudentStatus,
 } from '@/types/pipeline';
@@ -16,6 +18,13 @@ export interface PipelineState {
   pickup: Pickup | null;
   steps: StepProgress[];
   message: string | null;
+  /** Follow-up questions the pipeline has sent (P-109), in the order to ask them. */
+  followups: FollowupQuestion[];
+  /** Question ids answered or skipped here, so a repeated event never asks them again. */
+  handledFollowups: number[];
+  /** The student rated this print (here, or the backend says so); null = not known. */
+  rated: boolean | null;
+  rating: Rating | null;
   /** Highest event `seq` applied; older or repeated events are ignored (delivery is at least once). */
   lastSeq: number;
 }
@@ -27,6 +36,10 @@ export const initialPipelineState: PipelineState = {
   pickup: null,
   steps: [],
   message: null,
+  followups: [],
+  handledFollowups: [],
+  rated: null,
+  rating: null,
   lastSeq: 0,
 };
 
@@ -36,7 +49,11 @@ export type PipelineAction =
   /** Show a status before the server confirms it (the student's yes); the next snapshot corrects it. */
   | { type: 'optimistic'; studentStatus: StudentStatus }
   /** A 409 carried the new plan: show it for a second yes. */
-  | { type: 'plan'; plan: Plan };
+  | { type: 'plan'; plan: Plan }
+  /** The student tapped thumbs up or down (the server accepted it). */
+  | { type: 'rated'; rating: Rating }
+  /** A follow-up question was answered or skipped. */
+  | { type: 'followup-handled'; questionId: number };
 
 const upsertStep = (steps: StepProgress[], step: StepProgress): StepProgress[] => {
   const index = steps.findIndex((existing) => existing.step === step.step);
@@ -59,6 +76,10 @@ export function pipelineReducer(state: PipelineState, action: PipelineAction): P
         // A snapshot lists the steps so far; keep the ones we already streamed if it omits them.
         steps: snapshot.steps ?? state.steps,
         message: snapshot.message ?? null,
+        followups: snapshot.followups ?? state.followups,
+        // What the student did here outlasts a snapshot that doesn't know yet.
+        rated: state.rated === true ? true : (snapshot.rated ?? state.rated),
+        rating: snapshot.rating ?? state.rating,
       };
     }
     case 'event': {
@@ -73,12 +94,19 @@ export function pipelineReducer(state: PipelineState, action: PipelineAction): P
         pickup: event.pickup ?? state.pickup,
         steps: event.step ? upsertStep(state.steps, event.step) : state.steps,
         message: event.message ?? state.message,
+        followups: event.followups ?? state.followups,
       };
     }
     case 'optimistic':
       return { ...state, studentStatus: action.studentStatus };
     case 'plan':
       return { ...state, plan: action.plan, studentStatus: 'needs_confirmation' };
+    case 'rated':
+      return { ...state, rated: true, rating: action.rating };
+    case 'followup-handled':
+      return state.handledFollowups.includes(action.questionId)
+        ? state
+        : { ...state, handledFollowups: [...state.handledFollowups, action.questionId] };
   }
 }
 

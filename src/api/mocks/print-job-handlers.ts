@@ -8,6 +8,7 @@ import {
   mockUserHasPermission,
 } from './utils';
 import { PERMISSIONS } from '@/constants/permissions';
+import { withMockRating } from './pipeline-handlers';
 
 const apiUrl = process.env.API_URL;
 
@@ -58,7 +59,7 @@ export const jobHandlers = [
 
     return HttpResponse.json(
       generateSuccessResponse({
-        data: paginatedJobs,
+        data: paginatedJobs.map(withMockRating),
         pagination: {
           page,
           pageSize,

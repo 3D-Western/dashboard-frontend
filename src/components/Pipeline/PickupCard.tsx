@@ -3,9 +3,23 @@
 import { PackageCheck } from 'lucide-react';
 import { useLocalTime } from '@/hooks/useLocalTime';
 import type { Pickup } from '@/types/pipeline';
+import { CollectButton } from './CollectButton';
 
-/** "Slot 14, tag K7Q2": where to find the print, with a picture of it and when the window ends. */
-export function PickupCard({ pickup }: { pickup: Pickup }) {
+/**
+ * "Slot 14, tag K7Q2": where to find the print, with a picture of it and when the window ends.
+ * With a job to act on it also has the "I've collected it" button.
+ */
+export function PickupCard({
+  pickup,
+  jobId,
+  onCollected,
+  onCollectConflict,
+}: {
+  pickup: Pickup;
+  jobId?: string;
+  onCollected?: () => void;
+  onCollectConflict?: () => void;
+}) {
   const until = useLocalTime(pickup.windowEndsAt, 'EEE, MMM d, h:mm a');
   const photo = pickup.artifacts?.find(
     (artifact) => artifact.kind === 'preview_png' || artifact.kind === 'plate_png',
@@ -45,6 +59,11 @@ export function PickupCard({ pickup }: { pickup: Pickup }) {
           alt="Your finished print"
           className="aspect-[4/3] w-full border-t object-contain"
         />
+      )}
+      {jobId && onCollected && (
+        <div className="border-t p-4">
+          <CollectButton jobId={jobId} onCollected={onCollected} onConflict={onCollectConflict} />
+        </div>
       )}
     </section>
   );

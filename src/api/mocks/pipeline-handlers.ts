@@ -1,9 +1,12 @@
 import { http, HttpResponse } from 'msw';
 import { endpoints } from '../client/endpoints';
 import type {
+  FollowupAnswer,
+  FollowupQuestion,
   PipelineSnapshot,
   PipelineStreamEvent,
   Plan,
+  Rating,
   StepProgress,
   StudentInputs,
 } from '@/types/pipeline';
@@ -17,7 +20,9 @@ const apiUrl = process.env.API_URL;
 // A scripted pipeline for development without a backend (MOCK_ENABLED=true). Each job id plays
 // the same story, paced by the clock from the first time it is asked about:
 //   steps arrive one by one -> a choice is needed (unless the id says otherwise) -> review -> yes.
-// Ids containing "pickup" are ready for collection, "review" start at the review, "cannot" ends in "can't print", "choice" asks for a choice.
+// Ids containing "pickup" are ready for collection (then "I've collected it", the rating, the
+// quality step and two follow-up questions play out), "collected" start already collected and
+// unrated, "review" start at the review, "cannot" ends in "can't print", "choice" asks for a choice.
 
 const STEP_MS = 1500;
 
@@ -69,7 +74,30 @@ interface Session {
   choiceDone: boolean;
   inputs: StudentInputs | null;
   planVersion: number;
+  collected: boolean;
+  rating: Rating | null;
+  qualityReasons: string[] | null;
+  answers: Map<number, FollowupAnswer>;
 }
+
+/** Two reviewed-wording questions, as the pipeline would ask after a flagged print (P-109). */
+const FOLLOWUPS: FollowupQuestion[] = [
+  { questionId: 1, text: 'Did you notice any curling on the top overhang?' },
+  { questionId: 2, text: 'Is the text on the front easy to read?' },
+];
+
+const QUALITY_REASONS = new Set([
+  'warping',
+  'stringing',
+  'rough_layers',
+  'rough_surface',
+  'wrong_size',
+  'weak',
+  'support_marks',
+  'detail_lost',
+  'broke_on_removal',
+  'other',
+]);
 
 const sessions = new Map<string, Session>();
 
@@ -82,6 +110,10 @@ function sessionFor(jobId: string): Session {
       choiceDone: false,
       inputs: null,
       planVersion: 1,
+      collected: jobId.includes('collected'),
+      rating: null,
+      qualityReasons: null,
+      answers: new Map(),
     };
     sessions.set(jobId, session);
   }
@@ -167,6 +199,16 @@ function planFor(jobId: string, session: Session): Plan {
 
 function snapshotFor(jobId: string): PipelineSnapshot {
   const session = sessionFor(jobId);
+  if (session.collected) {
+    return {
+      studentStatus: 'collected',
+      plan: planFor(jobId, session),
+      steps: allSteps('done'),
+      followups: FOLLOWUPS.filter((question) => !session.answers.has(question.questionId)),
+      rated: session.rating !== null,
+      rating: session.rating,
+    };
+  }
   if (jobId.includes('pickup')) {
     return {
       studentStatus: 'ready_for_pickup',
@@ -199,6 +241,16 @@ function snapshotFor(jobId: string): PipelineSnapshot {
       ? 'needs_choice'
       : 'needs_confirmation';
   return { studentStatus, plan, steps: allSteps('done') };
+}
+
+/**
+ * For the job-list mocks: a collected job says whether the student rated it yet, which is what
+ * the rate-first screen (P-20) reads. `ratingRequired` stays off, so the mock lets the student skip.
+ */
+export function withMockRating<T extends { id: string; studentStatus?: string }>(job: T): T {
+  return job.studentStatus === 'collected'
+    ? { ...job, rated: sessionFor(job.id).rating !== null }
+    : job;
 }
 
 const allSteps = (state: StepProgress['state']): StepProgress[] =>
@@ -314,4 +366,84 @@ export const pipelineHandlers = [
     if (!requireUser(cookies)) return createInvalidSessionResponse();
     return HttpResponse.json(generateSuccessResponse(null), { status: 202 });
   }),
+
+  // "I've collected it": only a print that is ready for pickup can be collected (409 otherwise).
+  http.post(`${apiUrl}${endpoints.pipeline.collected(':jobId')}`, ({ cookies, params }) => {
+    if (!requireUser(cookies)) return createInvalidSessionResponse();
+    const jobId = String(params.jobId);
+    const session = sessionFor(jobId);
+    if (session.collected || !jobId.includes('pickup')) {
+      return conflict('Nothing is ready to collect for this job.');
+    }
+    session.collected = true;
+    return HttpResponse.json(generateSuccessResponse(null), { status: 202 });
+  }),
+
+  http.post(
+    `${apiUrl}${endpoints.pipeline.rating(':jobId')}`,
+    async ({ cookies, params, request }) => {
+      if (!requireUser(cookies)) return createInvalidSessionResponse();
+      const session = sessionFor(String(params.jobId));
+      const { rating } = (await request.json()) as { rating?: string };
+      if (rating !== 'up' && rating !== 'down') {
+        return HttpResponse.json(
+          {
+            success: false,
+            data: null,
+            error: { code: 'VALIDATION_FAILED', message: 'rating must be up or down' },
+          },
+          { status: 422 },
+        );
+      }
+      session.rating = rating;
+      return HttpResponse.json(generateSuccessResponse({ rating }), { status: 202 });
+    },
+  ),
+
+  http.post(
+    `${apiUrl}${endpoints.pipeline.quality(':jobId')}`,
+    async ({ cookies, params, request }) => {
+      if (!requireUser(cookies)) return createInvalidSessionResponse();
+      const session = sessionFor(String(params.jobId));
+      const { reasons } = (await request.json()) as { reasons?: string[] };
+      if (!reasons?.length || !reasons.every((reason) => QUALITY_REASONS.has(reason))) {
+        return HttpResponse.json(
+          {
+            success: false,
+            data: null,
+            error: { code: 'VALIDATION_FAILED', message: 'Unknown reason' },
+          },
+          { status: 422 },
+        );
+      }
+      session.qualityReasons = reasons;
+      return HttpResponse.json(generateSuccessResponse(null), { status: 202 });
+    },
+  ),
+
+  http.post(
+    `${apiUrl}${endpoints.pipeline.followup(':jobId', ':questionId')}`,
+    async ({ cookies, params, request }) => {
+      if (!requireUser(cookies)) return createInvalidSessionResponse();
+      const session = sessionFor(String(params.jobId));
+      const questionId = Number(params.questionId);
+      const { answer } = (await request.json()) as { answer?: FollowupAnswer };
+      if (!FOLLOWUPS.some((question) => question.questionId === questionId)) {
+        return HttpResponse.json(
+          { success: false, data: null, error: { code: 'NOT_FOUND', message: 'No such question' } },
+          { status: 404 },
+        );
+      }
+      if (session.answers.has(questionId)) return conflict('That question was already answered.');
+      session.answers.set(questionId, answer ?? 'unsure');
+      return HttpResponse.json(generateSuccessResponse(null), { status: 202 });
+    },
+  ),
 ];
+
+function conflict(message: string) {
+  return HttpResponse.json(
+    { success: false, data: null, error: { code: 'CONFLICT', message } },
+    { status: 409 },
+  );
+}

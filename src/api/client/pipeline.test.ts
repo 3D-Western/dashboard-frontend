@@ -4,8 +4,10 @@ import { mockServer } from '../mocks';
 import { ApiError } from './errors';
 import { endpoints } from './endpoints';
 import {
+  CONFLICT_CODE,
   PlanChangedError,
   createSseParser,
+  isConflictError,
   pipelineApi,
   planFromConflictBody,
   type SseFrame,
@@ -79,6 +81,103 @@ describe('pipelineApi', () => {
         description: 'A gear for my robot arm',
         settings: { profile: 'strong', infillPercent: 40, supports: 'auto', brim: 'on' },
       });
+    });
+  });
+
+  describe('after the print: collected, rating, quality, follow-ups', () => {
+    const conflict = (message: string) =>
+      HttpResponse.json(
+        { success: false, data: null, error: { code: 'CONFLICT', message } },
+        { status: 409 },
+      );
+
+    it('collected posts without a body to the collected route', async () => {
+      const received = vi.fn();
+      mockServer.use(
+        http.post(endpoints.pipeline.collected(JOB), async ({ request }) => {
+          received(await request.text());
+          return HttpResponse.json({ success: true, data: null }, { status: 202 });
+        }),
+      );
+
+      await pipelineApi.collected(JOB);
+
+      expect(received).toHaveBeenCalledWith('');
+    });
+
+    it('collected turns a 409 into a conflict error, never a plan change', async () => {
+      mockServer.use(
+        http.post(endpoints.pipeline.collected(JOB), () => conflict('Nothing is ready to collect')),
+      );
+
+      const error = await pipelineApi.collected(JOB).catch((e: unknown) => e);
+
+      expect(error).not.toBeInstanceOf(PlanChangedError);
+      expect(isConflictError(error)).toBe(true);
+      expect((error as ApiError).code).toBe(CONFLICT_CODE);
+      expect((error as ApiError).message).toBe('Nothing is ready to collect');
+    });
+
+    it('rate sends up or down and returns the stored rating', async () => {
+      const received = vi.fn();
+      mockServer.use(
+        http.post(endpoints.pipeline.rating(JOB), async ({ request }) => {
+          received(await request.json());
+          return HttpResponse.json({ success: true, data: { rating: 'down' } }, { status: 202 });
+        }),
+      );
+
+      await expect(pipelineApi.rate(JOB, 'down')).resolves.toEqual({ rating: 'down' });
+      expect(received).toHaveBeenCalledWith({ rating: 'down' });
+    });
+
+    it('reportQuality sends the reasons and trims the words, leaving them out when empty', async () => {
+      const received = vi.fn();
+      mockServer.use(
+        http.post(endpoints.pipeline.quality(JOB), async ({ request }) => {
+          received(await request.json());
+          return HttpResponse.json({ success: true, data: null }, { status: 202 });
+        }),
+      );
+
+      await pipelineApi.reportQuality(JOB, { reasons: ['warping', 'weak'], text: '  curled up  ' });
+      await pipelineApi.reportQuality(JOB, { reasons: ['other'], text: '   ' });
+
+      expect(received).toHaveBeenNthCalledWith(1, {
+        reasons: ['warping', 'weak'],
+        text: 'curled up',
+      });
+      expect(received).toHaveBeenNthCalledWith(2, { reasons: ['other'] });
+    });
+
+    it('answerFollowup posts the answer to the question id in the path', async () => {
+      const received = vi.fn();
+      mockServer.use(
+        http.post(endpoints.pipeline.followup(JOB, 7), async ({ request }) => {
+          received(await request.json());
+          return HttpResponse.json({ success: true, data: null }, { status: 202 });
+        }),
+      );
+
+      await pipelineApi.answerFollowup(JOB, 7, 'unsure');
+
+      expect(received).toHaveBeenCalledWith({ answer: 'unsure' });
+    });
+
+    it('answerFollowup reports a second answer (409) as a conflict', async () => {
+      mockServer.use(
+        http.post(endpoints.pipeline.followup(JOB, 7), () => conflict('Already answered')),
+      );
+
+      const error = await pipelineApi.answerFollowup(JOB, 7, 'yes').catch((e: unknown) => e);
+
+      expect(isConflictError(error)).toBe(true);
+    });
+
+    it('confirm still reads a 409 as a changed plan', async () => {
+      mockServer.use(http.post(endpoints.pipeline.confirm(JOB), () => conflict('plan changed')));
+
+      await expect(pipelineApi.confirm(JOB, 'plan-1')).rejects.toBeInstanceOf(PlanChangedError);
     });
   });
 
