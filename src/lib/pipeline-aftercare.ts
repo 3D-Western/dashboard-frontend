@@ -1,6 +1,6 @@
 // The logic of "after the print" that needs no DOM: the quality reasons, what this browser
-// remembers so nobody is asked twice (P-92 #13: never annoying), and which earlier print needs
-// rating before the next submission (P-20). Student pages only.
+// remembers so nobody is asked twice (P-92 #13: never annoying), and where the after-collection
+// flow is. Student pages only.
 
 import type {
   FollowupAnswer,
@@ -9,7 +9,6 @@ import type {
   Rating,
   StudentStatus,
 } from '@/types/pipeline';
-import type { BasePrintJob } from '@/types/jobs';
 
 // -- The quality step -------------------------------------------------------------------------
 
@@ -87,41 +86,6 @@ export function rememberFollowupSkipped(jobId: string, questionId: number) {
   if (!known.includes(questionId)) {
     write(FOLLOWUP_SKIPPED_PREFIX + jobId, JSON.stringify([...known, questionId]));
   }
-}
-
-// -- Rate first (P-20) ------------------------------------------------------------------------
-
-export interface PendingRating {
-  jobId: string;
-  jobName: string;
-  /** The backend blocks the next submission until this is rated; otherwise the student may skip. */
-  required: boolean;
-}
-
-/**
- * The earlier print to rate before submitting a new one: the newest collected job the backend
- * says is unrated (`rated: false`). Whether it may be skipped is the backend's call
- * (`ratingRequired`); a skippable one the student already skipped today is not offered again.
- * Jobs with no `rated` field (older jobs, or a backend without ratings) are never asked about.
- */
-export function findPendingRating(
-  jobs: readonly Pick<
-    BasePrintJob,
-    'id' | 'name' | 'studentStatus' | 'rated' | 'ratingRequired' | 'jobPlaced'
-  >[],
-  now = Date.now(),
-): PendingRating | null {
-  const newestFirst = [...jobs].sort(
-    (a, b) => new Date(b.jobPlaced).getTime() - new Date(a.jobPlaced).getTime(),
-  );
-  for (const job of newestFirst) {
-    if (job.studentStatus !== 'collected' || job.rated !== false) continue;
-    if (wasRated(job.id)) continue;
-    const required = job.ratingRequired === true;
-    if (!required && wasRatingSkipped(job.id, now)) continue;
-    return { jobId: job.id, jobName: job.name, required };
-  }
-  return null;
 }
 
 // -- After collection -------------------------------------------------------------------------

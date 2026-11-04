@@ -19,8 +19,9 @@ import { RateButtons } from './RateButtons';
 interface AfterPickupProps {
   jobId: string;
   jobName?: string;
-  /** The backend says (or the student just did) rate this print; null when not known. */
-  rated: boolean | null;
+  /** The backend says this collected print still needs its rating (`ratingPending`). */
+  ratingPending: boolean | null;
+  /** The rating given on this screen, if any. */
   rating: Rating | null;
   /** Follow-up questions from the pipeline, in order, and the ones already answered or skipped. */
   followups: FollowupQuestion[];
@@ -38,7 +39,7 @@ interface AfterPickupProps {
 export function AfterPickup({
   jobId,
   jobName,
-  rated,
+  ratingPending,
   rating,
   followups,
   handledFollowups,
@@ -58,7 +59,7 @@ export function AfterPickup({
   // "1 of 3" counts what is asked in this visit, not questions skipped on an earlier one.
   const askedHere = followups.filter((q) => handledFollowups.includes(q.questionId)).length;
 
-  const isRated = rated === true || wasRated(jobId) || ratingSkipped;
+  const isRated = ratingPending !== true || wasRated(jobId) || ratingSkipped;
   // The quality step belongs to the thumbs-down given just now; coming back later never reopens it.
   const step = aftercareStep({
     rated: isRated,

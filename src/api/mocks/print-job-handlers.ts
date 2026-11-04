@@ -8,7 +8,7 @@ import {
   mockUserHasPermission,
 } from './utils';
 import { PERMISSIONS } from '@/constants/permissions';
-import { withMockRating } from './pipeline-handlers';
+import { mockUnratedPrints } from './pipeline-handlers';
 
 const apiUrl = process.env.API_URL;
 
@@ -59,7 +59,7 @@ export const jobHandlers = [
 
     return HttpResponse.json(
       generateSuccessResponse({
-        data: paginatedJobs.map(withMockRating),
+        data: paginatedJobs,
         pagination: {
           page,
           pageSize,
@@ -123,6 +123,24 @@ export const jobHandlers = [
     } catch {
       // If formAnswerJson is invalid, use empty object
       formData = {};
+    }
+
+    // Rate first (P-20): a hard block while a collected print has no rating
+    if (body.category === 'ThreeDPrint') {
+      const unratedPrints = mockUnratedPrints(user.studentId);
+      if (unratedPrints.length > 0) {
+        return HttpResponse.json(
+          {
+            success: false,
+            data: { unratedPrints },
+            error: {
+              code: 'RATING_REQUIRED',
+              message: `Please rate your previous print "${unratedPrints[0].name}" before starting a new one. It takes one tap.`,
+            },
+          },
+          { status: 409 },
+        );
+      }
     }
 
     // Generate IDs

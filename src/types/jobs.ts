@@ -29,11 +29,6 @@ export interface BasePrintJob {
   // What the student sees for a job that went through the print pipeline (absent on older jobs).
   // When present it is what the screens word, in place of `status`.
   studentStatus?: StudentStatus;
-  // Rating of a collected print (P-20). `rated: false` on a collected job means "ask the student
-  // before the next submission"; `ratingRequired` says the backend blocks the next submission
-  // until it is rated, otherwise the student may skip. Both absent on older jobs (nothing asked).
-  rated?: boolean;
-  ratingRequired?: boolean;
 }
 
 export type PrintJobStatus =

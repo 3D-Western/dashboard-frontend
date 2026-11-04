@@ -22,8 +22,9 @@ export interface PipelineState {
   followups: FollowupQuestion[];
   /** Question ids answered or skipped here, so a repeated event never asks them again. */
   handledFollowups: number[];
-  /** The student rated this print (here, or the backend says so); null = not known. */
-  rated: boolean | null;
+  /** The backend says this collected print still needs its rating; null = not known yet. */
+  ratingPending: boolean | null;
+  /** The rating the student gave on this screen. */
   rating: Rating | null;
   /** Highest event `seq` applied; older or repeated events are ignored (delivery is at least once). */
   lastSeq: number;
@@ -38,7 +39,7 @@ export const initialPipelineState: PipelineState = {
   message: null,
   followups: [],
   handledFollowups: [],
-  rated: null,
+  ratingPending: null,
   rating: null,
   lastSeq: 0,
 };
@@ -77,9 +78,8 @@ export function pipelineReducer(state: PipelineState, action: PipelineAction): P
         steps: snapshot.steps ?? state.steps,
         message: snapshot.message ?? null,
         followups: snapshot.followups ?? state.followups,
-        // What the student did here outlasts a snapshot that doesn't know yet.
-        rated: state.rated === true ? true : (snapshot.rated ?? state.rated),
-        rating: snapshot.rating ?? state.rating,
+        // A rating given here outlasts a snapshot that doesn't know about it yet.
+        ratingPending: state.rating ? false : (snapshot.ratingPending ?? state.ratingPending),
       };
     }
     case 'event': {
@@ -102,7 +102,7 @@ export function pipelineReducer(state: PipelineState, action: PipelineAction): P
     case 'plan':
       return { ...state, plan: action.plan, studentStatus: 'needs_confirmation' };
     case 'rated':
-      return { ...state, rated: true, rating: action.rating };
+      return { ...state, ratingPending: false, rating: action.rating };
     case 'followup-handled':
       return state.handledFollowups.includes(action.questionId)
         ? state

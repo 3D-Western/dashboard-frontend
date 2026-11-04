@@ -205,8 +205,7 @@ function snapshotFor(jobId: string): PipelineSnapshot {
       plan: planFor(jobId, session),
       steps: allSteps('done'),
       followups: FOLLOWUPS.filter((question) => !session.answers.has(question.questionId)),
-      rated: session.rating !== null,
-      rating: session.rating,
+      ratingPending: session.rating === null,
     };
   }
   if (jobId.includes('pickup')) {
@@ -244,13 +243,18 @@ function snapshotFor(jobId: string): PipelineSnapshot {
 }
 
 /**
- * For the job-list mocks: a collected job says whether the student rated it yet, which is what
- * the rate-first screen (P-20) reads. `ratingRequired` stays off, so the mock lets the student skip.
+ * The rate-first gate (P-20), as the backend does it: the collected prints of this student that
+ * have no rating yet, oldest first. Creating a 3D-print job answers 409 RATING_REQUIRED with them.
  */
-export function withMockRating<T extends { id: string; studentStatus?: string }>(job: T): T {
-  return job.studentStatus === 'collected'
-    ? { ...job, rated: sessionFor(job.id).rating !== null }
-    : job;
+export function mockUnratedPrints(studentId: number) {
+  return db
+    .getPrintJobs({ userId: studentId })
+    .filter((job) => job.studentStatus === 'collected' && sessionFor(job.id).rating === null)
+    .map((job) => ({
+      jobId: job.id,
+      name: job.name,
+      collectedAt: job.completedAt ?? job.jobPlaced,
+    }));
 }
 
 const allSteps = (state: StepProgress['state']): StepProgress[] =>
@@ -376,7 +380,7 @@ export const pipelineHandlers = [
       return conflict('Nothing is ready to collect for this job.');
     }
     session.collected = true;
-    return HttpResponse.json(generateSuccessResponse(null), { status: 202 });
+    return HttpResponse.json(generateSuccessResponse(snapshotFor(jobId)), { status: 202 });
   }),
 
   http.post(
@@ -392,11 +396,16 @@ export const pipelineHandlers = [
             data: null,
             error: { code: 'VALIDATION_FAILED', message: 'rating must be up or down' },
           },
-          { status: 422 },
+          { status: 400 },
         );
       }
+      if (session.rating && session.rating !== rating) {
+        return conflict('This print was already rated.');
+      }
       session.rating = rating;
-      return HttpResponse.json(generateSuccessResponse({ rating }), { status: 202 });
+      return HttpResponse.json(generateSuccessResponse(snapshotFor(String(params.jobId))), {
+        status: 202,
+      });
     },
   ),
 
@@ -413,11 +422,13 @@ export const pipelineHandlers = [
             data: null,
             error: { code: 'VALIDATION_FAILED', message: 'Unknown reason' },
           },
-          { status: 422 },
+          { status: 400 },
         );
       }
       session.qualityReasons = reasons;
-      return HttpResponse.json(generateSuccessResponse(null), { status: 202 });
+      return HttpResponse.json(generateSuccessResponse(snapshotFor(String(params.jobId))), {
+        status: 202,
+      });
     },
   ),
 
@@ -436,7 +447,9 @@ export const pipelineHandlers = [
       }
       if (session.answers.has(questionId)) return conflict('That question was already answered.');
       session.answers.set(questionId, answer ?? 'unsure');
-      return HttpResponse.json(generateSuccessResponse(null), { status: 202 });
+      return HttpResponse.json(generateSuccessResponse(snapshotFor(String(params.jobId))), {
+        status: 202,
+      });
     },
   ),
 ];

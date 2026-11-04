@@ -52,12 +52,12 @@ export const endpoints = {
     submissions: '/api/v1/admin/pipeline/submissions',
     requeue: (jobId: string) => `/api/v1/admin/pipeline/submissions/${jobId}/requeue`,
   },
-  // Print farm, staff side: jobs the farm loop holds for a person and quarantined printers.
-  // Not in the backend yet (mocked); the shapes follow the pipeline's FarmLoop.resolve_held and
-  // clear_printer_quarantine. Needs jobs:update_status.
+  // Print farm, staff side (dashboard-backend StaffFarmController): jobs the farm loop holds for a
+  // person and quarantined printers. Needs jobs:update_status (any scope).
   pipelineFarm: {
-    overview: '/api/v1/admin/pipeline/farm',
-    resolveHeld: (jobId: string) => `/api/v1/admin/pipeline/farm/jobs/${jobId}/resolve`,
+    heldJobs: '/api/v1/admin/pipeline/farm/held-jobs',
+    resolveHeld: (jobId: string) => `/api/v1/admin/pipeline/farm/held-jobs/${jobId}/resolve`,
+    quarantinedPrinters: '/api/v1/admin/pipeline/farm/quarantined-printers',
     clearQuarantine: (printerId: string) =>
       `/api/v1/admin/pipeline/farm/printers/${encodeURIComponent(printerId)}/clear-quarantine`,
   },

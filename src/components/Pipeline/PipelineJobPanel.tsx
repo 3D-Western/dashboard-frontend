@@ -183,7 +183,7 @@ export function PipelineJobPanel({
           <AfterPickup
             jobId={jobId}
             jobName={jobName}
-            rated={pipeline.rated}
+            ratingPending={pipeline.ratingPending}
             rating={pipeline.rating}
             followups={pipeline.followups}
             handledFollowups={pipeline.handledFollowups}

@@ -10,6 +10,7 @@ import type {
   Rating,
   RatingRequest,
   StudentInputs,
+  UnratedPrint,
 } from '@/types/pipeline';
 import type { ApiResponseRaw } from '../types';
 import { ApiError, ErrorCodes } from './errors';
@@ -45,6 +46,23 @@ export function planFromConflictBody(body: unknown): Plan | null {
 
 /** Error code of a 409 on an action that is not about the plan (nothing to collect, already answered). */
 export const CONFLICT_CODE = 'CONFLICT';
+
+/**
+ * The prints to rate before a new 3D-print job, when the backend refused to create or reorder one
+ * with 409 `RATING_REQUIRED` (P-20: a hard block); null for any other error.
+ */
+export function unratedPrintsOf(error: unknown): UnratedPrint[] | null {
+  if (!(error instanceof ApiError) || error.code !== ErrorCodes.RATING_REQUIRED) return null;
+  const prints = (error.data as { unratedPrints?: unknown } | null | undefined)?.unratedPrints;
+  return Array.isArray(prints)
+    ? prints.filter(
+        (print): print is UnratedPrint =>
+          typeof print === 'object' &&
+          print !== null &&
+          typeof (print as UnratedPrint).jobId === 'string',
+      )
+    : [];
+}
 
 /** The backend refused the action because of the job's state (HTTP 409), not the plan. */
 export const isConflictError = (error: unknown): error is ApiError =>
@@ -250,14 +268,17 @@ export const pipelineApi = {
   report: (jobId: string, text: string) => post<void>(endpoints.pipeline.report(jobId), { text }),
 
   /**
-   * "I've collected it" (P-78). Rejected with a conflict (see `isConflictError`) when nothing is
-   * ready to collect, e.g. it was already marked, or the print isn't done.
+   * "I've collected it" (P-78). Rejected with a conflict (see `isConflictError`) unless the print
+   * is ready for pickup (tapping again once collected is accepted).
    */
-  collected: (jobId: string) => postAction<void>(endpoints.pipeline.collected(jobId)),
+  collected: (jobId: string) => postAction<PipelineSnapshot>(endpoints.pipeline.collected(jobId)),
 
-  /** The one-tap thumbs up or down (P-20). Answers with the stored rating. */
+  /**
+   * The one-tap thumbs up or down (P-20), one rating per print: the same again is accepted, a
+   * different one is a conflict. Answers with the job's updated student view.
+   */
   rate: (jobId: string, rating: Rating) =>
-    postAction<{ rating?: Rating } | null>(endpoints.pipeline.rating(jobId), {
+    postAction<PipelineSnapshot>(endpoints.pipeline.rating(jobId), {
       rating,
     } satisfies RatingRequest),
 
@@ -266,14 +287,14 @@ export const pipelineApi = {
    * pipeline's list (it refuses others) and the student's own words.
    */
   reportQuality: (jobId: string, report: QualityReportRequest) =>
-    postAction<void>(endpoints.pipeline.quality(jobId), {
+    postAction<PipelineSnapshot>(endpoints.pipeline.quality(jobId), {
       reasons: report.reasons,
       ...(report.text?.trim() ? { text: report.text.trim() } : {}),
     } satisfies QualityReportRequest),
 
   /** One follow-up answer (P-109). A second answer to the same question is a conflict. */
   answerFollowup: (jobId: string, questionId: number, answer: FollowupAnswer) =>
-    postAction<void>(endpoints.pipeline.followup(jobId, questionId), {
+    postAction<PipelineSnapshot>(endpoints.pipeline.followup(jobId, questionId), {
       answer,
     } satisfies FollowupAnswerRequest),
 };

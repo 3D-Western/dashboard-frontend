@@ -175,12 +175,17 @@ export interface PipelineSnapshot {
   /** Unanswered follow-up questions, in the order to ask them. */
   followups?: FollowupQuestion[];
   /**
-   * Whether the student already rated this print. Not in the contract table yet (assumed
-   * additive, written down in docs); when absent the screens fall back to what this browser
-   * remembers, so nobody is asked twice.
+   * True when the print is collected and the student has not rated it yet: the screen shows the
+   * one-tap rating, and a new 3D-print job is refused (`RATING_REQUIRED`) until it is given (P-20).
    */
-  rated?: boolean;
-  rating?: Rating | null;
+  ratingPending?: boolean;
+}
+
+/** A collected print the student has not rated (an item of `data.unratedPrints` of `RATING_REQUIRED`). */
+export interface UnratedPrint {
+  jobId: string;
+  name?: string | null;
+  collectedAt?: string | null;
 }
 
 export type PipelineEventType =
