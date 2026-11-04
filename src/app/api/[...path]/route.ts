@@ -82,8 +82,12 @@ async function proxyRequest(request: NextRequest, params: { path: string[] }) {
   // Get response body (fetch transparently decodes gzip/deflate)
   const responseBody = isStream ? response.body : await response.text();
 
+  // A 204 (the analytics events endpoint answers one) has no body, and a Response may not carry
+  // even an empty one with that status
+  const bodyless = response.status === 204 || response.status === 205 || response.status === 304;
+
   // Create the response
-  const nextResponse = new NextResponse(responseBody, {
+  const nextResponse = new NextResponse(bodyless ? null : responseBody, {
     status: response.status,
     statusText: response.statusText,
   });
