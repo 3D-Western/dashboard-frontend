@@ -20,6 +20,15 @@ const apiUrl = process.env.API_URL;
 
 const STEP_MS = 1500;
 
+// A stand-in for the pipeline's preview image: a bracket on a print plate, as an inline SVG
+const PREVIEW_SVG = encodeURIComponent(
+  '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300"><rect width="400" height="300" fill="#1c1f26"/>' +
+    '<rect x="40" y="215" width="320" height="14" rx="4" fill="#2d333d"/>' +
+    '<path d="M110 215V120h40v60h130v35z" fill="#8a38f5"/><path d="M150 120h40l90 60H150z" fill="#a96cf8"/>' +
+    '<path d="M190 120l90 60v35" fill="none" stroke="#3fb950" stroke-width="3" stroke-dasharray="6 5"/></svg>',
+);
+const PREVIEW_URL = `data:image/svg+xml;charset=utf-8,${PREVIEW_SVG}`;
+
 const STEPS: Omit<StepProgress, 'state'>[] = [
   {
     step: 'intake.load_mesh',
@@ -83,6 +92,7 @@ function planFor(jobId: string, session: Session): Plan {
   if (jobId.includes('cannot')) {
     return createMockPlan({
       planId,
+      artifacts: [{ kind: 'preview_png', url: PREVIEW_URL }],
       answer: 'cannot_print',
       summary:
         'The walls of your part are 0.3 mm thick, and our printers cannot make anything thinner than 0.8 mm that will survive being ejected.',
@@ -103,6 +113,7 @@ function planFor(jobId: string, session: Session): Plan {
   const needsChoice = !session.choiceDone && !jobId.includes('review');
   return createMockPlan({
     planId,
+    artifacts: [{ kind: 'preview_png', url: PREVIEW_URL }],
     answer: needsChoice ? 'needs_choice' : 'works_with_adjustments',
     choices: needsChoice
       ? [
@@ -185,7 +196,7 @@ export const pipelineHandlers = [
           );
         };
         const seen = new Map<string, string>();
-        for (let tick = 0; tick < 120 && !closed; tick += 1) {
+        for (let tick = 0; tick < 40 && !closed; tick += 1) {
           const snap = snapshotFor(jobId);
           for (const step of snap.steps ?? []) {
             if (seen.get(step.step) === step.state) continue;

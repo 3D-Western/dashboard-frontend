@@ -47,7 +47,7 @@ export default async function MyJobsPage({ searchParams }: MyJobsPageProps) {
   );
 
   return (
-    <div className="mx-auto w-full max-w-5xl space-y-6 p-6">
+    <div className="mx-auto w-full max-w-5xl space-y-6 p-6 max-md:pr-11">
       <div className="flex flex-col gap-4 sm:flex-row sm:justify-between fine:items-start">
         <div>
           <h1 className="text-3xl font-bold">My Jobs</h1>

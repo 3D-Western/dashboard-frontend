@@ -60,7 +60,7 @@ export default async function JobDetailPage({ params }: PageProps) {
   const isCollected = job.status === 'Succeeded';
 
   return (
-    <div className="mx-auto w-full max-w-5xl space-y-6 p-6">
+    <div className="mx-auto w-full max-w-5xl space-y-6 p-6 max-md:pr-11">
       <JobDetailHeader job={job} />
 
       {/* Jobs that went through the print pipeline show its live state; older jobs keep the old panel */}

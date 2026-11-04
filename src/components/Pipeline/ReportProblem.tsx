@@ -49,7 +49,7 @@ export function ReportProblem({ jobId }: { jobId?: string | null }) {
       <DialogTrigger asChild>
         <button
           type="button"
-          className="fixed top-1/2 right-0 z-40 flex min-h-32 w-11 -translate-y-1/2 items-center justify-center gap-2 rounded-l-lg border border-r-0 border-control-border bg-card text-sm font-medium shadow-md outline-none [writing-mode:vertical-rl] hover:border-purple-light hover:bg-purple-light/10 focus-visible:ring-3 focus-visible:ring-ring/50"
+          className="fixed top-1/2 right-0 z-40 flex min-h-32 w-9 -translate-y-1/2 items-center justify-center gap-2 rounded-l-lg border border-r-0 border-control-border bg-card text-xs font-medium shadow-md outline-none [writing-mode:vertical-rl] hover:border-purple-light hover:bg-purple-light/10 focus-visible:ring-3 focus-visible:ring-ring/50"
         >
           <Flag className="size-4 rotate-90" aria-hidden="true" />
           Report a problem
