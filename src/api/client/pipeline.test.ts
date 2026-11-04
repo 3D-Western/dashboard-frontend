@@ -4,7 +4,6 @@ import { mockServer } from '../mocks';
 import { ApiError } from './errors';
 import { endpoints } from './endpoints';
 import {
-  CONFLICT_CODE,
   PlanChangedError,
   createSseParser,
   isConflictError,
@@ -91,33 +90,6 @@ describe('pipelineApi', () => {
         { success: false, data: null, error: { code: 'CONFLICT', message } },
         { status: 409 },
       );
-
-    it('collected posts without a body to the collected route', async () => {
-      const received = vi.fn();
-      mockServer.use(
-        http.post(endpoints.pipeline.collected(JOB), async ({ request }) => {
-          received(await request.text());
-          return HttpResponse.json({ success: true, data: null }, { status: 202 });
-        }),
-      );
-
-      await pipelineApi.collected(JOB);
-
-      expect(received).toHaveBeenCalledWith('');
-    });
-
-    it('collected turns a 409 into a conflict error, never a plan change', async () => {
-      mockServer.use(
-        http.post(endpoints.pipeline.collected(JOB), () => conflict('Nothing is ready to collect')),
-      );
-
-      const error = await pipelineApi.collected(JOB).catch((e: unknown) => e);
-
-      expect(error).not.toBeInstanceOf(PlanChangedError);
-      expect(isConflictError(error)).toBe(true);
-      expect((error as ApiError).code).toBe(CONFLICT_CODE);
-      expect((error as ApiError).message).toBe('Nothing is ready to collect');
-    });
 
     it('rate sends up or down and returns the job’s updated student view', async () => {
       const received = vi.fn();

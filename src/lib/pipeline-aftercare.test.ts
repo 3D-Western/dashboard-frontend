@@ -1,14 +1,10 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import {
+  MAX_INLINE_FOLLOWUPS,
   QUALITY_REASONS,
-  aftercareStep,
-  nextQuestion,
-  rememberFollowupSkipped,
+  inlineFollowups,
   rememberRated,
-  rememberRatingSkipped,
-  skippedFollowups,
   wasRated,
-  wasRatingSkipped,
 } from './pipeline-aftercare';
 
 beforeEach(() => window.localStorage.clear());
@@ -32,65 +28,27 @@ describe('QUALITY_REASONS', () => {
   });
 });
 
-describe('browser memory', () => {
-  it('remembers a rating and a skip per job', () => {
+describe('what this browser remembers', () => {
+  it('remembers a rating per job', () => {
     expect(wasRated('a')).toBe(false);
     rememberRated('a');
     expect(wasRated('a')).toBe(true);
     expect(wasRated('b')).toBe(false);
-
-    rememberRatingSkipped('a', 1000);
-    expect(wasRatingSkipped('a', 2000)).toBe(true);
-    expect(wasRatingSkipped('b', 2000)).toBe(false);
-  });
-
-  it('remembers skipped follow-up questions without duplicates', () => {
-    rememberFollowupSkipped('a', 1);
-    rememberFollowupSkipped('a', 1);
-    rememberFollowupSkipped('a', 3);
-    expect(skippedFollowups('a')).toEqual([1, 3]);
-    expect(skippedFollowups('b')).toEqual([]);
-  });
-
-  it('survives blocked or corrupt storage', () => {
-    window.localStorage.setItem('3dw:followups-skipped:a', '{nope');
-    expect(skippedFollowups('a')).toEqual([]);
   });
 });
 
-describe('aftercareStep', () => {
-  const base = { rated: false, rating: null, qualityHandled: false, unanswered: 2 };
+describe('inlineFollowups', () => {
+  const questions = [1, 2, 3, 4].map((questionId) => ({ questionId, text: `Q${questionId}` }));
 
-  it('rates first, whatever is waiting', () => {
-    expect(aftercareStep(base)).toBe('rate');
+  it('shows the first unanswered questions, never more than two', () => {
+    expect(MAX_INLINE_FOLLOWUPS).toBe(2);
+    expect(inlineFollowups(questions, []).map((q) => q.questionId)).toEqual([1, 2]);
+    expect(inlineFollowups(questions, [1]).map((q) => q.questionId)).toEqual([2, 3]);
+    expect(inlineFollowups(questions, [1, 2, 3]).map((q) => q.questionId)).toEqual([4]);
   });
 
-  it('offers the quality step after a thumbs-down, once', () => {
-    expect(aftercareStep({ ...base, rated: true, rating: 'down' })).toBe('quality');
-    expect(aftercareStep({ ...base, rated: true, rating: 'down', qualityHandled: true })).toBe(
-      'followups',
-    );
-  });
-
-  it('goes straight to the questions after a thumbs-up', () => {
-    expect(aftercareStep({ ...base, rated: true, rating: 'up' })).toBe('followups');
-  });
-
-  it('is done when nothing is left to ask', () => {
-    expect(aftercareStep({ ...base, rated: true, rating: 'up', unanswered: 0 })).toBe('done');
-  });
-});
-
-describe('nextQuestion', () => {
-  const questions = [
-    { questionId: 1, text: 'a' },
-    { questionId: 2, text: 'b' },
-  ];
-
-  it('is the first one not handled yet', () => {
-    expect(nextQuestion(questions, [])?.questionId).toBe(1);
-    expect(nextQuestion(questions, [1])?.questionId).toBe(2);
-    expect(nextQuestion(questions, [1, 2])).toBeNull();
-    expect(nextQuestion(undefined, [])).toBeNull();
+  it('is empty when there is nothing left to ask', () => {
+    expect(inlineFollowups(questions, [1, 2, 3, 4])).toEqual([]);
+    expect(inlineFollowups(undefined, [])).toEqual([]);
   });
 });

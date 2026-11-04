@@ -3,23 +3,12 @@
 import { PackageCheck } from 'lucide-react';
 import { useLocalTime } from '@/hooks/useLocalTime';
 import type { Pickup } from '@/types/pipeline';
-import { CollectButton } from './CollectButton';
 
 /**
  * "Slot 14, tag K7Q2": where to find the print, with a picture of it and when the window ends.
- * With a job to act on it also has the "I've collected it" button.
+ * Nothing to do or confirm here: collection is inferred (P-136), the student just goes and gets it.
  */
-export function PickupCard({
-  pickup,
-  jobId,
-  onCollected,
-  onCollectConflict,
-}: {
-  pickup: Pickup;
-  jobId?: string;
-  onCollected?: () => void;
-  onCollectConflict?: () => void;
-}) {
+export function PickupCard({ pickup }: { pickup: Pickup }) {
   const until = useLocalTime(pickup.windowEndsAt, 'EEE, MMM d, h:mm a');
   const photo = pickup.artifacts?.find(
     (artifact) => artifact.kind === 'preview_png' || artifact.kind === 'plate_png',
@@ -45,17 +34,12 @@ export function PickupCard({
             {until && (
               <>
                 {' '}
-                Please collect it by <time dateTime={pickup.windowEndsAt}>{until}</time>.
+                It is yours to take until <time dateTime={pickup.windowEndsAt}>{until}</time>.
               </>
             )}
           </p>
         </div>
       </div>
-      {jobId && onCollected && (
-        <div className="px-4 pb-4">
-          <CollectButton jobId={jobId} onCollected={onCollected} onConflict={onCollectConflict} />
-        </div>
-      )}
       {photo && (
         // A short-lived signed link from another origin, so next/image's optimiser doesn't apply.
         // eslint-disable-next-line @next/next/no-img-element

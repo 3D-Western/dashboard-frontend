@@ -4,7 +4,7 @@ import userEvent from '@testing-library/user-event';
 import { jobApi } from '@/api/client/job';
 import { ApiError } from '@/api/client/errors';
 import { pipelineApi } from '@/api/client/pipeline';
-import { createMockSnapshot } from '@test/utils/pipelineFactories';
+import { createMockPlan, createMockSnapshot } from '@test/utils/pipelineFactories';
 import { PrintFlow } from './PrintFlow';
 
 vi.mock('@/api/client/job', () => ({
@@ -105,7 +105,7 @@ describe('PrintFlow', () => {
     await waitFor(() => expect(pipeline.getState).toHaveBeenCalledWith('job-9', expect.anything()));
   });
 
-  it('saves the purpose as soon as it is picked, then the student’s own words on continue', async () => {
+  it('saves the purpose as soon as it is picked, then the student’s own words once they stop typing', async () => {
     const user = setup();
     const { container } = render(<PrintFlow />);
     await chooseFile(container);
@@ -123,32 +123,76 @@ describe('PrintFlow', () => {
     const words = screen.getByRole('textbox', { name: /tell us about your part/i });
     expect(words).toHaveValue('');
     await user.type(words, 'A replacement gear for my robot arm');
-    await user.click(screen.getByRole('button', { name: 'Continue' }));
-
-    await waitFor(() =>
-      expect(pipeline.saveInputs).toHaveBeenLastCalledWith('job-9', {
-        purpose: 'class',
-        purposeDetails: { course: 'MME 4499' },
-        description: 'A replacement gear for my robot arm',
-      }),
+    // No Continue to tap: the pause after typing saves it
+    await waitFor(
+      () =>
+        expect(pipeline.saveInputs).toHaveBeenLastCalledWith('job-9', {
+          purpose: 'class',
+          purposeDetails: { course: 'MME 4499' },
+          description: 'A replacement gear for my robot arm',
+        }),
+      { timeout: 5000 },
     );
     expect(await screen.findByText('Your answers are saved')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Continue' })).not.toBeInTheDocument();
   });
 
-  it('does not let the student continue without a purpose and a few words of their own', async () => {
+  it('saves the words at once when the student leaves the field', async () => {
     const user = setup();
     const { container } = render(<PrintFlow />);
     await chooseFile(container);
-
-    const next = await screen.findByRole('button', { name: 'Continue' });
-    expect(next).toBeDisabled();
+    await waitFor(() => expect(jobs.completeUpload).toHaveBeenCalled());
     await user.click(screen.getByRole('radio', { name: 'Personal project' }));
-    expect(next).toBeDisabled();
+
+    await user.type(screen.getByRole('textbox', { name: /tell us about your part/i }), 'A desk hook');
+    await user.tab();
+
+    await waitFor(() =>
+      expect(pipeline.saveInputs).toHaveBeenLastCalledWith(
+        'job-9',
+        expect.objectContaining({ purpose: 'personal', description: 'A desk hook' }),
+      ),
+    );
+  });
+
+  it('shows the review below the form only once the purpose and the student’s own words are in, with no Continue step', async () => {
+    pipeline.getState.mockResolvedValue(
+      createMockSnapshot({ studentStatus: 'needs_confirmation', plan: createMockPlan() }),
+    );
+    const user = setup();
+    const { container } = render(<PrintFlow />);
+    await chooseFile(container);
+    await screen.findByRole('radio', { name: 'Personal project' });
+
+    expect(screen.queryByRole('button', { name: 'Continue' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /yes, print this/i })).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole('radio', { name: 'Personal project' }));
     await user.type(
       screen.getByRole('textbox', { name: /tell us about your part/i }),
       'A desk hook',
     );
-    expect(next).toBeEnabled();
+    expect(screen.queryByRole('button', { name: /yes, print this/i })).not.toBeInTheDocument();
+    await user.tab();
+
+    // The form stays on screen, editable, with the review right under it
+    expect(await screen.findByRole('button', { name: /yes, print this/i })).toBeEnabled();
+    expect(screen.getByRole('textbox', { name: /tell us about your part/i })).toBeEnabled();
+  });
+
+  it('puts a returning student straight into the description', async () => {
+    const user = setup();
+    const first = render(<PrintFlow />);
+    await chooseFile(first.container);
+    await user.click(await screen.findByRole('radio', { name: 'Personal project' }));
+    first.unmount();
+
+    const second = render(<PrintFlow />);
+    await chooseFile(second.container);
+
+    await waitFor(() =>
+      expect(screen.getByRole('textbox', { name: /tell us about your part/i })).toHaveFocus(),
+    );
   });
 
   it('remembers the purpose and its sub-form for next time', async () => {

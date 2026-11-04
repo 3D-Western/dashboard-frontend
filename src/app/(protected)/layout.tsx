@@ -1,3 +1,4 @@
+import { AnalyticsTracker } from '@/components/Analytics/AnalyticsTracker';
 import { AgreementsGate } from '@/components/Agreements/AgreementsGate';
 import { AppSidebar } from '@/components/AppSidebar';
 import { loadPendingAgreements } from '@/lib/agreements';
@@ -65,7 +66,10 @@ export default async function ProtectedLayout({ children }: { children: React.Re
           <PageHeader />
         </header>
         <div className="flex-1">
-          <UserProvider user={currentUser}>{children}</UserProvider>
+          <UserProvider user={currentUser}>
+            <AnalyticsTracker />
+            {children}
+          </UserProvider>
         </div>
       </SidebarInset>
     </SidebarProvider>

@@ -1,8 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import Link from 'next/link';
-import { AlertTriangle, Check, FileBox, Loader2, Pencil } from 'lucide-react';
+import { AlertTriangle, Check, FileBox, Loader2 } from 'lucide-react';
 import { RadioGroup as RadioGroupPrimitive } from 'radix-ui';
 import { pipelineApi } from '@/api/client/pipeline';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -22,7 +21,7 @@ import {
   loadRememberedPurpose,
   rememberPurpose,
 } from '@/lib/purpose-memory';
-import { Routes } from '@/lib/routes';
+import { trackScreen } from '@/lib/analytics';
 import type { Purpose, StudentInputs, UnratedPrint } from '@/types/pipeline';
 import { useJobUpload } from './useJobUpload';
 
@@ -39,7 +38,16 @@ const ACCEPTED_FILES = {
 
 const MAX_DESCRIPTION = 1000;
 const MIN_DESCRIPTION = 2;
+/** The purpose and its details are saved this long after the last change. */
 const SAVE_DELAY_MS = 600;
+/**
+ * The description is saved when the student stops typing (or leaves the field), so there is no
+ * "Continue" to tap (P-137): after a pause of this long, shorter for a real sentence, longer for a
+ * word or two that may not be finished.
+ */
+const DESCRIPTION_IDLE_MS = 1500;
+const SHORT_DESCRIPTION_IDLE_MS = 3000;
+const SENTENCE_LENGTH = 12;
 
 const CHIP =
   'min-h-11 rounded-full border border-control-border px-3.5 py-1.5 text-sm transition-colors outline-none hover:border-purple-light focus-visible:ring-3 focus-visible:ring-ring/50 data-[state=checked]:border-purple-light data-[state=checked]:bg-purple-light/25 fine:min-h-0';
@@ -50,7 +58,8 @@ type SaveState = 'idle' | 'saving' | 'saved' | 'error';
  * The student's print flow, upload first (SCOPE §2, P-63, P-117): the file starts uploading the
  * moment it is chosen, and the pipeline starts working on it the moment it arrives. While that
  * happens the student says what it is for and tells us about the part; those answers are saved
- * in the background, and each pipeline step shows up live under the form.
+ * in the background as they go (no "Continue" to tap, P-137), and each pipeline step shows up live
+ * under the form. The review with its explicit yes appears right below, on the same page.
  */
 export function PrintFlow({ mockMode = false }: { mockMode?: boolean }) {
   const upload = useJobUpload({ mockMode });
@@ -58,10 +67,15 @@ export function PrintFlow({ mockMode = false }: { mockMode?: boolean }) {
   const [purpose, setPurpose] = useState<Purpose | null>(null);
   const [details, setDetails] = useState<Partial<Record<Purpose, Record<string, string>>>>({});
   const [description, setDescription] = useState('');
-  const [submitted, setSubmitted] = useState(false);
   const [saveState, setSaveState] = useState<SaveState>('idle');
   const [saveAttempt, setSaveAttempt] = useState(0);
-  const lastSaved = useRef<string | null>(null);
+  // What the pipeline has of the student's answers (as the JSON that was sent), and how often it changed.
+  const [savedKey, setSavedKey] = useState<string | null>(null);
+  const [answersRevision, setAnswersRevision] = useState(0);
+  // The student left the description field: save it now rather than after the pause.
+  const [leftDescription, setLeftDescription] = useState(false);
+  const [focusDescription, setFocusDescription] = useState(false);
+  const descriptionRef = useRef<HTMLTextAreaElement>(null);
   // Rate first (P-20): the prints to rate before the file is asked for, looked up as the screen
   // opens. null = nothing to rate (or the lookup failed: the 409 on create is the fallback).
   const [rateFirst, setRateFirst] = useState<UnratedPrint[] | null>(null);
@@ -95,45 +109,72 @@ export function PrintFlow({ mockMode = false }: { mockMode?: boolean }) {
     setDetails((current) => (Object.keys(current).length ? current : remembered.details));
   }, []);
 
-  const cleanDetails = purpose ? cleanPurposeDetails(purpose, details[purpose]) : {};
-  const descriptionOk = description.trim().length >= MIN_DESCRIPTION;
+  const uploadError = upload.state.phase === 'error' ? upload.state : null;
+  const ratingBlocked = uploadError?.kind === 'rating-required';
+  // Before a file is chosen the one-tap rating comes first and the upload waits for it. A file
+  // chosen before the lookup answered goes up as usual (the 409 fallback covers it).
+  const ratingFirst = rateFirst !== null && !file;
 
-  // Background save: purpose as soon as it's chosen, the description once the student continues.
-  // Waits for the upload to finish (the pipeline only knows the job after that); never blocks.
+  const cleanDetails = purpose ? cleanPurposeDetails(purpose, details[purpose]) : {};
+  const descriptionText = description.trim();
+  const descriptionOk = descriptionText.length >= MIN_DESCRIPTION;
+
+  // What the pipeline needs from the student: purpose (with its details) and their own description.
+  const inputs: StudentInputs = {};
+  if (purpose) {
+    inputs.purpose = purpose;
+    inputs.purposeDetails = cleanDetails;
+  }
+  if (descriptionOk) inputs.description = descriptionText;
+  const inputsKey = JSON.stringify(inputs);
+  // Everything asked is answered and saved: now the review can show (and nothing is left to tap).
+  const answered = purpose !== null && descriptionOk && savedKey === inputsKey;
+
+  // Background save: the purpose a moment after it's chosen, the description once the student
+  // pauses or leaves the field. Waits for the upload to finish (the pipeline only knows the job
+  // after that); never blocks.
   useEffect(() => {
     if (!uploadJobId) return;
-    const inputs: StudentInputs = {};
-    if (purpose) {
-      inputs.purpose = purpose;
-      inputs.purposeDetails = cleanDetails;
-    }
-    if (submitted) inputs.description = description.trim();
-    if (Object.keys(inputs).length === 0) return;
-
-    const key = JSON.stringify(inputs);
-    if (key === lastSaved.current) return;
+    if (Object.keys(inputs).length === 0 || inputsKey === savedKey) return;
     let cancelled = false;
-    const timer = setTimeout(
-      async () => {
-        setSaveState('saving');
-        try {
-          await pipelineApi.saveInputs(uploadJobId, inputs);
-          if (cancelled) return;
-          lastSaved.current = key;
-          setSaveState('saved');
-        } catch {
-          if (!cancelled) setSaveState('error');
-        }
-      },
-      submitted ? 0 : SAVE_DELAY_MS,
-    );
+    const descriptionPending = inputs.description !== undefined;
+    const delay = !descriptionPending
+      ? SAVE_DELAY_MS
+      : leftDescription
+        ? 0
+        : descriptionText.length >= SENTENCE_LENGTH
+          ? DESCRIPTION_IDLE_MS
+          : SHORT_DESCRIPTION_IDLE_MS;
+    const timer = setTimeout(async () => {
+      setSaveState('saving');
+      try {
+        await pipelineApi.saveInputs(uploadJobId, inputs);
+        if (cancelled) return;
+        setSavedKey(inputsKey);
+        setAnswersRevision((n) => n + 1);
+        setSaveState('saved');
+      } catch {
+        if (!cancelled) setSaveState('error');
+      }
+    }, delay);
     return () => {
       cancelled = true;
       clearTimeout(timer);
     };
-    // cleanDetails is derived from purpose and details
+    // inputs and descriptionText are derived from inputsKey's parts
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [uploadJobId, purpose, details, description, submitted, saveAttempt]);
+  }, [uploadJobId, inputsKey, savedKey, leftDescription, saveAttempt]);
+
+  // Returning students (purpose remembered) go straight to the description, no tap to start typing.
+  useEffect(() => {
+    if (focusDescription && file) descriptionRef.current?.focus();
+  }, [focusDescription, file]);
+
+  // Which screen of the new-print flow the student is on, for the steps-to-submit metric (P-137)
+  const stage = ratingFirst || ratingBlocked ? 'rate_first' : !file ? 'file' : 'form';
+  useEffect(() => {
+    trackScreen(`print_new.${stage}`);
+  }, [stage]);
 
   function choosePurpose(next: Purpose) {
     setPurpose(next);
@@ -150,15 +191,11 @@ export function PrintFlow({ mockMode = false }: { mockMode?: boolean }) {
   function handleFile(accepted: File | null) {
     if (!accepted || file) return;
     setFile(accepted);
+    if (purpose) setFocusDescription(true);
     void upload.start(accepted);
   }
 
   const purposeOption = PURPOSES.find((option) => option.value === purpose);
-  const uploadError = upload.state.phase === 'error' ? upload.state : null;
-  const ratingBlocked = uploadError?.kind === 'rating-required';
-  // Before a file is chosen the one-tap rating comes first and the upload waits for it. A file
-  // chosen before the lookup answered goes up as usual (the 409 fallback covers it).
-  const ratingFirst = rateFirst !== null && !file;
 
   return (
     <div className="mx-auto w-full max-w-2xl space-y-6">
@@ -206,7 +243,9 @@ export function PrintFlow({ mockMode = false }: { mockMode?: boolean }) {
               )}
             </div>
           ) : (
-            <FileUploadDropzone onFileAccepted={handleFile} accept={ACCEPTED_FILES} />
+            <div data-track="choose_file">
+              <FileUploadDropzone onFileAccepted={handleFile} accept={ACCEPTED_FILES} />
+            </div>
           )}
           {!file && (
             <p className="text-sm text-muted-foreground">
@@ -233,7 +272,7 @@ export function PrintFlow({ mockMode = false }: { mockMode?: boolean }) {
         </section>
       )}
 
-      {file && !submitted && !ratingBlocked && (
+      {file && !ratingBlocked && (
         <>
           {/* 2. Purpose, with its short sub-form */}
           <section aria-labelledby="purpose-heading" className="space-y-3">
@@ -250,6 +289,7 @@ export function PrintFlow({ mockMode = false }: { mockMode?: boolean }) {
               value={purpose ?? ''}
               onValueChange={(value) => choosePurpose(value as Purpose)}
               className="flex flex-wrap gap-2"
+              data-track="purpose"
             >
               {PURPOSES.map((option) => (
                 <RadioGroupPrimitive.Item key={option.value} value={option.value} className={CHIP}>
@@ -292,74 +332,45 @@ export function PrintFlow({ mockMode = false }: { mockMode?: boolean }) {
               </p>
             </div>
             <Textarea
+              ref={descriptionRef}
               aria-labelledby="part-heading"
               value={description}
               maxLength={MAX_DESCRIPTION}
-              onChange={(event) => setDescription(event.target.value)}
+              onChange={(event) => {
+                setDescription(event.target.value);
+                setLeftDescription(false);
+              }}
+              onBlur={() => setLeftDescription(true)}
               placeholder="e.g. A replacement gear for the robot arm in my capstone project. The teeth take the load."
               className="min-h-28"
             />
-            <p className="text-right text-xs text-muted-foreground">
-              {description.length}/{MAX_DESCRIPTION}
-            </p>
-
-            <div className="sticky bottom-0 z-10 -mx-6 border-t bg-background px-6 py-3 md:static md:mx-0 md:border-0 md:bg-transparent md:p-0">
-              {!purpose && (
-                <p className="mb-2 text-sm text-muted-foreground">Pick what it&apos;s for first.</p>
-              )}
-              <Button
-                type="button"
-                size="lg"
-                disabled={!purpose || !descriptionOk}
-                onClick={() => setSubmitted(true)}
-                className="w-full md:w-auto md:min-w-40"
-              >
-                Continue
-              </Button>
+            <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-muted-foreground">
+              <div role="status" className="min-h-4">
+                {saveState === 'saving' && 'Saving your answers'}
+                {saveState === 'saved' && answered && (
+                  <span className="text-status-green-foreground">Your answers are saved</span>
+                )}
+                {!purpose && description.length > 0 && 'Pick what it’s for too.'}
+              </div>
+              <span>
+                {description.length}/{MAX_DESCRIPTION}
+              </span>
             </div>
+            {saveState === 'error' && (
+              <p className="flex flex-wrap items-center gap-2 text-xs text-destructive" role="alert">
+                We couldn&apos;t save your answers.
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setSaveAttempt((n) => n + 1)}
+                >
+                  Try again
+                </Button>
+              </p>
+            )}
           </section>
         </>
-      )}
-
-      {file && submitted && (
-        <section
-          aria-label="Your answers"
-          className="space-y-2 rounded-lg border bg-card p-4 text-sm"
-        >
-          <div className="flex items-start justify-between gap-3">
-            <div className="min-w-0">
-              <p className="font-medium">{purposeOption?.label}</p>
-              <p className="mt-1 break-words text-muted-foreground">{description.trim()}</p>
-            </div>
-            <Button type="button" variant="ghost" size="sm" onClick={() => setSubmitted(false)}>
-              <Pencil aria-hidden="true" />
-              Edit
-            </Button>
-          </div>
-          {saveState === 'saving' && (
-            <p className="text-xs text-muted-foreground" role="status">
-              Saving your answers
-            </p>
-          )}
-          {saveState === 'saved' && (
-            <p className="text-xs text-status-green-foreground" role="status">
-              Your answers are saved
-            </p>
-          )}
-          {saveState === 'error' && (
-            <p className="flex flex-wrap items-center gap-2 text-xs text-destructive" role="alert">
-              We couldn&apos;t save your answers.
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() => setSaveAttempt((n) => n + 1)}
-              >
-                Try again
-              </Button>
-            </p>
-          )}
-        </section>
       )}
 
       {/* Progress: live from the moment the upload completes, before the student has typed. */}
@@ -369,7 +380,8 @@ export function PrintFlow({ mockMode = false }: { mockMode?: boolean }) {
             <PipelineJobPanel
               jobId={uploadJobId}
               jobName={file.name}
-              stepsOnly={!submitted}
+              stepsOnly={!answered}
+              answersRevision={answersRevision}
               showJobLink
             />
           ) : (
@@ -394,13 +406,8 @@ export function PrintFlow({ mockMode = false }: { mockMode?: boolean }) {
       )}
 
       {uploadJobId && (
-        <p className="text-sm">
-          <Link href={Routes.jobs.detail(uploadJobId)} className="text-primary hover:underline">
-            Open this job&apos;s page
-          </Link>{' '}
-          <span className="text-muted-foreground">
-            to come back to it later. You will find it in My Jobs.
-          </span>
+        <p className="text-sm text-muted-foreground">
+          You can leave this page any time: your job keeps going and is in My Jobs.
         </p>
       )}
 

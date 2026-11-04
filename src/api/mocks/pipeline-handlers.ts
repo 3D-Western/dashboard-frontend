@@ -21,8 +21,8 @@ const apiUrl = process.env.API_URL;
 // A scripted pipeline for development without a backend (MOCK_ENABLED=true). Each job id plays
 // the same story, paced by the clock from the first time it is asked about:
 //   steps arrive one by one -> a choice is needed (unless the id says otherwise) -> review -> yes.
-// Ids containing "pickup" are ready for collection (then "I've collected it", the rating, the
-// quality step and two follow-up questions play out), "collected" start already collected and
+// Ids containing "pickup" are ready for pickup (the student's rating of it is the collection, then
+// the quality step and two follow-up questions play out), "collected" start already collected and
 // unrated, "review" start at the review, "cannot" ends in "can't print", "choice" asks for a choice.
 
 const STEP_MS = 1500;
@@ -266,6 +266,13 @@ function requireUser(cookies: Record<string, string>) {
 
 const sleep = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
 
+/** A print that is ready for pickup is collected once the student rates it (P-136); the job record follows. */
+function markCollected(jobId: string, session: Session) {
+  session.collected = true;
+  const job = (db.getPrintJobs({}) as unknown as BasePrintJob[]).find((j) => j.id === jobId);
+  if (job) job.studentStatus = 'collected';
+}
+
 /** Staff waived a print's rating (P-20): it no longer blocks the student. Says why it could not be waived, if so. */
 export function mockWaiveRating(jobId: string): 'ok' | 'not-collected' | 'already-rated' {
   const job = (db.getPrintJobs({}) as unknown as BasePrintJob[]).find((j) => j.id === jobId);
@@ -390,23 +397,14 @@ export const pipelineHandlers = [
     return HttpResponse.json(generateSuccessResponse(null), { status: 202 });
   }),
 
-  // "I've collected it": only a print that is ready for pickup can be collected (409 otherwise).
-  http.post(`${apiUrl}${endpoints.pipeline.collected(':jobId')}`, ({ cookies, params }) => {
-    if (!requireUser(cookies)) return createInvalidSessionResponse();
-    const jobId = String(params.jobId);
-    const session = sessionFor(jobId);
-    if (session.collected || !jobId.includes('pickup')) {
-      return conflict('Nothing is ready to collect for this job.');
-    }
-    session.collected = true;
-    return HttpResponse.json(generateSuccessResponse(snapshotFor(jobId)), { status: 202 });
-  }),
-
+  // Rating a print is its collection too (P-136): a print that is ready for pickup moves to
+  // collected with its first rating. Only ready or collected prints take a rating (409 otherwise).
   http.post(
     `${apiUrl}${endpoints.pipeline.rating(':jobId')}`,
     async ({ cookies, params, request }) => {
       if (!requireUser(cookies)) return createInvalidSessionResponse();
-      const session = sessionFor(String(params.jobId));
+      const jobId = String(params.jobId);
+      const session = sessionFor(jobId);
       const { rating } = (await request.json()) as { rating?: string };
       if (rating !== 'up' && rating !== 'down') {
         return HttpResponse.json(
@@ -418,11 +416,15 @@ export const pipelineHandlers = [
           { status: 400 },
         );
       }
+      if (!session.collected && !jobId.includes('pickup')) {
+        return conflict('Nothing is ready to rate for this job.');
+      }
       if (session.rating && session.rating !== 'waived' && session.rating !== rating) {
         return conflict('This print was already rated.');
       }
+      if (!session.collected) markCollected(jobId, session);
       session.rating = rating;
-      return HttpResponse.json(generateSuccessResponse(snapshotFor(String(params.jobId))), {
+      return HttpResponse.json(generateSuccessResponse(snapshotFor(jobId)), {
         status: 202,
       });
     },

@@ -1,11 +1,12 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { AlertTriangle, CheckCircle2, Clock, Loader2, Scale, Wrench } from 'lucide-react';
 import { toast } from 'sonner';
 import { PlanChangedError, pipelineApi } from '@/api/client/pipeline';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
+import { trackScreen } from '@/lib/analytics';
 import { formatGrams, formatPrintTime } from '@/lib/pipeline-state';
 import { settingReasons, settingsDiffer, settingsFromPlan } from '@/lib/pipeline-settings';
 import type { Answer, Plan, StudentSettings, StudentStatus } from '@/types/pipeline';
@@ -110,6 +111,11 @@ export function ReviewPlan({
   onStudentChange,
   planWasUpdated = false,
 }: ReviewPlanProps) {
+  // The review is a screen of its own in the steps-to-submit metric (P-137)
+  useEffect(() => {
+    trackScreen('review');
+  }, []);
+
   const [picked, setPicked] = useState<Record<string, string>>({});
   const [savingChoice, setSavingChoice] = useState<string | null>(null);
   const [confirming, setConfirming] = useState(false);
@@ -244,6 +250,7 @@ export function ReviewPlan({
             size="lg"
             disabled={confirming || studentStatus !== 'needs_confirmation' || settingsDirty}
             aria-busy={confirming}
+            data-track="confirm_print"
             onClick={handleConfirm}
             className="w-full md:w-auto md:min-w-48"
           >

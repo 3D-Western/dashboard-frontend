@@ -38,9 +38,13 @@ export const endpoints = {
     quality: (jobId: string) => `/api/v1/jobs/${jobId}/pipeline/quality`,
     followup: (jobId: string, questionId: number | string) =>
       `/api/v1/jobs/${jobId}/pipeline/followups/${questionId}`,
-    collected: (jobId: string) => `/api/v1/jobs/${jobId}/pipeline/collected`,
     // Rate first (P-20), look-ahead: the prints to rate before the new-print screen asks for a file
     pendingRatings: '/api/v1/jobs/pending-ratings',
+  },
+  // Product analytics (P-137): pseudonymous usage events; the admin summary is the steps-to-submit metric
+  analytics: {
+    events: '/api/v1/analytics/events',
+    stepsToSubmit: '/api/v1/admin/analytics/steps-to-submit',
   },
   // Print pipeline, staff side (dashboard-backend entities/pipeline/staff; jobs:update_status)
   pipelineReview: {
