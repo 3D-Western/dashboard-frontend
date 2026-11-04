@@ -11,6 +11,7 @@ import { settingReasons, settingsDiffer, settingsFromPlan } from '@/lib/pipeline
 import type { Answer, Plan, StudentSettings, StudentStatus } from '@/types/pipeline';
 import { ChoiceList } from './ChoiceList';
 import { AnalysisDetails, ConsequentialCards, splitLessonCards } from './LessonCards';
+import { PartFocusProvider } from './PartFocus';
 import { PartViewerSlot } from './PartViewerSlot';
 import { SpecifySettings } from './SpecifySettings';
 
@@ -44,6 +45,10 @@ const ANSWER_HEADLINE: Record<Answer, { text: string; icon: typeof CheckCircle2;
 
 export function previewUrlOf(plan: Plan | null | undefined) {
   return plan?.artifacts?.find((artifact) => artifact.kind === 'preview_png')?.url;
+}
+
+export function modelUrlOf(plan: Plan | null | undefined) {
+  return plan?.artifacts?.find((artifact) => artifact.kind === 'model_glb')?.url;
 }
 
 export function highlightsUrlOf(plan: Plan | null | undefined) {
@@ -180,73 +185,76 @@ export function ReviewPlan({
       : null;
 
   return (
-    <div className="space-y-5">
-      {planWasUpdated && (
-        <Alert variant="warning">
-          <AlertTriangle aria-hidden="true" />
-          <AlertTitle>Your plan changed while you were reading it</AlertTitle>
-          <AlertDescription>
-            Take another look at what is below. Nothing has been sent to the printers yet; it needs
-            a new yes from you.
-          </AlertDescription>
-        </Alert>
-      )}
+    <PartFocusProvider>
+      <div className="space-y-5">
+        {planWasUpdated && (
+          <Alert variant="warning">
+            <AlertTriangle aria-hidden="true" />
+            <AlertTitle>Your plan changed while you were reading it</AlertTitle>
+            <AlertDescription>
+              Take another look at what is below. Nothing has been sent to the printers yet; it
+              needs a new yes from you.
+            </AlertDescription>
+          </Alert>
+        )}
 
-      <div>
-        <h2 className={`flex items-start gap-2 text-xl ${headline.tone}`}>
-          <Headline className="mt-1 size-5 shrink-0" aria-hidden="true" />
-          {headline.text}
-        </h2>
-        <p className="mt-2 text-sm text-muted-foreground">{plan.summary}</p>
+        <div>
+          <h2 className={`flex items-start gap-2 text-xl ${headline.tone}`}>
+            <Headline className="mt-1 size-5 shrink-0" aria-hidden="true" />
+            {headline.text}
+          </h2>
+          <p className="mt-2 text-sm text-muted-foreground">{plan.summary}</p>
+        </div>
+
+        <PartViewerSlot
+          previewUrl={previewUrlOf(plan)}
+          modelUrl={modelUrlOf(plan)}
+          highlightsUrl={highlightsUrlOf(plan)}
+          highlights={plan.lessonCards}
+        />
+
+        <PlanFacts plan={plan} />
+
+        <ConsequentialCards cards={consequential} />
+
+        <ChoiceList
+          choices={choices}
+          selected={picked}
+          saving={savingChoice}
+          disabled={confirming}
+          onSelect={handleChoose}
+        />
+
+        <AnalysisDetails cards={rest} />
+
+        <SpecifySettings
+          settings={settings}
+          reasons={settingReasons(plan)}
+          dirty={settingsDirty}
+          applying={applying}
+          onChange={(next) => setEdit({ planId: plan.planId, settings: next })}
+          onApply={handleApplySettings}
+        />
+
+        {/* Phones: the yes stays in reach at the bottom while the plan scrolls. */}
+        <div className="sticky bottom-0 z-10 -mx-6 border-t bg-background px-6 py-3 md:static md:mx-0 md:border-0 md:bg-transparent md:p-0">
+          {blockedReason && <p className="mb-2 text-sm text-muted-foreground">{blockedReason}</p>}
+          <Button
+            type="button"
+            size="lg"
+            disabled={confirming || studentStatus !== 'needs_confirmation' || settingsDirty}
+            aria-busy={confirming}
+            onClick={handleConfirm}
+            className="w-full md:w-auto md:min-w-48"
+          >
+            {confirming && <Loader2 className="animate-spin" aria-hidden="true" />}
+            {planWasUpdated ? 'Yes, print this updated plan' : 'Yes, print this'}
+          </Button>
+          <p className="mt-2 text-xs text-muted-foreground">
+            Nothing goes to the printers until you say yes.
+          </p>
+        </div>
       </div>
-
-      <PartViewerSlot
-        previewUrl={previewUrlOf(plan)}
-        highlightsUrl={highlightsUrlOf(plan)}
-        highlights={plan.lessonCards}
-      />
-
-      <PlanFacts plan={plan} />
-
-      <ConsequentialCards cards={consequential} />
-
-      <ChoiceList
-        choices={choices}
-        selected={picked}
-        saving={savingChoice}
-        disabled={confirming}
-        onSelect={handleChoose}
-      />
-
-      <AnalysisDetails cards={rest} />
-
-      <SpecifySettings
-        settings={settings}
-        reasons={settingReasons(plan)}
-        dirty={settingsDirty}
-        applying={applying}
-        onChange={(next) => setEdit({ planId: plan.planId, settings: next })}
-        onApply={handleApplySettings}
-      />
-
-      {/* Phones: the yes stays in reach at the bottom while the plan scrolls. */}
-      <div className="sticky bottom-0 z-10 -mx-6 border-t bg-background px-6 py-3 md:static md:mx-0 md:border-0 md:bg-transparent md:p-0">
-        {blockedReason && <p className="mb-2 text-sm text-muted-foreground">{blockedReason}</p>}
-        <Button
-          type="button"
-          size="lg"
-          disabled={confirming || studentStatus !== 'needs_confirmation' || settingsDirty}
-          aria-busy={confirming}
-          onClick={handleConfirm}
-          className="w-full md:w-auto md:min-w-48"
-        >
-          {confirming && <Loader2 className="animate-spin" aria-hidden="true" />}
-          {planWasUpdated ? 'Yes, print this updated plan' : 'Yes, print this'}
-        </Button>
-        <p className="mt-2 text-xs text-muted-foreground">
-          Nothing goes to the printers until you say yes.
-        </p>
-      </div>
-    </div>
+    </PartFocusProvider>
   );
 }
