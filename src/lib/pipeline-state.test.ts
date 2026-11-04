@@ -9,6 +9,7 @@ import { settingReasons, settingsDiffer, settingsFromPlan } from './pipeline-set
 import { isTerminalStatus, studentStage } from './student-status';
 import {
   createMockEvent,
+  createMockPickup,
   createMockPlan,
   createMockSnapshot,
   createMockStep,
@@ -62,6 +63,31 @@ describe('pipelineReducer', () => {
 
     expect(replay).toBe(first);
     expect(replay.studentStatus).toBe('needs_confirmation');
+  });
+
+  it('keeps the pickup from a snapshot or an event until a newer one arrives', () => {
+    const pickup = createMockPickup();
+    let state = pipelineReducer(initialPipelineState, {
+      type: 'snapshot',
+      snapshot: createMockSnapshot({ studentStatus: 'ready_for_pickup', pickup }),
+    });
+    state = pipelineReducer(state, {
+      type: 'event',
+      event: createMockEvent({ seq: 1, studentStatus: 'ready_for_pickup' }),
+    });
+    expect(state.pickup).toEqual(pickup);
+
+    const moved = createMockPickup({ slot: '3' });
+    state = pipelineReducer(state, {
+      type: 'event',
+      event: createMockEvent({
+        seq: 2,
+        type: 'pickup',
+        studentStatus: 'ready_for_pickup',
+        pickup: moved,
+      }),
+    });
+    expect(state.pickup).toEqual(moved);
   });
 
   it('keeps the plan when a later event does not carry one', () => {
@@ -120,39 +146,21 @@ describe('student status', () => {
 });
 
 describe('Specify settings prefill', () => {
-  it('reads the pipeline choices whether keys arrive in snake_case or camelCase', () => {
-    const snake = settingsFromPlan(createMockPlan());
-    const camel = settingsFromPlan(
-      createMockPlan({
-        settingsChosen: {
-          profile: 'fine',
-          infillPercent: 10,
-          supports: 'never',
-          supportsBuildPlateOnly: false,
-          brim: 'off',
-        },
-      }),
-    );
-
-    expect(snake).toEqual({
+  it('reads the pipeline choices from the plan (a StudentSettings with camelCase keys)', () => {
+    expect(settingsFromPlan(createMockPlan())).toEqual({
       profile: 'standard',
       infillPercent: 25,
       supports: 'auto',
       supportsBuildPlateOnly: true,
       brim: 'on',
     });
-    expect(camel).toEqual({
-      profile: 'fine',
-      infillPercent: 10,
-      supports: 'never',
-      supportsBuildPlateOnly: false,
-      brim: 'off',
-    });
   });
 
   it('ignores values it does not understand', () => {
     const settings = settingsFromPlan(
-      createMockPlan({ settingsChosen: { profile: 'ultra', infill: 'lots', brim: 7 } }),
+      createMockPlan({
+        settingsChosen: { profile: 'ultra', infillPercent: 400, brim: 7 } as never,
+      }),
     );
 
     expect(settings).toEqual({

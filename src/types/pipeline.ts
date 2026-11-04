@@ -101,10 +101,10 @@ export interface Plan {
   summary: string;
   printTimeS?: number | null;
   filamentG?: number | null;
-  /** Prefills "Specify settings". Keys are the pipeline's setting names (see settingsFromPlan). */
-  settingsChosen?: Record<string, unknown>;
+  /** Prefills "Specify settings": the pipeline's choices, as the same StudentSettings. */
+  settingsChosen?: StudentSettings;
   /** Why each setting was chosen, by the same keys. */
-  settingsReasons?: Record<string, string>;
+  settingsReasons?: Partial<Record<keyof StudentSettings, string>>;
   lessonCards?: LessonCard[];
   choices?: Choice[];
   artifacts?: PlanArtifact[];
@@ -123,10 +123,23 @@ export interface StepProgress {
   durationMs?: number | null;
 }
 
+/** Where the student collects the part (P-78, P-82), known once it is ready for pickup. */
+export interface Pickup {
+  /** Shelf slot, e.g. "14". */
+  slot: string;
+  /** The through-hole tag code, e.g. "K7Q2". */
+  tag: string;
+  /** End of the 3-day pickup window (ISO date). */
+  windowEndsAt: string;
+  /** Photo or preview of the part. */
+  artifacts?: PlanArtifact[];
+}
+
 /** GET /api/v1/jobs/{id}/pipeline */
 export interface PipelineSnapshot {
   studentStatus: StudentStatus;
   plan?: Plan | null;
+  pickup?: Pickup | null;
   steps?: StepProgress[];
   message?: string | null;
 }
@@ -140,6 +153,7 @@ export interface PipelineStreamEvent {
   studentStatus: StudentStatus;
   step?: StepProgress | null;
   plan?: Plan | null;
+  pickup?: Pickup | null;
   message?: string | null;
 }
 

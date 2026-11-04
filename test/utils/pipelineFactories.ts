@@ -1,5 +1,6 @@
 import type {
   LessonCard,
+  Pickup,
   PipelineSnapshot,
   PipelineStreamEvent,
   Plan,
@@ -39,14 +40,14 @@ export function createMockPlan(overrides: Partial<Plan> = {}): Plan {
     filamentG: 41.6,
     settingsChosen: {
       profile: 'standard',
-      infill_percent: 25,
+      infillPercent: 25,
       supports: 'auto',
-      supports_build_plate_only: true,
+      supportsBuildPlateOnly: true,
       brim: 'on',
     },
     settingsReasons: {
       profile: 'Standard balances speed and a smooth surface for a part like this.',
-      infill_percent: 'You said it holds a load, so we went above the 15% default.',
+      infillPercent: 'You said it holds a load, so we went above the 15% default.',
       brim: 'The base is narrow, and a brim helps it stay stuck to the plate.',
     },
     lessonCards: [
@@ -62,6 +63,16 @@ export function createMockPlan(overrides: Partial<Plan> = {}): Plan {
     ],
     choices: [],
     artifacts: [{ kind: 'preview_png', url: '/preview.png' }],
+    ...overrides,
+  };
+}
+
+export function createMockPickup(overrides: Partial<Pickup> = {}): Pickup {
+  return {
+    slot: '14',
+    tag: 'K7Q2',
+    windowEndsAt: '2026-11-10T21:00:00Z',
+    artifacts: [{ kind: 'preview_png', url: '/pickup.png' }],
     ...overrides,
   };
 }

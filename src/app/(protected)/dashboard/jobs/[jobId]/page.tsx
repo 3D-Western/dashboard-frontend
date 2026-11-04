@@ -2,13 +2,13 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
 import { jobApi } from '@/api/client/job';
-import { PipelineJobPanel } from '@/components/Pipeline/PipelineJobPanel';
 import { ReportProblem } from '@/components/Pipeline/ReportProblem';
 import { Routes } from '@/lib/routes';
 import { JobDetail } from '@/types/jobs';
 import { FeatureProjectCta } from './components/FeatureProjectCta';
 import { JobDetailHeader } from './components/JobDetailHeader';
 import { JobInfo } from './components/JobInfo';
+import { PipelineJobView } from './components/PipelineJobView';
 import { StagePanel } from './components/StagePanel';
 import { StatusStepper } from './components/StatusStepper';
 
@@ -55,6 +55,10 @@ export default async function JobDetailPage({ params }: PageProps) {
     );
   }
 
+  // A job that went through the print pipeline has its own live page, worded and dated by
+  // studentStatus only
+  if (job.studentStatus) return <PipelineJobView job={job} initialStatus={job.studentStatus} />;
+
   const hasHistory = Boolean(job.statusHistory?.length);
   // Ask to feature the project once they've actually picked it up, not while it's waiting
   const isCollected = job.status === 'Succeeded';
@@ -63,12 +67,7 @@ export default async function JobDetailPage({ params }: PageProps) {
     <div className="mx-auto w-full max-w-5xl space-y-6 p-6 max-md:pr-11">
       <JobDetailHeader job={job} />
 
-      {/* Jobs that went through the print pipeline show its live state; older jobs keep the old panel */}
-      {job.studentStatus ? (
-        <PipelineJobPanel jobId={job.id} jobName={job.name} initialStatus={job.studentStatus} />
-      ) : (
-        <StagePanel job={job} />
-      )}
+      <StagePanel job={job} />
 
       {isCollected && <FeatureProjectCta jobName={job.name} jobId={job.id} />}
 

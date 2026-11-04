@@ -93,7 +93,8 @@ export interface VerifyEmailResponse {
 export interface CreateJobRequest {
   // Required fields
   jobName: string;
-  description: string;
+  // Not required for 3D print jobs: the student's own words go through /pipeline/inputs
+  description?: string;
   formAnswerJson: string;
   category: JobCategory;
 }

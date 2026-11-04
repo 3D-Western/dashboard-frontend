@@ -81,6 +81,8 @@ describe('PrintFlow', () => {
     expect(jobs.createJob).toHaveBeenCalledWith(
       expect.objectContaining({ jobName: 'robot-arm-gear', category: 'ThreeDPrint' }),
     );
+    // The student's own words come later, through the pipeline inputs: no placeholder text
+    expect(jobs.createJob.mock.calls[0][0]).not.toHaveProperty('description');
     expect(jobs.uploadJobFile).toHaveBeenCalledWith(
       'https://storage.example/upload',
       expect.any(File),

@@ -6,6 +6,7 @@ import { PipelineJobPanel } from './PipelineJobPanel';
 import {
   createMockEvent,
   createMockLessonCard,
+  createMockPickup,
   createMockPlan,
   createMockSnapshot,
   createMockStep,
@@ -333,5 +334,41 @@ describe('After the yes', () => {
 
     expect(await screen.findByRole('heading', { name: 'Printing again' })).toBeInTheDocument();
     expect(screen.getByText(/you don't need to do anything/i)).toBeInTheDocument();
+  });
+});
+
+describe('Ready for pickup', () => {
+  it('shows the slot and tag with the preview', async () => {
+    api.getState.mockResolvedValue(
+      createMockSnapshot({
+        studentStatus: 'ready_for_pickup',
+        plan: createMockPlan(),
+        pickup: createMockPickup(),
+      }),
+    );
+    openStream();
+    render(<PipelineJobPanel jobId="job-1" />);
+
+    expect(await screen.findByRole('heading', { name: 'Slot 14, tag K7Q2' })).toBeInTheDocument();
+    expect(screen.getByAltText('Your finished print')).toHaveAttribute('src', '/pickup.png');
+    expect(screen.getByText(/please collect it by/i)).toBeInTheDocument();
+  });
+
+  it('picks up the slot from a pickup event on the stream', async () => {
+    api.getState.mockResolvedValue(createMockSnapshot({ studentStatus: 'printing' }));
+    const live = openStream();
+    render(<PipelineJobPanel jobId="job-1" />);
+    await screen.findByRole('heading', { name: 'Printing' });
+
+    live.emit(
+      createMockEvent({
+        seq: 1,
+        type: 'pickup',
+        studentStatus: 'ready_for_pickup',
+        pickup: createMockPickup({ slot: '3', tag: 'ZZ99' }),
+      }),
+    );
+
+    expect(await screen.findByRole('heading', { name: 'Slot 3, tag ZZ99' })).toBeInTheDocument();
   });
 });

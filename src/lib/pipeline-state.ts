@@ -1,6 +1,7 @@
 import type {
   PipelineSnapshot,
   PipelineStreamEvent,
+  Pickup,
   Plan,
   StepProgress,
   StudentStatus,
@@ -12,6 +13,7 @@ export interface PipelineState {
   loaded: boolean;
   studentStatus: StudentStatus | null;
   plan: Plan | null;
+  pickup: Pickup | null;
   steps: StepProgress[];
   message: string | null;
   /** Highest event `seq` applied; older or repeated events are ignored (delivery is at least once). */
@@ -22,6 +24,7 @@ export const initialPipelineState: PipelineState = {
   loaded: false,
   studentStatus: null,
   plan: null,
+  pickup: null,
   steps: [],
   message: null,
   lastSeq: 0,
@@ -52,6 +55,7 @@ export function pipelineReducer(state: PipelineState, action: PipelineAction): P
         loaded: true,
         studentStatus: snapshot.studentStatus,
         plan: snapshot.plan ?? null,
+        pickup: snapshot.pickup ?? null,
         // A snapshot lists the steps so far; keep the ones we already streamed if it omits them.
         steps: snapshot.steps ?? state.steps,
         message: snapshot.message ?? null,
@@ -66,6 +70,7 @@ export function pipelineReducer(state: PipelineState, action: PipelineAction): P
         lastSeq: event.seq,
         studentStatus: event.studentStatus,
         plan: event.plan ?? state.plan,
+        pickup: event.pickup ?? state.pickup,
         steps: event.step ? upsertStep(state.steps, event.step) : state.steps,
         message: event.message ?? state.message,
       };

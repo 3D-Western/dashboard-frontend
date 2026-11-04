@@ -271,14 +271,16 @@ describe('createSseParser', () => {
 describe('planFromConflictBody', () => {
   const plan = createMockPlan({ planId: 'plan-9' });
 
+  it('finds the new plan at data.plan, where the contract puts it', () => {
+    expect(planFromConflictBody({ success: false, data: { plan } })).toEqual(plan);
+  });
+
   it.each([
-    ['data.plan', { data: { plan } }],
-    ['data', { data: plan }],
+    ['data itself', { data: plan }],
     ['error.details.plan', { error: { details: { plan } } }],
-    ['error.details', { error: { details: plan } }],
-    ['plan', { plan }],
-  ])('finds the new plan in %s', (_where, body) => {
-    expect(planFromConflictBody(body)).toEqual(plan);
+    ['the top level', { plan }],
+  ])('does not look for it in %s', (_where, body) => {
+    expect(planFromConflictBody(body)).toBeNull();
   });
 
   it('returns null when there is none', () => {

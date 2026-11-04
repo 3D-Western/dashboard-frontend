@@ -13,6 +13,7 @@ import { TONE_CLASSES } from '@/app/(protected)/dashboard/jobs/lib/job-stages';
 import { cn } from '@/lib/utils';
 import type { Plan, StudentStatus } from '@/types/pipeline';
 import { CannotPrint } from './CannotPrint';
+import { PickupCard } from './PickupCard';
 import { PartViewerSlot } from './PartViewerSlot';
 import { PreparingSteps } from './PreparingSteps';
 import { highlightsUrlOf, PlanFacts, previewUrlOf, ReviewPlan } from './ReviewPlan';
@@ -26,6 +27,8 @@ interface PipelineJobPanelProps {
   initialStatus?: StudentStatus;
   /** On the new-job screen the finished states link on to the job page. */
   showJobLink?: boolean;
+  /** Told whenever the live status changes, so the rest of the page (the timeline) can follow it. */
+  onStatusChange?: (status: StudentStatus) => void;
   /** Only show the live steps, whatever the status (the student is still typing their answers). */
   stepsOnly?: boolean;
   /** Test hook: how quickly a broken stream is retried. */
@@ -43,11 +46,17 @@ export function PipelineJobPanel({
   initialStatus,
   showJobLink = false,
   stepsOnly = false,
+  onStatusChange,
   retryBaseMs,
 }: PipelineJobPanelProps) {
   const pipeline = usePipelineJob(jobId, { retryBaseMs });
   const { plan, steps, message, loaded, connection, error } = pipeline;
   const status = pipeline.studentStatus ?? initialStatus ?? null;
+  const { pickup } = pipeline;
+
+  useEffect(() => {
+    if (pipeline.studentStatus) onStatusChange?.(pipeline.studentStatus);
+  }, [pipeline.studentStatus, onStatusChange]);
 
   // The plan the student first saw; a different one on screen later was changed under them.
   const [baselinePlanId, setBaselinePlanId] = useState<string | null>(null);
@@ -140,12 +149,11 @@ export function PipelineJobPanel({
           </h2>
           <p className="mt-2 text-sm text-muted-foreground">{message || stage.message}</p>
         </div>
-        {plan && (
-          <>
-            <PartViewerSlot previewUrl={previewUrlOf(plan)} highlightsUrl={highlightsUrlOf(plan)} />
-            <PlanFacts plan={plan} />
-          </>
+        {status === 'ready_for_pickup' && pickup && <PickupCard pickup={pickup} />}
+        {plan && !(status === 'ready_for_pickup' && pickup) && (
+          <PartViewerSlot previewUrl={previewUrlOf(plan)} highlightsUrl={highlightsUrlOf(plan)} />
         )}
+        {plan && <PlanFacts plan={plan} />}
         {showJobLink && (
           <Button asChild variant="outline" size="lg" className="px-4">
             <Link href={Routes.jobs.detail(jobId)}>View this job</Link>

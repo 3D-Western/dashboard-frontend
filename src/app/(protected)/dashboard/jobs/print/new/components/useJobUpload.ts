@@ -83,8 +83,6 @@ export function useJobUpload({ mockMode = false }: { mockMode?: boolean } = {}) 
         } else {
           const created = await jobApi.createJob({
             jobName: jobNameFromFile(file),
-            // Required by the backend; the student's own words arrive later as pipeline inputs.
-            description: `Uploaded file: ${file.name}`.slice(0, 200),
             category: 'ThreeDPrint',
             formAnswerJson: JSON.stringify({ contentType: contentTypeOf(file), flow: 'pipeline' }),
           });

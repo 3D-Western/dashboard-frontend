@@ -32,25 +32,10 @@ export class PlanChangedError extends Error {
 const isPlan = (value: unknown): value is Plan =>
   typeof value === 'object' && value !== null && typeof (value as Plan).planId === 'string';
 
-/**
- * Where a 409 carries the new plan isn't fixed by the contract ("the response carries the new
- * plan"), so look in the places the backend's ApiResponse wrapper could put it.
- */
+/** A 409 carries the new plan at `data.plan` of the usual ApiResponse (dashboard contract). */
 export function planFromConflictBody(body: unknown): Plan | null {
-  if (typeof body !== 'object' || body === null) return null;
-  const { data, error, plan } = body as {
-    data?: unknown;
-    error?: { details?: unknown };
-    plan?: unknown;
-  };
-  const candidates: unknown[] = [
-    (data as { plan?: unknown } | null | undefined)?.plan,
-    data,
-    (error?.details as { plan?: unknown } | null | undefined)?.plan,
-    error?.details,
-    plan,
-  ];
-  return candidates.find(isPlan) ?? null;
+  const plan = (body as { data?: { plan?: unknown } } | null)?.data?.plan;
+  return isPlan(plan) ? plan : null;
 }
 
 async function pipelineRequest<T>(url: string, init: RequestInit = {}): Promise<T> {

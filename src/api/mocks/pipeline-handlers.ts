@@ -16,7 +16,7 @@ const apiUrl = process.env.API_URL;
 // A scripted pipeline for development without a backend (MOCK_ENABLED=true). Each job id plays
 // the same story, paced by the clock from the first time it is asked about:
 //   steps arrive one by one -> a choice is needed (unless the id says otherwise) -> review -> yes.
-// Ids containing "review" start at the review, "cannot" ends in "can't print", "choice" asks for a choice.
+// Ids containing "pickup" are ready for collection, "review" start at the review, "cannot" ends in "can't print", "choice" asks for a choice.
 
 const STEP_MS = 1500;
 
@@ -141,6 +141,19 @@ function planFor(jobId: string, session: Session): Plan {
 
 function snapshotFor(jobId: string): PipelineSnapshot {
   const session = sessionFor(jobId);
+  if (jobId.includes('pickup')) {
+    return {
+      studentStatus: 'ready_for_pickup',
+      plan: planFor(jobId, session),
+      pickup: {
+        slot: '14',
+        tag: 'K7Q2',
+        windowEndsAt: new Date(Date.now() + 3 * 24 * 3600 * 1000).toISOString(),
+        artifacts: [{ kind: 'preview_png', url: PREVIEW_URL }],
+      },
+      steps: allSteps('done'),
+    };
+  }
   if (session.confirmed)
     return { studentStatus: 'queued', plan: planFor(jobId, session), steps: allSteps('done') };
 

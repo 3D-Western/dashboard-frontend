@@ -50,6 +50,13 @@ export const mockPrintJobs = [
     category: 'ThreeDPrint',
   } as unknown as PrintJob),
   createMockPrintJob({
+    id: 'pipeline-pickup',
+    name: 'Cable Clip Set',
+    status: 'Ready',
+    studentStatus: 'ready_for_pickup',
+    category: 'ThreeDPrint',
+  } as unknown as PrintJob),
+  createMockPrintJob({
     id: 'pipeline-cannot',
     name: 'Thin Vase',
     status: 'Failed',
