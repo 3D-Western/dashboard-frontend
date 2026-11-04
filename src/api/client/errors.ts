@@ -4,6 +4,8 @@ export class ApiError extends Error {
     message?: string,
     public details?: unknown,
     public redirectUrl?: string,
+    /** The response's `data`, for errors that carry one (a 409 listing what to rate first). */
+    public data?: unknown,
   ) {
     super(message ?? code);
     this.name = 'ApiError';
@@ -39,6 +41,8 @@ export const ErrorCodes = {
   CHALLENGE_NOT_FOUND: 'CHALLENGE_NOT_FOUND',
   TOO_MANY_OTP_ATTEMPTS: 'TOO_MANY_OTP_ATTEMPTS',
   ACCOUNT_LOCKED: 'ACCOUNT_LOCKED',
+  /** A collected print must be rated before a new 3D-print job (P-20); `data.unratedPrints` lists them. */
+  RATING_REQUIRED: 'RATING_REQUIRED',
 };
 
 /** Codes the backend returns when a request carries no usable session. */

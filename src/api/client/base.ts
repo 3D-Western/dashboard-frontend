@@ -144,6 +144,8 @@ export async function apiRequest<T>(
       data.error?.code || 'UNKNOWN_ERROR',
       data.error?.message,
       data.error?.details,
+      undefined,
+      data.data,
     );
   }
 

@@ -4,8 +4,11 @@ import { mockServer } from '../mocks';
 import { ApiError } from './errors';
 import { endpoints } from './endpoints';
 import {
+  CONFLICT_CODE,
   PlanChangedError,
   createSseParser,
+  isConflictError,
+  unratedPrintsOf,
   pipelineApi,
   planFromConflictBody,
   type SseFrame,
@@ -79,6 +82,114 @@ describe('pipelineApi', () => {
         description: 'A gear for my robot arm',
         settings: { profile: 'strong', infillPercent: 40, supports: 'auto', brim: 'on' },
       });
+    });
+  });
+
+  describe('after the print: collected, rating, quality, follow-ups', () => {
+    const conflict = (message: string) =>
+      HttpResponse.json(
+        { success: false, data: null, error: { code: 'CONFLICT', message } },
+        { status: 409 },
+      );
+
+    it('collected posts without a body to the collected route', async () => {
+      const received = vi.fn();
+      mockServer.use(
+        http.post(endpoints.pipeline.collected(JOB), async ({ request }) => {
+          received(await request.text());
+          return HttpResponse.json({ success: true, data: null }, { status: 202 });
+        }),
+      );
+
+      await pipelineApi.collected(JOB);
+
+      expect(received).toHaveBeenCalledWith('');
+    });
+
+    it('collected turns a 409 into a conflict error, never a plan change', async () => {
+      mockServer.use(
+        http.post(endpoints.pipeline.collected(JOB), () => conflict('Nothing is ready to collect')),
+      );
+
+      const error = await pipelineApi.collected(JOB).catch((e: unknown) => e);
+
+      expect(error).not.toBeInstanceOf(PlanChangedError);
+      expect(isConflictError(error)).toBe(true);
+      expect((error as ApiError).code).toBe(CONFLICT_CODE);
+      expect((error as ApiError).message).toBe('Nothing is ready to collect');
+    });
+
+    it('rate sends up or down and returns the job’s updated student view', async () => {
+      const received = vi.fn();
+      const view = createMockSnapshot({ studentStatus: 'collected', ratingPending: false });
+      mockServer.use(
+        http.post(endpoints.pipeline.rating(JOB), async ({ request }) => {
+          received(await request.json());
+          return HttpResponse.json({ success: true, data: view }, { status: 202 });
+        }),
+      );
+
+      await expect(pipelineApi.rate(JOB, 'down')).resolves.toEqual(view);
+      expect(received).toHaveBeenCalledWith({ rating: 'down' });
+    });
+
+    it('rate reports a different second rating (409) as a conflict', async () => {
+      mockServer.use(
+        http.post(endpoints.pipeline.rating(JOB), () => conflict('This print was already rated.')),
+      );
+
+      const error = await pipelineApi.rate(JOB, 'up').catch((e: unknown) => e);
+
+      expect(isConflictError(error)).toBe(true);
+    });
+
+    it('reportQuality sends the reasons and trims the words, leaving them out when empty', async () => {
+      const received = vi.fn();
+      mockServer.use(
+        http.post(endpoints.pipeline.quality(JOB), async ({ request }) => {
+          received(await request.json());
+          return HttpResponse.json({ success: true, data: null }, { status: 202 });
+        }),
+      );
+
+      await pipelineApi.reportQuality(JOB, { reasons: ['warping', 'weak'], text: '  curled up  ' });
+      await pipelineApi.reportQuality(JOB, { reasons: ['other'], text: '   ' });
+
+      expect(received).toHaveBeenNthCalledWith(1, {
+        reasons: ['warping', 'weak'],
+        text: 'curled up',
+      });
+      expect(received).toHaveBeenNthCalledWith(2, { reasons: ['other'] });
+    });
+
+    it('answerFollowup posts the answer to the question id in the path', async () => {
+      const received = vi.fn();
+      mockServer.use(
+        http.post(endpoints.pipeline.followup(JOB, 7), async ({ request }) => {
+          received(await request.json());
+          return HttpResponse.json({ success: true, data: null }, { status: 202 });
+        }),
+      );
+
+      await pipelineApi.answerFollowup(JOB, 7, 'unsure');
+
+      expect(received).toHaveBeenCalledWith({ answer: 'unsure' });
+    });
+
+    it('answerFollowup reports a second answer (409) as a conflict', async () => {
+      mockServer.use(
+        http.post(endpoints.pipeline.followup(JOB, 7), () => conflict('Already answered')),
+      );
+
+      const error = await pipelineApi.answerFollowup(JOB, 7, 'yes').catch((e: unknown) => e);
+
+      expect(isConflictError(error)).toBe(true);
+    });
+
+    it('confirm still reads a 409 as a changed plan', async () => {
+      mockServer.use(http.post(endpoints.pipeline.confirm(JOB), () => conflict('plan changed')));
+
+      await expect(pipelineApi.confirm(JOB, 'plan-1')).rejects.toBeInstanceOf(PlanChangedError);
     });
   });
 
@@ -286,5 +397,41 @@ describe('planFromConflictBody', () => {
   it('returns null when there is none', () => {
     expect(planFromConflictBody(null)).toBeNull();
     expect(planFromConflictBody({ error: { code: 'PLAN_CHANGED' } })).toBeNull();
+  });
+});
+
+describe('unratedPrintsOf (rate first, P-20)', () => {
+  const prints = [{ jobId: 'job-1', name: 'Hinge Pair', collectedAt: '2026-11-01T10:00:00Z' }];
+
+  it('reads the prints to rate from the 409 RATING_REQUIRED that create-job answers', async () => {
+    mockServer.use(
+      http.post(endpoints.jobs.create, () =>
+        HttpResponse.json(
+          {
+            success: false,
+            data: { unratedPrints: prints },
+            error: { code: 'RATING_REQUIRED', message: 'Please rate your previous print' },
+          },
+          { status: 409 },
+        ),
+      ),
+    );
+    const { jobApi } = await import('./job');
+
+    const error = await jobApi
+      .createJob({ jobName: 'x', category: 'ThreeDPrint', formAnswerJson: '{}' } as never)
+      .catch((e: unknown) => e);
+
+    expect(error).toBeInstanceOf(ApiError);
+    expect(unratedPrintsOf(error)).toEqual(prints);
+  });
+
+  it('is null for any other error, and empty when the list is missing', () => {
+    expect(unratedPrintsOf(new ApiError('CONFLICT', 'x'))).toBeNull();
+    expect(unratedPrintsOf(new Error('x'))).toBeNull();
+    expect(unratedPrintsOf(new ApiError('RATING_REQUIRED', 'x'))).toEqual([]);
+    expect(unratedPrintsOf(new ApiError('RATING_REQUIRED', 'x', undefined, undefined, {}))).toEqual(
+      [],
+    );
   });
 });

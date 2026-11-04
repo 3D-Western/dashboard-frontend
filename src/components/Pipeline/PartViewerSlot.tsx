@@ -28,6 +28,8 @@ export interface PartViewerSlotProps {
   highlightsUrl?: string;
   /** The plan's lesson cards: regions on the part come from here too when there is no highlights file. */
   highlights?: LessonCard[];
+  /** Whose screen this is: students read "your part", staff read about "the part". */
+  audience?: 'student' | 'staff';
 }
 
 type ViewerState = 'idle' | 'ready' | 'failed';
@@ -51,7 +53,13 @@ export function PartViewerSlot(props: PartViewerSlotProps) {
   );
 }
 
-function PartViewer({ previewUrl, modelUrl, highlightsUrl, highlights = [] }: PartViewerSlotProps) {
+function PartViewer({
+  previewUrl,
+  modelUrl,
+  highlightsUrl,
+  highlights = [],
+  audience = 'student',
+}: PartViewerSlotProps) {
   const figureRef = useRef<HTMLElement>(null);
   const [approved, setApproved] = useState(false);
   const [nearKey, setNearKey] = useState<string>();
@@ -104,8 +112,12 @@ function PartViewer({ previewUrl, modelUrl, highlightsUrl, highlights = [] }: Pa
   }
 
   const ready = state === 'ready';
-  const flaggedLabel =
-    flagged === 1
+  const staff = audience === 'staff';
+  const flaggedLabel = staff
+    ? flagged === 1
+      ? '1 area of the part is flagged.'
+      : `${flagged} areas of the part are flagged.`
+    : flagged === 1
       ? '1 area of your part is flagged below.'
       : `${flagged} areas of your part are flagged below.`;
 
@@ -127,7 +139,11 @@ function PartViewer({ previewUrl, modelUrl, highlightsUrl, highlights = [] }: Pa
             // eslint-disable-next-line @next/next/no-img-element
             <img
               src={previewUrl}
-              alt="Preview of your part on the print plate"
+              alt={
+                staff
+                  ? "Preview of the student's part on the print plate"
+                  : 'Preview of your part on the print plate'
+              }
               className="size-full object-contain"
             />
           ) : (

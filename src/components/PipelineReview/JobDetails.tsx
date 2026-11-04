@@ -9,7 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import {
   findingsAsCards,
   formatPrintTime,
-  screeningRenders,
+  screeningRendersOf,
   staffStatusLabel,
 } from '@/lib/pipeline-review';
 import { formatAgo, formatDateTime } from '@/lib/signoff-format';
@@ -62,7 +62,7 @@ export function JobDetails({
   now?: Date;
   onReportResolved?: () => void;
 }) {
-  const renders = screeningRenders(job.events);
+  const renders = screeningRendersOf(job.screeningRenders);
   const cards = findingsAsCards(job.findings);
   const previewUrl = previewUrlOf(job.plan);
   const modelUrl = modelUrlOf(job.plan);
@@ -89,6 +89,7 @@ export function JobDetails({
                 modelUrl={modelUrl}
                 highlightsUrl={highlightsUrl}
                 highlights={cards}
+                audience="staff"
               />
             )}
           </div>
@@ -103,7 +104,13 @@ export function JobDetails({
           <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
             {renders.map((render) => (
               <li key={render.name} className="space-y-1">
-                {render.url ? (
+                <a
+                  href={render.url}
+                  target="_blank"
+                  rel="noreferrer"
+                  aria-label={`Open the ${render.name} render full size`}
+                  className="block rounded-lg outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
+                >
                   <Image
                     src={render.url}
                     alt={`Screening render: ${render.name}`}
@@ -112,11 +119,7 @@ export function JobDetails({
                     unoptimized
                     className="aspect-square w-full rounded-lg border bg-muted/30 object-contain"
                   />
-                ) : (
-                  <div className="flex aspect-square items-center justify-center rounded-lg border bg-muted/30 p-2 text-center text-xs text-muted-foreground">
-                    Stored, but no link to show it
-                  </div>
-                )}
+                </a>
                 <p className="text-xs text-muted-foreground">{render.name}</p>
               </li>
             ))}

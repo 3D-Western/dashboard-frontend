@@ -1,10 +1,16 @@
 import type {
   ChoiceRequest,
   ConfirmRequest,
+  FollowupAnswer,
+  FollowupAnswerRequest,
   PipelineSnapshot,
   PipelineStreamEvent,
   Plan,
+  QualityReportRequest,
+  Rating,
+  RatingRequest,
   StudentInputs,
+  UnratedPrint,
 } from '@/types/pipeline';
 import type { ApiResponseRaw } from '../types';
 import { ApiError, ErrorCodes } from './errors';
@@ -38,7 +44,40 @@ export function planFromConflictBody(body: unknown): Plan | null {
   return isPlan(plan) ? plan : null;
 }
 
-async function pipelineRequest<T>(url: string, init: RequestInit = {}): Promise<T> {
+/** Error code of a 409 on an action that is not about the plan (nothing to collect, already answered). */
+export const CONFLICT_CODE = 'CONFLICT';
+
+/**
+ * The prints to rate before a new 3D-print job, when the backend refused to create or reorder one
+ * with 409 `RATING_REQUIRED` (P-20: a hard block); null for any other error.
+ */
+export function unratedPrintsOf(error: unknown): UnratedPrint[] | null {
+  if (!(error instanceof ApiError) || error.code !== ErrorCodes.RATING_REQUIRED) return null;
+  const prints = (error.data as { unratedPrints?: unknown } | null | undefined)?.unratedPrints;
+  return Array.isArray(prints)
+    ? prints.filter(
+        (print): print is UnratedPrint =>
+          typeof print === 'object' &&
+          print !== null &&
+          typeof (print as UnratedPrint).jobId === 'string',
+      )
+    : [];
+}
+
+/** The backend refused the action because of the job's state (HTTP 409), not the plan. */
+export const isConflictError = (error: unknown): error is ApiError =>
+  error instanceof ApiError && error.code === CONFLICT_CODE;
+
+interface PipelineRequestOptions {
+  /** A 409 means "the plan changed" (confirm, choices); elsewhere it is a plain conflict. */
+  conflictIsPlanChange?: boolean;
+}
+
+async function pipelineRequest<T>(
+  url: string,
+  init: RequestInit = {},
+  { conflictIsPlanChange = true }: PipelineRequestOptions = {},
+): Promise<T> {
   let response: Response;
   try {
     response = await fetch(`${getBaseUrl()}${url}`, {
@@ -66,7 +105,14 @@ async function pipelineRequest<T>(url: string, init: RequestInit = {}): Promise<
     body = null;
   }
 
-  if (response.status === 409) throw new PlanChangedError(planFromConflictBody(body));
+  if (response.status === 409) {
+    if (conflictIsPlanChange) throw new PlanChangedError(planFromConflictBody(body));
+    throw new ApiError(
+      CONFLICT_CODE,
+      body?.error?.message ?? 'That is no longer possible for this job.',
+      body?.error?.details,
+    );
+  }
 
   if (!body) {
     throw new ApiError(
@@ -87,6 +133,14 @@ async function pipelineRequest<T>(url: string, init: RequestInit = {}): Promise<
 
 const post = <T>(url: string, payload: unknown) =>
   pipelineRequest<T>(url, { method: 'POST', body: JSON.stringify(payload) });
+
+/** An action after the print (collect, rate, report, answer): a 409 is a conflict, never a plan change. */
+const postAction = <T>(url: string, payload?: unknown) =>
+  pipelineRequest<T>(
+    url,
+    { method: 'POST', ...(payload === undefined ? {} : { body: JSON.stringify(payload) }) },
+    { conflictIsPlanChange: false },
+  );
 
 // -- Server-sent events ----------------------------------------------------------------------
 
@@ -212,4 +266,35 @@ export const pipelineApi = {
 
   /** "Report a problem": free text to the crew, tied to this job. */
   report: (jobId: string, text: string) => post<void>(endpoints.pipeline.report(jobId), { text }),
+
+  /**
+   * "I've collected it" (P-78). Rejected with a conflict (see `isConflictError`) unless the print
+   * is ready for pickup (tapping again once collected is accepted).
+   */
+  collected: (jobId: string) => postAction<PipelineSnapshot>(endpoints.pipeline.collected(jobId)),
+
+  /**
+   * The one-tap thumbs up or down (P-20), one rating per print: the same again is accepted, a
+   * different one is a conflict. Answers with the job's updated student view.
+   */
+  rate: (jobId: string, rating: Rating) =>
+    postAction<PipelineSnapshot>(endpoints.pipeline.rating(jobId), {
+      rating,
+    } satisfies RatingRequest),
+
+  /**
+   * The optional "report print quality" step after a thumbs-down (P-102): reasons from the
+   * pipeline's list (it refuses others) and the student's own words.
+   */
+  reportQuality: (jobId: string, report: QualityReportRequest) =>
+    postAction<PipelineSnapshot>(endpoints.pipeline.quality(jobId), {
+      reasons: report.reasons,
+      ...(report.text?.trim() ? { text: report.text.trim() } : {}),
+    } satisfies QualityReportRequest),
+
+  /** One follow-up answer (P-109). A second answer to the same question is a conflict. */
+  answerFollowup: (jobId: string, questionId: number, answer: FollowupAnswer) =>
+    postAction<PipelineSnapshot>(endpoints.pipeline.followup(jobId, questionId), {
+      answer,
+    } satisfies FollowupAnswerRequest),
 };

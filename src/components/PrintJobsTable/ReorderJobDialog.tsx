@@ -5,6 +5,8 @@ import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { PrintJob } from '@/types/jobs';
 import { jobApi } from '@/api/client/job';
+import { unratedPrintsOf } from '@/api/client/pipeline';
+import { Routes } from '@/lib/routes';
 import {
   Dialog,
   DialogContent,
@@ -57,6 +59,19 @@ function ReorderJobDialogContent({ printJob, onOpenChange }: ReorderJobDialogCon
       onOpenChange(false);
       router.refresh();
     } catch (error) {
+      const unrated = unratedPrintsOf(error);
+      if (unrated) {
+        // Rate first (P-20): the backend holds new 3D-print jobs until the last collected print is rated.
+        const first = unrated[0];
+        toast.error('Rate your last print first', {
+          description: error instanceof Error ? error.message : 'It takes one tap.',
+          action: first
+            ? { label: 'Rate it', onClick: () => router.push(Routes.jobs.detail(first.jobId)) }
+            : undefined,
+        });
+        onOpenChange(false);
+        return;
+      }
       console.error('Failed to reorder job:', error);
       toast.error("Couldn't create the new job", {
         description: error instanceof Error ? error.message : 'An error occurred while copying',

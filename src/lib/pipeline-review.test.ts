@@ -3,10 +3,9 @@ import {
   createFinding,
   createQueueItem,
   createReportQueueItem,
-  createStaffEvent,
   createStaffUser,
 } from '@test/utils/pipelineReviewFactories';
-import type { Finding, QueueItem, StaffEvent, StaffDecisionType } from '@/types/pipeline-review';
+import type { Finding, QueueItem, StaffDecisionType } from '@/types/pipeline-review';
 import {
   buildDecisionRequest,
   canResolveEscalation,
@@ -19,7 +18,7 @@ import {
   needsConfirmation,
   releasableFindings,
   REASON_MAX,
-  screeningRenders,
+  screeningRendersOf,
   shortCodes,
   sortDecisions,
   statusesOf,
@@ -304,66 +303,38 @@ describe('findingsAsCards', () => {
   });
 });
 
-describe('screeningRenders', () => {
-  const render = (name: string, url: string | null, extra: Record<string, unknown> = {}) => ({
-    kind: 'screening_png',
-    name,
-    url,
-    ...extra,
-  });
-
-  it('reads the screening renders with a url from the staff_artifacts of events', () => {
-    const events: StaffEvent[] = [
-      createStaffEvent({
-        seq: 4,
-        data: { staff_artifacts: [render('top', 'https://files.example/top.png')] },
-      }),
-    ];
-    expect(screeningRenders(events)).toEqual([
-      { name: 'top', url: 'https://files.example/top.png', seq: 4 },
+describe('screeningRendersOf', () => {
+  it('names each render by its view and keeps the backend’s link', () => {
+    expect(
+      screeningRendersOf([
+        { kind: 'screening_png', view: 'iso', url: 'https://files.example/iso.png?sig=1' },
+        { kind: 'screening_png', view: 'top', url: 'https://files.example/top.png?sig=2' },
+      ]),
+    ).toEqual([
+      { name: 'iso', url: 'https://files.example/iso.png?sig=1' },
+      { name: 'top', url: 'https://files.example/top.png?sig=2' },
     ]);
   });
 
-  it('ignores artifacts of other kinds', () => {
-    const events: StaffEvent[] = [
-      createStaffEvent({
-        seq: 1,
-        data: {
-          staff_artifacts: [
-            { kind: 'gcode', name: 'plate', url: 'https://files.example/plate.gcode' },
-            render('side', 'https://files.example/side.png'),
-          ],
-        },
-      }),
-    ];
-    expect(screeningRenders(events).map((r) => r.name)).toEqual(['side']);
-  });
-
-  it('keeps an entry without a url with url null', () => {
-    const events: StaffEvent[] = [
-      createStaffEvent({ seq: 2, data: { staff_artifacts: [render('front', null)] } }),
-    ];
-    expect(screeningRenders(events)).toEqual([{ name: 'front', url: null, seq: 2 }]);
-  });
-
-  it('lets the newest event win for the same name, whatever the order given', () => {
-    const events: StaffEvent[] = [
-      createStaffEvent({
-        seq: 7,
-        data: { staff_artifacts: [render('top', 'https://files.example/new.png')] },
-      }),
-      createStaffEvent({
-        seq: 3,
-        data: { staff_artifacts: [render('top', 'https://files.example/old.png')] },
-      }),
-    ];
-    expect(screeningRenders(events)).toEqual([
-      { name: 'top', url: 'https://files.example/new.png', seq: 7 },
+  it('names a render without a view by its place in the list', () => {
+    expect(screeningRendersOf([{ kind: 'screening_png', url: '/a.png' }])).toEqual([
+      { name: 'render 1', url: '/a.png' },
     ]);
   });
 
-  it('skips events without staff_artifacts', () => {
-    expect(screeningRenders([createStaffEvent({ seq: 1, data: {} })])).toEqual([]);
+  it('ignores other kinds and entries without a link', () => {
+    expect(
+      screeningRendersOf([
+        { kind: 'gcode', view: 'plate', url: '/plate.gcode' },
+        { kind: 'screening_png', view: 'front', url: '' },
+      ]),
+    ).toEqual([]);
+  });
+
+  it('is empty when the job has none', () => {
+    expect(screeningRendersOf(undefined)).toEqual([]);
+    expect(screeningRendersOf(null)).toEqual([]);
+    expect(screeningRendersOf([])).toEqual([]);
   });
 });
 

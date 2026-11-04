@@ -3,8 +3,10 @@
 import { useCallback, useRef, useState } from 'react';
 import { ApiError, ErrorCodes } from '@/api/client/errors';
 import { jobApi } from '@/api/client/job';
+import { unratedPrintsOf } from '@/api/client/pipeline';
 import { TrainingErrorCodes } from '@/api/client/training-errors';
 import { calculateFileChecksum } from '@/lib/file-utils';
+import type { UnratedPrint } from '@/types/pipeline';
 
 export type UploadState =
   | { phase: 'idle' }
@@ -15,6 +17,15 @@ export type UploadState =
       jobId: string | null;
       kind: 'orientation' | 'rate-limit' | 'other';
       message: string;
+    }
+  // The backend holds new 3D-print jobs until these collected prints are rated (P-20, 409
+  // RATING_REQUIRED): rate them, then `retry()` carries on with the same file.
+  | {
+      phase: 'error';
+      jobId: null;
+      kind: 'rating-required';
+      message: string;
+      prints: UnratedPrint[];
     };
 
 const CONTENT_TYPES: Record<string, string> = {
@@ -37,6 +48,16 @@ export const jobNameFromFile = (file: File) =>
     .slice(0, 30) || 'My print';
 
 function describeError(error: unknown): Extract<UploadState, { phase: 'error' }> {
+  const unrated = unratedPrintsOf(error);
+  if (unrated) {
+    return {
+      phase: 'error',
+      jobId: null,
+      kind: 'rating-required',
+      message: 'Please rate your previous print first. It takes one tap.',
+      prints: unrated,
+    };
+  }
   if (error instanceof ApiError && error.code === TrainingErrorCodes.ORIENTATION_REQUIRED) {
     return {
       phase: 'error',
@@ -105,7 +126,12 @@ export function useJobUpload({ mockMode = false }: { mockMode?: boolean } = {}) 
         });
         setState({ phase: 'done', jobId: jobIdRef.current });
       } catch (error) {
-        setState({ ...describeError(error), jobId: jobIdRef.current });
+        const described = describeError(error);
+        setState(
+          described.kind === 'rating-required'
+            ? described
+            : { ...described, jobId: jobIdRef.current },
+        );
       }
     },
     [mockMode],

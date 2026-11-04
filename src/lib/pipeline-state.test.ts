@@ -182,3 +182,78 @@ describe('Specify settings prefill', () => {
     ).toBe(true);
   });
 });
+
+describe('after the print', () => {
+  const questions = [
+    { questionId: 1, text: 'Did the top overhang curl?' },
+    { questionId: 2, text: 'Is the text readable?' },
+  ];
+
+  it('takes the follow-up questions from the snapshot and from a followup event', () => {
+    let state = pipelineReducer(initialPipelineState, {
+      type: 'snapshot',
+      snapshot: { studentStatus: 'collected', followups: [questions[0]] },
+    });
+    expect(state.followups).toEqual([questions[0]]);
+
+    state = pipelineReducer(state, {
+      type: 'event',
+      event: {
+        seq: 5,
+        type: 'followup',
+        studentStatus: 'collected',
+        followups: questions,
+      },
+    });
+    expect(state.followups).toEqual(questions);
+  });
+
+  it('keeps the questions when a later event carries none', () => {
+    let state = pipelineReducer(initialPipelineState, {
+      type: 'snapshot',
+      snapshot: { studentStatus: 'collected', followups: questions },
+    });
+    state = pipelineReducer(state, {
+      type: 'event',
+      event: { seq: 1, type: 'status', studentStatus: 'collected' },
+    });
+    expect(state.followups).toEqual(questions);
+  });
+
+  it('remembers each question handled once, and a repeat changes nothing', () => {
+    const once = pipelineReducer(initialPipelineState, { type: 'followup-handled', questionId: 1 });
+    const twice = pipelineReducer(once, { type: 'followup-handled', questionId: 1 });
+    expect(once.handledFollowups).toEqual([1]);
+    expect(twice).toBe(once);
+  });
+
+  it('keeps a rating given here when a late snapshot still says it is pending', () => {
+    let state = pipelineReducer(initialPipelineState, { type: 'rated', rating: 'down' });
+    state = pipelineReducer(state, {
+      type: 'snapshot',
+      snapshot: { studentStatus: 'collected', ratingPending: true },
+    });
+    expect(state.ratingPending).toBe(false);
+    expect(state.rating).toBe('down');
+  });
+
+  it('learns from the snapshot whether the collected print still needs its rating', () => {
+    const unknown = pipelineReducer(initialPipelineState, {
+      type: 'snapshot',
+      snapshot: { studentStatus: 'collected' },
+    });
+    expect(unknown.ratingPending).toBeNull();
+
+    const pending = pipelineReducer(initialPipelineState, {
+      type: 'snapshot',
+      snapshot: { studentStatus: 'collected', ratingPending: true },
+    });
+    expect(pending.ratingPending).toBe(true);
+
+    const rated = pipelineReducer(pending, {
+      type: 'snapshot',
+      snapshot: { studentStatus: 'collected', ratingPending: false },
+    });
+    expect(rated.ratingPending).toBe(false);
+  });
+});

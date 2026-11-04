@@ -13,6 +13,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { FileUploadDropzone } from '@/components/FileUploadDropzone';
 import { OrientationLockNotice } from '@/components/Training/OrientationLockNotice';
 import { PipelineJobPanel } from '@/components/Pipeline/PipelineJobPanel';
+import { RatingRequiredPrompt } from '@/components/Pipeline/RatingRequiredPrompt';
 import { PreparingSteps } from '@/components/Pipeline/PreparingSteps';
 import { ReportProblem } from '@/components/Pipeline/ReportProblem';
 import {
@@ -137,10 +138,16 @@ export function PrintFlow({ mockMode = false }: { mockMode?: boolean }) {
 
   const purposeOption = PURPOSES.find((option) => option.value === purpose);
   const uploadError = upload.state.phase === 'error' ? upload.state : null;
+  const ratingBlocked = uploadError?.kind === 'rating-required';
 
   return (
     <div className="mx-auto w-full max-w-2xl space-y-6">
       {uploadError?.kind === 'orientation' && <OrientationLockNotice interrupt />}
+
+      {/* Rate first (P-20): the backend holds a new job until the last collected print is rated. */}
+      {uploadError?.kind === 'rating-required' && (
+        <RatingRequiredPrompt prints={uploadError.prints} onDone={upload.retry} />
+      )}
 
       {/* 1. Upload first */}
       <section aria-labelledby="upload-heading" className="space-y-3">
@@ -156,7 +163,10 @@ export function PrintFlow({ mockMode = false }: { mockMode?: boolean }) {
                 {upload.state.phase === 'done' && 'Uploaded. We are already checking it.'}
                 {upload.state.phase === 'uploading' &&
                   'Uploading. Keep going, this runs in the background.'}
-                {upload.state.phase === 'error' && 'The upload did not finish.'}
+                {upload.state.phase === 'error' &&
+                  (ratingBlocked
+                    ? 'One quick rating first, then your file goes up.'
+                    : 'The upload did not finish.')}
               </p>
             </div>
             {upload.state.phase === 'uploading' && (
@@ -175,23 +185,25 @@ export function PrintFlow({ mockMode = false }: { mockMode?: boolean }) {
             moment it arrives.
           </p>
         )}
-        {uploadError && uploadError.kind !== 'orientation' && (
-          <Alert variant="destructive">
-            <AlertTriangle aria-hidden="true" />
-            <AlertTitle>Couldn&apos;t upload your file</AlertTitle>
-            <AlertDescription className="space-y-3">
-              <p>{uploadError.message}</p>
-              {uploadError.kind === 'other' && (
-                <Button type="button" variant="outline" onClick={upload.retry}>
-                  Try again
-                </Button>
-              )}
-            </AlertDescription>
-          </Alert>
-        )}
+        {uploadError &&
+          uploadError.kind !== 'orientation' &&
+          uploadError.kind !== 'rating-required' && (
+            <Alert variant="destructive">
+              <AlertTriangle aria-hidden="true" />
+              <AlertTitle>Couldn&apos;t upload your file</AlertTitle>
+              <AlertDescription className="space-y-3">
+                <p>{uploadError.message}</p>
+                {uploadError.kind === 'other' && (
+                  <Button type="button" variant="outline" onClick={upload.retry}>
+                    Try again
+                  </Button>
+                )}
+              </AlertDescription>
+            </Alert>
+          )}
       </section>
 
-      {file && !submitted && (
+      {file && !submitted && !ratingBlocked && (
         <>
           {/* 2. Purpose, with its short sub-form */}
           <section aria-labelledby="purpose-heading" className="space-y-3">

@@ -6,7 +6,6 @@ import {
   HELD_JOB_ID,
   createProblemReport,
   createStaffDecisionRecord,
-  createStaffEvent,
   createStaffJobView,
   createStaffUser,
   createSubmission,
@@ -18,8 +17,18 @@ vi.mock('@/api/client/pipeline-review', () => ({
 }));
 // The 3D viewer is its own tested component; here only that it is given the regions matters.
 vi.mock('@/components/Pipeline/PartViewerSlot', () => ({
-  PartViewerSlot: ({ highlights }: { highlights?: { code: string }[] }) => (
-    <div data-testid="part-viewer" data-codes={(highlights ?? []).map((h) => h.code).join(',')} />
+  PartViewerSlot: ({
+    highlights,
+    audience,
+  }: {
+    highlights?: { code: string }[];
+    audience?: string;
+  }) => (
+    <div
+      data-testid="part-viewer"
+      data-audience={audience}
+      data-codes={(highlights ?? []).map((h) => h.code).join(',')}
+    />
   ),
 }));
 
@@ -53,26 +62,27 @@ describe('ReviewJobView', () => {
     expect(viewer).toHaveAttribute('data-codes', 'walls.too_thin,overhang.unsupported');
   });
 
-  it('shows the screening renders as images', async () => {
+  it('shows the screening renders as images from the links in screeningRenders', async () => {
     api.job.mockResolvedValue(
       createStaffJobView({
-        events: [
-          createStaffEvent({
-            seq: 4,
-            data: {
-              staff_artifacts: [
-                { kind: 'screening_png', name: 'front', url: '/renders/front.png' },
-                { kind: 'screening_png', name: 'top' },
-              ],
-            },
-          }),
+        screeningRenders: [
+          { kind: 'screening_png', view: 'front', url: '/renders/front.png' },
+          { kind: 'screening_png', url: '/renders/second.png' },
         ],
       }),
     );
     render(<ReviewJobView jobId={HELD_JOB_ID} refreshMs={0} />, { user: staff });
 
     expect(await screen.findByRole('img', { name: /front/ })).toBeInTheDocument();
-    expect(screen.getByText('Stored, but no link to show it')).toBeInTheDocument();
+    expect(screen.getByRole('img', { name: 'Screening render: render 2' })).toBeInTheDocument();
+  });
+
+  it('shows no renders section when the job has none', async () => {
+    api.job.mockResolvedValue(createStaffJobView({ screeningRenders: [] }));
+    render(<ReviewJobView jobId={HELD_JOB_ID} refreshMs={0} />, { user: staff });
+
+    await screen.findByTestId('part-viewer');
+    expect(screen.queryByRole('heading', { name: 'Screening renders' })).not.toBeInTheDocument();
   });
 
   it('lists the student inputs, past decisions and events', async () => {
@@ -127,5 +137,33 @@ describe('ReviewJobView', () => {
     api.job.mockRejectedValue(new Error('Job not found'));
     render(<ReviewJobView jobId={HELD_JOB_ID} refreshMs={0} />, { user: staff });
     expect(await screen.findByText('Job not found')).toBeInTheDocument();
+  });
+});
+
+describe('ReviewJobView screening renders from the real wire shape', () => {
+  it('shows each render by the backend’s short-lived url, named by `view`, linked full size', async () => {
+    api.job.mockResolvedValue(
+      createStaffJobView({
+        // What the backend serves: kind, view and a url; never the storage bucket or key
+        screeningRenders: [
+          { kind: 'screening_png', view: 'iso', url: 'https://files.example/iso.png?sig=1' },
+        ],
+      }),
+    );
+    render(<ReviewJobView jobId={HELD_JOB_ID} refreshMs={0} />, { user: staff });
+
+    const iso = await screen.findByRole('img', { name: 'Screening render: iso' });
+    expect(iso).toHaveAttribute('src', 'https://files.example/iso.png?sig=1');
+    expect(screen.getByRole('link', { name: /open the iso render full size/i })).toHaveAttribute(
+      'href',
+      'https://files.example/iso.png?sig=1',
+    );
+  });
+
+  it('asks the 3D viewer for its staff wording', async () => {
+    api.job.mockResolvedValue(createStaffJobView());
+    render(<ReviewJobView jobId={HELD_JOB_ID} refreshMs={0} />, { user: staff });
+
+    expect(await screen.findByTestId('part-viewer')).toHaveAttribute('data-audience', 'staff');
   });
 });

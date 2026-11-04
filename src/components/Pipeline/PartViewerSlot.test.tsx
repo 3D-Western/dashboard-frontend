@@ -100,6 +100,32 @@ beforeEach(() => {
   Element.prototype.scrollIntoView = vi.fn();
 });
 
+describe('Part viewer wording', () => {
+  it('speaks to the student about "your part" by default', () => {
+    render(<PartViewerSlot previewUrl="/preview.png" highlights={cards} />);
+    expect(screen.getByAltText('Preview of your part on the print plate')).toBeVisible();
+    expect(screen.getByText('1 area of your part is flagged below.')).toBeVisible();
+  });
+
+  it('speaks about "the part" on a staff screen', () => {
+    render(<PartViewerSlot previewUrl="/preview.png" highlights={cards} audience="staff" />);
+    expect(screen.getByAltText("Preview of the student's part on the print plate")).toBeVisible();
+    expect(screen.getByText('1 area of the part is flagged.')).toBeVisible();
+    expect(document.body.textContent).not.toMatch(/your part/i);
+  });
+
+  it('counts several flagged areas for staff', () => {
+    render(
+      <PartViewerSlot
+        previewUrl="/preview.png"
+        highlights={[...cards, { ...cards[0], code: 'second.region' }]}
+        audience="staff"
+      />,
+    );
+    expect(screen.getByText('2 areas of the part are flagged.')).toBeVisible();
+  });
+});
+
 describe('Part viewer fallbacks', () => {
   it('shows only the preview image when the plan has no model', () => {
     render(<PartViewerSlot previewUrl="/preview.png" highlights={cards} />);

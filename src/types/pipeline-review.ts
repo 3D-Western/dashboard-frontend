@@ -201,6 +201,17 @@ export interface PipelineSubmission {
   sentAt?: string | null;
 }
 
+/**
+ * A render of the part made for screening review (never shown to students): `url` is a
+ * short-lived download link, the storage key stays on the server.
+ */
+export interface StaffRender {
+  kind: string;
+  /** Which view of the part it is, e.g. "front" or "iso". */
+  view?: string | null;
+  url: string;
+}
+
 /** GET /api/v1/admin/pipeline/review/jobs/{id} */
 export interface StaffJobView {
   jobId: string;
@@ -226,6 +237,8 @@ export interface StaffJobView {
   submission?: PipelineSubmission | null;
   /** The decisions that make sense from the current status (resolve_escalation only for those who may). */
   allowedDecisions: StaffDecisionType[];
+  /** Renders of the part for the screening review (latest hold that had any), as short-lived links. */
+  screeningRenders?: StaffRender[];
 }
 
 // -- Decisions --------------------------------------------------------------------------------
