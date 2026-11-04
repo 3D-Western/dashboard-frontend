@@ -4,6 +4,7 @@ import type {
   HeldFarmJob,
   QuarantinedPrinter,
   ResolveHeldRequest,
+  WaiveRatingRequest,
 } from '@/types/pipeline-farm';
 import { apiRequest } from './base';
 import { endpoints } from './endpoints';
@@ -32,6 +33,14 @@ export const pipelineFarmApi = {
    */
   resolveHeld: (jobId: string, body: ResolveHeldRequest) =>
     post<FarmActionResult>(endpoints.pipelineFarm.resolveHeld(jobId), body),
+
+  /**
+   * Lets one collected print through the rate-first gate without a rating (P-20), e.g. when the
+   * student cannot rate it. A reason is required and audited; 409 when the print is not
+   * collected or already has a real rating.
+   */
+  waiveRating: (jobId: string, body: WaiveRatingRequest) =>
+    post<FarmActionResult>(endpoints.pipelineFarm.waiveRating(jobId), body),
 
   /** Printers taken out of service after repeated failures, oldest first. */
   quarantinedPrinters: (options?: RequestInit) =>

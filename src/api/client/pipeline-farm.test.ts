@@ -37,9 +37,27 @@ describe('pipelineFarmApi', () => {
     expect(endpoints.pipelineFarm.quarantinedPrinters).toBe(
       '/api/v1/admin/pipeline/farm/quarantined-printers',
     );
+    expect(endpoints.pipelineFarm.waiveRating('j1')).toBe(
+      '/api/v1/admin/pipeline/farm/jobs/j1/waive-rating',
+    );
     expect(endpoints.pipelineFarm.clearQuarantine('P 12')).toBe(
       '/api/v1/admin/pipeline/farm/printers/P%2012/clear-quarantine',
     );
+  });
+
+  it("waives a print's rating with the reason, and returns the result", async () => {
+    const received = vi.fn();
+    mockServer.use(
+      http.post(endpoints.pipelineFarm.waiveRating('job-7'), async ({ request }) => {
+        received(await request.json());
+        return HttpResponse.json({ success: true, data: { ok: true, message: 'Waived' } });
+      }),
+    );
+
+    const result = await pipelineFarmApi.waiveRating('job-7', { reason: 'print was lost' });
+
+    expect(received).toHaveBeenCalledWith({ reason: 'print was lost' });
+    expect(result).toEqual({ ok: true, message: 'Waived' });
   });
 
   it('resolves a held job with retry and the reason, and returns the result', async () => {

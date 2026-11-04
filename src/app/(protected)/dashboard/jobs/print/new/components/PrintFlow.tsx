@@ -23,7 +23,7 @@ import {
   rememberPurpose,
 } from '@/lib/purpose-memory';
 import { Routes } from '@/lib/routes';
-import type { Purpose, StudentInputs } from '@/types/pipeline';
+import type { Purpose, StudentInputs, UnratedPrint } from '@/types/pipeline';
 import { useJobUpload } from './useJobUpload';
 
 // STL, STEP, or 3MF (as plain geometry, or as a project carrying the student's own settings; P-53).
@@ -62,12 +62,29 @@ export function PrintFlow({ mockMode = false }: { mockMode?: boolean }) {
   const [saveState, setSaveState] = useState<SaveState>('idle');
   const [saveAttempt, setSaveAttempt] = useState(0);
   const lastSaved = useRef<string | null>(null);
+  // Rate first (P-20): the prints to rate before the file is asked for, looked up as the screen
+  // opens. null = nothing to rate (or the lookup failed: the 409 on create is the fallback).
+  const [rateFirst, setRateFirst] = useState<UnratedPrint[] | null>(null);
 
   const uploadJobId = upload.state.phase === 'done' ? upload.state.jobId : null;
   const knownJobId =
     upload.state.phase === 'uploading' || upload.state.phase === 'error'
       ? upload.state.jobId
       : uploadJobId;
+
+  useEffect(() => {
+    const controller = new AbortController();
+    const look = async () => {
+      try {
+        const prints = await pipelineApi.pendingRatings({ signal: controller.signal });
+        if (!controller.signal.aborted && prints.length > 0) setRateFirst(prints);
+      } catch {
+        // Not fatal: creating the job answers 409 RATING_REQUIRED and the same prompt shows then.
+      }
+    };
+    void look();
+    return () => controller.abort();
+  }, []);
 
   // What the student answered last time is offered again (once the page is on screen).
   useEffect(() => {
@@ -139,6 +156,9 @@ export function PrintFlow({ mockMode = false }: { mockMode?: boolean }) {
   const purposeOption = PURPOSES.find((option) => option.value === purpose);
   const uploadError = upload.state.phase === 'error' ? upload.state : null;
   const ratingBlocked = uploadError?.kind === 'rating-required';
+  // Before a file is chosen the one-tap rating comes first and the upload waits for it. A file
+  // chosen before the lookup answered goes up as usual (the 409 fallback covers it).
+  const ratingFirst = rateFirst !== null && !file;
 
   return (
     <div className="mx-auto w-full max-w-2xl space-y-6">
@@ -149,59 +169,69 @@ export function PrintFlow({ mockMode = false }: { mockMode?: boolean }) {
         <RatingRequiredPrompt prints={uploadError.prints} onDone={upload.retry} />
       )}
 
-      {/* 1. Upload first */}
-      <section aria-labelledby="upload-heading" className="space-y-3">
-        <h2 id="upload-heading" className="text-lg">
-          1. Your file
-        </h2>
-        {file ? (
-          <div className="flex items-center gap-3 rounded-lg border bg-card p-3">
-            <FileBox className="size-6 shrink-0 text-muted-foreground" aria-hidden="true" />
-            <div className="min-w-0 flex-1">
-              <p className="truncate text-sm font-medium">{file.name}</p>
-              <p className="text-xs text-muted-foreground" role="status">
-                {upload.state.phase === 'done' && 'Uploaded. We are already checking it.'}
-                {upload.state.phase === 'uploading' &&
-                  'Uploading. Keep going, this runs in the background.'}
-                {upload.state.phase === 'error' &&
-                  (ratingBlocked
-                    ? 'One quick rating first, then your file goes up.'
-                    : 'The upload did not finish.')}
-              </p>
+      {ratingFirst && (
+        <RatingRequiredPrompt
+          prints={rateFirst}
+          fileChosen={false}
+          onDone={() => setRateFirst(null)}
+        />
+      )}
+
+      {/* 1. Upload first (after the rating, when one is due) */}
+      {!ratingFirst && (
+        <section aria-labelledby="upload-heading" className="space-y-3">
+          <h2 id="upload-heading" className="text-lg">
+            1. Your file
+          </h2>
+          {file ? (
+            <div className="flex items-center gap-3 rounded-lg border bg-card p-3">
+              <FileBox className="size-6 shrink-0 text-muted-foreground" aria-hidden="true" />
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-sm font-medium">{file.name}</p>
+                <p className="text-xs text-muted-foreground" role="status">
+                  {upload.state.phase === 'done' && 'Uploaded. We are already checking it.'}
+                  {upload.state.phase === 'uploading' &&
+                    'Uploading. Keep going, this runs in the background.'}
+                  {upload.state.phase === 'error' &&
+                    (ratingBlocked
+                      ? 'One quick rating first, then your file goes up.'
+                      : 'The upload did not finish.')}
+                </p>
+              </div>
+              {upload.state.phase === 'uploading' && (
+                <Loader2 className="size-4 animate-spin text-muted-foreground" aria-hidden="true" />
+              )}
+              {upload.state.phase === 'done' && (
+                <Check className="size-4 text-status-green" aria-hidden="true" />
+              )}
             </div>
-            {upload.state.phase === 'uploading' && (
-              <Loader2 className="size-4 animate-spin text-muted-foreground" aria-hidden="true" />
-            )}
-            {upload.state.phase === 'done' && (
-              <Check className="size-4 text-status-green" aria-hidden="true" />
-            )}
-          </div>
-        ) : (
-          <FileUploadDropzone onFileAccepted={handleFile} accept={ACCEPTED_FILES} />
-        )}
-        {!file && (
-          <p className="text-sm text-muted-foreground">
-            STL, STEP or 3MF. A 3MF project can carry your own settings. We start checking the
-            moment it arrives.
-          </p>
-        )}
-        {uploadError &&
-          uploadError.kind !== 'orientation' &&
-          uploadError.kind !== 'rating-required' && (
-            <Alert variant="destructive">
-              <AlertTriangle aria-hidden="true" />
-              <AlertTitle>Couldn&apos;t upload your file</AlertTitle>
-              <AlertDescription className="space-y-3">
-                <p>{uploadError.message}</p>
-                {uploadError.kind === 'other' && (
-                  <Button type="button" variant="outline" onClick={upload.retry}>
-                    Try again
-                  </Button>
-                )}
-              </AlertDescription>
-            </Alert>
+          ) : (
+            <FileUploadDropzone onFileAccepted={handleFile} accept={ACCEPTED_FILES} />
           )}
-      </section>
+          {!file && (
+            <p className="text-sm text-muted-foreground">
+              STL, STEP or 3MF. A 3MF project can carry your own settings. We start checking the
+              moment it arrives.
+            </p>
+          )}
+          {uploadError &&
+            uploadError.kind !== 'orientation' &&
+            uploadError.kind !== 'rating-required' && (
+              <Alert variant="destructive">
+                <AlertTriangle aria-hidden="true" />
+                <AlertTitle>Couldn&apos;t upload your file</AlertTitle>
+                <AlertDescription className="space-y-3">
+                  <p>{uploadError.message}</p>
+                  {uploadError.kind === 'other' && (
+                    <Button type="button" variant="outline" onClick={upload.retry}>
+                      Try again
+                    </Button>
+                  )}
+                </AlertDescription>
+              </Alert>
+            )}
+        </section>
+      )}
 
       {file && !submitted && !ratingBlocked && (
         <>

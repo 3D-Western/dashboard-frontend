@@ -400,6 +400,54 @@ describe('planFromConflictBody', () => {
   });
 });
 
+describe('pendingRatings (rate first look-ahead, P-20)', () => {
+  const prints = [{ jobId: 'job-1', name: 'Hinge Pair', collectedAt: '2026-11-01T10:00:00Z' }];
+
+  it('uses the backend path and returns the prints to rate out of the ApiResponse wrapper', async () => {
+    expect(endpoints.pipeline.pendingRatings).toBe('/api/v1/jobs/pending-ratings');
+    mockServer.use(
+      http.get(endpoints.pipeline.pendingRatings, () =>
+        HttpResponse.json({ success: true, data: { unratedPrints: prints } }),
+      ),
+    );
+
+    await expect(pipelineApi.pendingRatings()).resolves.toEqual(prints);
+  });
+
+  it('is an empty list when nothing needs rating, or the list is missing or malformed', async () => {
+    mockServer.use(
+      http.get(endpoints.pipeline.pendingRatings, () =>
+        HttpResponse.json({ success: true, data: { unratedPrints: [] } }),
+      ),
+    );
+    await expect(pipelineApi.pendingRatings()).resolves.toEqual([]);
+
+    mockServer.use(
+      http.get(endpoints.pipeline.pendingRatings, () =>
+        HttpResponse.json({ success: true, data: { unratedPrints: [{ name: 'no id' }, 7] } }),
+      ),
+    );
+    await expect(pipelineApi.pendingRatings()).resolves.toEqual([]);
+  });
+
+  it('rejects on an error (429 rate limit, signed out) so the caller can fall back to the 409', async () => {
+    mockServer.use(
+      http.get(endpoints.pipeline.pendingRatings, () =>
+        HttpResponse.json(
+          {
+            success: false,
+            data: null,
+            error: { code: 'RATE_LIMIT_EXCEEDED', message: 'Slow down' },
+          },
+          { status: 429 },
+        ),
+      ),
+    );
+
+    await expect(pipelineApi.pendingRatings()).rejects.toBeInstanceOf(ApiError);
+  });
+});
+
 describe('unratedPrintsOf (rate first, P-20)', () => {
   const prints = [{ jobId: 'job-1', name: 'Hinge Pair', collectedAt: '2026-11-01T10:00:00Z' }];
 

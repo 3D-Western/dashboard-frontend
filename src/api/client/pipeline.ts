@@ -53,7 +53,12 @@ export const CONFLICT_CODE = 'CONFLICT';
  */
 export function unratedPrintsOf(error: unknown): UnratedPrint[] | null {
   if (!(error instanceof ApiError) || error.code !== ErrorCodes.RATING_REQUIRED) return null;
-  const prints = (error.data as { unratedPrints?: unknown } | null | undefined)?.unratedPrints;
+  return unratedPrintsIn(error.data);
+}
+
+/** The `unratedPrints` list of a `RATING_REQUIRED` body or of the look-ahead; empty when missing. */
+function unratedPrintsIn(data: unknown): UnratedPrint[] {
+  const prints = (data as { unratedPrints?: unknown } | null | undefined)?.unratedPrints;
   return Array.isArray(prints)
     ? prints.filter(
         (print): print is UnratedPrint =>
@@ -191,6 +196,21 @@ export interface StreamOptions {
 }
 
 export const pipelineApi = {
+  /**
+   * Rate first (P-20), look-ahead: the student's collected prints that still need their one tap,
+   * oldest first (empty when none, or when the gate is off). Same rule and shape as the 409
+   * `RATING_REQUIRED` that creating a job answers with, so the new-print screen can ask before
+   * the file instead of after.
+   */
+  pendingRatings: async (options?: RequestInit): Promise<UnratedPrint[]> =>
+    unratedPrintsIn(
+      await pipelineRequest<unknown>(
+        endpoints.pipeline.pendingRatings,
+        { method: 'GET', ...options },
+        { conflictIsPlanChange: false },
+      ),
+    ),
+
   /** The student-safe state of a job's pipeline run: status, plan, steps so far, message. */
   getState: (jobId: string, options?: RequestInit) =>
     pipelineRequest<PipelineSnapshot>(endpoints.pipeline.state(jobId), {

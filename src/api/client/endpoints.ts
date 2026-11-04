@@ -39,6 +39,8 @@ export const endpoints = {
     followup: (jobId: string, questionId: number | string) =>
       `/api/v1/jobs/${jobId}/pipeline/followups/${questionId}`,
     collected: (jobId: string) => `/api/v1/jobs/${jobId}/pipeline/collected`,
+    // Rate first (P-20), look-ahead: the prints to rate before the new-print screen asks for a file
+    pendingRatings: '/api/v1/jobs/pending-ratings',
   },
   // Print pipeline, staff side (dashboard-backend entities/pipeline/staff; jobs:update_status)
   pipelineReview: {
@@ -58,6 +60,7 @@ export const endpoints = {
     heldJobs: '/api/v1/admin/pipeline/farm/held-jobs',
     resolveHeld: (jobId: string) => `/api/v1/admin/pipeline/farm/held-jobs/${jobId}/resolve`,
     quarantinedPrinters: '/api/v1/admin/pipeline/farm/quarantined-printers',
+    waiveRating: (jobId: string) => `/api/v1/admin/pipeline/farm/jobs/${jobId}/waive-rating`,
     clearQuarantine: (printerId: string) =>
       `/api/v1/admin/pipeline/farm/printers/${encodeURIComponent(printerId)}/clear-quarantine`,
   },
