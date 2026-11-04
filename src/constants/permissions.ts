@@ -12,6 +12,7 @@ export const PERMISSIONS = {
   JOBS_READ: 'jobs:read',
   JOBS_LIST: 'jobs:list',
   JOBS_UPDATE_STATUS: 'jobs:update_status',
+  JOBS_RESOLVE_ESCALATION: 'jobs:resolve_escalation',
   JOBS_DELETE: 'jobs:delete',
   JOBS_COMPLETE_UPLOAD: 'jobs:complete_upload',
   JOBS_RETRY_UPLOAD: 'jobs:retry_upload',
@@ -118,6 +119,13 @@ export const PERMISSION_CATALOG: PermissionDefinition[] = [
     resource: 'jobs',
     action: 'update_status',
     description: 'Update job status',
+  },
+  {
+    key: PERMISSIONS.JOBS_RESOLVE_ESCALATION,
+    resource: 'jobs',
+    action: 'resolve_escalation',
+    description: 'Resolve a screening escalation as a false positive',
+    isDangerous: true,
   },
   { key: PERMISSIONS.JOBS_DELETE, resource: 'jobs', action: 'delete', description: 'Delete a job' },
   {
@@ -319,6 +327,9 @@ export const ADMIN_SECTION_PERMISSIONS: PermissionKey[] = [
   PERMISSIONS.BOOKINGS_CANCEL,
   // Supervisors who only sign students off still need to get into /admin
   PERMISSIONS.TRAINING_SIGNOFF,
+  // Print review staff (the pipeline's review queue). Never granted to members, who only have
+  // own-scoped job permissions.
+  PERMISSIONS.JOBS_UPDATE_STATUS,
   // The access system (gatekeepers, devices, live view, card links)
   PERMISSIONS.ACCESS_ADMIN,
 ];

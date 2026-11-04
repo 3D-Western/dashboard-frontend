@@ -20,6 +20,8 @@ export const Routes = {
   adminBookingsManagement: '/admin/bookings',
   adminBookingRequests: '/admin/requests',
   adminEquipmentManagement: '/admin/equipment',
+  adminReview: '/admin/review',
+  adminReviewJob: (jobId: string) => `/admin/review/${jobId}`,
   adminSignoffs: '/admin/signoffs',
   adminSignoff: (signoffId: number) => `/admin/signoffs/${signoffId}`,
 

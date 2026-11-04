@@ -35,6 +35,18 @@ export const endpoints = {
     choices: (jobId: string) => `/api/v1/jobs/${jobId}/pipeline/choices`,
     report: (jobId: string) => `/api/v1/jobs/${jobId}/pipeline/report`,
   },
+  // Print pipeline, staff side (dashboard-backend entities/pipeline/staff; jobs:update_status)
+  pipelineReview: {
+    queue: '/api/v1/admin/pipeline/review/queue',
+    job: (jobId: string) => `/api/v1/admin/pipeline/review/jobs/${jobId}`,
+    decisions: (jobId: string) => `/api/v1/admin/pipeline/review/jobs/${jobId}/decisions`,
+    reports: '/api/v1/admin/pipeline/review/reports',
+    resolveReport: (reportId: number) =>
+      `/api/v1/admin/pipeline/review/reports/${reportId}/resolve`,
+    health: '/api/v1/admin/pipeline/review/health',
+    submissions: '/api/v1/admin/pipeline/submissions',
+    requeue: (jobId: string) => `/api/v1/admin/pipeline/submissions/${jobId}/requeue`,
+  },
   files: {
     list: '/api/v1/files',
     byId: (fileId: string) => `/api/v1/files/${fileId}`,

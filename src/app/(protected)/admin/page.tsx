@@ -1,7 +1,7 @@
 import { PageContainer } from '@/components/PageContainer';
 import type { Metadata } from 'next';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { ClipboardCheck, DoorOpen, PenSquare, Printer, Users } from 'lucide-react';
+import { ClipboardCheck, DoorOpen, PenSquare, Printer, ScanSearch, Users } from 'lucide-react';
 import Link from 'next/link';
 import PageTitle from '@/components/PageTitle';
 import { Routes } from '@/lib/routes';
@@ -59,6 +59,26 @@ export default async function AdminDashboardPage() {
               <CardContent>
                 <p className="text-sm text-muted-foreground">
                   Monitor, modify, and manage all jobs across the system.
+                </p>
+              </CardContent>
+            </Card>
+          </Link>
+        )}
+
+        {user && hasPermission(user, PERMISSIONS.JOBS_UPDATE_STATUS) && (
+          <Link href={Routes.adminReview}>
+            <Card className="cursor-pointer transition-colors hover:bg-accent">
+              <CardHeader>
+                <div className="flex items-center gap-2">
+                  <ScanSearch className="h-5 w-5 text-muted-foreground" />
+                  <CardTitle>Print Review</CardTitle>
+                </div>
+                <CardDescription>Held prints and student problem reports</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-muted-foreground">
+                  Look at what the screening found, then release, approve, reject, escalate or rerun
+                  a print, and resolve the problems students report.
                 </p>
               </CardContent>
             </Card>
