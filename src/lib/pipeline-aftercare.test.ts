@@ -1,9 +1,7 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import {
   QUALITY_REASONS,
-  SKIP_MEMORY_MS,
   aftercareStep,
-  findPendingRating,
   nextQuestion,
   rememberFollowupSkipped,
   rememberRated,
@@ -14,15 +12,6 @@ import {
 } from './pipeline-aftercare';
 
 beforeEach(() => window.localStorage.clear());
-
-const job = (overrides: Record<string, unknown> = {}) => ({
-  id: 'job-1',
-  name: 'Hinge Pair',
-  studentStatus: 'collected' as const,
-  rated: false,
-  jobPlaced: '2026-11-01T10:00:00Z',
-  ...overrides,
-});
 
 describe('QUALITY_REASONS', () => {
   it('are exactly the values the pipeline accepts', () => {
@@ -40,53 +29,6 @@ describe('QUALITY_REASONS', () => {
         'wrong_size',
       ].sort(),
     );
-  });
-});
-
-describe('findPendingRating', () => {
-  it('finds a collected job the backend says is unrated', () => {
-    expect(findPendingRating([job()])).toEqual({
-      jobId: 'job-1',
-      jobName: 'Hinge Pair',
-      required: false,
-    });
-  });
-
-  it('passes on the backend’s word that rating blocks the next submission', () => {
-    expect(findPendingRating([job({ ratingRequired: true })])?.required).toBe(true);
-  });
-
-  it('takes the newest of several unrated jobs', () => {
-    const found = findPendingRating([
-      job({ id: 'old', jobPlaced: '2026-10-01T10:00:00Z' }),
-      job({ id: 'new', jobPlaced: '2026-11-03T10:00:00Z' }),
-    ]);
-    expect(found?.jobId).toBe('new');
-  });
-
-  it.each([
-    ['rated', { rated: true }],
-    ['not collected', { studentStatus: 'printing' }],
-    ['without rating info (older jobs, or a backend without ratings)', { rated: undefined }],
-  ])('ignores a job that is %s', (_why, overrides) => {
-    expect(findPendingRating([job(overrides)])).toBeNull();
-  });
-
-  it('does not ask again about a print this browser already rated', () => {
-    rememberRated('job-1');
-    expect(findPendingRating([job()])).toBeNull();
-  });
-
-  it('does not ask again within a day about a skippable one that was skipped', () => {
-    const now = Date.parse('2026-11-04T12:00:00Z');
-    rememberRatingSkipped('job-1', now - 60_000);
-    expect(findPendingRating([job()], now)).toBeNull();
-    expect(findPendingRating([job()], now + SKIP_MEMORY_MS)).not.toBeNull();
-  });
-
-  it('asks again about a required one whatever was skipped', () => {
-    rememberRatingSkipped('job-1');
-    expect(findPendingRating([job({ ratingRequired: true })])).not.toBeNull();
   });
 });
 

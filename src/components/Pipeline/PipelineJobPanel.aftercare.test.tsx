@@ -50,10 +50,11 @@ beforeEach(() => {
     (_id, { signal }) =>
       new Promise<void>((resolve) => signal?.addEventListener('abort', () => resolve())),
   );
-  api.collected.mockResolvedValue(undefined);
-  api.rate.mockResolvedValue({});
-  api.reportQuality.mockResolvedValue(undefined);
-  api.answerFollowup.mockResolvedValue(undefined);
+  // The backend answers every student action with the job's updated student view (202)
+  api.collected.mockResolvedValue(collected());
+  api.rate.mockResolvedValue(collected());
+  api.reportQuality.mockResolvedValue(collected());
+  api.answerFollowup.mockResolvedValue(collected());
 });
 
 describe('I have collected it', () => {
@@ -66,7 +67,7 @@ describe('I have collected it', () => {
           pickup: createMockPickup(),
         }),
       )
-      .mockResolvedValue(collected());
+      .mockResolvedValue(collected({ ratingPending: true }));
     render(<PipelineJobPanel jobId={JOB} jobName="Hinge Pair" />);
 
     await setup().click(await screen.findByRole('button', { name: /i've collected it/i }));
@@ -114,7 +115,7 @@ describe('I have collected it', () => {
         pickup: createMockPickup(),
       }),
     );
-    api.collected.mockRejectedValueOnce(new Error('offline')).mockResolvedValue(undefined);
+    api.collected.mockRejectedValueOnce(new Error('offline')).mockResolvedValue(collected());
     render(<PipelineJobPanel jobId={JOB} />);
     const user = setup();
 
@@ -128,7 +129,7 @@ describe('I have collected it', () => {
 
 describe('After collection', () => {
   it('thumbs up is one tap, then the follow-up questions come one at a time', async () => {
-    api.getState.mockResolvedValue(collected({ followups: questions, rated: false }));
+    api.getState.mockResolvedValue(collected({ followups: questions, ratingPending: true }));
     render(<PipelineJobPanel jobId={JOB} jobName="Hinge Pair" />);
     const user = setup();
 
@@ -153,7 +154,7 @@ describe('After collection', () => {
   });
 
   it('thumbs down opens the optional quality step with reason chips and words', async () => {
-    api.getState.mockResolvedValue(collected({ followups: [], rated: false }));
+    api.getState.mockResolvedValue(collected({ followups: [], ratingPending: true }));
     render(<PipelineJobPanel jobId={JOB} jobName="Hinge Pair" />);
     const user = setup();
 
@@ -179,7 +180,7 @@ describe('After collection', () => {
   });
 
   it('sends words alone as "something else" so the report is never refused', async () => {
-    api.getState.mockResolvedValue(collected({ followups: [], rated: false }));
+    api.getState.mockResolvedValue(collected({ followups: [], ratingPending: true }));
     render(<PipelineJobPanel jobId={JOB} />);
     const user = setup();
 
@@ -191,7 +192,7 @@ describe('After collection', () => {
   });
 
   it('the quality step can be skipped, and then the questions still follow', async () => {
-    api.getState.mockResolvedValue(collected({ followups: questions, rated: false }));
+    api.getState.mockResolvedValue(collected({ followups: questions, ratingPending: true }));
     render(<PipelineJobPanel jobId={JOB} />);
     const user = setup();
 
@@ -203,7 +204,7 @@ describe('After collection', () => {
   });
 
   it('"Not now" skips the rating and is not asked again on the next visit', async () => {
-    api.getState.mockResolvedValue(collected({ followups: [], rated: false }));
+    api.getState.mockResolvedValue(collected({ followups: [], ratingPending: true }));
     const first = render(<PipelineJobPanel jobId={JOB} />);
     const user = setup();
 
@@ -218,7 +219,7 @@ describe('After collection', () => {
   });
 
   it('a skipped question is remembered and not asked again, the next one still is', async () => {
-    api.getState.mockResolvedValue(collected({ followups: questions, rated: true, rating: 'up' }));
+    api.getState.mockResolvedValue(collected({ followups: questions, ratingPending: false }));
     const first = render(<PipelineJobPanel jobId={JOB} />);
     const user = setup();
 
@@ -234,7 +235,7 @@ describe('After collection', () => {
   });
 
   it('stays quiet when the print is already rated and nothing is left to ask', async () => {
-    api.getState.mockResolvedValue(collected({ followups: [], rated: true, rating: 'down' }));
+    api.getState.mockResolvedValue(collected({ followups: [], ratingPending: false }));
     render(<PipelineJobPanel jobId={JOB} />);
 
     await screen.findByRole('heading', { name: 'Collected' });
@@ -243,7 +244,7 @@ describe('After collection', () => {
   });
 
   it('does not reopen the quality step on a later visit after a thumbs-down', async () => {
-    api.getState.mockResolvedValue(collected({ followups: [], rated: true, rating: 'down' }));
+    api.getState.mockResolvedValue(collected({ followups: [], ratingPending: false }));
     render(<PipelineJobPanel jobId={JOB} />);
 
     await screen.findByRole('heading', { name: 'Collected' });
@@ -251,7 +252,7 @@ describe('After collection', () => {
   });
 
   it('keeps the buttons for a second tap when saving the rating fails', async () => {
-    api.getState.mockResolvedValue(collected({ followups: [], rated: false }));
+    api.getState.mockResolvedValue(collected({ followups: [], ratingPending: true }));
     api.rate.mockRejectedValueOnce(new Error('offline'));
     render(<PipelineJobPanel jobId={JOB} />);
     const user = setup();
@@ -265,7 +266,7 @@ describe('After collection', () => {
   });
 
   it('treats "already rated" (a conflict) as done instead of an error', async () => {
-    api.getState.mockResolvedValue(collected({ followups: [], rated: false }));
+    api.getState.mockResolvedValue(collected({ followups: [], ratingPending: true }));
     api.rate.mockRejectedValue(new ApiError(CONFLICT_CODE, 'already rated'));
     render(<PipelineJobPanel jobId={JOB} />);
 
@@ -278,7 +279,7 @@ describe('After collection', () => {
   });
 
   it('moves past a question the pipeline says was already answered', async () => {
-    api.getState.mockResolvedValue(collected({ followups: questions, rated: true, rating: 'up' }));
+    api.getState.mockResolvedValue(collected({ followups: questions, ratingPending: false }));
     api.answerFollowup.mockRejectedValueOnce(new ApiError(CONFLICT_CODE, 'already answered'));
     render(<PipelineJobPanel jobId={JOB} />);
 
@@ -289,7 +290,7 @@ describe('After collection', () => {
   });
 
   it('gives each question large tap targets in a labelled group', async () => {
-    api.getState.mockResolvedValue(collected({ followups: questions, rated: true, rating: 'up' }));
+    api.getState.mockResolvedValue(collected({ followups: questions, ratingPending: false }));
     render(<PipelineJobPanel jobId={JOB} />);
 
     const group = await screen.findByRole('group', { name: 'Your answer' });

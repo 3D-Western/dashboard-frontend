@@ -3,57 +3,61 @@ import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { ApiError } from '@/api/client/errors';
 import { pipelineFarmApi } from '@/api/client/pipeline-farm';
-import type { FarmOverview } from '@/types/pipeline-farm';
+import type { HeldFarmJob, QuarantinedPrinter } from '@/types/pipeline-farm';
 import { FarmDesk } from './FarmDesk';
 
 vi.mock('@/api/client/pipeline-farm', () => ({
-  pipelineFarmApi: { overview: vi.fn(), resolveHeld: vi.fn(), clearQuarantine: vi.fn() },
+  pipelineFarmApi: {
+    heldJobs: vi.fn(),
+    quarantinedPrinters: vi.fn(),
+    resolveHeld: vi.fn(),
+    clearQuarantine: vi.fn(),
+  },
 }));
 
 const api = vi.mocked(pipelineFarmApi);
 const setup = () => userEvent.setup({ pointerEventsCheck: 0 });
 const NOW = new Date('2026-11-04T12:00:00Z');
 
-const overview = (): FarmOverview => ({
-  heldJobs: [
-    {
-      jobId: '22222222-2222-4222-8222-000000000002',
-      jobName: 'Gear Housing',
-      studentName: 'Priya Nair',
-      studentId: 251100002,
-      attempt: 1,
-      printerId: null,
-      pickupTag: 'M3X9',
-      reason: 'The farm cannot say what happened to this job.',
-      heldSince: '2026-11-04T10:00:00Z',
-    },
-    {
-      jobId: '22222222-2222-4222-8222-000000000001',
-      jobName: 'Bracket Mount',
-      studentName: 'Sam Rivera',
-      attempt: 2,
-      printerId: 'P07',
-      binNumber: 7,
-      reason: 'No printer is known to be good yet.',
-      heldSince: '2026-11-04T06:00:00Z',
-    },
-  ],
-  quarantinedPrinters: [
-    {
-      printerId: 'P12',
-      name: 'Printer 12',
-      reason: '3 failed prints in a row; a person must check the printer.',
-      consecutiveFailures: 3,
-      quarantinedAt: '2026-11-03T16:00:00Z',
-    },
-  ],
-});
+const heldJobs = (): HeldFarmJob[] => [
+  {
+    jobId: '22222222-2222-4222-8222-000000000002',
+    jobName: 'Gear Housing',
+    studentName: 'Priya Nair',
+    attemptNo: 1,
+    printerId: null,
+    pickupTag: 'M3X9',
+    needsPerson: 'The farm cannot say what happened to this job.',
+    since: '2026-11-04T10:00:00Z',
+  },
+  {
+    jobId: '22222222-2222-4222-8222-000000000001',
+    jobName: 'Bracket Mount',
+    studentName: 'Sam Rivera',
+    attemptNo: 2,
+    printerId: 'P07',
+    needsPerson: 'No printer is known to be good yet.',
+    since: '2026-11-04T06:00:00Z',
+  },
+];
+
+const printers = (): QuarantinedPrinter[] => [
+  {
+    printerId: 'P12',
+    reason: '3 failed prints in a row; a person must check the printer.',
+    consecutiveFailures: 3,
+    quarantinedAt: '2026-11-03T16:00:00Z',
+  },
+];
+
+const ok = { ok: true, message: '' };
 
 beforeEach(() => {
   Object.values(api).forEach((fn) => fn.mockReset());
-  api.overview.mockResolvedValue(overview());
-  api.resolveHeld.mockResolvedValue(undefined);
-  api.clearQuarantine.mockResolvedValue(undefined);
+  api.heldJobs.mockResolvedValue(heldJobs());
+  api.quarantinedPrinters.mockResolvedValue(printers());
+  api.resolveHeld.mockResolvedValue(ok);
+  api.clearQuarantine.mockResolvedValue(ok);
 });
 
 const renderDesk = () => render(<FarmDesk now={NOW} refreshMs={0} />);
@@ -68,15 +72,17 @@ describe('FarmDesk', () => {
       'Gear Housing',
     ]);
     expect(within(held[0]).getByText('Attempt 2')).toBeVisible();
-    expect(within(held[0]).getByText(/printer P07 · bin 7/)).toBeVisible();
+    expect(within(held[0]).getByText(/printer P07/)).toBeVisible();
+    expect(within(held[0]).getByText('No printer is known to be good yet.')).toBeVisible();
     const printer = screen.getByTestId('quarantined-printer');
-    expect(within(printer).getByText('Printer 12 (P12)')).toBeVisible();
+    expect(within(printer).getByText('Printer P12')).toBeVisible();
     expect(within(printer).getByText(/3 failures in a row/)).toBeVisible();
     expect(screen.getByText('2 held jobs, 1 quarantined printer.')).toBeVisible();
   });
 
   it('says plainly when nothing needs a person', async () => {
-    api.overview.mockResolvedValue({ heldJobs: [], quarantinedPrinters: [] });
+    api.heldJobs.mockResolvedValue([]);
+    api.quarantinedPrinters.mockResolvedValue([]);
     renderDesk();
 
     expect(await screen.findByText('No job is waiting for a person.')).toBeVisible();
@@ -84,7 +90,7 @@ describe('FarmDesk', () => {
   });
 
   it('shows an error with the backend’s words when the farm can’t be loaded', async () => {
-    api.overview.mockRejectedValue(new ApiError('FORBIDDEN', 'Staff only'));
+    api.heldJobs.mockRejectedValue(new ApiError('FORBIDDEN', 'Staff only'));
     renderDesk();
 
     expect(await screen.findByText('Staff only')).toBeVisible();
@@ -129,13 +135,13 @@ describe('FarmDesk', () => {
       expect(within(dialog).getByText(/Cleaned the nozzle, test print fine/)).toBeVisible();
       expect(api.clearQuarantine).not.toHaveBeenCalled();
 
-      api.overview.mockResolvedValue({ ...overview(), quarantinedPrinters: [] });
+      api.quarantinedPrinters.mockResolvedValue([]);
       await user.click(within(dialog).getByRole('button', { name: /yes, put it back live/i }));
 
       expect(api.clearQuarantine).toHaveBeenCalledWith('P12', {
-        reason: 'Cleaned the nozzle, test print fine',
+        cause: 'Cleaned the nozzle, test print fine',
       });
-      expect(await screen.findByText(/Printer 12 \(P12\) is back live/)).toBeVisible();
+      expect(await screen.findByText(/Printer P12 is back live/)).toBeVisible();
       await waitFor(() => expect(screen.getByText('Every printer is in rotation.')).toBeVisible());
     });
 

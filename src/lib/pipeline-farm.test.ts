@@ -30,16 +30,16 @@ describe('request bodies', () => {
     });
   });
 
-  it('clearing a quarantine carries the trimmed reason', () => {
-    expect(buildClearRequest('  new hotend ')).toEqual({ reason: 'new hotend' });
+  it('clearing a quarantine carries the trimmed text as the backend’s `cause`', () => {
+    expect(buildClearRequest('  new hotend ')).toEqual({ cause: 'new hotend' });
   });
 });
 
 describe('ordering and labels', () => {
   it('lists the longest-waiting first', () => {
     const held = heldOldestFirst([
-      { jobId: 'new', heldSince: '2026-11-04T10:00:00Z' },
-      { jobId: 'old', heldSince: '2026-11-03T10:00:00Z' },
+      { jobId: 'new', since: '2026-11-04T10:00:00Z' },
+      { jobId: 'old', since: '2026-11-03T10:00:00Z' },
     ] as never);
     expect(held.map((j) => j.jobId)).toEqual(['old', 'new']);
 
@@ -50,8 +50,15 @@ describe('ordering and labels', () => {
     expect(printers.map((p) => p.printerId)).toEqual(['a', 'b']);
   });
 
-  it('names a printer by its friendly name and id, or by id alone', () => {
-    expect(printerLabel({ name: 'Printer 12', printerId: 'P12' })).toBe('Printer 12 (P12)');
-    expect(printerLabel({ name: null, printerId: 'P12' })).toBe('Printer P12');
+  it('puts a printer with no known quarantine time last', () => {
+    const printers = quarantinedOldestFirst([
+      { printerId: 'unknown' },
+      { printerId: 'known', quarantinedAt: '2026-11-01T10:00:00Z' },
+    ] as never);
+    expect(printers.map((p) => p.printerId)).toEqual(['known', 'unknown']);
+  });
+
+  it('names a printer by its id', () => {
+    expect(printerLabel({ printerId: 'P12' })).toBe('Printer P12');
   });
 });

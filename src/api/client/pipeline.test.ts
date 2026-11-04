@@ -8,6 +8,7 @@ import {
   PlanChangedError,
   createSseParser,
   isConflictError,
+  unratedPrintsOf,
   pipelineApi,
   planFromConflictBody,
   type SseFrame,
@@ -118,17 +119,28 @@ describe('pipelineApi', () => {
       expect((error as ApiError).message).toBe('Nothing is ready to collect');
     });
 
-    it('rate sends up or down and returns the stored rating', async () => {
+    it('rate sends up or down and returns the job’s updated student view', async () => {
       const received = vi.fn();
+      const view = createMockSnapshot({ studentStatus: 'collected', ratingPending: false });
       mockServer.use(
         http.post(endpoints.pipeline.rating(JOB), async ({ request }) => {
           received(await request.json());
-          return HttpResponse.json({ success: true, data: { rating: 'down' } }, { status: 202 });
+          return HttpResponse.json({ success: true, data: view }, { status: 202 });
         }),
       );
 
-      await expect(pipelineApi.rate(JOB, 'down')).resolves.toEqual({ rating: 'down' });
+      await expect(pipelineApi.rate(JOB, 'down')).resolves.toEqual(view);
       expect(received).toHaveBeenCalledWith({ rating: 'down' });
+    });
+
+    it('rate reports a different second rating (409) as a conflict', async () => {
+      mockServer.use(
+        http.post(endpoints.pipeline.rating(JOB), () => conflict('This print was already rated.')),
+      );
+
+      const error = await pipelineApi.rate(JOB, 'up').catch((e: unknown) => e);
+
+      expect(isConflictError(error)).toBe(true);
     });
 
     it('reportQuality sends the reasons and trims the words, leaving them out when empty', async () => {
@@ -385,5 +397,41 @@ describe('planFromConflictBody', () => {
   it('returns null when there is none', () => {
     expect(planFromConflictBody(null)).toBeNull();
     expect(planFromConflictBody({ error: { code: 'PLAN_CHANGED' } })).toBeNull();
+  });
+});
+
+describe('unratedPrintsOf (rate first, P-20)', () => {
+  const prints = [{ jobId: 'job-1', name: 'Hinge Pair', collectedAt: '2026-11-01T10:00:00Z' }];
+
+  it('reads the prints to rate from the 409 RATING_REQUIRED that create-job answers', async () => {
+    mockServer.use(
+      http.post(endpoints.jobs.create, () =>
+        HttpResponse.json(
+          {
+            success: false,
+            data: { unratedPrints: prints },
+            error: { code: 'RATING_REQUIRED', message: 'Please rate your previous print' },
+          },
+          { status: 409 },
+        ),
+      ),
+    );
+    const { jobApi } = await import('./job');
+
+    const error = await jobApi
+      .createJob({ jobName: 'x', category: 'ThreeDPrint', formAnswerJson: '{}' } as never)
+      .catch((e: unknown) => e);
+
+    expect(error).toBeInstanceOf(ApiError);
+    expect(unratedPrintsOf(error)).toEqual(prints);
+  });
+
+  it('is null for any other error, and empty when the list is missing', () => {
+    expect(unratedPrintsOf(new ApiError('CONFLICT', 'x'))).toBeNull();
+    expect(unratedPrintsOf(new Error('x'))).toBeNull();
+    expect(unratedPrintsOf(new ApiError('RATING_REQUIRED', 'x'))).toEqual([]);
+    expect(unratedPrintsOf(new ApiError('RATING_REQUIRED', 'x', undefined, undefined, {}))).toEqual(
+      [],
+    );
   });
 });

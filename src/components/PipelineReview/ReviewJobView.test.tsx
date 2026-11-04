@@ -63,26 +63,27 @@ describe('ReviewJobView', () => {
     expect(viewer).toHaveAttribute('data-codes', 'walls.too_thin,overhang.unsupported');
   });
 
-  it('shows the screening renders as images', async () => {
+  it('shows the screening renders as images from the links in screeningRenders', async () => {
     api.job.mockResolvedValue(
       createStaffJobView({
-        events: [
-          createStaffEvent({
-            seq: 4,
-            data: {
-              staff_artifacts: [
-                { kind: 'screening_png', name: 'front', url: '/renders/front.png' },
-                { kind: 'screening_png', name: 'top' },
-              ],
-            },
-          }),
+        screeningRenders: [
+          { kind: 'screening_png', view: 'front', url: '/renders/front.png' },
+          { kind: 'screening_png', url: '/renders/second.png' },
         ],
       }),
     );
     render(<ReviewJobView jobId={HELD_JOB_ID} refreshMs={0} />, { user: staff });
 
     expect(await screen.findByRole('img', { name: /front/ })).toBeInTheDocument();
-    expect(screen.getByText('Stored, but no link to show it')).toBeInTheDocument();
+    expect(screen.getByRole('img', { name: 'Screening render: render 2' })).toBeInTheDocument();
+  });
+
+  it('shows no renders section when the job has none', async () => {
+    api.job.mockResolvedValue(createStaffJobView({ screeningRenders: [] }));
+    render(<ReviewJobView jobId={HELD_JOB_ID} refreshMs={0} />, { user: staff });
+
+    await screen.findByTestId('part-viewer');
+    expect(screen.queryByRole('heading', { name: 'Screening renders' })).not.toBeInTheDocument();
   });
 
   it('lists the student inputs, past decisions and events', async () => {
@@ -141,34 +142,12 @@ describe('ReviewJobView', () => {
 });
 
 describe('ReviewJobView screening renders from the real wire shape', () => {
-  it('shows each render from the url the backend added, named by the pipeline’s `view`, linked full size', async () => {
+  it('shows each render by the backend’s short-lived url, named by `view`, linked full size', async () => {
     api.job.mockResolvedValue(
       createStaffJobView({
-        events: [
-          createStaffEvent({
-            seq: 6,
-            data: {
-              // What the pipeline stores (kind, view, storage ref, sha256) plus the backend's link
-              staff_artifacts: [
-                {
-                  kind: 'screening_png',
-                  view: 'iso',
-                  bucket: 'artifacts',
-                  key: 'screening/job-1/1/iso.png',
-                  sha256: 'abc',
-                  content_type: 'image/png',
-                  url: 'https://files.example/iso.png?sig=1',
-                },
-                {
-                  kind: 'screening_png',
-                  bucket: 'artifacts',
-                  key: 'screening/job-1/1/top.png',
-                  sha256: 'def',
-                  url: 'https://files.example/top.png?sig=2',
-                },
-              ],
-            },
-          }),
+        // What the backend serves: kind, view and a url; never the storage bucket or key
+        screeningRenders: [
+          { kind: 'screening_png', view: 'iso', url: 'https://files.example/iso.png?sig=1' },
         ],
       }),
     );
@@ -179,11 +158,6 @@ describe('ReviewJobView screening renders from the real wire shape', () => {
     expect(screen.getByRole('link', { name: /open the iso render full size/i })).toHaveAttribute(
       'href',
       'https://files.example/iso.png?sig=1',
-    );
-    // A ref with no `view` is still named, from the end of its storage key
-    expect(screen.getByRole('img', { name: 'Screening render: top' })).toHaveAttribute(
-      'src',
-      'https://files.example/top.png?sig=2',
     );
   });
 

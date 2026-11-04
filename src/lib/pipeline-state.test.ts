@@ -227,28 +227,33 @@ describe('after the print', () => {
     expect(twice).toBe(once);
   });
 
-  it('keeps a rating given here when a late snapshot does not know it yet', () => {
+  it('keeps a rating given here when a late snapshot still says it is pending', () => {
     let state = pipelineReducer(initialPipelineState, { type: 'rated', rating: 'down' });
     state = pipelineReducer(state, {
       type: 'snapshot',
-      snapshot: { studentStatus: 'collected', rated: false },
+      snapshot: { studentStatus: 'collected', ratingPending: true },
     });
-    expect(state.rated).toBe(true);
+    expect(state.ratingPending).toBe(false);
     expect(state.rating).toBe('down');
   });
 
-  it('learns from the snapshot whether the print was rated', () => {
+  it('learns from the snapshot whether the collected print still needs its rating', () => {
     const unknown = pipelineReducer(initialPipelineState, {
       type: 'snapshot',
       snapshot: { studentStatus: 'collected' },
     });
-    expect(unknown.rated).toBeNull();
+    expect(unknown.ratingPending).toBeNull();
 
-    const rated = pipelineReducer(initialPipelineState, {
+    const pending = pipelineReducer(initialPipelineState, {
       type: 'snapshot',
-      snapshot: { studentStatus: 'collected', rated: true, rating: 'up' },
+      snapshot: { studentStatus: 'collected', ratingPending: true },
     });
-    expect(rated.rated).toBe(true);
-    expect(rated.rating).toBe('up');
+    expect(pending.ratingPending).toBe(true);
+
+    const rated = pipelineReducer(pending, {
+      type: 'snapshot',
+      snapshot: { studentStatus: 'collected', ratingPending: false },
+    });
+    expect(rated.ratingPending).toBe(false);
   });
 });

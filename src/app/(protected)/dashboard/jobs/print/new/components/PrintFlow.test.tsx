@@ -2,8 +2,8 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { jobApi } from '@/api/client/job';
+import { ApiError } from '@/api/client/errors';
 import { pipelineApi } from '@/api/client/pipeline';
-import { userApi } from '@/api/client/user';
 import { createMockSnapshot } from '@test/utils/pipelineFactories';
 import { PrintFlow } from './PrintFlow';
 
@@ -30,24 +30,14 @@ vi.mock('@/api/client/pipeline', async (importOriginal) => ({
   },
 }));
 
-vi.mock('@/api/client/user', () => ({ userApi: { getCurrentUserJobs: vi.fn() } }));
-
 vi.mock('@/lib/file-utils', () => ({
   calculateFileChecksum: vi.fn(() => Promise.resolve('sha256:test')),
 }));
 
 const jobs = vi.mocked(jobApi);
 const pipeline = vi.mocked(pipelineApi);
-const users = vi.mocked(userApi);
 const setup = () => userEvent.setup({ pointerEventsCheck: 0 });
 const model = () => new File(['solid'], 'robot-arm-gear.stl', { type: 'model/stl' });
-
-/** The flow opens after the rate-first check (nothing to rate here), so wait for the upload step. */
-async function renderFlow() {
-  const view = render(<PrintFlow />);
-  await screen.findByRole('heading', { name: '1. Your file' });
-  return view;
-}
 
 function chooseFile(container: HTMLElement, file = model()) {
   const input = container.querySelector('input[type="file"]') as HTMLInputElement;
@@ -58,8 +48,6 @@ beforeEach(() => {
   window.localStorage.clear();
   Object.values(jobs).forEach((fn) => fn.mockReset());
   Object.values(pipeline).forEach((fn) => fn.mockReset());
-  users.getCurrentUserJobs.mockReset();
-  users.getCurrentUserJobs.mockResolvedValue({ data: [], pagination: {} } as never);
   jobs.createJob.mockResolvedValue({
     jobId: 'job-9',
     createdAt: '2026-11-04T10:00:00Z',
@@ -79,7 +67,7 @@ beforeEach(() => {
 
 describe('PrintFlow', () => {
   it('starts with the upload, before anything is asked', async () => {
-    await renderFlow();
+    render(<PrintFlow />);
 
     expect(screen.getByRole('heading', { name: '1. Your file' })).toBeInTheDocument();
     expect(screen.queryByRole('heading', { name: /what's it for/i })).not.toBeInTheDocument();
@@ -87,7 +75,7 @@ describe('PrintFlow', () => {
   });
 
   it('uploads at once, in the background, then opens the live progress while the student answers', async () => {
-    const { container } = await renderFlow();
+    const { container } = render(<PrintFlow />);
 
     await chooseFile(container);
 
@@ -117,7 +105,7 @@ describe('PrintFlow', () => {
 
   it('saves the purpose as soon as it is picked, then the student’s own words on continue', async () => {
     const user = setup();
-    const { container } = await renderFlow();
+    const { container } = render(<PrintFlow />);
     await chooseFile(container);
     await waitFor(() => expect(jobs.completeUpload).toHaveBeenCalled());
 
@@ -147,7 +135,7 @@ describe('PrintFlow', () => {
 
   it('does not let the student continue without a purpose and a few words of their own', async () => {
     const user = setup();
-    const { container } = await renderFlow();
+    const { container } = render(<PrintFlow />);
     await chooseFile(container);
 
     const next = await screen.findByRole('button', { name: 'Continue' });
@@ -163,13 +151,13 @@ describe('PrintFlow', () => {
 
   it('remembers the purpose and its sub-form for next time', async () => {
     const user = setup();
-    const first = await renderFlow();
+    const first = render(<PrintFlow />);
     await chooseFile(first.container);
     await user.click(await screen.findByRole('radio', { name: 'Startup or venture' }));
     await user.type(screen.getByLabelText('Venture or business name'), 'Maple Gear Co.');
     first.unmount();
 
-    const second = await renderFlow();
+    const second = render(<PrintFlow />);
     await chooseFile(second.container);
 
     expect(await screen.findByRole('radio', { name: 'Startup or venture' })).toBeChecked();
@@ -185,7 +173,7 @@ describe('PrintFlow', () => {
       storageKey: 'k',
     });
     const user = setup();
-    const { container } = await renderFlow();
+    const { container } = render(<PrintFlow />);
 
     await chooseFile(container);
 
@@ -202,34 +190,63 @@ describe('PrintFlow', () => {
   });
 
   it('keeps "Report a problem" in reach throughout', async () => {
-    await renderFlow();
+    render(<PrintFlow />);
 
     expect(screen.getByRole('button', { name: /report a problem/i })).toBeInTheDocument();
   });
 
-  it('asks to rate the last collected print first, then continues straight to the upload', async () => {
-    users.getCurrentUserJobs.mockResolvedValue({
-      data: [
-        {
-          id: 'old-1',
-          name: 'Hinge Pair',
-          studentStatus: 'collected',
-          rated: false,
-          jobPlaced: '2026-11-01T10:00:00Z',
-        },
-      ],
-      pagination: {},
-    } as never);
-    pipeline.rate.mockResolvedValue({});
-    render(<PrintFlow />);
+  describe('rate first (P-20)', () => {
+    const ratingRequired = (prints: unknown[]) =>
+      new ApiError(
+        'RATING_REQUIRED',
+        'Please rate your previous print first.',
+        undefined,
+        undefined,
+        { unratedPrints: prints },
+      );
 
-    // Rating first: the upload is not on screen yet
-    expect(await screen.findByTestId('rate-first')).toBeVisible();
-    expect(screen.queryByRole('heading', { name: '1. Your file' })).not.toBeInTheDocument();
+    it('holds the upload for one tap when the backend says a collected print is unrated, then carries on with the same file', async () => {
+      jobs.createJob
+        .mockRejectedValueOnce(
+          ratingRequired([
+            { jobId: 'old-1', name: 'Hinge Pair', collectedAt: '2026-11-01T10:00:00Z' },
+          ]),
+        )
+        .mockResolvedValue({
+          jobId: 'job-9',
+          createdAt: '2026-11-04T10:00:00Z',
+          fileId: 'file-9',
+          uploadUrl: 'https://storage.example/upload',
+          uploadExpiresIn: 900,
+        });
+      pipeline.rate.mockResolvedValue(createMockSnapshot());
+      const { container } = render(<PrintFlow />);
 
-    await setup().click(screen.getByRole('button', { name: 'Good' }));
+      await chooseFile(container);
 
-    expect(pipeline.rate).toHaveBeenCalledWith('old-1', 'up');
-    expect(await screen.findByRole('heading', { name: '1. Your file' })).toBeVisible();
+      expect(await screen.findByTestId('rating-required')).toBeVisible();
+      expect(screen.getByRole('heading', { name: /how did hinge pair turn out/i })).toBeVisible();
+      // No upload happened, and the questions about the new part wait
+      expect(jobs.uploadJobFile).not.toHaveBeenCalled();
+      expect(screen.queryByRole('heading', { name: /what's it for/i })).not.toBeInTheDocument();
+
+      await setup().click(screen.getByRole('button', { name: 'Good' }));
+
+      expect(pipeline.rate).toHaveBeenCalledWith('old-1', 'up');
+      await waitFor(() => expect(jobs.completeUpload).toHaveBeenCalled());
+      expect(jobs.createJob).toHaveBeenCalledTimes(2);
+      expect(screen.queryByTestId('rating-required')).not.toBeInTheDocument();
+      expect(await screen.findByRole('heading', { name: /what's it for/i })).toBeVisible();
+    });
+
+    it('has no way to skip it: the backend blocks the submission', async () => {
+      jobs.createJob.mockRejectedValue(ratingRequired([{ jobId: 'old-1', name: 'Hinge Pair' }]));
+      const { container } = render(<PrintFlow />);
+
+      await chooseFile(container);
+
+      await screen.findByTestId('rating-required');
+      expect(screen.queryByRole('button', { name: /skip|not now/i })).not.toBeInTheDocument();
+    });
   });
 });
