@@ -16,7 +16,7 @@ import { CannotPrint } from './CannotPrint';
 import { PickupCard } from './PickupCard';
 import { PartViewerSlot } from './PartViewerSlot';
 import { PreparingSteps } from './PreparingSteps';
-import { highlightsUrlOf, PlanFacts, previewUrlOf, ReviewPlan } from './ReviewPlan';
+import { highlightsUrlOf, modelUrlOf, PlanFacts, previewUrlOf, ReviewPlan } from './ReviewPlan';
 
 const REVIEW_STATUSES: StudentStatus[] = ['needs_confirmation', 'needs_choice'];
 
@@ -151,7 +151,11 @@ export function PipelineJobPanel({
         </div>
         {status === 'ready_for_pickup' && pickup && <PickupCard pickup={pickup} />}
         {plan && !(status === 'ready_for_pickup' && pickup) && (
-          <PartViewerSlot previewUrl={previewUrlOf(plan)} highlightsUrl={highlightsUrlOf(plan)} />
+          <PartViewerSlot
+            previewUrl={previewUrlOf(plan)}
+            modelUrl={modelUrlOf(plan)}
+            highlightsUrl={highlightsUrlOf(plan)}
+          />
         )}
         {plan && <PlanFacts plan={plan} />}
         {showJobLink && (

@@ -83,6 +83,7 @@ export interface Choice {
 
 export type ArtifactKind =
   | 'preview_png'
+  | 'model_glb'
   | 'highlights_json'
   | 'project_3mf'
   | 'timelapse'

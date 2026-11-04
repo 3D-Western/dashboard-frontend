@@ -7,7 +7,8 @@ import type {
   StepProgress,
   StudentInputs,
 } from '@/types/pipeline';
-import { createMockPlan } from '../../../test/utils/pipelineFactories';
+import { createMockLessonCard, createMockPlan } from '../../../test/utils/pipelineFactories';
+import { MOCK_HIGHLIGHTS_URL, MOCK_MODEL_URL } from './data/mock-part';
 import db from './database/db';
 import { createInvalidSessionResponse, generateSuccessResponse } from './utils';
 
@@ -92,7 +93,11 @@ function planFor(jobId: string, session: Session): Plan {
   if (jobId.includes('cannot')) {
     return createMockPlan({
       planId,
-      artifacts: [{ kind: 'preview_png', url: PREVIEW_URL }],
+      artifacts: [
+        { kind: 'preview_png', url: PREVIEW_URL },
+        { kind: 'model_glb', url: MOCK_MODEL_URL },
+        { kind: 'highlights_json', url: MOCK_HIGHLIGHTS_URL.cannot },
+      ],
       answer: 'cannot_print',
       summary:
         'The walls of your part are 0.3 mm thick, and our printers cannot make anything thinner than 0.8 mm that will survive being ejected.',
@@ -113,7 +118,28 @@ function planFor(jobId: string, session: Session): Plan {
   const needsChoice = !session.choiceDone && !jobId.includes('review');
   return createMockPlan({
     planId,
-    artifacts: [{ kind: 'preview_png', url: PREVIEW_URL }],
+    artifacts: [
+      { kind: 'preview_png', url: PREVIEW_URL },
+      { kind: 'model_glb', url: MOCK_MODEL_URL },
+      { kind: 'highlights_json', url: MOCK_HIGHLIGHTS_URL.review },
+    ],
+    lessonCards: [
+      createMockLessonCard(),
+      createMockLessonCard({
+        code: 'base.brim_added',
+        title: 'We added a brim around the base',
+        body: 'The base is narrow, so a thin extra ring of plastic helps it stay stuck to the plate. It snaps off after printing.',
+        region: { faces: [2, 3] },
+      }),
+      createMockLessonCard({
+        code: 'surface.minor_stringing',
+        title: 'Small gaps may leave fine strings',
+        body: 'Thin gaps can pick up a few wisps of plastic. They pull off by hand.',
+        severity: 'info',
+        region: null,
+        consequential: false,
+      }),
+    ],
     answer: needsChoice ? 'needs_choice' : 'works_with_adjustments',
     choices: needsChoice
       ? [
