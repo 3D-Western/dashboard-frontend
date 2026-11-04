@@ -10,6 +10,7 @@ import {
   SidebarGroupLabel,
   SidebarHeader,
   SidebarMenu,
+  SidebarMenuBadge,
   SidebarMenuButton,
   SidebarMenuItem,
 } from '@/components/ui/sidebar';
@@ -17,6 +18,7 @@ import { SettingsPopover } from '@/components/SettingsPopover';
 import { User, hasPermission } from '@/types/user';
 import { PERMISSIONS } from '@/constants/permissions';
 import {
+  Bell,
   ClipboardCheck,
   GraduationCap,
   LayoutDashboard,
@@ -34,6 +36,8 @@ import { usePathname } from 'next/navigation';
 import { Routes } from '@/lib/routes';
 import { AccessAdminRoutes } from '@/lib/access-admin-routes';
 import { isJobCreationEnabled } from '@/lib/feature-flags';
+import { useAlertSummary } from '@/hooks/useAlertSummary';
+import { badgeText } from '@/lib/staff-alerts';
 
 // NOTE: Equipment Booking, IAM Management, Audit Log, and the booking-admin pages (Equipment
 // Bookings / Booking Requests / Equipment Management) are intentionally left out of this list
@@ -81,6 +85,8 @@ interface AdminNavItem {
   permission: string;
   /** A second permission that also shows the entry. */
   alsoPermission?: string;
+  /** Shows how many staff alerts still need a person (the alerts centre, P-135). */
+  alertsBadge?: boolean;
 }
 
 const adminNavigationItems: AdminNavItem[] = [
@@ -98,6 +104,13 @@ const adminNavigationItems: AdminNavItem[] = [
     // distinguish admins here. JOBS_UPDATE_STATUS is the permission the actual admin job-status
     // override endpoint requires (PATCH /jobs/:jobId) and is never granted to members.
     permission: PERMISSIONS.JOBS_UPDATE_STATUS,
+  },
+  {
+    title: 'Alerts',
+    url: Routes.adminAlerts,
+    icon: Bell,
+    permission: PERMISSIONS.JOBS_UPDATE_STATUS,
+    alertsBadge: true,
   },
   {
     title: 'Print Review',
@@ -130,6 +143,25 @@ const adminNavigationItems: AdminNavItem[] = [
 // Larger text and tap area than the shadcn default, especially on phones
 const NAV_BUTTON_CLASS =
   'h-11 text-base fine:h-9 fine:text-[15px] [&_svg]:size-5 fine:[&_svg]:size-4';
+
+/** The number of alerts nobody has acknowledged yet, red while one of them is critical. Nothing at zero. */
+function AlertsNavBadge() {
+  const summary = useAlertSummary();
+  const count = summary?.unacknowledged ?? 0;
+  if (count <= 0) return null;
+  return (
+    <SidebarMenuBadge
+      className={
+        summary?.unacknowledgedCritical
+          ? 'bg-status-red text-status-red-foreground peer-hover/menu-button:text-status-red-foreground peer-data-active/menu-button:text-status-red-foreground'
+          : 'bg-sidebar-accent'
+      }
+    >
+      {badgeText(count)}
+      <span className="sr-only"> alerts need a person</span>
+    </SidebarMenuBadge>
+  );
+}
 
 interface AppSidebarProps {
   user: User;
@@ -195,6 +227,7 @@ export function AppSidebar({ user }: AppSidebarProps) {
                         <span>{item.title}</span>
                       </Link>
                     </SidebarMenuButton>
+                    {item.alertsBadge && <AlertsNavBadge />}
                   </SidebarMenuItem>
                 ))}
               </SidebarMenu>

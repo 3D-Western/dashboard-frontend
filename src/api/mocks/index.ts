@@ -14,6 +14,7 @@ import { onboardingHandlers } from './onboarding-handlers';
 import { pipelineHandlers } from './pipeline-handlers';
 import { pipelineReviewHandlers } from './pipeline-review-handlers';
 import { pipelineFarmHandlers } from './pipeline-farm-handlers';
+import { staffAlertsHandlers } from './staff-alerts-handlers';
 import { trainingHandlers } from './training-handlers';
 
 // Initialize tmp/ directory when server module loads
@@ -34,5 +35,6 @@ export const mockServer = setupServer(
   ...pipelineHandlers,
   ...pipelineReviewHandlers,
   ...pipelineFarmHandlers,
+  ...staffAlertsHandlers,
   ...trainingHandlers,
 );
