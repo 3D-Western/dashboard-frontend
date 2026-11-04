@@ -1,11 +1,19 @@
-import { describe, it, expect, vi } from 'vitest';
-import { screen } from '@testing-library/react';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { screen, waitFor } from '@testing-library/react';
 import { render } from '@test/utils/render';
 import { SidebarProvider } from '@/components/ui/sidebar';
 import { AppSidebar } from './index';
 import { createMockUser, createMockAdmin, perm } from '@test/utils/mockFactories';
 import { PERMISSIONS } from '@/constants/permissions';
 import { User } from '@/types/user';
+import { staffAlertsApi } from '@/api/client/staff-alerts';
+
+// The nav badge of the alerts centre asks the backend how many alerts need a person.
+vi.mock('@/api/client/staff-alerts', () => ({ staffAlertsApi: { summary: vi.fn() } }));
+const summary = vi.mocked(staffAlertsApi.summary);
+beforeEach(() => {
+  summary.mockReset().mockResolvedValue({ unacknowledged: 0, unacknowledgedCritical: 0 });
+});
 
 // The current path, changed by the tests that move between pages.
 const nav = vi.hoisted(() => ({ pathname: '/' }));
@@ -293,6 +301,68 @@ describe('AppSidebar', () => {
 
       expect(screen.getByText('Jane Smith')).toBeInTheDocument();
       expect(screen.getByText('ID: 251000001')).toBeInTheDocument();
+    });
+  });
+
+  describe('alerts centre', () => {
+    it('shows an Alerts link to staff, with no count while nothing needs a person', async () => {
+      const admin = createMockAdmin({ permissions: [perm(PERMISSIONS.JOBS_UPDATE_STATUS)] });
+      renderSidebar(admin);
+
+      expect(screen.getByRole('link', { name: /^alerts$/i })).toHaveAttribute(
+        'href',
+        '/admin/alerts',
+      );
+      await waitFor(() => expect(summary).toHaveBeenCalled());
+      expect(screen.queryByText(/alerts need a person/i)).not.toBeInTheDocument();
+    });
+
+    it('shows how many alerts need a person next to it', async () => {
+      summary.mockResolvedValue({ unacknowledged: 3, unacknowledgedCritical: 1 });
+      const admin = createMockAdmin({ permissions: [perm(PERMISSIONS.JOBS_UPDATE_STATUS)] });
+      renderSidebar(admin);
+
+      expect((await screen.findByText(/alerts need a person/i)).parentElement).toHaveTextContent(
+        '3',
+      );
+      expect(screen.getByRole('link', { name: /^alerts$/i })).toBeInTheDocument();
+    });
+
+    it('caps the number at 9+ so it fits the menu', async () => {
+      summary.mockResolvedValue({ unacknowledged: 42, unacknowledgedCritical: 0 });
+      const admin = createMockAdmin({ permissions: [perm(PERMISSIONS.JOBS_UPDATE_STATUS)] });
+      renderSidebar(admin);
+
+      expect((await screen.findByText(/alerts need a person/i)).parentElement).toHaveTextContent(
+        '9+',
+      );
+    });
+
+    it('keeps the last number when a refresh fails', async () => {
+      vi.useFakeTimers({ shouldAdvanceTime: true });
+      try {
+        summary.mockResolvedValueOnce({ unacknowledged: 2, unacknowledgedCritical: 0 });
+        summary.mockRejectedValue(new Error('offline'));
+        const admin = createMockAdmin({ permissions: [perm(PERMISSIONS.JOBS_UPDATE_STATUS)] });
+        renderSidebar(admin);
+        expect((await screen.findByText(/alerts need a person/i)).parentElement).toHaveTextContent(
+          '2',
+        );
+
+        await vi.advanceTimersByTimeAsync(31_000);
+
+        expect(summary.mock.calls.length).toBeGreaterThan(1);
+        expect(screen.getByText(/alerts need a person/i).parentElement).toHaveTextContent('2');
+      } finally {
+        vi.useRealTimers();
+      }
+    });
+
+    it('is not offered to, and never asks for, members without staff permission', () => {
+      renderSidebar(createMockUser());
+
+      expect(screen.queryByRole('link', { name: /^alerts$/i })).not.toBeInTheDocument();
+      expect(summary).not.toHaveBeenCalled();
     });
   });
 });

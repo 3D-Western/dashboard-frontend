@@ -23,6 +23,7 @@ export const Routes = {
   adminReview: '/admin/review',
   adminReviewJob: (jobId: string) => `/admin/review/${jobId}`,
   adminReviewFarm: '/admin/review/farm',
+  adminAlerts: '/admin/alerts',
   adminSignoffs: '/admin/signoffs',
   adminSignoff: (signoffId: number) => `/admin/signoffs/${signoffId}`,
 

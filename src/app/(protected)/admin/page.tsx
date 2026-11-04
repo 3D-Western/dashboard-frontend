@@ -1,7 +1,15 @@
 import { PageContainer } from '@/components/PageContainer';
 import type { Metadata } from 'next';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { ClipboardCheck, DoorOpen, PenSquare, Printer, ScanSearch, Users } from 'lucide-react';
+import {
+  Bell,
+  ClipboardCheck,
+  DoorOpen,
+  PenSquare,
+  Printer,
+  ScanSearch,
+  Users,
+} from 'lucide-react';
 import Link from 'next/link';
 import PageTitle from '@/components/PageTitle';
 import { Routes } from '@/lib/routes';
@@ -59,6 +67,26 @@ export default async function AdminDashboardPage() {
               <CardContent>
                 <p className="text-sm text-muted-foreground">
                   Monitor, modify, and manage all jobs across the system.
+                </p>
+              </CardContent>
+            </Card>
+          </Link>
+        )}
+
+        {user && hasPermission(user, PERMISSIONS.JOBS_UPDATE_STATUS) && (
+          <Link href={Routes.adminAlerts}>
+            <Card className="cursor-pointer transition-colors hover:bg-accent">
+              <CardHeader>
+                <div className="flex items-center gap-2">
+                  <Bell className="h-5 w-5 text-muted-foreground" />
+                  <CardTitle>Alerts</CardTitle>
+                </div>
+                <CardDescription>Holds, escalations and pipeline problems</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-muted-foreground">
+                  Everything that needs a person, newest first. Open one to deal with it,
+                  acknowledge it when you are on it, resolve it with a note when done.
                 </p>
               </CardContent>
             </Card>
