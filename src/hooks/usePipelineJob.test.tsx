@@ -105,6 +105,42 @@ describe('usePipelineJob', () => {
     expect(result.current.error).toBeNull();
   });
 
+  it('re-reads the job when it is collected so the rating card shows without a reload', async () => {
+    getState
+      .mockResolvedValueOnce(
+        createMockSnapshot({ studentStatus: 'ready_for_pickup', ratingPending: false }),
+      )
+      .mockResolvedValue(createMockSnapshot({ studentStatus: 'collected', ratingPending: true }));
+    const live = openStream();
+    const { result } = renderHook(() => usePipelineJob('job-1'));
+    await waitFor(() => expect(result.current.connection).toBe('live'));
+    expect(result.current.ratingPending).toBe(false);
+
+    act(() => live.emit(createMockEvent({ seq: 5, studentStatus: 'collected' })));
+
+    await waitFor(() => expect(result.current.ratingPending).toBe(true));
+    expect(result.current.studentStatus).toBe('collected');
+    expect(getState).toHaveBeenCalledTimes(2);
+  });
+
+  it('re-reads the job when it becomes ready for pickup, and keeps streaming', async () => {
+    getState
+      .mockResolvedValueOnce(createMockSnapshot({ studentStatus: 'printing', ratingPending: null }))
+      .mockResolvedValue(createMockSnapshot({ studentStatus: 'ready_for_pickup', ratingPending: false }));
+    const live = openStream();
+    openStream();
+    const { result } = renderHook(() => usePipelineJob('job-1'));
+    await waitFor(() => expect(result.current.connection).toBe('live'));
+
+    act(() => live.emit(createMockEvent({ seq: 7, studentStatus: 'ready_for_pickup' })));
+
+    await waitFor(() => expect(getState).toHaveBeenCalledTimes(2));
+    await waitFor(() => expect(stream).toHaveBeenCalledTimes(2));
+    expect(stream.mock.calls[1][1].lastSeq).toBe(7);
+    await waitFor(() => expect(result.current.connection).toBe('live'));
+    expect(result.current.studentStatus).toBe('ready_for_pickup');
+  });
+
   it('does not open a stream for a job that is finished', async () => {
     getState.mockResolvedValue(createMockSnapshot({ studentStatus: 'collected' }));
 
