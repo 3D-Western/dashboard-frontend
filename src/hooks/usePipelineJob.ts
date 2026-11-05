@@ -16,6 +16,9 @@ export interface UsePipelineJobOptions {
   enabled?: boolean;
 }
 
+/** Statuses after which the snapshot has facts the stream events lack (the rating card needs `ratingPending`). */
+const REREAD_STATUSES: ReadonlySet<StudentStatus> = new Set<StudentStatus>(['ready_for_pickup', 'collected']);
+
 /**
  * Follows one job's pipeline run: loads the snapshot at once, then streams events live (steps,
  * status, plan) and applies them in order. If the stream breaks it reconnects with backoff and
@@ -32,11 +35,17 @@ export function usePipelineJob(
   const lastSeq = useRef(0);
   const [refreshToken, setRefreshToken] = useState(0);
 
+  /** Re-reads the snapshot and reopens the stream (after an action, or on "try again"). */
+  const refresh = useCallback(() => setRefreshToken((token) => token + 1), []);
+
   useEffect(() => {
     if (!enabled) return;
     const controller = new AbortController();
     const { signal } = controller;
     let attempt = 0;
+    // A final status arrived on this run. Only then is the stream closed for good: a re-read (refresh)
+    // also aborts this run, and must not show the link as closed while the next run is live.
+    let finished = false;
 
     const wait = (ms: number) =>
       new Promise<void>((resolve) => {
@@ -77,7 +86,13 @@ export function usePipelineJob(
             onEvent: (event) => {
               lastSeq.current = Math.max(lastSeq.current, event.seq);
               dispatch({ type: 'event', event });
-              if (isTerminalStatus(event.studentStatus)) controller.abort();
+              // The snapshot carries what a stream event does not (e.g. ratingPending after pickup),
+              // so re-read it when the student's screen changes to one of these.
+              if (REREAD_STATUSES.has(event.studentStatus)) refresh();
+              if (isTerminalStatus(event.studentStatus)) {
+                finished = true;
+                controller.abort();
+              }
             },
           });
         } catch {
@@ -91,13 +106,11 @@ export function usePipelineJob(
     }
 
     void run().finally(() => {
-      if (signal.aborted) setConnection('closed');
+      if (finished) setConnection('closed');
     });
     return () => controller.abort();
-  }, [jobId, enabled, retryBaseMs, maxRetryMs, refreshToken]);
+  }, [jobId, enabled, retryBaseMs, maxRetryMs, refreshToken, refresh]);
 
-  /** Re-reads the snapshot and reopens the stream (after an action, or on "try again"). */
-  const refresh = useCallback(() => setRefreshToken((token) => token + 1), []);
   const showPlan = useCallback((plan: Plan) => dispatch({ type: 'plan', plan }), []);
   const setOptimisticStatus = useCallback(
     (studentStatus: StudentStatus) => dispatch({ type: 'optimistic', studentStatus }),
