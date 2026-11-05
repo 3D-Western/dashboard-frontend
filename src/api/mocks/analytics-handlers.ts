@@ -72,6 +72,7 @@ export const analyticsHandlers = [
     return HttpResponse.json(
       generateSuccessResponse({
         generatedAt: new Date().toISOString(),
+        minGroupSize: 5,
         weeks: mockStepsToSubmitWeeks(weeks),
       }),
     );

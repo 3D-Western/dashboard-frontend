@@ -76,18 +76,53 @@ export function sanitizeLabel(raw: string): string {
 }
 
 /**
- * The screen label of a page: its path with every id-like segment (a uuid or a number) replaced by
- * ":id", so no job id ever leaves the browser. null for the new-print page, which reports its own
- * stages (file, form, review ...) as screens.
+ * The pages a student can be on, as route patterns: ":id" stands for any one dynamic segment (a job, booking or
+ * attempt id). A label is always built from a pattern, never from the real path, so no id and no other text a URL
+ * can carry ever leaves the browser. The backend keeps the same list (AnalyticsLabels.SCREENS) and stores anything
+ * else as "other".
+ */
+const ROUTE_PATTERNS: string[][] = [
+  ['dashboard'],
+  ['dashboard', 'bookings'],
+  ['dashboard', 'bookings', 'new'],
+  ['dashboard', 'bookings', ':id'],
+  ['dashboard', 'jobs'],
+  ['dashboard', 'jobs', 'new'],
+  ['dashboard', 'jobs', 'cnc', 'new'],
+  ['dashboard', 'jobs', 'laser-cutting', 'new'],
+  ['dashboard', 'jobs', 'water-jet', 'new'],
+  ['dashboard', 'jobs', 'print-submission-history'],
+  ['dashboard', 'jobs', 'print-submission-history', ':id'],
+  ['dashboard', 'jobs', ':id'],
+  ['dashboard', 'settings'],
+  ['dashboard', 'training'],
+  ['dashboard', 'training', 'attempt', ':id'],
+  ['dashboard', 'training', 'attempt', ':id', 'review'],
+];
+
+/** The label for a page nobody listed: it says nothing about where the student was. */
+export const OTHER_SCREEN = 'other';
+
+/**
+ * The screen label of a page, from the route pattern it matches (literal segments win over ":id"), else "other".
+ * null for the new-print page, which reports its own stages (file, form, review ...) as screens.
  */
 export function screenOfPath(pathname: string): string | null {
   const segments = pathname.split('/').filter(Boolean);
   if (segments.length === 0) return 'home';
   if (segments.join('/') === 'dashboard/jobs/print/new') return null;
-  const labels = segments.map((segment) =>
-    /^[0-9a-f]{8}-[0-9a-f]{4}-|^\d+$/i.test(segment) ? ':id' : segment,
-  );
-  return sanitizeLabel(labels.join('.'));
+  let best: string[] | null = null;
+  let bestLiterals = -1;
+  for (const pattern of ROUTE_PATTERNS) {
+    if (pattern.length !== segments.length) continue;
+    if (!pattern.every((part, i) => part === ':id' || part === segments[i])) continue;
+    const literals = pattern.filter((part) => part !== ':id').length;
+    if (literals > bestLiterals) {
+      best = pattern;
+      bestLiterals = literals;
+    }
+  }
+  return best ? best.join('.') : OTHER_SCREEN;
 }
 
 function newSessionId(): string {

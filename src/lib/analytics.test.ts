@@ -263,6 +263,27 @@ describe('labels', () => {
     expect(screenOfPath('/dashboard/jobs/1042')).toBe('dashboard.jobs.:id');
   });
 
+  it('builds the label from the route pattern, so any dynamic segment is stripped, not only ids', () => {
+    // A segment that is a slug, a name or a file name matches the pattern's :id slot and is never sent
+    expect(screenOfPath('/dashboard/jobs/robot-arm-gear-v2')).toBe('dashboard.jobs.:id');
+    expect(screenOfPath('/dashboard/bookings/jane.doe')).toBe('dashboard.bookings.:id');
+    expect(screenOfPath('/dashboard/training/attempt/abc/review')).toBe(
+      'dashboard.training.attempt.:id.review',
+    );
+    expect(screenOfPath('/dashboard/jobs/print-submission-history/xyz')).toBe(
+      'dashboard.jobs.print-submission-history.:id',
+    );
+    // Literal pages win over the :id slot
+    expect(screenOfPath('/dashboard/jobs/new')).toBe('dashboard.jobs.new');
+    expect(screenOfPath('/dashboard/jobs/cnc/new')).toBe('dashboard.jobs.cnc.new');
+  });
+
+  it('labels a page that is not on the list "other", with nothing of its path', () => {
+    expect(screenOfPath('/dashboard/jobs/My File (final).STL/extra/deep')).toBe('other');
+    expect(screenOfPath('/admin/users')).toBe('other');
+    expect(screenOfPath('/Ünïcode/ß/ümlaut')).toBe('other');
+  });
+
   it('names the home page, and leaves the new-print page to its own stages', () => {
     expect(screenOfPath('/')).toBe('home');
     expect(screenOfPath('/dashboard/jobs/print/new')).toBeNull();
