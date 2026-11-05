@@ -1,14 +1,10 @@
-// The logic of "after the print" that needs no DOM: the quality reasons, what this browser
-// remembers so nobody is asked twice (P-92 #13: never annoying), and where the after-collection
-// flow is. Student pages only.
+// The logic of "after the print" that needs no DOM: the quality reasons, the follow-up answers, and
+// what this browser remembers. Student pages only. There is no "I've collected it" step and no
+// sequence of questions (P-136, P-137): one card holds the one-tap rating, the optional quality
+// step after a thumbs-down and at most two follow-up questions, all answerable in any order or not
+// at all.
 
-import type {
-  FollowupAnswer,
-  FollowupQuestion,
-  QualityReason,
-  Rating,
-  StudentStatus,
-} from '@/types/pipeline';
+import type { FollowupAnswer, FollowupQuestion, QualityReason } from '@/types/pipeline';
 
 // -- The quality step -------------------------------------------------------------------------
 
@@ -34,12 +30,12 @@ export const FOLLOWUP_ANSWERS: { value: FollowupAnswer; label: string }[] = [
   { value: 'unsure', label: 'Not sure' },
 ];
 
+/** At most this many follow-up questions are shown, together with the rating and never as a sequence. */
+export const MAX_INLINE_FOLLOWUPS = 2;
+
 // -- What this browser remembers --------------------------------------------------------------
 
 const RATED_PREFIX = '3dw:rated:';
-const SKIPPED_PREFIX = '3dw:rating-skipped:';
-/** A skipped rating is not asked again for a day. */
-export const SKIP_MEMORY_MS = 24 * 60 * 60 * 1000;
 
 function read(key: string): string | null {
   try {
@@ -53,7 +49,7 @@ function write(key: string, value: string) {
   try {
     window.localStorage.setItem(key, value);
   } catch {
-    // Private mode or blocked storage: the worst case is being asked once more.
+    // Private mode or blocked storage: the worst case is being offered the rating once more.
   }
 }
 
@@ -61,60 +57,10 @@ function write(key: string, value: string) {
 export const rememberRated = (jobId: string) => write(RATED_PREFIX + jobId, '1');
 export const wasRated = (jobId: string) => read(RATED_PREFIX + jobId) !== null;
 
-/** "Not now" on a rating prompt. */
-export const rememberRatingSkipped = (jobId: string, now = Date.now()) =>
-  write(SKIPPED_PREFIX + jobId, String(now));
-export function wasRatingSkipped(jobId: string, now = Date.now()): boolean {
-  const at = Number(read(SKIPPED_PREFIX + jobId));
-  return Number.isFinite(at) && at > 0 && now - at < SKIP_MEMORY_MS;
-}
-
-/** Follow-up questions the student skipped: asking again on every visit would be nagging. */
-const FOLLOWUP_SKIPPED_PREFIX = '3dw:followups-skipped:';
-
-export function skippedFollowups(jobId: string): number[] {
-  try {
-    const parsed: unknown = JSON.parse(read(FOLLOWUP_SKIPPED_PREFIX + jobId) ?? '[]');
-    return Array.isArray(parsed) ? parsed.filter((id): id is number => typeof id === 'number') : [];
-  } catch {
-    return [];
-  }
-}
-
-export function rememberFollowupSkipped(jobId: string, questionId: number) {
-  const known = skippedFollowups(jobId);
-  if (!known.includes(questionId)) {
-    write(FOLLOWUP_SKIPPED_PREFIX + jobId, JSON.stringify([...known, questionId]));
-  }
-}
-
-// -- After collection -------------------------------------------------------------------------
-
-export type AftercareStep = 'rate' | 'quality' | 'followups' | 'done';
-
-/**
- * Where the after-collection flow is: rate (unless already rated), the optional quality step
- * after a thumbs-down, the follow-up questions one at a time, then done.
- */
-export function aftercareStep(input: {
-  rated: boolean;
-  rating: Rating | null;
-  qualityHandled: boolean;
-  unanswered: number;
-}): AftercareStep {
-  if (!input.rated) return 'rate';
-  if (input.rating === 'down' && !input.qualityHandled) return 'quality';
-  return input.unanswered > 0 ? 'followups' : 'done';
-}
-
-/** The question to ask now: the first one not answered or skipped yet. */
-export function nextQuestion(
+/** The questions to show now: the first unanswered ones, at most MAX_INLINE_FOLLOWUPS, in the pipeline's order. */
+export function inlineFollowups(
   questions: readonly FollowupQuestion[] | undefined,
   handled: readonly number[],
-): FollowupQuestion | null {
-  return questions?.find((q) => !handled.includes(q.questionId)) ?? null;
+): FollowupQuestion[] {
+  return (questions ?? []).filter((q) => !handled.includes(q.questionId)).slice(0, MAX_INLINE_FOLLOWUPS);
 }
-
-/** Statuses after which the student has the print in hand and can rate it. */
-export const isCollectedStatus = (status: StudentStatus | null | undefined) =>
-  status === 'collected';

@@ -7,21 +7,21 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { usePipelineJob } from '@/hooks/usePipelineJob';
+import { trackPrintSubmitted } from '@/lib/analytics';
 import { Routes } from '@/lib/routes';
 import { studentStage } from '@/lib/student-status';
 import { TONE_CLASSES } from '@/app/(protected)/dashboard/jobs/lib/job-stages';
 import { cn } from '@/lib/utils';
-import type { Plan, StudentStatus } from '@/types/pipeline';
+import type { Plan, Rating, StudentStatus } from '@/types/pipeline';
 import { AfterPickup } from './AfterPickup';
 import { CannotPrint } from './CannotPrint';
-import { CollectButton } from './CollectButton';
 import { PickupCard } from './PickupCard';
 import { PartViewerSlot } from './PartViewerSlot';
 import { PreparingSteps } from './PreparingSteps';
 import { highlightsUrlOf, modelUrlOf, PlanFacts, previewUrlOf, ReviewPlan } from './ReviewPlan';
 
-/** How long after "collected" the job is read again to pick up the follow-up questions. */
-const COLLECTED_REREAD_MS = 4000;
+/** How long after a rating the job is read again to pick up the follow-up questions. */
+const RATED_REREAD_MS = 4000;
 
 const REVIEW_STATUSES: StudentStatus[] = ['needs_confirmation', 'needs_choice'];
 
@@ -36,6 +36,11 @@ interface PipelineJobPanelProps {
   onStatusChange?: (status: StudentStatus) => void;
   /** Only show the live steps, whatever the status (the student is still typing their answers). */
   stepsOnly?: boolean;
+  /**
+   * Counts the student's own saves of their answers on the new-print screen. A new plan after one
+   * of them is not a surprise ("your plan changed while you were reading it").
+   */
+  answersRevision?: number;
   /** Test hook: how quickly a broken stream is retried. */
   retryBaseMs?: number;
 }
@@ -51,6 +56,7 @@ export function PipelineJobPanel({
   initialStatus,
   showJobLink = false,
   stepsOnly = false,
+  answersRevision = 0,
   onStatusChange,
   retryBaseMs,
 }: PipelineJobPanelProps) {
@@ -73,19 +79,31 @@ export function PipelineJobPanel({
   }, [reviewing, plan]);
   const planWasUpdated = reviewing && baselinePlanId !== null && plan?.planId !== baselinePlanId;
 
-  // The pipeline sends the follow-up questions a moment after "collected" and the live stream is
-  // closed by then, so the job is re-read a few times instead of leaving the questions unseen.
+  // The student's own change of their answers makes a new plan on purpose: that is not a surprise.
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- forgets the plan shown before the student's own edit
+    if (answersRevision > 0) setBaselinePlanId(null);
+  }, [answersRevision]);
+
+  // Rating a print that was still ready for pickup records the collection (P-136). The pipeline sends
+  // the follow-up questions a moment after that and the live stream is closed by then, so the job is
+  // re-read a few times instead of leaving the questions unseen.
   const refreshTimers = useRef<ReturnType<typeof setTimeout>[]>([]);
   useEffect(() => {
     const timers = refreshTimers.current;
     return () => timers.forEach(clearTimeout);
   }, []);
-  const { refresh, setOptimisticStatus } = pipeline;
-  const handleCollected = useCallback(() => {
-    setOptimisticStatus('collected');
-    refresh();
-    refreshTimers.current.push(setTimeout(refresh, COLLECTED_REREAD_MS));
-  }, [setOptimisticStatus, refresh]);
+  const { refresh, setOptimisticStatus, markRated } = pipeline;
+  const wasReady = status === 'ready_for_pickup';
+  const handleRated = useCallback(
+    (rating: Rating) => {
+      markRated(rating);
+      if (wasReady) setOptimisticStatus('collected');
+      refresh();
+      refreshTimers.current.push(setTimeout(refresh, RATED_REREAD_MS));
+    },
+    [markRated, wasReady, setOptimisticStatus, refresh],
+  );
 
   const handlePlanChanged = (next: Plan | null) => {
     if (next) {
@@ -150,6 +168,7 @@ export function PipelineJobPanel({
         onConfirmed={() => {
           pipeline.setOptimisticStatus('queued');
           setBaselinePlanId(null);
+          trackPrintSubmitted(jobId);
         }}
         onPlanChanged={handlePlanChanged}
         onStudentChange={() => setBaselinePlanId(null)}
@@ -168,18 +187,10 @@ export function PipelineJobPanel({
           </h2>
           <p className="mt-2 text-sm text-muted-foreground">{message || stage.message}</p>
         </div>
-        {status === 'ready_for_pickup' && pickup && (
-          <PickupCard
-            pickup={pickup}
-            jobId={jobId}
-            onCollected={handleCollected}
-            onCollectConflict={refresh}
-          />
-        )}
-        {status === 'ready_for_pickup' && !pickup && (
-          <CollectButton jobId={jobId} onCollected={handleCollected} onConflict={refresh} />
-        )}
-        {status === 'collected' && (
+        {/* Ready for pickup: where and what, nothing to do or confirm (P-136) */}
+        {status === 'ready_for_pickup' && pickup && <PickupCard pickup={pickup} />}
+        {/* Rating: the next time the student is here (it implies they have the print) */}
+        {(status === 'collected' || status === 'ready_for_pickup') && (
           <AfterPickup
             jobId={jobId}
             jobName={jobName}
@@ -187,7 +198,7 @@ export function PipelineJobPanel({
             rating={pipeline.rating}
             followups={pipeline.followups}
             handledFollowups={pipeline.handledFollowups}
-            onRated={pipeline.markRated}
+            onRated={handleRated}
             onFollowupHandled={pipeline.markFollowupHandled}
           />
         )}

@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import { NextRequest } from 'next/server';
-import { GET } from './route';
+import { GET, POST } from './route';
 
 afterEach(() => vi.unstubAllGlobals());
 
@@ -60,5 +60,20 @@ describe('API proxy', () => {
 
     expect(await response.text()).toBe('{"success":true}');
     expect(response.headers.get('Cache-Control')).toBeNull();
+  });
+
+  it('forwards a 204 without a body instead of failing on it', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(null, { status: 204 })));
+
+    const response = await POST(
+      new NextRequest('http://localhost/api/v1/analytics/events', {
+        method: 'POST',
+        body: '{"sessionId":"s","events":[]}',
+      }),
+      ctx(['v1', 'analytics', 'events']),
+    );
+
+    expect(response.status).toBe(204);
+    expect(await response.text()).toBe('');
   });
 });

@@ -45,7 +45,12 @@ export function RateButtons({
 
   const base = 'h-auto min-h-16 flex-1 flex-col gap-1 py-3 text-base fine:min-h-14';
   return (
-    <div className={cn('flex gap-3', className)} role="group" aria-label="How did it turn out?">
+    <div
+      className={cn('flex gap-3', className)}
+      role="group"
+      aria-label="How did it turn out?"
+      data-track="rate"
+    >
       <Button
         type="button"
         variant="outline"

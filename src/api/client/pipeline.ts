@@ -44,7 +44,7 @@ export function planFromConflictBody(body: unknown): Plan | null {
   return isPlan(plan) ? plan : null;
 }
 
-/** Error code of a 409 on an action that is not about the plan (nothing to collect, already answered). */
+/** Error code of a 409 on an action that is not about the plan (not ready to rate, already answered). */
 export const CONFLICT_CODE = 'CONFLICT';
 
 /**
@@ -139,7 +139,7 @@ async function pipelineRequest<T>(
 const post = <T>(url: string, payload: unknown) =>
   pipelineRequest<T>(url, { method: 'POST', body: JSON.stringify(payload) });
 
-/** An action after the print (collect, rate, report, answer): a 409 is a conflict, never a plan change. */
+/** An action after the print (rate, report, answer): a 409 is a conflict, never a plan change. */
 const postAction = <T>(url: string, payload?: unknown) =>
   pipelineRequest<T>(
     url,
@@ -288,14 +288,10 @@ export const pipelineApi = {
   report: (jobId: string, text: string) => post<void>(endpoints.pipeline.report(jobId), { text }),
 
   /**
-   * "I've collected it" (P-78). Rejected with a conflict (see `isConflictError`) unless the print
-   * is ready for pickup (tapping again once collected is accepted).
-   */
-  collected: (jobId: string) => postAction<PipelineSnapshot>(endpoints.pipeline.collected(jobId)),
-
-  /**
    * The one-tap thumbs up or down (P-20), one rating per print: the same again is accepted, a
-   * different one is a conflict. Answers with the job's updated student view.
+   * different one is a conflict. Answers with the job's updated student view. A rating also means
+   * the student has the print (P-136: there is no "I've collected it" step), so it is accepted
+   * while a print is still ready for pickup, and the backend records the collection.
    */
   rate: (jobId: string, rating: Rating) =>
     postAction<PipelineSnapshot>(endpoints.pipeline.rating(jobId), {

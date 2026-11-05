@@ -1,16 +1,8 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import { CheckCircle2 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import {
-  aftercareStep,
-  nextQuestion,
-  rememberRatingSkipped,
-  skippedFollowups,
-  wasRated,
-  wasRatingSkipped,
-} from '@/lib/pipeline-aftercare';
+import { inlineFollowups, wasRated } from '@/lib/pipeline-aftercare';
 import type { FollowupQuestion, Rating } from '@/types/pipeline';
 import { FollowupQuestions } from './FollowupQuestions';
 import { QualityReport } from './QualityReport';
@@ -19,11 +11,11 @@ import { RateButtons } from './RateButtons';
 interface AfterPickupProps {
   jobId: string;
   jobName?: string;
-  /** The backend says this collected print still needs its rating (`ratingPending`). */
+  /** The backend says this print still needs its rating (`ratingPending`). */
   ratingPending: boolean | null;
   /** The rating given on this screen, if any. */
   rating: Rating | null;
-  /** Follow-up questions from the pipeline, in order, and the ones already answered or skipped. */
+  /** Follow-up questions from the pipeline, in order, and the ones already answered here. */
   followups: FollowupQuestion[];
   handledFollowups: number[];
   onRated: (rating: Rating) => void;
@@ -31,10 +23,11 @@ interface AfterPickupProps {
 }
 
 /**
- * After the student collected the print: a one-tap thumbs up/down, a thumbs-down opens the quick
- * optional quality step (P-102), then the targeted follow-up questions one at a time (P-109).
- * Every step can be skipped and nothing comes back once it was (P-92: never annoying). When
- * there is nothing to ask the card is not on screen at all.
+ * What the student can say about a print, in one card and no sequence (P-136, P-137): the one-tap
+ * thumbs up/down (a rating implies they have the print, so there is nothing to confirm first), the
+ * optional quality step right below after a thumbs-down, and at most two follow-up questions (P-109)
+ * under them. Everything is optional and in any order; nothing is a separate screen. When there is
+ * nothing to ask, the card is not on screen at all.
  */
 export function AfterPickup({
   jobId,
@@ -46,29 +39,23 @@ export function AfterPickup({
   onRated,
   onFollowupHandled,
 }: AfterPickupProps) {
-  // Browser facts, read once when the card first shows (it only renders after the data loaded).
-  const [skipped] = useState(() => skippedFollowups(jobId));
-  const [ratingSkipped, setRatingSkipped] = useState(() => wasRatingSkipped(jobId));
+  // Browser fact, read once when the card first shows (it only renders after the data loaded).
+  const [alreadyRated] = useState(() => wasRated(jobId));
   const [qualityHandled, setQualityHandled] = useState(false);
-  // Something was asked in this visit: say thanks at the end instead of vanishing.
+  // Something was done in this visit: say thanks at the end instead of vanishing.
   const [engaged, setEngaged] = useState(false);
 
-  const handled = useMemo(() => [...handledFollowups, ...skipped], [handledFollowups, skipped]);
-  const remaining = followups.filter((q) => !handled.includes(q.questionId));
-  const question = nextQuestion(followups, handled);
-  // "1 of 3" counts what is asked in this visit, not questions skipped on an earlier one.
-  const askedHere = followups.filter((q) => handledFollowups.includes(q.questionId)).length;
+  // The (at most two) questions are fixed the first time there are any, so answering one never
+  // brings a third in: the card stays the same size and is never a sequence.
+  const [shown, setShown] = useState<FollowupQuestion[] | null>(null);
+  const candidates = inlineFollowups(followups, handledFollowups);
+  if (shown === null && candidates.length > 0) setShown(candidates);
+  const questions = shown ?? [];
+  const questionsOpen = questions.some((q) => !handledFollowups.includes(q.questionId));
+  const needsRating = ratingPending === true && !alreadyRated && rating === null;
+  const showQuality = rating === 'down' && !qualityHandled;
 
-  const isRated = ratingPending !== true || wasRated(jobId) || ratingSkipped;
-  // The quality step belongs to the thumbs-down given just now; coming back later never reopens it.
-  const step = aftercareStep({
-    rated: isRated,
-    rating: engaged ? rating : null,
-    qualityHandled,
-    unanswered: remaining.length,
-  });
-
-  if (step === 'done') {
+  if (!needsRating && !showQuality && !questionsOpen) {
     if (!engaged) return null;
     return (
       <p
@@ -85,12 +72,11 @@ export function AfterPickup({
     <section
       aria-labelledby="aftercare-heading"
       aria-live="polite"
-      className="space-y-4 rounded-lg border bg-card p-4"
+      className="space-y-5 rounded-lg border bg-card p-4"
       data-testid="after-pickup"
-      data-step={step}
     >
-      {step === 'rate' && (
-        <>
+      {needsRating && (
+        <div className="space-y-4">
           <div>
             <h2 id="aftercare-heading" className="text-lg font-semibold">
               How did {jobName ? <span className="break-words">{jobName}</span> : 'it'} turn out?
@@ -104,26 +90,16 @@ export function AfterPickup({
               onRated(value);
             }}
           />
-          <Button
-            type="button"
-            variant="ghost"
-            size="sm"
-            className="text-muted-foreground"
-            onClick={() => {
-              rememberRatingSkipped(jobId);
-              setRatingSkipped(true);
-            }}
-          >
-            Not now
-          </Button>
-        </>
+        </div>
       )}
 
-      {step === 'quality' && (
-        <>
-          <h2 id="aftercare-heading" className="sr-only">
-            Report print quality
-          </h2>
+      {showQuality && (
+        <div>
+          {!needsRating && (
+            <h2 id="aftercare-heading" className="sr-only">
+              Report print quality
+            </h2>
+          )}
           <QualityReport
             jobId={jobId}
             onDone={() => {
@@ -131,26 +107,26 @@ export function AfterPickup({
               setQualityHandled(true);
             }}
           />
-        </>
+        </div>
       )}
 
-      {step === 'followups' && question && (
-        <>
-          <h2 id="aftercare-heading" className="sr-only">
-            A few quick questions
-          </h2>
+      {questions.length > 0 && (
+        <div className="space-y-3">
+          {!needsRating && !showQuality && (
+            <h2 id="aftercare-heading" className="text-base font-semibold">
+              {questions.length === 1 ? 'One quick question' : 'Two quick questions'}
+            </h2>
+          )}
           <FollowupQuestions
-            key={question.questionId}
             jobId={jobId}
-            question={question}
-            position={askedHere + 1}
-            total={askedHere + remaining.length}
+            questions={questions}
+            handled={handledFollowups}
             onHandled={(id) => {
               setEngaged(true);
               onFollowupHandled(id);
             }}
           />
-        </>
+        </div>
       )}
     </section>
   );

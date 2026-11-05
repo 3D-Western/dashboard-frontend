@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { PlanChangedError, pipelineApi } from '@/api/client/pipeline';
+import { trackPrintSubmitted } from '@/lib/analytics';
 import { PipelineJobPanel } from './PipelineJobPanel';
 import {
   createMockEvent,
@@ -23,6 +24,11 @@ vi.mock('@/api/client/pipeline', async (importOriginal) => ({
     choose: vi.fn(),
     report: vi.fn(),
   },
+}));
+
+vi.mock('@/lib/analytics', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@/lib/analytics')>()),
+  trackPrintSubmitted: vi.fn(),
 }));
 
 const api = vi.mocked(pipelineApi);
@@ -47,6 +53,7 @@ beforeEach(() => {
   api.saveInputs.mockResolvedValue(undefined);
   api.confirm.mockResolvedValue(undefined);
   api.choose.mockResolvedValue(undefined);
+  vi.mocked(trackPrintSubmitted).mockClear();
 });
 
 describe('Preparing your print', () => {
@@ -176,6 +183,23 @@ describe('Review', () => {
 
     expect(api.confirm).toHaveBeenCalledWith('job-1', 'plan-77');
     expect(await screen.findByRole('heading', { name: 'Queued' })).toBeInTheDocument();
+  });
+
+  it('counts the yes as the submitted print for the steps-to-submit metric, and a refused yes is not one', async () => {
+    api.getState.mockResolvedValue(reviewSnapshot({ planId: 'plan-1' }));
+    openStream();
+    api.confirm.mockRejectedValueOnce(new PlanChangedError(createMockPlan({ planId: 'plan-2' })));
+    const user = setup();
+    render(<PipelineJobPanel jobId="job-1" />);
+
+    await user.click(await screen.findByRole('button', { name: 'Yes, print this' }));
+    await screen.findByRole('button', { name: 'Yes, print this updated plan' });
+    expect(trackPrintSubmitted).not.toHaveBeenCalled();
+
+    await user.click(screen.getByRole('button', { name: 'Yes, print this updated plan' }));
+    await screen.findByRole('heading', { name: 'Queued' });
+    expect(trackPrintSubmitted).toHaveBeenCalledTimes(1);
+    expect(trackPrintSubmitted).toHaveBeenCalledWith('job-1');
   });
 
   it('on a 409 shows the changed plan and asks for a second yes', async () => {
@@ -351,7 +375,7 @@ describe('Ready for pickup', () => {
 
     expect(await screen.findByRole('heading', { name: 'Slot 14, tag K7Q2' })).toBeInTheDocument();
     expect(screen.getByAltText('Your finished print')).toHaveAttribute('src', '/pickup.png');
-    expect(screen.getByText(/please collect it by/i)).toBeInTheDocument();
+    expect(screen.getByText(/yours to take until/i)).toBeInTheDocument();
   });
 
   it('picks up the slot from a pickup event on the stream', async () => {
