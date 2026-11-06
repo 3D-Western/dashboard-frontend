@@ -83,5 +83,7 @@ describe('kinds', () => {
     expect([...KIND_ORDER].sort()).toEqual(Object.keys(KIND_LABEL).sort());
     expect(KIND_ORDER).toContain('farm_job_held');
     expect(KIND_ORDER).toContain('printer_quarantined');
+    expect(KIND_ORDER).toContain('student_disagrees');
+    expect(KIND_LABEL.student_disagrees).toBe('Student disagrees');
   });
 });

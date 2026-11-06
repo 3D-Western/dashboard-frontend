@@ -133,7 +133,10 @@ describe('DisagreePanel', () => {
 
     await user.type(box(), 'Why?');
     await user.click(askButton());
-    await user.click(await screen.findByRole('button', { name: 'Try again' }));
+    const tryAgain = await screen.findByRole('button', { name: 'Try again' });
+    // A 503 or 429 of the ask call still leaves the way to the crew open
+    expect(screen.getByRole('button', { name: 'Ask the crew' })).toBeEnabled();
+    await user.click(tryAgain);
 
     expect(await screen.findByText('Here is why.')).toBeInTheDocument();
     expect(api.disagree).toHaveBeenCalledTimes(2);
@@ -214,6 +217,30 @@ describe('DisagreePanel', () => {
 
     rerender(<DisagreePanel jobId="job-1" currentPlanId="plan-2" />);
     expect(screen.getByText(/earlier version of your plan/)).toBeInTheDocument();
+  });
+
+  it('makes a lesson card chip (by its code) take the student to that card when it is on the page', async () => {
+    const card = document.createElement('article');
+    card.id = 'lesson-card-overhang';
+    const scrolled = vi.fn();
+    const clicked = vi.fn();
+    card.scrollIntoView = scrolled;
+    card.addEventListener('click', clicked);
+    document.body.append(card);
+    api.disagree.mockResolvedValue(answer());
+    const user = setup();
+    render(<DisagreePanel jobId="job-1" />);
+
+    await user.type(box(), 'Why?');
+    await user.click(askButton());
+    await user.click(await screen.findByRole('button', { name: /We added supports/ }));
+    card.remove();
+
+    expect(scrolled).toHaveBeenCalled();
+    expect(clicked).toHaveBeenCalled();
+    // The other chip has no card to go to and stays a plain label
+    expect(screen.getAllByRole('button', { name: /We added supports/ })).toHaveLength(1);
+    expect(screen.queryByRole('button', { name: /Print time/ })).toBeNull();
   });
 
   it('shows only the student wording, never fields the assistant should not have sent', async () => {

@@ -12,7 +12,7 @@ import {
   questionsLeftText,
 } from '@/lib/pipeline-disagree';
 import { cn } from '@/lib/utils';
-import type { DisagreeAnswer } from '@/types/pipeline';
+import type { DisagreeAnswer, DisagreeCitation } from '@/types/pipeline';
 
 /**
  * "Ask why" (P-54): a compact chat on a plan or a finished job. The assistant explains from the
@@ -225,16 +225,42 @@ function AnswerBubble({
       {citations.length > 0 && (
         <ul aria-label="Based on" className="flex flex-wrap gap-1.5">
           {citations.map((citation) => (
-            <li
-              key={citation.entryId}
-              className="rounded-full border bg-background px-2 py-0.5 text-xs text-muted-foreground"
-            >
-              {citation.title}
+            <li key={citation.entryId}>
+              <CitationChip citation={citation} />
             </li>
           ))}
         </ul>
       )}
     </div>
+  );
+}
+
+const CHIP_CLASS = 'rounded-full border bg-background px-2 py-0.5 text-xs text-muted-foreground';
+
+/**
+ * A chip with the entry's title. A lesson card's chip has its finding `code`: when that card is on
+ * this page the chip takes the student to it and selects it, as tapping the card does (which also
+ * lights up its region on the part).
+ */
+function CitationChip({ citation }: { citation: DisagreeCitation }) {
+  const card =
+    citation.kind === 'lesson_card' && citation.code && typeof document !== 'undefined'
+      ? document.getElementById(`lesson-card-${citation.code}`)
+      : null;
+  if (!card) return <span className={CHIP_CLASS}>{citation.title}</span>;
+  return (
+    <button
+      type="button"
+      className={cn(CHIP_CLASS, 'hover:border-purple-light hover:text-foreground')}
+      aria-label={`${citation.title} (show this card)`}
+      onClick={() => {
+        const reduced = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+        card.scrollIntoView?.({ behavior: reduced ? 'auto' : 'smooth', block: 'center' });
+        card.click();
+      }}
+    >
+      {citation.title}
+    </button>
   );
 }
 

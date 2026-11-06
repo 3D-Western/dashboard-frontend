@@ -213,6 +213,34 @@ export interface StaffRender {
   url: string;
 }
 
+/** One exchange of a student's conversation with the "Ask why" assistant, as the pipeline recorded it. */
+export interface StaffDisagreeTurn {
+  turn?: number | null;
+  askedAt?: string | null;
+  question: string;
+  /** How the assistant answered: answered, not_in_record, declined, unavailable ... */
+  status?: string | null;
+  answer?: string | null;
+  /** Record entries the answer used: `card:<finding code>`, `summary`, `numbers` ... */
+  cited?: string[];
+  /** Local injection rules the question matched (the assistant declined it without a model call). */
+  injectionRules?: string[];
+}
+
+/** A student's "Ask the crew" after the assistant (P-54). Staff only: the student's own words. */
+export interface StudentDisagreement {
+  eventSeq: number;
+  occurredAt: string;
+  escalationId?: string | null;
+  /** What the student wrote when asking the crew; absent when they just clicked. */
+  studentReason?: string | null;
+  citedFindingCodes?: string[];
+  /** A question looked like an attempt to manipulate the assistant. */
+  suspectedInjection?: boolean;
+  conversation?: StaffDisagreeTurn[];
+  note?: string | null;
+}
+
 /** GET /api/v1/admin/pipeline/review/jobs/{id} */
 export interface StaffJobView {
   jobId: string;
@@ -240,6 +268,8 @@ export interface StaffJobView {
   allowedDecisions: StaffDecisionType[];
   /** Renders of the part for the screening review (latest hold that had any), as short-lived links. */
   screeningRenders?: StaffRender[];
+  /** Students who asked the crew after the "Ask why" assistant, oldest first. Staff only. */
+  studentDisagreements?: StudentDisagreement[];
 }
 
 // -- Decisions --------------------------------------------------------------------------------

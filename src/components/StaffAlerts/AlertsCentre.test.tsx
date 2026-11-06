@@ -53,6 +53,31 @@ describe('AlertsCentre', () => {
     expect(screen.getByRole('button', { name: /^Open 2$/ })).toBeInTheDocument();
   });
 
+  it('offers the student_disagrees kind as a filter and shows the reason and conversation', async () => {
+    const disagrees = createStaffAlert({
+      id: 20,
+      kind: 'student_disagrees',
+      title: 'A student disagrees with a decision',
+      details: [
+        { label: 'Job', value: ALERT_JOB_ID },
+        { label: "Student's reason", value: 'The supports ruined my part' },
+        { label: 'Question 1', value: 'Why supports?' },
+        { label: 'Answer 1 (answered)', value: 'The arm overhangs.' },
+        { label: 'Question 2', value: 'Really?' },
+        { label: 'Answer 2 (declined)', value: 'I can only explain.' },
+      ],
+    });
+    api.list.mockResolvedValue(createAlertList([disagrees]));
+    render(<AlertsCentre now={NOW} refreshMs={0} />);
+
+    await screen.findByText('A student disagrees with a decision');
+    expect(screen.getByText("Student's reason")).toBeInTheDocument();
+    expect(screen.getByText('The supports ruined my part')).toBeInTheDocument();
+    expect(screen.getByText('Answer 2 (declined)')).toBeInTheDocument();
+    expect(screen.getByText('I can only explain.')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /student disagrees/i })).toBeInTheDocument();
+  });
+
   it('links each alert straight to where it is dealt with', async () => {
     api.list.mockResolvedValue(
       createAlertList([

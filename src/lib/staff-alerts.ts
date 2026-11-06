@@ -22,11 +22,13 @@ export const KIND_LABEL: Record<AlertKind, string> = {
   pipeline_recovered: 'Pipeline recovered',
   farm_job_held: 'Farm job held',
   printer_quarantined: 'Printer quarantined',
+  student_disagrees: 'Student disagrees',
 };
 
 export const KIND_ORDER: AlertKind[] = [
   'hold',
   'escalation',
+  'student_disagrees',
   'farm_job_held',
   'printer_quarantined',
   'pipeline_outage',

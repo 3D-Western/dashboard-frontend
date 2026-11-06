@@ -10,7 +10,9 @@ export type AlertKind =
   | 'pipeline_outage'
   | 'pipeline_recovered'
   | 'farm_job_held'
-  | 'printer_quarantined';
+  | 'printer_quarantined'
+  /** A student asked the crew after the "Ask why" assistant (P-54); details hold their reason and the conversation. */
+  | 'student_disagrees';
 
 /** How urgent: info needs no action (stored already closed), critical is an escalation or outage. */
 export type AlertSeverity = 'info' | 'warning' | 'critical';

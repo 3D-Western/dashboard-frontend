@@ -16,6 +16,7 @@ import { formatAgo, formatDateTime } from '@/lib/signoff-format';
 import type { StaffJobView } from '@/types/pipeline-review';
 import { FindingList } from './FindingList';
 import { ProblemReportList } from './ProblemReports';
+import { StudentDisagreementList } from './StudentDisagreements';
 
 const Section = ({
   title,
@@ -74,6 +75,12 @@ export function JobDetails({
 
   return (
     <div className="space-y-8">
+      {(job.studentDisagreements?.length ?? 0) > 0 && (
+        <Section title="Student disagrees" id="disagreements-title">
+          <StudentDisagreementList disagreements={job.studentDisagreements ?? []} now={now} />
+        </Section>
+      )}
+
       <PartFocusProvider>
         <Section title="Findings" id="findings-title">
           <p className="text-sm text-muted-foreground">
