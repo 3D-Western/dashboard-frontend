@@ -36,6 +36,9 @@ export const endpoints = {
     report: (jobId: string) => `/api/v1/jobs/${jobId}/pipeline/report`,
     rating: (jobId: string) => `/api/v1/jobs/${jobId}/pipeline/rating`,
     quality: (jobId: string) => `/api/v1/jobs/${jobId}/pipeline/quality`,
+    // The "Ask why" assistant and its one-click hand-over to the crew (P-54)
+    disagree: (jobId: string) => `/api/v1/jobs/${jobId}/pipeline/disagree`,
+    disagreeEscalate: (jobId: string) => `/api/v1/jobs/${jobId}/pipeline/disagree/escalate`,
     followup: (jobId: string, questionId: number | string) =>
       `/api/v1/jobs/${jobId}/pipeline/followups/${questionId}`,
     // Rate first (P-20), look-ahead: the prints to rate before the new-print screen asks for a file

@@ -1,6 +1,9 @@
 import type {
   ChoiceRequest,
   ConfirmRequest,
+  DisagreeAnswer,
+  DisagreeEscalateRequest,
+  DisagreeQuestion,
   FollowupAnswer,
   FollowupAnswerRequest,
   PipelineSnapshot,
@@ -331,4 +334,38 @@ export const pipelineApi = {
     postAction<PipelineSnapshot>(endpoints.pipeline.followup(jobId, questionId), {
       answer,
     } satisfies FollowupAnswerRequest),
+
+  /**
+   * Asks the "Ask why" assistant about a decision (P-54). `request.requestId` is the idempotency
+   * key: send the same one again to retry and the stored answer comes back without counting
+   * against the limits. A 200 carries whatever `status` the assistant gave (`unavailable` and
+   * `rate_limited` included), so only a transport or request error throws. Never cached.
+   */
+  disagree: (jobId: string, request: DisagreeQuestion) =>
+    pipelineRequest<DisagreeAnswer>(
+      endpoints.pipeline.disagree(jobId),
+      {
+        method: 'POST',
+        cache: 'no-store',
+        body: JSON.stringify({ requestId: request.requestId, text: request.text }),
+      },
+      { conflictIsPlanChange: false },
+    ),
+
+  /**
+   * "Ask the crew": hands the conversation to staff, with the student's own words if they add any.
+   * A 409 (`isConflictError`) means it is already with the crew.
+   */
+  escalateDisagree: (jobId: string, text?: string) =>
+    pipelineRequest<void>(
+      endpoints.pipeline.disagreeEscalate(jobId),
+      {
+        method: 'POST',
+        cache: 'no-store',
+        body: JSON.stringify(
+          (text?.trim() ? { text: text.trim() } : {}) satisfies DisagreeEscalateRequest,
+        ),
+      },
+      { conflictIsPlanChange: false },
+    ),
 };

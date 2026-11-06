@@ -15,6 +15,7 @@ import { cn } from '@/lib/utils';
 import type { PipelineSnapshot, Plan, Rating, StudentStatus } from '@/types/pipeline';
 import { AfterPickup } from './AfterPickup';
 import { CannotPrint } from './CannotPrint';
+import { DisagreePanel } from './DisagreePanel';
 import { PickupCard } from './PickupCard';
 import { PartViewerSlot } from './PartViewerSlot';
 import { PreparingSteps } from './PreparingSteps';
@@ -283,9 +284,19 @@ export function PipelineJobPanel({
     );
   }
 
+  // "Ask why" goes with a plan or a finished decision; while the part is still being prepared there
+  // is nothing to ask about yet.
+  const canAskWhy =
+    !stepsOnly && status !== null && status !== 'preparing' && !(reviewing && !plan);
+
   return (
     <div data-testid="pipeline-panel" data-status={status ?? 'loading'}>
       {body}
+      {canAskWhy && (
+        <div className="mt-6">
+          <DisagreePanel jobId={jobId} currentPlanId={plan?.planId} />
+        </div>
+      )}
     </div>
   );
 }

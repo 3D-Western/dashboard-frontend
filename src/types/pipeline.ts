@@ -243,3 +243,47 @@ export interface QualityReportRequest {
 export interface FollowupAnswerRequest {
   answer: FollowupAnswer;
 }
+
+/** What the "Ask why" assistant answered with (`status`); the `answer` text is always student-facing. */
+export type DisagreeStatus =
+  | 'answered'
+  | 'not_in_record'
+  | 'declined'
+  | 'unavailable'
+  | 'rate_limited';
+
+/** One entry of the job's student-visible record that an answer used; shown as a chip by `title`. */
+export interface DisagreeCitation {
+  entryId: string;
+  kind: 'status' | 'summary' | 'numbers' | 'lesson_card' | 'choice' | 'setting' | 'notice';
+  title: string;
+  /** The finding code of a lesson card. */
+  code?: string | null;
+}
+
+/** POST .../pipeline/disagree body: `requestId` is the idempotency key, kept for retries. */
+export interface DisagreeQuestion {
+  requestId: string;
+  text: string;
+}
+
+/** POST .../pipeline/disagree response (the pipeline's DisagreeAnswer, camelCase). */
+export interface DisagreeAnswer {
+  requestId: string;
+  turn: number;
+  status: DisagreeStatus;
+  answer: string;
+  askedAt: string;
+  /** True for every status: "Ask the crew" is always offered. */
+  canEscalate?: boolean;
+  citations?: DisagreeCitation[];
+  /** The plan the answer was about; may be an earlier one than the plan on screen. */
+  planId?: string | null;
+  questionsLeft?: number | null;
+  retryAfterS?: number | null;
+}
+
+/** POST .../pipeline/disagree/escalate body. */
+export interface DisagreeEscalateRequest {
+  text?: string;
+}
