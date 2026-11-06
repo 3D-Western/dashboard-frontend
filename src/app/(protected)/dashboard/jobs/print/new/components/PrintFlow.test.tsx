@@ -144,7 +144,10 @@ describe('PrintFlow', () => {
     await waitFor(() => expect(jobs.completeUpload).toHaveBeenCalled());
     await user.click(screen.getByRole('radio', { name: 'Personal project' }));
 
-    await user.type(screen.getByRole('textbox', { name: /tell us about your part/i }), 'A desk hook');
+    await user.type(
+      screen.getByRole('textbox', { name: /tell us about your part/i }),
+      'A desk hook',
+    );
     await user.tab();
 
     await waitFor(() =>
@@ -178,6 +181,82 @@ describe('PrintFlow', () => {
     // The form stays on screen, editable, with the review right under it
     expect(await screen.findByRole('button', { name: /yes, print this/i })).toBeEnabled();
     expect(screen.getByRole('textbox', { name: /tell us about your part/i })).toBeEnabled();
+  });
+
+  describe('after the review is shown', () => {
+    async function openReview() {
+      pipeline.getState.mockResolvedValue(
+        createMockSnapshot({ studentStatus: 'needs_confirmation', plan: createMockPlan() }),
+      );
+      const user = setup();
+      const { container } = render(<PrintFlow />);
+      await chooseFile(container);
+      await user.click(await screen.findByRole('radio', { name: 'Personal project' }));
+      await user.type(
+        screen.getByRole('textbox', { name: /tell us about your part/i }),
+        'A desk hook',
+      );
+      await user.tab();
+      await screen.findByRole('button', { name: /yes, print this/i });
+      await waitFor(() =>
+        expect(screen.getByRole('button', { name: /yes, print this/i })).toBeEnabled(),
+      );
+      return user;
+    }
+
+    it('keeps the review (and the yes) on screen while the student edits, holding the yes until the edit is saved', async () => {
+      const user = await openReview();
+      pipeline.saveInputs.mockClear();
+
+      await user.type(
+        screen.getByRole('textbox', { name: /tell us about your part/i }),
+        ' on a wall',
+      );
+
+      // Not back to the steps-only view: the yes is still there, waiting for the save
+      const yes = screen.getByRole('button', { name: /yes, print this/i });
+      expect(yes).toBeDisabled();
+      expect(screen.getByText(/saving your changes first/i)).toBeInTheDocument();
+      await user.tab();
+      await waitFor(() =>
+        expect(pipeline.saveInputs).toHaveBeenLastCalledWith(
+          'job-9',
+          expect.objectContaining({ description: 'A desk hook on a wall' }),
+        ),
+      );
+      await waitFor(() =>
+        expect(screen.getByRole('button', { name: /yes, print this/i })).toBeEnabled(),
+      );
+    });
+
+    it('locks the answers once the student says yes, and saves nothing more', async () => {
+      const user = await openReview();
+      pipeline.confirm.mockResolvedValue(undefined);
+      pipeline.saveInputs.mockClear();
+
+      await user.click(screen.getByRole('button', { name: /yes, print this/i }));
+
+      await waitFor(() =>
+        expect(screen.getByRole('textbox', { name: /tell us about your part/i })).toBeDisabled(),
+      );
+      expect(screen.getByRole('radio', { name: 'Personal project' })).toBeDisabled();
+      expect(screen.getByText(/your answers are locked/i)).toBeInTheDocument();
+      expect(pipeline.saveInputs).not.toHaveBeenCalled();
+    });
+
+    it('treats a 409 on saving the answers as "already sent", not as a changed plan or a save error', async () => {
+      const user = await openReview();
+      pipeline.saveInputs.mockRejectedValue(new ApiError('CONFLICT', 'The job is closed'));
+
+      await user.type(screen.getByRole('textbox', { name: /tell us about your part/i }), ' now');
+      await user.tab();
+
+      await waitFor(() =>
+        expect(screen.getByRole('textbox', { name: /tell us about your part/i })).toBeDisabled(),
+      );
+      expect(screen.queryByText(/couldn.t save your answers/i)).not.toBeInTheDocument();
+      expect(screen.queryByText(/plan changed/i)).not.toBeInTheDocument();
+    });
   });
 
   it('puts a returning student straight into the description', async () => {

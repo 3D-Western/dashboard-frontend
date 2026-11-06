@@ -95,6 +95,8 @@ interface ReviewPlanProps {
   onStudentChange: () => void;
   /** Set when the plan on screen replaced one the student had already seen. */
   planWasUpdated?: boolean;
+  /** The student has answers still being saved: the yes waits so it quotes the plan they will get. */
+  inputsPending?: boolean;
 }
 
 /**
@@ -110,6 +112,7 @@ export function ReviewPlan({
   onPlanChanged,
   onStudentChange,
   planWasUpdated = false,
+  inputsPending = false,
 }: ReviewPlanProps) {
   // The review is a screen of its own in the steps-to-submit metric (P-137)
   useEffect(() => {
@@ -188,7 +191,9 @@ export function ReviewPlan({
     ? 'Choose an option above first.'
     : settingsDirty
       ? 'Update your plan with your new settings first.'
-      : null;
+      : inputsPending
+        ? 'Saving your changes first, then your plan updates.'
+        : null;
 
   return (
     <PartFocusProvider>
@@ -248,7 +253,9 @@ export function ReviewPlan({
           <Button
             type="button"
             size="lg"
-            disabled={confirming || studentStatus !== 'needs_confirmation' || settingsDirty}
+            disabled={
+              confirming || studentStatus !== 'needs_confirmation' || settingsDirty || inputsPending
+            }
             aria-busy={confirming}
             data-track="confirm_print"
             onClick={handleConfirm}

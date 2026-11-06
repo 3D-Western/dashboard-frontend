@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { AlertTriangle, Check, FileBox, Loader2 } from 'lucide-react';
 import { RadioGroup as RadioGroupPrimitive } from 'radix-ui';
-import { pipelineApi } from '@/api/client/pipeline';
+import { isConflictError, pipelineApi } from '@/api/client/pipeline';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -22,7 +22,7 @@ import {
   rememberPurpose,
 } from '@/lib/purpose-memory';
 import { trackScreen } from '@/lib/analytics';
-import type { Purpose, StudentInputs, UnratedPrint } from '@/types/pipeline';
+import type { Purpose, StudentInputs, StudentStatus, UnratedPrint } from '@/types/pipeline';
 import { useJobUpload } from './useJobUpload';
 
 // STL, STEP, or 3MF (as plain geometry, or as a project carrying the student's own settings; P-53).
@@ -54,6 +54,10 @@ const CHIP =
 
 type SaveState = 'idle' | 'saving' | 'saved' | 'error';
 
+const REVIEW_STATUSES: readonly StudentStatus[] = ['needs_confirmation', 'needs_choice'];
+/** Statuses in which the pipeline still takes the student's answers (before and during the review). */
+const EDITABLE_STATUSES: readonly StudentStatus[] = ['preparing', ...REVIEW_STATUSES];
+
 /**
  * The student's print flow, upload first (SCOPE §2, P-63, P-117): the file starts uploading the
  * moment it is chosen, and the pipeline starts working on it the moment it arrives. While that
@@ -78,6 +82,11 @@ export function PrintFlow({ mockMode = false }: { mockMode?: boolean }) {
   const descriptionRef = useRef<HTMLTextAreaElement>(null);
   // Rate first (P-20): the prints to rate before the file is asked for, looked up as the screen
   // opens. null = nothing to rate (or the lookup failed: the 409 on create is the fallback).
+  // The live status of the job, and whether the review has been on screen already.
+  const [jobStatus, setJobStatus] = useState<StudentStatus | null>(null);
+  const [reviewShown, setReviewShown] = useState(false);
+  // The server refused an answer because the job is closed (the student already said yes).
+  const [closedByServer, setClosedByServer] = useState(false);
   const [rateFirst, setRateFirst] = useState<UnratedPrint[] | null>(null);
 
   const uploadJobId = upload.state.phase === 'done' ? upload.state.jobId : null;
@@ -129,12 +138,20 @@ export function PrintFlow({ mockMode = false }: { mockMode?: boolean }) {
   const inputsKey = JSON.stringify(inputs);
   // Everything asked is answered and saved: now the review can show (and nothing is left to tap).
   const answered = purpose !== null && descriptionOk && savedKey === inputsKey;
+  // Past the review (the yes was said, or the job was refused) the answers are locked: the pipeline
+  // no longer takes them, and editing would only fail.
+  const locked = closedByServer || (jobStatus !== null && !EDITABLE_STATUSES.includes(jobStatus));
+  // Once the review was shown it stays: an edit never sends the student back to the steps view.
+  if (!reviewShown && answered && jobStatus !== null && REVIEW_STATUSES.includes(jobStatus)) {
+    setReviewShown(true);
+  }
+  const inputsPending = Object.keys(inputs).length > 0 && savedKey !== inputsKey;
 
   // Background save: the purpose a moment after it's chosen, the description once the student
   // pauses or leaves the field. Waits for the upload to finish (the pipeline only knows the job
   // after that); never blocks.
   useEffect(() => {
-    if (!uploadJobId) return;
+    if (!uploadJobId || locked) return;
     if (Object.keys(inputs).length === 0 || inputsKey === savedKey) return;
     let cancelled = false;
     const descriptionPending = inputs.description !== undefined;
@@ -153,8 +170,15 @@ export function PrintFlow({ mockMode = false }: { mockMode?: boolean }) {
         setSavedKey(inputsKey);
         setAnswersRevision((n) => n + 1);
         setSaveState('saved');
-      } catch {
-        if (!cancelled) setSaveState('error');
+      } catch (error) {
+        if (cancelled) return;
+        // 409: the job is closed (the yes went through first). Lock the form instead of an error.
+        if (isConflictError(error)) {
+          setClosedByServer(true);
+          setSaveState('idle');
+        } else {
+          setSaveState('error');
+        }
       }
     }, delay);
     return () => {
@@ -163,7 +187,7 @@ export function PrintFlow({ mockMode = false }: { mockMode?: boolean }) {
     };
     // inputs and descriptionText are derived from inputsKey's parts
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [uploadJobId, inputsKey, savedKey, leftDescription, saveAttempt]);
+  }, [uploadJobId, locked, inputsKey, savedKey, leftDescription, saveAttempt]);
 
   // Returning students (purpose remembered) go straight to the description, no tap to start typing.
   useEffect(() => {
@@ -177,12 +201,13 @@ export function PrintFlow({ mockMode = false }: { mockMode?: boolean }) {
   }, [stage]);
 
   function choosePurpose(next: Purpose) {
+    if (locked) return;
     setPurpose(next);
     rememberPurpose({ purpose: next, details });
   }
 
   function setDetail(key: string, value: string) {
-    if (!purpose) return;
+    if (!purpose || locked) return;
     const next = { ...details, [purpose]: { ...details[purpose], [key]: value } };
     setDetails(next);
     rememberPurpose({ purpose, details: next });
@@ -288,6 +313,7 @@ export function PrintFlow({ mockMode = false }: { mockMode?: boolean }) {
               aria-labelledby="purpose-heading"
               value={purpose ?? ''}
               onValueChange={(value) => choosePurpose(value as Purpose)}
+              disabled={locked}
               className="flex flex-wrap gap-2"
               data-track="purpose"
             >
@@ -308,6 +334,7 @@ export function PrintFlow({ mockMode = false }: { mockMode?: boolean }) {
                       value={details[purposeOption.value]?.[field.key] ?? ''}
                       maxLength={80}
                       placeholder={field.placeholder}
+                      disabled={locked}
                       onChange={(event) => setDetail(field.key, event.target.value)}
                     />
                   </div>
@@ -336,6 +363,7 @@ export function PrintFlow({ mockMode = false }: { mockMode?: boolean }) {
               aria-labelledby="part-heading"
               value={description}
               maxLength={MAX_DESCRIPTION}
+              disabled={locked}
               onChange={(event) => {
                 setDescription(event.target.value);
                 setLeftDescription(false);
@@ -346,18 +374,22 @@ export function PrintFlow({ mockMode = false }: { mockMode?: boolean }) {
             />
             <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-muted-foreground">
               <div role="status" className="min-h-4">
-                {saveState === 'saving' && 'Saving your answers'}
-                {saveState === 'saved' && answered && (
+                {locked && 'Your print is on its way, so your answers are locked.'}
+                {!locked && saveState === 'saving' && 'Saving your answers'}
+                {!locked && saveState === 'saved' && answered && (
                   <span className="text-status-green-foreground">Your answers are saved</span>
                 )}
-                {!purpose && description.length > 0 && 'Pick what it’s for too.'}
+                {!locked && !purpose && description.length > 0 && 'Pick what it’s for too.'}
               </div>
               <span>
                 {description.length}/{MAX_DESCRIPTION}
               </span>
             </div>
-            {saveState === 'error' && (
-              <p className="flex flex-wrap items-center gap-2 text-xs text-destructive" role="alert">
+            {!locked && saveState === 'error' && (
+              <p
+                className="flex flex-wrap items-center gap-2 text-xs text-destructive"
+                role="alert"
+              >
                 We couldn&apos;t save your answers.
                 <Button
                   type="button"
@@ -380,8 +412,10 @@ export function PrintFlow({ mockMode = false }: { mockMode?: boolean }) {
             <PipelineJobPanel
               jobId={uploadJobId}
               jobName={file.name}
-              stepsOnly={!answered}
+              stepsOnly={!answered && !reviewShown}
               answersRevision={answersRevision}
+              inputsPending={inputsPending}
+              onStatusChange={setJobStatus}
               showJobLink
             />
           ) : (

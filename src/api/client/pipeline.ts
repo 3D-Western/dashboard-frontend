@@ -269,9 +269,12 @@ export const pipelineApi = {
     }
   },
 
-  /** Saves what the student typed (`update_inputs`). Safe to call again with the same values. */
+  /**
+   * Saves what the student typed (`update_inputs`). Safe to call again with the same values. A 409
+   * means the job no longer takes inputs (the student already said yes), not that the plan changed.
+   */
   saveInputs: (jobId: string, inputs: StudentInputs) =>
-    post<void>(endpoints.pipeline.inputs(jobId), inputs),
+    postAction<void>(endpoints.pipeline.inputs(jobId), inputs),
 
   /**
    * The explicit yes. Throws PlanChangedError (HTTP 409) when the plan is no longer the one the

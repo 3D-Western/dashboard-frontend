@@ -41,6 +41,11 @@ interface PipelineJobPanelProps {
    * of them is not a surprise ("your plan changed while you were reading it").
    */
   answersRevision?: number;
+  /**
+   * The student has typed answers that are not saved yet. The review stays on screen (the yes does
+   * not disappear while they type) but the yes waits, so it never confirms a plan that is about to change.
+   */
+  inputsPending?: boolean;
   /** Test hook: how quickly a broken stream is retried. */
   retryBaseMs?: number;
 }
@@ -57,6 +62,7 @@ export function PipelineJobPanel({
   showJobLink = false,
   stepsOnly = false,
   answersRevision = 0,
+  inputsPending = false,
   onStatusChange,
   retryBaseMs,
 }: PipelineJobPanelProps) {
@@ -165,6 +171,7 @@ export function PipelineJobPanel({
         plan={plan}
         studentStatus={status as StudentStatus}
         planWasUpdated={planWasUpdated}
+        inputsPending={inputsPending}
         onConfirmed={() => {
           pipeline.setOptimisticStatus('queued');
           setBaselinePlanId(null);

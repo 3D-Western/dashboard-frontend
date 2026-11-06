@@ -84,6 +84,24 @@ describe('pipelineApi', () => {
     });
   });
 
+  describe('saveInputs on a closed job', () => {
+    it('reports a 409 as a plain conflict, never as a changed plan', async () => {
+      mockServer.use(
+        http.post(endpoints.pipeline.inputs(JOB), () =>
+          HttpResponse.json(
+            { success: false, error: { code: 'CONFLICT', message: 'The job is closed' } },
+            { status: 409 },
+          ),
+        ),
+      );
+
+      const error = await pipelineApi.saveInputs(JOB, { description: 'x' }).catch((e) => e);
+
+      expect(error).not.toBeInstanceOf(PlanChangedError);
+      expect(isConflictError(error)).toBe(true);
+    });
+  });
+
   describe('after the print: collected, rating, quality, follow-ups', () => {
     const conflict = (message: string) =>
       HttpResponse.json(
