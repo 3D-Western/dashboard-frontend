@@ -66,6 +66,8 @@ function PartViewer({
   const [nearKey, setNearKey] = useState<string>();
   const [result, setResult] = useState<{
     key?: string;
+    /** The exact (short-lived) link the result was for: a failure belongs to that link. */
+    url?: string;
     state: ViewerState;
     drawn: PartHighlight[];
   }>({ state: 'idle', drawn: [] });
@@ -81,8 +83,12 @@ function PartViewer({
   const flagged = (staff ? highlights : withoutHolds(highlights)).filter(
     (card) => card.region,
   ).length;
-  // What the viewer reported belongs to the model it loaded; a new model starts over.
-  const current = result.key === modelKey ? result : { state: 'idle' as ViewerState, drawn: [] };
+  // What the viewer reported belongs to the model it loaded; a new model starts over. A failure
+  // belongs to the link it failed with: the same model under a fresh link (a later snapshot hands
+  // out new ones, and an expired link is the usual reason a load fails) gets another try.
+  const sameModel = result.key === modelKey;
+  const staleFailure = result.state === 'failed' && result.url !== modelUrl;
+  const current = sameModel && !staleFailure ? result : { state: 'idle' as ViewerState, drawn: [] };
   const state = current.state;
   const drawn = current.drawn;
 
@@ -111,8 +117,8 @@ function PartViewer({
   function handleStatus(status: ViewerStatus) {
     setResult(
       status.state === 'ready'
-        ? { key: modelKey, state: 'ready', drawn: status.highlights }
-        : { key: modelKey, state: 'failed', drawn: [] },
+        ? { key: modelKey, url: modelUrl, state: 'ready', drawn: status.highlights }
+        : { key: modelKey, url: modelUrl, state: 'failed', drawn: [] },
     );
   }
 

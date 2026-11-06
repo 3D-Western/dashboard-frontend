@@ -172,6 +172,28 @@ describe('Part viewer fallbacks', () => {
     expect(screen.getByText('1 area of your part is flagged below.')).toBeVisible();
   });
 
+  it('tries again when a later snapshot brings a fresh link for the same model, but not for the same link', async () => {
+    env.outcome = 'error';
+    const viewer = (c: HTMLElement) => c.querySelector('[data-slot="part-viewer"]');
+    const { container, rerender } = render(
+      <PartViewerSlot previewUrl="/p.png" modelUrl="https://files.example/part.glb?sig=1" />,
+    );
+    await waitFor(() => expect(viewer(container)).toHaveAttribute('data-viewer', 'failed'));
+
+    // Same link again (a snapshot with nothing new): it stays failed, no retry loop
+    rerender(
+      <PartViewerSlot previewUrl="/p.png" modelUrl="https://files.example/part.glb?sig=1" />,
+    );
+    expect(viewer(container)).toHaveAttribute('data-viewer', 'failed');
+
+    // A fresh link for the same file (the old one may have expired): one more try, which now works
+    env.outcome = 'ready';
+    rerender(
+      <PartViewerSlot previewUrl="/p.png" modelUrl="https://files.example/part.glb?sig=2" />,
+    );
+    await waitFor(() => expect(viewer(container)).toHaveAttribute('data-viewer', 'ready'));
+  });
+
   it('shows the preview first and the 3D view once it has loaded, with a labelled legend', async () => {
     const { container } = render(
       <PartViewerSlot previewUrl="/preview.png" modelUrl="/part.glb" highlights={cards} />,
