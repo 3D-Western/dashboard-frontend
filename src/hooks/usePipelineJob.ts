@@ -146,6 +146,8 @@ export function usePipelineJob(
 
   /** The server took a rating (so a late snapshot can't take it back). */
   const markRated = useCallback((rating: Rating) => dispatch({ type: 'rated', rating }), []);
+  /** The rating shown at once could not be saved: ask again. */
+  const markRatingFailed = useCallback(() => dispatch({ type: 'rating-failed' }), []);
   /** A follow-up question was answered or skipped. */
   const markFollowupHandled = useCallback(
     (questionId: number) => dispatch({ type: 'followup-handled', questionId }),
@@ -160,6 +162,7 @@ export function usePipelineJob(
     showPlan,
     setOptimisticStatus,
     markRated,
+    markRatingFailed,
     markFollowupHandled,
   };
 }

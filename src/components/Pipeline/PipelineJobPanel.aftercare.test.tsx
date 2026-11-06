@@ -4,6 +4,7 @@ import userEvent from '@testing-library/user-event';
 import { toast } from 'sonner';
 import { ApiError } from '@/api/client/errors';
 import { CONFLICT_CODE, pipelineApi } from '@/api/client/pipeline';
+import type { PipelineSnapshot } from '@/types/pipeline';
 import {
   createMockPickup,
   createMockPlan,
@@ -227,6 +228,41 @@ describe('After the print', () => {
 
     await user.click(screen.getByRole('button', { name: 'Good' }));
     expect(api.rate).toHaveBeenCalledTimes(2);
+  });
+
+  it('shows the result of a tap at once, before the server answers, and re-reads only once it has saved', async () => {
+    api.getState.mockResolvedValue(afterPrint({ followups: [], ratingPending: true }));
+    let saved: (value: PipelineSnapshot) => void = () => {};
+    api.rate.mockImplementation(() => new Promise((resolve) => (saved = resolve)));
+    render(<PipelineJobPanel jobId={JOB} />);
+
+    await setup().click(await screen.findByRole('button', { name: 'Good' }));
+
+    // The save has not finished, yet the card already moved on
+    expect(screen.queryByRole('button', { name: 'Good' })).not.toBeInTheDocument();
+    expect(screen.getByText(/thanks/i)).toBeInTheDocument();
+    expect(api.getState).toHaveBeenCalledTimes(1);
+
+    saved(afterPrint({ followups: [], ratingPending: false }));
+    await waitFor(() => expect(api.getState).toHaveBeenCalledTimes(2));
+  });
+
+  it('takes the optimistic rating back and offers the buttons again when the save fails', async () => {
+    api.getState.mockResolvedValue(afterPrint({ followups: [], ratingPending: true }));
+    let fail: (error: Error) => void = () => {};
+    api.rate.mockImplementationOnce(() => new Promise((_, reject) => (fail = reject)));
+    render(<PipelineJobPanel jobId={JOB} />);
+    const user = setup();
+
+    await user.click(await screen.findByRole('button', { name: 'Not great' }));
+    expect(screen.queryByRole('button', { name: 'Not great' })).not.toBeInTheDocument();
+
+    fail(new Error('offline'));
+
+    expect(await screen.findByRole('button', { name: 'Not great' })).toBeEnabled();
+    expect(toast.error).toHaveBeenCalled();
+    expect(screen.queryByRole('button', { name: 'Send' })).not.toBeInTheDocument();
+    expect(api.getState).toHaveBeenCalledTimes(1);
   });
 
   it('treats "already rated" (a conflict) as done instead of an error', async () => {

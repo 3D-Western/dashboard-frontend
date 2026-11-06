@@ -51,8 +51,10 @@ export type PipelineAction =
   | { type: 'optimistic'; studentStatus: StudentStatus }
   /** A 409 carried the new plan: show it for a second yes (or choice, per its answer). */
   | { type: 'plan'; plan: Plan }
-  /** The student tapped thumbs up or down (the server accepted it). */
+  /** The student tapped thumbs up or down (shown at once; the server may still refuse it). */
   | { type: 'rated'; rating: Rating }
+  /** The server could not save that rating: the card asks again. */
+  | { type: 'rating-failed' }
   /** A follow-up question was answered or skipped. */
   | { type: 'followup-handled'; questionId: number };
 
@@ -122,6 +124,8 @@ export function pipelineReducer(state: PipelineState, action: PipelineAction): P
       return { ...state, plan: action.plan, studentStatus: statusForPlan(action.plan) };
     case 'rated':
       return { ...state, ratingPending: false, rating: action.rating };
+    case 'rating-failed':
+      return { ...state, ratingPending: true, rating: null };
     case 'followup-handled':
       return state.handledFollowups.includes(action.questionId)
         ? state

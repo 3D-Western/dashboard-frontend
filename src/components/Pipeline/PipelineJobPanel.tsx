@@ -105,17 +105,27 @@ export function PipelineJobPanel({
     const timers = refreshTimers.current;
     return () => timers.forEach(clearTimeout);
   }, []);
-  const { refresh, setOptimisticStatus, markRated } = pipeline;
+  const { refresh, setOptimisticStatus, markRated, markRatingFailed } = pipeline;
   const wasReady = status === 'ready_for_pickup';
+  // The tap shows its result at once; the re-reads wait until the server has the rating (reading
+  // sooner would bring back the old status), and a failed save takes the result back.
+  const readyBeforeRating = useRef(false);
   const handleRated = useCallback(
     (rating: Rating) => {
       markRated(rating);
+      readyBeforeRating.current = wasReady;
       if (wasReady) setOptimisticStatus('collected');
-      refresh();
-      refreshTimers.current.push(setTimeout(refresh, RATED_REREAD_MS));
     },
-    [markRated, wasReady, setOptimisticStatus, refresh],
+    [markRated, wasReady, setOptimisticStatus],
   );
+  const handleRateSaved = useCallback(() => {
+    refresh();
+    refreshTimers.current.push(setTimeout(refresh, RATED_REREAD_MS));
+  }, [refresh]);
+  const handleRateFailed = useCallback(() => {
+    markRatingFailed();
+    if (readyBeforeRating.current) setOptimisticStatus('ready_for_pickup');
+  }, [markRatingFailed, setOptimisticStatus]);
 
   const handlePlanChanged = (next: Plan | null) => {
     if (next) {
@@ -216,6 +226,8 @@ export function PipelineJobPanel({
             followups={pipeline.followups}
             handledFollowups={pipeline.handledFollowups}
             onRated={handleRated}
+            onRateSaved={handleRateSaved}
+            onRateFailed={handleRateFailed}
             onFollowupHandled={pipeline.markFollowupHandled}
           />
         )}

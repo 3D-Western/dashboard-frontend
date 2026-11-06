@@ -18,7 +18,10 @@ interface AfterPickupProps {
   /** Follow-up questions from the pipeline, in order, and the ones already answered here. */
   followups: FollowupQuestion[];
   handledFollowups: number[];
+  /** The tap, shown at once; the save follows (`onRateSaved`) or fails (`onRateFailed`). */
   onRated: (rating: Rating) => void;
+  onRateSaved?: (rating: Rating) => void;
+  onRateFailed?: (rating: Rating) => void;
   onFollowupHandled: (questionId: number) => void;
 }
 
@@ -37,6 +40,8 @@ export function AfterPickup({
   followups,
   handledFollowups,
   onRated,
+  onRateSaved,
+  onRateFailed,
   onFollowupHandled,
 }: AfterPickupProps) {
   // Browser fact, read once when the card first shows (it only renders after the data loaded).
@@ -88,6 +93,11 @@ export function AfterPickup({
             onRated={(value) => {
               setEngaged(true);
               onRated(value);
+            }}
+            onSaved={onRateSaved}
+            onFailed={(value) => {
+              setEngaged(false);
+              onRateFailed?.(value);
             }}
           />
         </div>

@@ -281,6 +281,21 @@ describe('after the print', () => {
     expect(state.rating).toBe('down');
   });
 
+  it('takes a rating back when the server could not save it, so the card asks again', () => {
+    const rated = pipelineReducer(
+      pipelineReducer(initialPipelineState, {
+        type: 'snapshot',
+        snapshot: createMockSnapshot({ studentStatus: 'collected', ratingPending: true }),
+      }),
+      { type: 'rated', rating: 'up' },
+    );
+    expect(rated).toMatchObject({ rating: 'up', ratingPending: false });
+
+    const failed = pipelineReducer(rated, { type: 'rating-failed' });
+
+    expect(failed).toMatchObject({ rating: null, ratingPending: true });
+  });
+
   it('learns from the snapshot whether the collected print still needs its rating', () => {
     const unknown = pipelineReducer(initialPipelineState, {
       type: 'snapshot',

@@ -74,6 +74,8 @@ export function RatingRequiredPrompt({
           </div>
           <RateButtons
             jobId={print.jobId}
+            // A hard gate: it moves on only once the backend has the rating.
+            optimistic={false}
             onRated={(rating) => (rating === 'down' ? setQualityFor(print.jobId) : next())}
           />
         </>
