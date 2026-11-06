@@ -85,7 +85,11 @@ describe('A print that is ready for pickup (collection is inferred, P-136)', () 
     render(<PipelineJobPanel jobId={JOB} />);
 
     await screen.findByRole('heading', { name: 'Ready' });
-    expect(screen.queryByRole('button')).not.toBeInTheDocument();
+    // No buttons besides the "Ask why" panel's own
+    const askWhy = screen.getByTestId('disagree-panel');
+    expect(screen.queryAllByRole('button').filter((button) => !askWhy.contains(button))).toEqual(
+      [],
+    );
   });
 
   it('offers the one-tap rating next time the student is here, and rating it means collected', async () => {

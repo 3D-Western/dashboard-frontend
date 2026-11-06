@@ -473,3 +473,62 @@ describe('Ready for pickup', () => {
     expect(await screen.findByRole('heading', { name: 'Slot 3, tag ZZ99' })).toBeInTheDocument();
   });
 });
+
+describe('Ask why', () => {
+  it.each([
+    ['needs_confirmation', 'a plan waiting for its yes'],
+    ['needs_choice', 'a plan waiting for a choice'],
+    ['cannot_print', "a part that can't print"],
+    ['collected', 'a closed job'],
+    ['rejected', 'a rejected job'],
+  ] as const)('is on screen for %s (%s), with Ask the crew', async (studentStatus, _why) => {
+    api.getState.mockResolvedValue(createMockSnapshot({ studentStatus, plan: createMockPlan() }));
+    openStream();
+    render(<PipelineJobPanel jobId="job-1" />);
+
+    const panel = await screen.findByTestId('disagree-panel');
+    expect(within(panel).getByRole('button', { name: 'Ask the crew' })).toBeEnabled();
+    expect(within(panel).getByLabelText('Your question')).toBeInTheDocument();
+  });
+
+  it('is not shown while the part is still being prepared, or on the steps-only screen', async () => {
+    api.getState.mockResolvedValue(createMockSnapshot({ studentStatus: 'preparing' }));
+    openStream();
+    const { unmount } = render(<PipelineJobPanel jobId="job-1" />);
+    await screen.findByRole('heading', { name: 'Preparing your print' });
+    expect(screen.queryByTestId('disagree-panel')).not.toBeInTheDocument();
+    unmount();
+
+    api.getState.mockResolvedValue(
+      createMockSnapshot({ studentStatus: 'needs_confirmation', plan: createMockPlan() }),
+    );
+    render(<PipelineJobPanel jobId="job-1" stepsOnly />);
+    await screen.findByRole('heading', { name: 'Preparing your print' });
+    expect(screen.queryByTestId('disagree-panel')).not.toBeInTheDocument();
+  });
+
+  it('flags an answer about an earlier plan once the plan on screen has moved on', async () => {
+    api.getState.mockResolvedValue(
+      createMockSnapshot({
+        studentStatus: 'needs_confirmation',
+        plan: createMockPlan({ planId: 'plan-2' }),
+      }),
+    );
+    openStream();
+    vi.mocked(pipelineApi).disagree = vi.fn().mockResolvedValue({
+      requestId: 'r',
+      turn: 1,
+      status: 'answered',
+      answer: 'That was decided on your first plan.',
+      askedAt: '2026-11-05T12:00:00Z',
+      planId: 'plan-1',
+    });
+    const user = setup();
+    render(<PipelineJobPanel jobId="job-1" />);
+
+    await user.type(await screen.findByLabelText('Your question'), 'Why?');
+    await user.click(screen.getByRole('button', { name: 'Ask' }));
+
+    expect(await screen.findByText(/earlier version of your plan/)).toBeInTheDocument();
+  });
+});

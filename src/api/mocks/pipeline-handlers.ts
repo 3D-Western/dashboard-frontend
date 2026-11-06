@@ -397,6 +397,30 @@ export const pipelineHandlers = [
     return HttpResponse.json(generateSuccessResponse(null), { status: 202 });
   }),
 
+  // The "Ask why" assistant (P-54): a canned, delayed answer that cites the plan's summary
+  http.post(`${apiUrl}${endpoints.pipeline.disagree(':jobId')}`, async ({ cookies, request }) => {
+    if (!requireUser(cookies)) return createInvalidSessionResponse();
+    const { requestId } = (await request.json()) as { requestId?: string };
+    await new Promise((resolve) => setTimeout(resolve, 900));
+    return HttpResponse.json(
+      generateSuccessResponse({
+        requestId,
+        turn: 1,
+        status: 'answered',
+        answer: 'Your plan was made from the checks on your part; the summary above says why.',
+        askedAt: new Date().toISOString(),
+        canEscalate: true,
+        citations: [{ entryId: 'summary', kind: 'summary', title: 'Plan summary' }],
+        questionsLeft: 19,
+      }),
+    );
+  }),
+
+  http.post(`${apiUrl}${endpoints.pipeline.disagreeEscalate(':jobId')}`, ({ cookies }) => {
+    if (!requireUser(cookies)) return createInvalidSessionResponse();
+    return HttpResponse.json(generateSuccessResponse(null), { status: 202 });
+  }),
+
   // Rating a print is its collection too (P-136): a print that is ready for pickup moves to
   // collected with its first rating. Only ready or collected prints take a rating (409 otherwise).
   http.post(

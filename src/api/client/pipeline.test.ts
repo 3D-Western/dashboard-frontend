@@ -277,6 +277,89 @@ describe('pipelineApi', () => {
     });
   });
 
+  describe('disagree and escalate', () => {
+    const answer = {
+      requestId: '7c0f8f1e-4b54-4a5a-9d2c-1f3f5f1a9a11',
+      turn: 1,
+      status: 'rate_limited',
+      answer: 'Too many questions.',
+      askedAt: '2026-11-05T12:00:00Z',
+      retryAfterS: 90,
+    };
+
+    it('posts the request id and text and passes a rate_limited 200 through as an answer', async () => {
+      const received = vi.fn();
+      mockServer.use(
+        http.post(endpoints.pipeline.disagree(JOB), async ({ request }) => {
+          received(await request.json());
+          return HttpResponse.json({ success: true, data: answer });
+        }),
+      );
+
+      const result = await pipelineApi.disagree(JOB, {
+        requestId: answer.requestId,
+        text: 'Why supports?',
+      });
+
+      expect(result).toEqual(answer);
+      expect(received).toHaveBeenCalledWith({
+        requestId: answer.requestId,
+        text: 'Why supports?',
+      });
+    });
+
+    it('fails with an ApiError on a network error or an error response', async () => {
+      mockServer.use(http.post(endpoints.pipeline.disagree(JOB), () => HttpResponse.error()));
+      await expect(
+        pipelineApi.disagree(JOB, { requestId: answer.requestId, text: 'x' }),
+      ).rejects.toBeInstanceOf(ApiError);
+
+      mockServer.use(
+        http.post(endpoints.pipeline.disagree(JOB), () =>
+          HttpResponse.json(
+            { success: false, error: { code: 'VALIDATION_ERROR', message: 'Too long' } },
+            { status: 422 },
+          ),
+        ),
+      );
+      await expect(
+        pipelineApi.disagree(JOB, { requestId: answer.requestId, text: 'x' }),
+      ).rejects.toMatchObject({ code: 'VALIDATION_ERROR' });
+    });
+
+    it('escalates with the trimmed words, or with an empty body when there are none', async () => {
+      const received = vi.fn();
+      mockServer.use(
+        http.post(endpoints.pipeline.disagreeEscalate(JOB), async ({ request }) => {
+          received(await request.json());
+          return HttpResponse.json({ success: true, data: null }, { status: 202 });
+        }),
+      );
+
+      await pipelineApi.escalateDisagree(JOB, '  still wrong  ');
+      await pipelineApi.escalateDisagree(JOB);
+      await pipelineApi.escalateDisagree(JOB, '   ');
+
+      expect(received.mock.calls).toEqual([[{ text: 'still wrong' }], [{}], [{}]]);
+    });
+
+    it('reports a 409 on escalate as a conflict (already with the crew)', async () => {
+      mockServer.use(
+        http.post(endpoints.pipeline.disagreeEscalate(JOB), () =>
+          HttpResponse.json(
+            { success: false, error: { code: 'CONFLICT', message: 'Already escalated' } },
+            { status: 409 },
+          ),
+        ),
+      );
+
+      const error = await pipelineApi.escalateDisagree(JOB, 'x').catch((e: unknown) => e);
+
+      expect(error).not.toBeInstanceOf(PlanChangedError);
+      expect(isConflictError(error)).toBe(true);
+    });
+  });
+
   describe('stream', () => {
     it('delivers each event as it arrives, even when frames are split between chunks', async () => {
       const events = [
