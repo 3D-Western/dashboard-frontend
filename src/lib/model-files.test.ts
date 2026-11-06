@@ -12,7 +12,16 @@ const MB = 1024 * 1024;
 
 describe('model files', () => {
   it('takes STL, 3MF and STEP/STP in any case', () => {
-    for (const name of ['a.stl', 'A.STL', 'b.3mf', 'c.step', 'C.STEP', 'd.stp', 'D.Stp', 'v2.final.step'])
+    for (const name of [
+      'a.stl',
+      'A.STL',
+      'b.3mf',
+      'c.step',
+      'C.STEP',
+      'd.stp',
+      'D.Stp',
+      'v2.final.step',
+    ])
       expect(validateModelFile({ name, size: 1024 })).toBeNull();
   });
 
@@ -45,7 +54,12 @@ describe('model files', () => {
 
   it('offers the extensions to the picker, so a STEP file reported with no type still passes', () => {
     expect(PRINT_MODEL_INPUT_ACCEPT).toBe('.stl,.3mf,.step,.stp');
-    expect(PRINT_MODEL_ACCEPT['application/octet-stream']).toEqual(['.stl', '.3mf', '.step', '.stp']);
+    expect(PRINT_MODEL_ACCEPT['application/octet-stream']).toEqual([
+      '.stl',
+      '.3mf',
+      '.step',
+      '.stp',
+    ]);
     expect(PRINT_MODEL_ACCEPT['model/step']).toEqual(['.step', '.stp']);
   });
 });

@@ -23,6 +23,8 @@ export const KIND_LABEL: Record<AlertKind, string> = {
   farm_job_held: 'Farm job held',
   printer_quarantined: 'Printer quarantined',
   clear_bed: 'Bed to check',
+  room_temperature: 'Room temperature',
+  farm_agent: 'Farm agent',
   student_disagrees: 'Student disagrees',
 };
 
@@ -33,6 +35,8 @@ export const KIND_ORDER: AlertKind[] = [
   'farm_job_held',
   'printer_quarantined',
   'clear_bed',
+  'room_temperature',
+  'farm_agent',
   'pipeline_outage',
   'pipeline_recovered',
 ];
@@ -89,6 +93,7 @@ export function alertLink(target: AlertTarget | null | undefined): AlertLink | n
     case 'job':
       return target.id ? { href: Routes.adminReviewJob(target.id), label: 'Open the job' } : null;
     case 'printer':
+    case 'farm':
       return { href: Routes.adminReviewFarm, label: 'Open the print farm' };
     case 'pipeline_health':
       return { href: Routes.adminReview, label: 'Open the review queue' };

@@ -22,11 +22,7 @@ import {
   rememberPurpose,
 } from '@/lib/purpose-memory';
 import { trackScreen } from '@/lib/analytics';
-import {
-  PRINT_MODEL_ACCEPT,
-  REJECTED_FILE_MESSAGE,
-  validateModelFile,
-} from '@/lib/model-files';
+import { PRINT_MODEL_ACCEPT, REJECTED_FILE_MESSAGE, validateModelFile } from '@/lib/model-files';
 import type { Purpose, StudentInputs, StudentStatus, UnratedPrint } from '@/types/pipeline';
 import { useJobUpload } from './useJobUpload';
 

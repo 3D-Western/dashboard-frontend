@@ -13,6 +13,10 @@ export type AlertKind =
   | 'printer_quarantined'
   /** The empty-bed check holds a printer back (P-106): a person looks at the bed. Closes itself when the block is lifted. */
   | 'clear_bed'
+  /** The room-temperature watch holds new prints or has no usable reading (P-175). One alert per episode; closes itself when the room is back in band. */
+  | 'room_temperature'
+  /** The farm agent on the server PC is silent, never connected or reports a problem (P-175). Closes itself when it is healthy again. */
+  | 'farm_agent'
   /** A student asked the crew after the "Ask why" assistant (P-54); details hold their reason and the conversation. */
   | 'student_disagrees';
 
@@ -25,8 +29,8 @@ export type AlertSeverity = 'info' | 'warning' | 'critical';
  */
 export type AlertState = 'open' | 'acknowledged' | 'resolved';
 
-/** Where an alert is dealt with. A pipeline-health alert has no id. */
-export type AlertTargetType = 'job' | 'printer' | 'pipeline_health';
+/** Where an alert is dealt with. A pipeline-health or farm alert has no id. */
+export type AlertTargetType = 'job' | 'printer' | 'pipeline_health' | 'farm';
 
 export interface AlertTarget {
   type: AlertTargetType;

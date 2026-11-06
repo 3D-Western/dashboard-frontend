@@ -95,4 +95,15 @@ describe('kinds', () => {
       label: 'Open the print farm',
     });
   });
+
+  it('offers the room-temperature and farm-agent alerts, and sends them to the farm page', () => {
+    expect(KIND_ORDER).toContain('room_temperature');
+    expect(KIND_ORDER).toContain('farm_agent');
+    expect(KIND_LABEL.room_temperature).toBe('Room temperature');
+    expect(KIND_LABEL.farm_agent).toBe('Farm agent');
+    expect(alertLink({ type: 'farm' })).toEqual({
+      href: '/admin/review/farm',
+      label: 'Open the print farm',
+    });
+  });
 });

@@ -71,7 +71,9 @@ describe('RoomTempReadings', () => {
     expect(within(rows[1]).getByText(/Withdrawn .* by Pat Staff/)).toBeVisible();
     expect(within(rows[1]).queryByRole('button', { name: /Withdraw/ })).not.toBeInTheDocument();
     expect(within(rows[2]).getByText(/entered by Cam Crew/)).toBeVisible();
-    expect(within(rows[2]).getByRole('button', { name: 'Withdraw the 21.0 °C reading' })).toBeVisible();
+    expect(
+      within(rows[2]).getByRole('button', { name: 'Withdraw the 21.0 °C reading' }),
+    ).toBeVisible();
   });
 
   it('sends a typed reading with its note, confirms it, and reloads the list', async () => {
@@ -113,7 +115,10 @@ describe('RoomTempReadings', () => {
   it('shows the pipeline’s reason when it refuses the number, and keeps what was typed', async () => {
     const user = setup();
     api.enterRoomTemperature.mockRejectedValue(
-      new ApiError('INVALID_STAFF_DECISION', '90 C is outside -10 to 50 C, so it looks like a typing mistake'),
+      new ApiError(
+        'INVALID_STAFF_DECISION',
+        '90 C is outside -10 to 50 C, so it looks like a typing mistake',
+      ),
     );
     render(<RoomTempReadings now={NOW} />);
     await screen.findByText('No thermometer reading has been entered.');
@@ -131,14 +136,22 @@ describe('RoomTempReadings', () => {
     api.roomTemperatureReadings
       .mockResolvedValueOnce([reading({ id: 7, celsius: 29 })])
       .mockResolvedValue([
-        reading({ id: 7, celsius: 29, inUse: false, withdrawnAt: '2026-11-06T11:59:00Z', withdrawnBy: 'Sam Staff' }),
+        reading({
+          id: 7,
+          celsius: 29,
+          inUse: false,
+          withdrawnAt: '2026-11-06T11:59:00Z',
+          withdrawnBy: 'Sam Staff',
+        }),
       ]);
     render(<RoomTempReadings now={NOW} onChanged={changed} />);
 
     await user.click(await screen.findByRole('button', { name: 'Withdraw the 29.0 °C reading' }));
 
     await waitFor(() => expect(api.withdrawRoomTemperature).toHaveBeenCalledWith(7));
-    expect(await screen.findByRole('status')).toHaveTextContent('The 29.0 °C reading was withdrawn.');
+    expect(await screen.findByRole('status')).toHaveTextContent(
+      'The 29.0 °C reading was withdrawn.',
+    );
     expect((await screen.findByTestId('room-temperature-reading')).dataset.state).toBe('withdrawn');
     expect(changed).toHaveBeenCalledTimes(1);
   });
@@ -155,7 +168,9 @@ describe('RoomTempReadings', () => {
     expect(await screen.findByText(/withdrawn already/)).toBeVisible();
     unmount();
 
-    api.roomTemperatureReadings.mockRejectedValue(new ApiError('PIPELINE_UNAVAILABLE', 'Not offered yet'));
+    api.roomTemperatureReadings.mockRejectedValue(
+      new ApiError('PIPELINE_UNAVAILABLE', 'Not offered yet'),
+    );
     render(<RoomTempReadings now={NOW} />);
     expect(await screen.findByText('Not offered yet')).toBeVisible();
     expect(screen.getByRole('button', { name: 'Save reading' })).toBeVisible(); // the form still works

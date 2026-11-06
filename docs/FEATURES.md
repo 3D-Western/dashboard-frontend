@@ -152,8 +152,9 @@ Upload first: the file goes up in the background the moment it is chosen (`creat
 
 Refreshes itself every 15 seconds. From the top:
 
-- **Farm status**, two read-only cards, each read on its own (one that cannot be read says why and leaves the rest of the desk alone):
+- **Farm status**, two cards (the room-temperature card also takes a thermometer reading), each read on its own (one that cannot be read says why and leaves the rest of the desk alone):
   - **Room temperature** (`GET .../farm/room-temperature`): the watch's state, the last reading and how old it is, the allowed band, the jobs held back while it holds, and the open supervisor task. **No reading and a stale reading are shown as a hold ("No reading: holding new prints"), never as fine**; a watch the pipeline has stopped asking is "Not being checked". "Watch is off" while the pipeline's `farm.room_temp.enabled` is off (the default).
+    - **Thermometer reading** (`RoomTempReadings.tsx`, shown while the watch is on): type what a thermometer in the room shows (23, 23.5 or 23,5; optional note) and **Save reading**; it counts for as long as the pipeline counts a reading (15 minutes by default), together with the idle printers (the worse of the two is used when they disagree, so a typed number cannot outvote a hot printer). The pipeline refuses a typing mistake (outside -10 to 50 C by default) or a reading that is too old and its reason is shown. **Recent readings** lists the last entries with who entered each (their name), which one is "In use", and a **Withdraw** button for a wrong entry (it stays on the list, marked, with who withdrew it). Routes `GET/POST .../farm/room-temperature/readings`, `POST .../readings/{id}/withdraw`.
   - **Farm agent** (`GET .../farm/agent`): last contact and heartbeat, version, whether AutoFarm3D is reachable from the agent, the live switches (pipeline live, the agent's own, its kill switch, live view, empty-bed check, room-temperature watch). An agent **silent for more than five minutes**, never seen, with a kill switch on, or with the pipeline live while the agent is not, is shown as a problem with the pipeline's own sentence.
 - **Held jobs** (print again, or close and tell the student), **Beds to check** (the empty-bed check's `clear_bed` tasks, "Bed is clear", the reference picture), **Quarantined printers** (put back live with the cause), and a box to look at any printer's empty-bed reference.
 
@@ -267,7 +268,7 @@ Built on TanStack Table v8. Shared between user jobs view and admin jobs view vi
 ### Forms
 
 - All forms use React Hook Form + Zod resolvers
-- `FileUploadDropzone`: drag-and-drop or click-to-select for STL files
+- `FileUploadDropzone`: drag-and-drop or click-to-select; the new-print screen takes **STL, STEP (.step, .stp) or 3MF** (`src/lib/model-files.ts`: the same 50 MB limit for every model, checked before the upload starts, with a plain message; a STEP file is converted to a mesh by the slicing pipeline, and the student's 3D view is the pipeline's GLB, never the upload). An upload that did not finish can be retried from the job page with the same file types.
 - `UnsavedChangesDialog`: browser-native-style warning before leaving a dirty form
 - `StatusAlert`: contextual success/warning/error banner used in auth forms
 - `ColorSelect`: reusable colour picker component

@@ -94,7 +94,9 @@ export function RoomTempReadings({
       await load();
       onChanged?.();
     } catch (err) {
-      setFailure(reviewErrorMessage(err, 'That was not withdrawn. Check the pipeline and try again.'));
+      setFailure(
+        reviewErrorMessage(err, 'That was not withdrawn. Check the pipeline and try again.'),
+      );
     } finally {
       setWithdrawing(null);
     }
@@ -179,7 +181,9 @@ export function RoomTempReadings({
                   data-state={state}
                 >
                   <div className="space-y-0.5">
-                    <p className={state === 'withdrawn' ? 'text-muted-foreground line-through' : ''}>
+                    <p
+                      className={state === 'withdrawn' ? 'text-muted-foreground line-through' : ''}
+                    >
                       <span className="font-medium">{formatCelsius(reading.celsius)}</span>
                       <span className="text-muted-foreground">
                         {' '}

@@ -81,26 +81,32 @@ describe('PrintFlow', () => {
     ['Bracket.STP', 'application/step'],
     ['housing.step', 'model/step'],
     ['housing.step', 'application/octet-stream'],
-  ])('takes a STEP file (%s, reported as "%s") like any model and uploads it at once', async (name, type) => {
-    const { container } = render(<PrintFlow />);
+  ])(
+    'takes a STEP file (%s, reported as "%s") like any model and uploads it at once',
+    async (name, type) => {
+      const { container } = render(<PrintFlow />);
 
-    await chooseFile(container, new File(['ISO-10303-21;'], name, { type }));
+      await chooseFile(container, new File(['ISO-10303-21;'], name, { type }));
 
-    await waitFor(() => expect(jobs.completeUpload).toHaveBeenCalled());
-    expect(jobs.createJob).toHaveBeenCalledWith(
-      expect.objectContaining({
-        jobName: name.replace(/\.[^.]+$/, ''),
-        category: 'ThreeDPrint',
-        formAnswerJson: expect.stringContaining('"contentType":"' + (type || 'model/step') + '"'),
-      }),
-    );
-    expect(jobs.uploadJobFile).toHaveBeenCalledWith('https://storage.example/upload', expect.any(File));
-    expect(jobs.completeUpload).toHaveBeenCalledWith(
-      'job-9',
-      expect.objectContaining({ fileName: name, contentType: type || 'model/step' }),
-    );
-    expect(screen.queryByTestId('file-problem')).not.toBeInTheDocument();
-  });
+      await waitFor(() => expect(jobs.completeUpload).toHaveBeenCalled());
+      expect(jobs.createJob).toHaveBeenCalledWith(
+        expect.objectContaining({
+          jobName: name.replace(/\.[^.]+$/, ''),
+          category: 'ThreeDPrint',
+          formAnswerJson: expect.stringContaining('"contentType":"' + (type || 'model/step') + '"'),
+        }),
+      );
+      expect(jobs.uploadJobFile).toHaveBeenCalledWith(
+        'https://storage.example/upload',
+        expect.any(File),
+      );
+      expect(jobs.completeUpload).toHaveBeenCalledWith(
+        'job-9',
+        expect.objectContaining({ fileName: name, contentType: type || 'model/step' }),
+      );
+      expect(screen.queryByTestId('file-problem')).not.toBeInTheDocument();
+    },
+  );
 
   it('refuses a model over the size limit, and a file of another type, before anything is uploaded', async () => {
     const user = userEvent.setup({ applyAccept: false });
