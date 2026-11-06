@@ -46,6 +46,12 @@ export const initialPipelineState: PipelineState = {
 
 export type PipelineAction =
   | { type: 'snapshot'; snapshot: PipelineSnapshot }
+  /**
+   * The read made a moment after an accepted yes, choice or answer. It must not undo what the
+   * student already sees: only what is strictly newer than the screen, or a message that says the
+   * pipeline refused the action, is applied.
+   */
+  | { type: 'reread'; snapshot: PipelineSnapshot }
   | { type: 'event'; event: PipelineStreamEvent }
   /** Show a status before the server confirms it (the student's yes); the next snapshot corrects it. */
   | { type: 'optimistic'; studentStatus: StudentStatus }
@@ -103,6 +109,12 @@ export function pipelineReducer(state: PipelineState, action: PipelineAction): P
         // to it are already included, later ones apply. Never a number remembered from before.
         lastSeq: snapshot.lastSeq ?? state.lastSeq,
       };
+    }
+    case 'reread': {
+      const { snapshot } = action;
+      const newer = (snapshot.lastSeq ?? 0) > state.lastSeq;
+      const refusal = snapshot.message != null && snapshot.message !== state.message;
+      return newer || refusal ? pipelineReducer(state, { type: 'snapshot', snapshot }) : state;
     }
     case 'event': {
       const { event } = action;

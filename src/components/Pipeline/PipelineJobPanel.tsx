@@ -117,14 +117,15 @@ export function PipelineJobPanel({
   const { refresh, setOptimisticStatus, markRated, markRatingFailed } = pipeline;
   // The backend accepted an action (202) but the pipeline may refuse it afterwards, and that only
   // shows as a message in the snapshot: read it once, a moment later (one pending read at a time).
+  const { reread } = pipeline;
   const rereadTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const rereadSoon = useCallback(() => {
     if (rereadTimer.current) clearTimeout(rereadTimer.current);
     rereadTimer.current = setTimeout(() => {
       rereadTimer.current = null;
-      refresh();
+      reread();
     }, actionRereadMs);
-  }, [refresh, actionRereadMs]);
+  }, [reread, actionRereadMs]);
   useEffect(
     () => () => {
       if (rereadTimer.current) clearTimeout(rereadTimer.current);

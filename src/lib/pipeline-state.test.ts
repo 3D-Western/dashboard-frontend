@@ -170,6 +170,75 @@ describe('pipelineReducer', () => {
     ).toBe('queued');
   });
 
+  describe('the read after an accepted action', () => {
+    const queued = () =>
+      pipelineReducer(
+        pipelineReducer(initialPipelineState, {
+          type: 'snapshot',
+          snapshot: createMockSnapshot({
+            studentStatus: 'needs_confirmation',
+            plan: createMockPlan(),
+            lastSeq: 5,
+          }),
+        }),
+        { type: 'optimistic', studentStatus: 'queued' },
+      );
+
+    it('does not move the status back when nothing newer happened', () => {
+      const state = queued();
+      const next = pipelineReducer(state, {
+        type: 'reread',
+        snapshot: createMockSnapshot({
+          studentStatus: 'needs_confirmation',
+          plan: createMockPlan(),
+          lastSeq: 5,
+        }),
+      });
+      expect(next).toBe(state);
+      expect(next.studentStatus).toBe('queued');
+    });
+
+    it('applies what is strictly newer', () => {
+      const next = pipelineReducer(queued(), {
+        type: 'reread',
+        snapshot: createMockSnapshot({ studentStatus: 'printing', lastSeq: 6 }),
+      });
+      expect(next).toMatchObject({ studentStatus: 'printing', lastSeq: 6 });
+    });
+
+    it('brings the review back with the note when the pipeline refused the action', () => {
+      const next = pipelineReducer(queued(), {
+        type: 'reread',
+        snapshot: createMockSnapshot({
+          studentStatus: 'needs_confirmation',
+          plan: createMockPlan(),
+          lastSeq: 5,
+          message: 'We could not take your yes.',
+        }),
+      });
+      expect(next).toMatchObject({
+        studentStatus: 'needs_confirmation',
+        message: 'We could not take your yes.',
+      });
+    });
+
+    it('ignores a message the screen already has', () => {
+      const withNote = pipelineReducer(queued(), {
+        type: 'event',
+        event: createMockEvent({ seq: 6, studentStatus: 'queued', message: 'Old note' }),
+      });
+      const next = pipelineReducer(withNote, {
+        type: 'reread',
+        snapshot: createMockSnapshot({
+          studentStatus: 'needs_confirmation',
+          lastSeq: 5,
+          message: 'Old note',
+        }),
+      });
+      expect(next).toBe(withNote);
+    });
+  });
+
   it('keeps its seq when a snapshot has none (older backend)', () => {
     const afterEvent = pipelineReducer(initialPipelineState, {
       type: 'event',

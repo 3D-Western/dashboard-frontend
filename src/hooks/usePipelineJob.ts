@@ -57,6 +57,8 @@ export function usePipelineJob(
   // Only the first run may start from the server's snapshot; after that it would be stale.
   const seed = useRef(initialSnapshot);
   const [refreshToken, setRefreshToken] = useState(0);
+  // The next read is the one after an accepted action: it must not move the screen backwards.
+  const cautious = useRef(false);
 
   /** Re-reads the snapshot and reopens the stream (after an action, or on "try again"). */
   const refresh = useCallback(() => setRefreshToken((token) => token + 1), []);
@@ -87,7 +89,8 @@ export function usePipelineJob(
           seed.current = null;
           const snapshot = seeded ?? (await pipelineApi.getState(jobId, { signal }));
           if (signal.aborted) return;
-          dispatch({ type: 'snapshot', snapshot });
+          dispatch({ type: cautious.current ? 'reread' : 'snapshot', snapshot });
+          cautious.current = false;
           // Stream from where the snapshot ends instead of replaying the whole history.
           // The snapshot's number as is, never a remembered one: numbering may have changed since.
           lastSeq.current = snapshot.lastSeq ?? lastSeq.current;
@@ -139,6 +142,12 @@ export function usePipelineJob(
     return () => controller.abort();
   }, [jobId, enabled, retryBaseMs, maxRetryMs, refreshToken, refresh]);
 
+  /** Reads the job again after an action the backend accepted; shows only what is newer, or a refusal. */
+  const reread = useCallback(() => {
+    cautious.current = true;
+    setRefreshToken((token) => token + 1);
+  }, []);
+
   const showPlan = useCallback((plan: Plan) => dispatch({ type: 'plan', plan }), []);
   const setOptimisticStatus = useCallback(
     (studentStatus: StudentStatus) => dispatch({ type: 'optimistic', studentStatus }),
@@ -160,6 +169,7 @@ export function usePipelineJob(
     connection,
     error,
     refresh,
+    reread,
     showPlan,
     setOptimisticStatus,
     markRated,

@@ -186,6 +186,21 @@ describe('Review', () => {
     expect(await screen.findByRole('heading', { name: 'Queued' })).toBeInTheDocument();
   });
 
+  it('keeps showing "Queued" after the yes when the re-read finds nothing new (no flick back to the review)', async () => {
+    api.getState.mockResolvedValue(reviewSnapshot({ planId: 'plan-1' }));
+    openStream();
+    const user = setup();
+    render(<PipelineJobPanel jobId="job-1" actionRereadMs={20} />);
+
+    await user.click(await screen.findByRole('button', { name: 'Yes, print this' }));
+    await screen.findByRole('heading', { name: 'Queued' });
+    await waitFor(() => expect(api.getState).toHaveBeenCalledTimes(2));
+    await new Promise((resolve) => setTimeout(resolve, 50));
+
+    expect(screen.getByRole('heading', { name: 'Queued' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Yes, print this' })).not.toBeInTheDocument();
+  });
+
   it('reads the job once more after an accepted yes, and shows the reason when the pipeline refused it later', async () => {
     api.getState.mockResolvedValueOnce(reviewSnapshot({ planId: 'plan-1' })).mockResolvedValue({
       ...reviewSnapshot({ planId: 'plan-1' }),
