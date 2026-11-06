@@ -10,6 +10,8 @@ import type {
   FarmAgent,
   FarmSwitches,
   HeldFarmJob,
+  ManualTempEntryRequest,
+  ManualTempReading,
   QuarantinedPrinter,
   ResolveHeldRequest,
   RoomTemperature,
@@ -186,3 +188,48 @@ export const KILL_LABEL: Record<KillSwitch, string> = {
   writes: 'On: refuses everything that changes the farm',
   all: 'On: refuses everything',
 };
+
+// -- Staff thermometer readings (P-174) -------------------------------------------------------
+
+/** The backend's bounds on a typed temperature, and on the note. The pipeline's own typo check is narrower (-10 to 50 °C by default). */
+export const TEMP_MIN_C = -60;
+export const TEMP_MAX_C = 100;
+export const TEMP_NOTE_MAX = 500;
+
+/** A temperature typed as "23", "23.5" or "23,5" (and "°C" or "C" after it); null when it is not a number. */
+export function parseCelsius(text: string): number | null {
+  const cleaned = text
+    .trim()
+    .replace(/\s*°?\s*c$/i, '')
+    .replace(',', '.');
+  if (!/^[-+]?(\d+\.?\d*|\.\d+)$/.test(cleaned)) return null;
+  const value = Number(cleaned);
+  return Number.isFinite(value) ? value : null;
+}
+
+/** What is wrong with the typed temperature and note, or null when both can be sent. */
+export function validateReading(text: string, note: string): string | null {
+  if (text.trim() === '') return 'Type what the thermometer shows.';
+  const celsius = parseCelsius(text);
+  if (celsius === null) return 'The temperature must be a number, like 23 or 23.5.';
+  if (celsius < TEMP_MIN_C || celsius > TEMP_MAX_C) {
+    return `The temperature must be between ${TEMP_MIN_C} and ${TEMP_MAX_C} °C.`;
+  }
+  if (note.trim().length > TEMP_NOTE_MAX) {
+    return `The note can be at most ${TEMP_NOTE_MAX} characters.`;
+  }
+  return null;
+}
+
+/** The request for a typed temperature and note (call `validateReading` first). */
+export function buildReadingRequest(text: string, note: string): ManualTempEntryRequest {
+  const celsius = parseCelsius(text);
+  if (celsius === null) throw new Error('The temperature must be a number');
+  return { celsius, ...(note.trim() ? { note: note.trim() } : {}) };
+}
+
+/** A reading's state in a word for the list. */
+export function readingState(reading: ManualTempReading): 'withdrawn' | 'in use' | 'earlier' {
+  if (reading.withdrawnAt) return 'withdrawn';
+  return reading.inUse ? 'in use' : 'earlier';
+}

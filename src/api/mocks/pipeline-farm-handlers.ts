@@ -7,6 +7,8 @@ import type {
   FarmActionResult,
   FarmAgent,
   HeldFarmJob,
+  ManualTempEntryRequest,
+  ManualTempReading,
   QuarantinedPrinter,
   ResolveHeldRequest,
   RoomTemperature,
@@ -35,6 +37,9 @@ const quarantined = new Map<string, QuarantinedPrinter>();
 const bedBlocks = new Map<string, BedBlock>();
 /** Printers with a saved empty-bed reference (the mock keeps no picture: it draws one). */
 const references = new Set<string>();
+/** Staff thermometer readings, newest entered last. */
+const thermometer = new Map<number, ManualTempReading>();
+let nextReadingId = 1;
 
 /** The room-temperature watch and the farm agent as the pipeline would report them (the mock keeps them as plain values). */
 let mockRoom: RoomTemperature;
@@ -110,6 +115,8 @@ export function resetMockFarm() {
   bedBlocks.clear();
   references.clear();
   references.add('P07');
+  thermometer.clear();
+  nextReadingId = 1;
   bedBlocks.set('P09', {
     printerId: 'P09',
     verdict: 'not_clear',
@@ -261,6 +268,65 @@ export const pipelineFarmHandlers = [
       }
       quarantined.delete(printerId);
       return ok('The printer is back live and the cause is logged.');
+    },
+  ),
+
+  // Staff thermometer readings (P-174): the pipeline refuses a typing mistake (outside -10 to 50 C) with its reason.
+  http.get(`${apiUrl}${endpoints.pipelineFarm.roomTemperatureReadings}`, ({ cookies }) => {
+    const { response } = staff(cookies);
+    if (response) return response;
+    const newest = [...thermometer.values()].reverse();
+    const inUse = newest.find((r) => !r.withdrawnAt)?.id;
+    return HttpResponse.json(
+      generateSuccessResponse(newest.map((r) => ({ ...r, inUse: r.id === inUse }))),
+    );
+  }),
+
+  http.post(
+    `${apiUrl}${endpoints.pipelineFarm.roomTemperatureReadings}`,
+    async ({ cookies, request }) => {
+      const { response, user } = staff(cookies);
+      if (response) return response;
+      const body = (await request.json().catch(() => ({}))) as Partial<ManualTempEntryRequest>;
+      if (typeof body.celsius !== 'number' || !Number.isFinite(body.celsius)) {
+        return apiError(400, 'VALIDATION_FAILED', 'celsius is required');
+      }
+      if (body.celsius < -10 || body.celsius > 50) {
+        return apiError(
+          400,
+          'INVALID_STAFF_DECISION',
+          `${body.celsius} C is outside -10 to 50 C, so it looks like a typing mistake; check the thermometer`,
+        );
+      }
+      const now = new Date().toISOString();
+      const reading: ManualTempReading = {
+        id: nextReadingId++,
+        celsius: body.celsius,
+        takenAt: body.takenAt ?? now,
+        enteredAt: now,
+        enteredBy: [user?.firstName, user?.lastName].filter(Boolean).join(' ') || 'Staff',
+        note: body.note ?? null,
+        withdrawnAt: null,
+        withdrawnBy: null,
+        inUse: true,
+      };
+      thermometer.set(reading.id, reading);
+      return HttpResponse.json(generateSuccessResponse(reading));
+    },
+  ),
+
+  http.post(
+    `${apiUrl}${endpoints.pipelineFarm.withdrawRoomTemperature(':readingId')}`,
+    ({ cookies, params }) => {
+      const { response, user } = staff(cookies);
+      if (response) return response;
+      const reading = thermometer.get(Number(params.readingId));
+      if (!reading || reading.withdrawnAt) {
+        return apiError(409, 'CONFLICT', 'There is no such reading, or it was withdrawn already');
+      }
+      reading.withdrawnAt = new Date().toISOString();
+      reading.withdrawnBy = [user?.firstName, user?.lastName].filter(Boolean).join(' ') || 'Staff';
+      return ok('The reading was withdrawn');
     },
   ),
 

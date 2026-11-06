@@ -78,7 +78,16 @@ function Unreadable({ title, message }: { title: string; message: string }) {
  * allowed band, the jobs it is holding back and the open supervisor task. A missing or old reading
  * reads as a hold, never as fine. Staff only.
  */
-export function RoomTemperatureCard({ room, now }: { room: RoomTemperature; now: Date }) {
+export function RoomTemperatureCard({
+  room,
+  now,
+  entry,
+}: {
+  room: RoomTemperature;
+  now: Date;
+  /** The thermometer entry form and recent list (staff readings), shown while the watch is on. */
+  entry?: ReactNode;
+}) {
   const headline = roomTempHeadline(room);
   const band = formatBand(room);
   const hasReading = typeof room.celsius === 'number';
@@ -182,6 +191,8 @@ export function RoomTemperatureCard({ room, now }: { room: RoomTemperature; now:
           )}
         </div>
       )}
+
+      {room.enabled && entry}
     </section>
   );
 }
@@ -332,10 +343,12 @@ export function FarmStatusCards({
   room,
   agent,
   now,
+  roomEntry,
 }: {
   room: Section<RoomTemperature>;
   agent: Section<FarmAgent>;
   now: Date;
+  roomEntry?: ReactNode;
 }) {
   return (
     <section aria-labelledby="farm-status-heading" className="space-y-3">
@@ -344,7 +357,7 @@ export function FarmStatusCards({
       </h2>
       <div className="grid gap-3 md:grid-cols-2">
         {room.ok ? (
-          <RoomTemperatureCard room={room.value} now={now} />
+          <RoomTemperatureCard room={room.value} now={now} entry={roomEntry} />
         ) : (
           <Unreadable title="Room temperature could not be read" message={room.message} />
         )}

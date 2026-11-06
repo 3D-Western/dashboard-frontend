@@ -1,6 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import {
   BED_NOTE_MAX,
+  TEMP_NOTE_MAX,
+  buildReadingRequest,
+  parseCelsius,
+  readingState,
+  validateReading,
   agentHeadline,
   formatBand,
   formatCelsius,
@@ -252,5 +257,50 @@ describe('agentHeadline', () => {
   it('shows an agent that never came as a problem, and a pipeline without one as off', () => {
     expect(agentHeadline(agent({ state: 'never_connected', problem: true })).tone).toBe('problem');
     expect(agentHeadline(agent({ state: 'not_used', configured: false })).tone).toBe('off');
+  });
+});
+
+describe('staff thermometer readings', () => {
+  it('reads a typed temperature the way a person writes it', () => {
+    expect(parseCelsius('23')).toBe(23);
+    expect(parseCelsius(' 23.5 ')).toBe(23.5);
+    expect(parseCelsius('23,5')).toBe(23.5);
+    expect(parseCelsius('21.5 °C')).toBe(21.5);
+    expect(parseCelsius('21c')).toBe(21);
+    expect(parseCelsius('-3')).toBe(-3);
+    expect(parseCelsius('.5')).toBe(0.5);
+  });
+
+  it('refuses what is not a number', () => {
+    for (const text of ['', 'warm', '2x3', '23..5', '1e3', 'NaN', 'Infinity', '--3', '23 F'])
+      expect(parseCelsius(text)).toBeNull();
+  });
+
+  it('says what is wrong before anything is sent', () => {
+    expect(validateReading('', '')).toMatch(/Type what the thermometer shows/);
+    expect(validateReading('warm', '')).toMatch(/must be a number/);
+    expect(validateReading('101', '')).toMatch(/between -60 and 100/);
+    expect(validateReading('-61', '')).toMatch(/between -60 and 100/);
+    expect(validateReading('22', 'x'.repeat(TEMP_NOTE_MAX + 1))).toMatch(/at most 500/);
+    expect(validateReading('22', 'x'.repeat(TEMP_NOTE_MAX))).toBeNull();
+    // A number that is not a believable room is the pipeline's call, with its own words.
+    expect(validateReading('80', '')).toBeNull();
+  });
+
+  it('builds the request with the trimmed note, and without an empty one', () => {
+    expect(buildReadingRequest('23,5', '  by the door ')).toEqual({
+      celsius: 23.5,
+      note: 'by the door',
+    });
+    expect(buildReadingRequest('22', '   ')).toEqual({ celsius: 22 });
+    expect(() => buildReadingRequest('warm', '')).toThrow();
+  });
+
+  it('names a reading’s state', () => {
+    const base = { id: 1, celsius: 22, takenAt: 't', enteredAt: 't', enteredBy: 'Sam' };
+    expect(readingState({ ...base, inUse: true })).toBe('in use');
+    expect(readingState({ ...base, inUse: false })).toBe('earlier');
+    expect(readingState({ ...base, inUse: false, withdrawnAt: 'x' })).toBe('withdrawn');
+    expect(readingState({ ...base, inUse: true, withdrawnAt: 'x' })).toBe('withdrawn');
   });
 });

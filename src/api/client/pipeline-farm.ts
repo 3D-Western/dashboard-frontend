@@ -5,6 +5,8 @@ import type {
   FarmActionResult,
   FarmAgent,
   HeldFarmJob,
+  ManualTempEntryRequest,
+  ManualTempReading,
   QuarantinedPrinter,
   ResolveHeldRequest,
   RoomTemperature,
@@ -76,6 +78,30 @@ export const pipelineFarmApi = {
    */
   farmAgent: (options?: RequestInit) =>
     request<FarmAgent>(endpoints.pipelineFarm.agent, { method: 'GET', ...options }),
+
+  /**
+   * The last staff thermometer readings, newest first, withdrawn ones included and marked. 503 when
+   * the pipeline cannot be reached or is older than the route.
+   */
+  roomTemperatureReadings: (options?: RequestInit) =>
+    request<ManualTempReading[]>(endpoints.pipelineFarm.roomTemperatureReadings, {
+      method: 'GET',
+      ...options,
+    }),
+
+  /**
+   * Enters a thermometer reading. The pipeline uses it for as long as it counts a reading; 400
+   * (with its reason) for a number that looks like a typing mistake or a reading that is too old,
+   * 409 when staff readings are switched off in the pipeline.
+   */
+  enterRoomTemperature: (body: ManualTempEntryRequest) =>
+    post<ManualTempReading>(endpoints.pipelineFarm.roomTemperatureReadings, body),
+
+  /** Takes a wrong reading out of use (it stays on the list, marked); 409 when already withdrawn. */
+  withdrawRoomTemperature: (readingId: number) =>
+    request<FarmActionResult>(endpoints.pipelineFarm.withdrawRoomTemperature(readingId), {
+      method: 'POST',
+    }),
 
   /** Printers the empty-bed check holds back (P-106), oldest first; empty while the check is off. */
   bedBlocks: (options?: RequestInit) =>

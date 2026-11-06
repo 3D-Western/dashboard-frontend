@@ -192,3 +192,30 @@ export interface FarmActionResult {
   ok: boolean;
   message: string;
 }
+
+/**
+ * GET .../farm/room-temperature/readings: one staff thermometer reading as the pipeline keeps it.
+ * `enteredBy` is the name of the person who entered it; `inUse` marks the newest entry that is not
+ * withdrawn and still fresh (the one the watch may be using; idle printers can still outvote it).
+ */
+export interface ManualTempReading {
+  id: number;
+  celsius: number;
+  takenAt: string;
+  enteredAt: string;
+  enteredBy: string;
+  note?: string | null;
+  withdrawnAt?: string | null;
+  withdrawnBy?: string | null;
+  inUse: boolean;
+}
+
+/** POST .../farm/room-temperature/readings: a staff member read a thermometer in the room. */
+export interface ManualTempEntryRequest {
+  /** Degrees C, from -60 to 100; the pipeline refuses a number that cannot be a room (a typing mistake). */
+  celsius: number;
+  /** When it was read, if not just now (an ISO time with its zone). */
+  takenAt?: string;
+  /** Optional, up to 500 characters. */
+  note?: string;
+}

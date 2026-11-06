@@ -50,6 +50,7 @@ import type {
 import { BedReferenceTools } from './BedReferenceTools';
 import { FarmStatusCards, type Section } from './FarmStatusCards';
 import { ReasonForm } from './ReasonForm';
+import { RoomTempReadings } from './RoomTempReadings';
 import { reviewErrorMessage } from './ReviewBits';
 
 export const FARM_REFRESH_MS = 15_000;
@@ -522,7 +523,18 @@ export function FarmDesk({ now, refreshMs = FARM_REFRESH_MS }: { now?: Date; ref
 
       {overview && (
         <>
-          <FarmStatusCards room={overview.room} agent={overview.agent} now={clock} />
+          <FarmStatusCards
+            room={overview.room}
+            agent={overview.agent}
+            now={clock}
+            roomEntry={
+              <RoomTempReadings
+                now={clock}
+                refreshKey={loadedAt?.getTime()}
+                onChanged={() => void load()}
+              />
+            }
+          />
 
           <section aria-labelledby="held-heading" className="space-y-3">
             <h2 id="held-heading" className="text-lg font-semibold">

@@ -58,6 +58,67 @@ describe('pipelineFarmApi', () => {
     await expect(pipelineFarmApi.roomTemperature()).rejects.toThrow('Not offered yet');
   });
 
+  it('lists, enters and withdraws staff thermometer readings through the backend', async () => {
+    const reading = {
+      id: 7,
+      celsius: 23.5,
+      takenAt: '2026-11-06T11:00:00Z',
+      enteredAt: '2026-11-06T11:00:01Z',
+      enteredBy: 'Sam Staff',
+      inUse: true,
+    };
+    let sent: unknown = null;
+    mockServer.use(
+      http.get(endpoints.pipelineFarm.roomTemperatureReadings, () =>
+        HttpResponse.json({ success: true, data: [reading] }),
+      ),
+      http.post(endpoints.pipelineFarm.roomTemperatureReadings, async ({ request }) => {
+        sent = await request.json();
+        return HttpResponse.json({ success: true, data: reading });
+      }),
+      http.post(endpoints.pipelineFarm.withdrawRoomTemperature(7), () =>
+        HttpResponse.json({ success: true, data: { ok: true, message: 'withdrawn' } }),
+      ),
+    );
+
+    await expect(pipelineFarmApi.roomTemperatureReadings()).resolves.toEqual([reading]);
+    await expect(
+      pipelineFarmApi.enterRoomTemperature({ celsius: 23.5, note: 'by the door' }),
+    ).resolves.toEqual(reading);
+    expect(sent).toEqual({ celsius: 23.5, note: 'by the door' });
+    await expect(pipelineFarmApi.withdrawRoomTemperature(7)).resolves.toEqual({
+      ok: true,
+      message: 'withdrawn',
+    });
+  });
+
+  it('throws the pipeline’s reason when it refuses a reading', async () => {
+    mockServer.use(
+      http.post(endpoints.pipelineFarm.roomTemperatureReadings, () =>
+        HttpResponse.json(
+          {
+            success: false,
+            error: { code: 'INVALID_STAFF_DECISION', message: '90 C looks like a typing mistake' },
+          },
+          { status: 400 },
+        ),
+      ),
+    );
+
+    await expect(pipelineFarmApi.enterRoomTemperature({ celsius: 90 })).rejects.toThrow(
+      '90 C looks like a typing mistake',
+    );
+  });
+
+  it('uses the thermometer reading paths under the room-temperature route', () => {
+    expect(endpoints.pipelineFarm.roomTemperatureReadings).toBe(
+      '/api/v1/admin/pipeline/farm/room-temperature/readings',
+    );
+    expect(endpoints.pipelineFarm.withdrawRoomTemperature(7)).toBe(
+      '/api/v1/admin/pipeline/farm/room-temperature/readings/7/withdraw',
+    );
+  });
+
   it('uses the backend paths under /api/v1/admin/pipeline/farm', () => {
     expect(endpoints.pipelineFarm.roomTemperature).toBe(
       '/api/v1/admin/pipeline/farm/room-temperature',

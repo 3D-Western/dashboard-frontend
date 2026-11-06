@@ -18,6 +18,9 @@ vi.mock('@/api/client/pipeline-farm', () => ({
     quarantinedPrinters: vi.fn(),
     roomTemperature: vi.fn(),
     farmAgent: vi.fn(),
+    roomTemperatureReadings: vi.fn(),
+    enterRoomTemperature: vi.fn(),
+    withdrawRoomTemperature: vi.fn(),
     bedBlocks: vi.fn(),
     clearBedBlock: vi.fn(),
     bedReference: vi.fn(),
@@ -128,6 +131,7 @@ beforeEach(() => {
   api.bedBlocks.mockResolvedValue([]);
   api.roomTemperature.mockResolvedValue(roomTemp());
   api.farmAgent.mockResolvedValue(farmAgent());
+  api.roomTemperatureReadings.mockResolvedValue([]);
   api.clearBedBlock.mockResolvedValue(ok);
   api.bedReference.mockResolvedValue(null);
   api.setBedReference.mockResolvedValue(ok);
@@ -164,6 +168,58 @@ describe('FarmDesk', () => {
     const agent = screen.getByTestId('farm-agent');
     expect(within(agent).getByText('Online')).toBeVisible();
     expect(screen.getAllByTestId('held-job')).toHaveLength(2);
+  });
+
+  it('offers the thermometer form in the room-temperature card while the watch is on, with the recent readings', async () => {
+    api.roomTemperatureReadings.mockResolvedValue([
+      {
+        id: 4,
+        celsius: 23,
+        takenAt: '2026-11-04T11:50:00Z',
+        enteredAt: '2026-11-04T11:50:05Z',
+        enteredBy: 'Sam Staff',
+        inUse: true,
+      },
+    ]);
+    renderDesk();
+
+    const room = await screen.findByTestId('room-temperature');
+    const readings = await within(room).findByTestId('room-temperature-readings');
+    expect(within(readings).getByRole('button', { name: 'Save reading' })).toBeVisible();
+    expect(await within(readings).findByText(/entered by Sam Staff/)).toBeVisible();
+  });
+
+  it('reloads the desk after a reading is saved, so the card shows what the watch makes of it', async () => {
+    const user = setup();
+    api.enterRoomTemperature.mockResolvedValue({
+      id: 5,
+      celsius: 22,
+      takenAt: '2026-11-04T12:00:00Z',
+      enteredAt: '2026-11-04T12:00:01Z',
+      enteredBy: 'Sam Staff',
+      inUse: true,
+    });
+    renderDesk();
+    const room = await screen.findByTestId('room-temperature');
+    await within(room).findByTestId('room-temperature-readings');
+    const loads = api.roomTemperature.mock.calls.length;
+
+    await user.type(within(room).getByLabelText('Thermometer shows (°C)'), '22');
+    await user.click(within(room).getByRole('button', { name: 'Save reading' }));
+
+    await waitFor(() => expect(api.enterRoomTemperature).toHaveBeenCalledWith({ celsius: 22 }));
+    await waitFor(() => expect(api.roomTemperature.mock.calls.length).toBeGreaterThan(loads));
+  });
+
+  it('has no thermometer form while the watch is off', async () => {
+    api.roomTemperature.mockResolvedValue(
+      roomTemp({ enabled: false, code: null, summary: 'The room-temperature watch is off.' }),
+    );
+    renderDesk();
+
+    await screen.findByTestId('room-temperature');
+    expect(screen.queryByTestId('room-temperature-readings')).not.toBeInTheDocument();
+    expect(api.roomTemperatureReadings).not.toHaveBeenCalled();
   });
 
   it('shows a missing reading as a hold with the jobs it holds back', async () => {
