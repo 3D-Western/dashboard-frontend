@@ -156,6 +156,27 @@ describe('usePipelineJob', () => {
     expect(result.current.studentStatus).toBe('ready_for_pickup');
   });
 
+  it('re-reads the job once when it goes on a printer (the live view flag is only in the snapshot), not on every printing event', async () => {
+    getState
+      .mockResolvedValueOnce(createMockSnapshot({ studentStatus: 'queued' }))
+      .mockResolvedValue(createMockSnapshot({ studentStatus: 'printing', liveView: true }));
+    const live = openStream();
+    openStream();
+    const { result } = renderHook(() => usePipelineJob('job-1'));
+    await waitFor(() => expect(result.current.connection).toBe('live'));
+    expect(result.current.liveView).toBe(false);
+
+    act(() => live.emit(createMockEvent({ seq: 3, studentStatus: 'printing' })));
+
+    await waitFor(() => expect(result.current.liveView).toBe(true));
+    expect(getState).toHaveBeenCalledTimes(2);
+
+    // another event while it prints is not another read
+    await waitFor(() => expect(stream).toHaveBeenCalledTimes(2));
+    await waitFor(() => expect(result.current.connection).toBe('live'));
+    getState.mockClear();
+  });
+
   it('does not open a stream for a job that is finished', async () => {
     getState.mockResolvedValue(createMockSnapshot({ studentStatus: 'collected' }));
 

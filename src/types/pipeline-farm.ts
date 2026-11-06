@@ -51,6 +51,36 @@ export interface WaiveRatingRequest {
   reason: string;
 }
 
+/**
+ * GET .../farm/bed-blocks: a printer the empty-bed check holds back (P-106), the `clear_bed` task.
+ * `verdict` says whether the camera saw something on the bed (`not_clear`) or could not tell (`unsure`).
+ */
+export interface BedBlock {
+  printerId: string;
+  verdict: 'not_clear' | 'unsure';
+  code: string;
+  /** The pipeline's words, for staff only. */
+  reason: string;
+  blockedAt: string;
+  lastCheckedAt: string;
+  /** The job whose release the check stopped, when there was one. */
+  jobId?: string | null;
+}
+
+/** POST .../farm/printers/{printerId}/clear-bed-block: "I looked, the bed is clear". */
+export interface ClearBedBlockRequest {
+  /** Optional, up to 2000 characters. */
+  note?: string;
+}
+
+/** POST .../farm/printers/{printerId}/bed-reference: the camera's picture now becomes the printer's empty-bed reference. */
+export interface SetBedReferenceRequest {
+  /** Must be true: the person is looking at the printer, the bed is empty and the chamber light is on. */
+  confirmed: true;
+  /** Optional, up to 2000 characters. */
+  note?: string;
+}
+
 /** What a farm action did. */
 export interface FarmActionResult {
   ok: boolean;

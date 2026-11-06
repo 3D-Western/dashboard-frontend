@@ -1,11 +1,14 @@
 import { http, HttpResponse } from 'msw';
 import { PERMISSIONS } from '@/constants/permissions';
 import type {
+  BedBlock,
+  ClearBedBlockRequest,
   ClearQuarantineRequest,
   FarmActionResult,
   HeldFarmJob,
   QuarantinedPrinter,
   ResolveHeldRequest,
+  SetBedReferenceRequest,
   WaiveRatingRequest,
 } from '@/types/pipeline-farm';
 import { endpoints } from '../client/endpoints';
@@ -27,11 +30,25 @@ const hoursAgo = (hours: number) => new Date(Date.now() - hours * 3600_000).toIS
 
 const heldJobs = new Map<string, HeldFarmJob>();
 const quarantined = new Map<string, QuarantinedPrinter>();
+const bedBlocks = new Map<string, BedBlock>();
+/** Printers with a saved empty-bed reference (the mock keeps no picture: it draws one). */
+const references = new Set<string>();
 
 /** Fresh seed data (also used by tests that want a known farm). */
 export function resetMockFarm() {
   heldJobs.clear();
   quarantined.clear();
+  bedBlocks.clear();
+  references.clear();
+  references.add('P07');
+  bedBlocks.set('P09', {
+    printerId: 'P09',
+    verdict: 'not_clear',
+    code: 'bed.part_left',
+    reason: 'Something is on the plate: the picture differs from the empty-bed reference.',
+    blockedAt: hoursAgo(3),
+    lastCheckedAt: hoursAgo(0.5),
+  });
   [
     {
       jobId: '22222222-2222-4222-8222-000000000001',
@@ -163,6 +180,73 @@ export const pipelineFarmHandlers = [
       }
       quarantined.delete(printerId);
       return ok('The printer is back live and the cause is logged.');
+    },
+  ),
+
+  // The empty-bed check (P-106): the printers held back, "the bed is clear", and the reference picture.
+  http.get(`${apiUrl}${endpoints.pipelineFarm.bedBlocks}`, ({ cookies }) => {
+    const { response } = staff(cookies);
+    if (response) return response;
+    return HttpResponse.json(generateSuccessResponse([...bedBlocks.values()]));
+  }),
+
+  http.post(
+    `${apiUrl}${endpoints.pipelineFarm.clearBedBlock(':printerId')}`,
+    async ({ cookies, params, request }) => {
+      const { response } = staff(cookies);
+      if (response) return response;
+      const body = (await request.json().catch(() => ({}))) as Partial<ClearBedBlockRequest>;
+      if (typeof body.note === 'string' && body.note.length > 2000) {
+        return apiError(400, 'VALIDATION_FAILED', 'note must be at most 2000 characters');
+      }
+      const printerId = decodeURIComponent(String(params.printerId));
+      if (!bedBlocks.delete(printerId)) {
+        return apiError(409, 'CONFLICT', 'That printer has no empty-bed block.');
+      }
+      return ok('The printer takes jobs again.');
+    },
+  ),
+
+  http.post(
+    `${apiUrl}${endpoints.pipelineFarm.bedReference(':printerId')}`,
+    async ({ cookies, params, request }) => {
+      const { response } = staff(cookies);
+      if (response) return response;
+      const body = (await request.json().catch(() => ({}))) as Partial<SetBedReferenceRequest>;
+      if (body.confirmed !== true) {
+        return apiError(
+          400,
+          'VALIDATION_FAILED',
+          'Confirm that the bed is empty and the chamber light is on',
+        );
+      }
+      const printerId = decodeURIComponent(String(params.printerId));
+      references.add(printerId);
+      bedBlocks.delete(printerId);
+      return ok('The camera’s picture is now this printer’s empty-bed reference.');
+    },
+  ),
+
+  http.get(
+    `${apiUrl}${endpoints.pipelineFarm.bedReference(':printerId')}`,
+    ({ cookies, params }) => {
+      const { response } = staff(cookies);
+      if (response) return response;
+      const printerId = decodeURIComponent(String(params.printerId));
+      if (!references.has(printerId)) {
+        return apiError(
+          404,
+          'NOT_FOUND',
+          'No empty-bed reference picture is saved for this printer yet',
+        );
+      }
+      const svg =
+        '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 360"><rect width="640" height="360" fill="#2a2f38"/>' +
+        '<rect x="80" y="280" width="480" height="14" rx="4" fill="#3b424d"/>' +
+        `<text x="24" y="40" fill="#e6edf3" font-family="monospace" font-size="20">mock empty bed: ${printerId}</text></svg>`;
+      return new HttpResponse(svg, {
+        headers: { 'Content-Type': 'image/svg+xml', 'Cache-Control': 'no-store' },
+      });
     },
   ),
 ];

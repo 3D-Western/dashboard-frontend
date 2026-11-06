@@ -17,21 +17,31 @@ import {
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Textarea } from '@/components/ui/textarea';
 import {
+  BED_NOTE_MAX,
+  BED_VERDICT_LABEL,
   HELD_CHOICE_HELP,
   HELD_CHOICE_LABEL,
+  bedBlocksOldestFirst,
+  buildClearBedRequest,
   buildClearRequest,
   buildResolveRequest,
   heldOldestFirst,
+  isPrinterId,
   printerLabel,
   quarantinedOldestFirst,
+  validateBedNote,
   type HeldChoice,
 } from '@/lib/pipeline-farm';
 import { shortId } from '@/lib/pipeline-review';
 import { Routes } from '@/lib/routes';
 import { formatAgo } from '@/lib/signoff-format';
-import type { HeldFarmJob, QuarantinedPrinter } from '@/types/pipeline-farm';
+import type { BedBlock, HeldFarmJob, QuarantinedPrinter } from '@/types/pipeline-farm';
+import { BedReferenceTools } from './BedReferenceTools';
 import { ReasonForm } from './ReasonForm';
 import { reviewErrorMessage } from './ReviewBits';
 
@@ -41,6 +51,8 @@ export const FARM_REFRESH_MS = 15_000;
 interface FarmOverview {
   heldJobs: HeldFarmJob[];
   quarantinedPrinters: QuarantinedPrinter[];
+  /** Printers the empty-bed check holds back (P-106): the `clear_bed` tasks. */
+  bedBlocks: BedBlock[];
 }
 
 /** What the person is about to do, waiting for a reason and a yes. */
@@ -172,7 +184,155 @@ function QuarantineCard({
           Put back live
         </Button>
       )}
+      <BedReferenceTools printerId={printer.printerId} />
     </li>
+  );
+}
+
+/**
+ * A printer the empty-bed check holds back, with what to do about it: look at the bed and say it is
+ * clear (lifts the block), or save a new empty-bed reference (also lifts it). This is the
+ * `clear_bed` task of the alerts centre.
+ */
+function BedBlockCard({
+  block,
+  now,
+  busy,
+  onClear,
+  onSaved,
+}: {
+  block: BedBlock;
+  now: Date;
+  busy: boolean;
+  onClear: (note: string) => void;
+  onSaved: () => void;
+}) {
+  const [asking, setAsking] = useState(false);
+  const [note, setNote] = useState('');
+  const [noteError, setNoteError] = useState<string | null>(null);
+  const noteId = `bed-note-${block.printerId.replace(/[^A-Za-z0-9_-]/g, '_')}`;
+
+  return (
+    <li className="space-y-3 rounded-xl border bg-card p-4" data-testid="bed-block">
+      <div className="space-y-1">
+        <div className="flex flex-wrap items-center gap-2">
+          <Printer className="size-4 text-muted-foreground" aria-hidden="true" />
+          <span className="text-base font-medium">{printerLabel(block)}</span>
+          <Badge variant={block.verdict === 'not_clear' ? 'destructive' : 'secondary'}>
+            {BED_VERDICT_LABEL[block.verdict]}
+          </Badge>
+        </div>
+        <p className="text-sm text-muted-foreground">
+          Held back {formatAgo(block.blockedAt, now)} · last looked at{' '}
+          {formatAgo(block.lastCheckedAt, now)}
+          {block.jobId && (
+            <>
+              {' '}
+              · stopped job{' '}
+              <Link
+                href={Routes.adminReviewJob(block.jobId)}
+                className="underline-offset-4 hover:underline"
+              >
+                {shortId(block.jobId)}
+              </Link>
+            </>
+          )}
+        </p>
+        {block.reason && <p className="text-sm">{block.reason}</p>}
+      </div>
+
+      {asking ? (
+        <form
+          className="space-y-3"
+          noValidate
+          onSubmit={(event) => {
+            event.preventDefault();
+            const problem = validateBedNote(note);
+            setNoteError(problem);
+            if (!problem) onClear(note);
+          }}
+        >
+          <p className="text-sm text-muted-foreground">
+            Look at the printer. If the bed is clear, say so: it takes jobs again.
+          </p>
+          <div className="space-y-2">
+            <Label htmlFor={noteId}>What you saw (optional)</Label>
+            <Textarea
+              id={noteId}
+              value={note}
+              maxLength={BED_NOTE_MAX}
+              aria-invalid={noteError ? true : undefined}
+              onChange={(event) => setNote(event.target.value)}
+            />
+            {noteError && (
+              <p role="alert" className="text-sm text-destructive">
+                {noteError}
+              </p>
+            )}
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <Button type="submit" className="h-11 fine:h-9" disabled={busy}>
+              {busy && <Loader2 className="animate-spin" aria-hidden="true" />}
+              Yes, I looked: the bed is clear
+            </Button>
+            <Button
+              type="button"
+              variant="ghost"
+              className="h-11 fine:h-9"
+              disabled={busy}
+              onClick={() => setAsking(false)}
+            >
+              Cancel
+            </Button>
+          </div>
+        </form>
+      ) : (
+        <Button
+          type="button"
+          variant="outline"
+          className="h-11 fine:h-9"
+          onClick={() => setAsking(true)}
+        >
+          Bed is clear…
+        </Button>
+      )}
+      <BedReferenceTools printerId={block.printerId} onSaved={onSaved} />
+    </li>
+  );
+}
+
+/** Any printer's reference picture, for one that is not on a list above: type its id. */
+function AnyPrinterReference({ onSaved }: { onSaved: () => void }) {
+  const [printerId, setPrinterId] = useState('');
+  const id = printerId.trim();
+  return (
+    <section aria-labelledby="reference-heading" className="space-y-3">
+      <h2 id="reference-heading" className="text-lg font-semibold">
+        Empty-bed references
+      </h2>
+      <p className="text-sm text-muted-foreground">
+        The check compares a printer’s bed with its saved empty-bed picture. Look at any printer’s
+        reference, or save a new one while its bed is empty and its light is on.
+      </p>
+      <div className="max-w-xs space-y-2">
+        <Label htmlFor="reference-printer">Printer id</Label>
+        <Input
+          id="reference-printer"
+          value={printerId}
+          onChange={(event) => setPrinterId(event.target.value)}
+          autoComplete="off"
+          spellCheck={false}
+          aria-invalid={id !== '' && !isPrinterId(id) ? true : undefined}
+          aria-describedby={id !== '' && !isPrinterId(id) ? 'reference-printer-error' : undefined}
+        />
+        {id !== '' && !isPrinterId(id) && (
+          <p id="reference-printer-error" role="alert" className="text-sm text-destructive">
+            A printer id has letters, digits and . _ : - only.
+          </p>
+        )}
+      </div>
+      {id !== '' && isPrinterId(id) && <BedReferenceTools printerId={id} onSaved={onSaved} />}
+    </section>
   );
 }
 
@@ -200,11 +360,13 @@ export function FarmDesk({ now, refreshMs = FARM_REFRESH_MS }: { now?: Date; ref
   const load = useCallback(async () => {
     setRefreshing(true);
     try {
-      const [heldJobs, quarantinedPrinters] = await Promise.all([
+      const [heldJobs, quarantinedPrinters, bedBlocks] = await Promise.all([
         pipelineFarmApi.heldJobs(),
         pipelineFarmApi.quarantinedPrinters(),
+        // A backend or pipeline without the empty-bed check must not take the rest of the desk down.
+        pipelineFarmApi.bedBlocks().catch((): BedBlock[] => []),
       ]);
-      setOverview({ heldJobs, quarantinedPrinters });
+      setOverview({ heldJobs, quarantinedPrinters, bedBlocks });
       setError(null);
       setLoadedAt(new Date());
     } catch (err) {
@@ -263,16 +425,35 @@ export function FarmDesk({ now, refreshMs = FARM_REFRESH_MS }: { now?: Date; ref
     }
   }
 
+  async function clearBed(block: BedBlock, note: string) {
+    setSending(true);
+    setFailure(null);
+    setDone(null);
+    try {
+      const result = await pipelineFarmApi.clearBedBlock(
+        block.printerId,
+        buildClearBedRequest(note),
+      );
+      setDone(result?.message || `${printerLabel(block)} takes jobs again. Your word is logged.`);
+      await load();
+    } catch (err) {
+      setFailure(reviewErrorMessage(err, 'That was not sent. Check the farm and try again.'));
+    } finally {
+      setSending(false);
+    }
+  }
+
   const clock = now ?? new Date();
   const held = heldOldestFirst(overview?.heldJobs ?? []);
   const printers = quarantinedOldestFirst(overview?.quarantinedPrinters ?? []);
+  const beds = bedBlocksOldestFirst(overview?.bedBlocks ?? []);
 
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <p className="text-sm text-muted-foreground" aria-live="polite">
           {overview
-            ? `${held.length} held ${held.length === 1 ? 'job' : 'jobs'}, ${printers.length} quarantined ${printers.length === 1 ? 'printer' : 'printers'}.`
+            ? `${held.length} held ${held.length === 1 ? 'job' : 'jobs'}, ${printers.length} quarantined ${printers.length === 1 ? 'printer' : 'printers'}${beds.length > 0 ? `, ${beds.length} ${beds.length === 1 ? 'bed' : 'beds'} to check` : ''}.`
             : ''}
         </p>
         <div className="flex items-center gap-3">
@@ -356,6 +537,30 @@ export function FarmDesk({ now, refreshMs = FARM_REFRESH_MS }: { now?: Date; ref
             )}
           </section>
 
+          {beds.length > 0 && (
+            <section aria-labelledby="beds-heading" className="space-y-3">
+              <h2 id="beds-heading" className="text-lg font-semibold">
+                Beds to check
+              </h2>
+              <p className="text-sm text-muted-foreground">
+                The camera check did not see a clear bed on these printers, so they take no new job.
+                Look at the bed first.
+              </p>
+              <ul className="space-y-3">
+                {beds.map((block) => (
+                  <BedBlockCard
+                    key={block.printerId}
+                    block={block}
+                    now={clock}
+                    busy={sending}
+                    onClear={(note) => void clearBed(block, note)}
+                    onSaved={() => void load()}
+                  />
+                ))}
+              </ul>
+            </section>
+          )}
+
           <section aria-labelledby="quarantine-heading" className="space-y-3">
             <h2 id="quarantine-heading" className="text-lg font-semibold">
               Quarantined printers
@@ -385,6 +590,8 @@ export function FarmDesk({ now, refreshMs = FARM_REFRESH_MS }: { now?: Date; ref
               </ul>
             )}
           </section>
+
+          <AnyPrinterReference onSaved={() => void load()} />
         </>
       )}
 

@@ -11,6 +11,8 @@ export type AlertKind =
   | 'pipeline_recovered'
   | 'farm_job_held'
   | 'printer_quarantined'
+  /** The empty-bed check holds a printer back (P-106): a person looks at the bed. Closes itself when the block is lifted. */
+  | 'clear_bed'
   /** A student asked the crew after the "Ask why" assistant (P-54); details hold their reason and the conversation. */
   | 'student_disagrees';
 

@@ -23,7 +23,8 @@ const apiUrl = process.env.API_URL;
 //   steps arrive one by one -> a choice is needed (unless the id says otherwise) -> review -> yes.
 // Ids containing "pickup" are ready for pickup (the student's rating of it is the collection, then
 // the quality step and two follow-up questions play out), "collected" start already collected and
-// unrated, "review" start at the review, "cannot" ends in "can't print", "choice" asks for a choice.
+// unrated, "review" start at the review, "cannot" ends in "can't print", "choice" asks for a choice,
+// "printing" are on a printer and can be watched (a still picture refreshed every two seconds).
 
 const STEP_MS = 1500;
 
@@ -222,6 +223,15 @@ function snapshotFor(jobId: string): PipelineSnapshot {
       steps: allSteps('done'),
     };
   }
+  if (jobId.includes('printing')) {
+    // On a printer with a live view (P-100): the "Watch it print" control shows.
+    return {
+      studentStatus: 'printing',
+      plan: planFor(jobId, session),
+      steps: allSteps('done'),
+      liveView: true,
+    };
+  }
   if (session.confirmed)
     return { studentStatus: 'queued', plan: planFor(jobId, session), steps: allSteps('done') };
 
@@ -291,6 +301,39 @@ export const pipelineHandlers = [
     return HttpResponse.json(
       generateSuccessResponse({ unratedPrints: mockUnratedPrints(user.studentId) }),
     );
+  }),
+
+  // Watch it print (P-100): the offer, and a moving stand-in picture (the real stream is MJPEG).
+  http.get(`${apiUrl}${endpoints.pipeline.liveView(':jobId')}`, ({ cookies, params }) => {
+    if (!requireUser(cookies)) return createInvalidSessionResponse();
+    const jobId = String(params.jobId);
+    if (!jobId.includes('printing')) {
+      return HttpResponse.json(
+        generateSuccessResponse({ available: false, reason: 'not_printing' }),
+      );
+    }
+    return HttpResponse.json(
+      generateSuccessResponse({
+        available: true,
+        snapshotUrl: `${endpoints.pipeline.liveView(jobId)}/snapshot`,
+        snapshotIntervalS: 2,
+        expiresAt: new Date(Date.now() + 120_000).toISOString(),
+        maxStreamS: 90,
+      }),
+    );
+  }),
+
+  http.get(`${apiUrl}${endpoints.pipeline.liveView(':jobId')}/snapshot`, ({ cookies }) => {
+    if (!requireUser(cookies)) return createInvalidSessionResponse();
+    const clock = new Date().toLocaleTimeString();
+    const svg =
+      '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 360"><rect width="640" height="360" fill="#1c1f26"/>' +
+      '<rect x="80" y="280" width="480" height="14" rx="4" fill="#2d333d"/>' +
+      '<path d="M200 280V150h60v80h180v50z" fill="#8a38f5"/>' +
+      `<text x="24" y="40" fill="#e6edf3" font-family="monospace" font-size="20">mock camera ${clock}</text></svg>`;
+    return new HttpResponse(svg, {
+      headers: { 'Content-Type': 'image/svg+xml', 'Cache-Control': 'no-store' },
+    });
   }),
 
   http.get(`${apiUrl}/api/v1/jobs/:jobId/pipeline`, ({ cookies, params }) => {

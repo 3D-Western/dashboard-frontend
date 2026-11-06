@@ -19,6 +19,7 @@ import { DisagreePanel } from './DisagreePanel';
 import { PickupCard } from './PickupCard';
 import { PartViewerSlot } from './PartViewerSlot';
 import { PreparingSteps } from './PreparingSteps';
+import { WatchItPrint } from './WatchItPrint';
 import { highlightsUrlOf, modelUrlOf, PlanFacts, previewUrlOf, ReviewPlan } from './ReviewPlan';
 
 /** How long after a rating the job is read again to pick up the follow-up questions. */
@@ -250,6 +251,10 @@ export function PipelineJobPanel({
           </h2>
           <p className="mt-2 text-sm text-muted-foreground">{message || stage.message}</p>
         </div>
+        {/* On a printer, and the backend says a live view is on: the student may watch it print (P-100) */}
+        {(status === 'printing' || status === 'reprinting') && pipeline.liveView && (
+          <WatchItPrint jobId={jobId} />
+        )}
         {/* Ready for pickup: where and what, nothing to do or confirm (P-136) */}
         {status === 'ready_for_pickup' && pickup && <PickupCard pickup={pickup} />}
         {/* Rating: the next time the student is here (it implies they have the print) */}

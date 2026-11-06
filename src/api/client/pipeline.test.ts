@@ -4,7 +4,10 @@ import { mockServer } from '../mocks';
 import { ApiError } from './errors';
 import { endpoints } from './endpoints';
 import {
+  LiveViewFrameError,
   PlanChangedError,
+  isLiveViewEnded,
+  liveViewRelayUrl,
   createSseParser,
   isConflictError,
   unratedPrintsOf,
@@ -554,5 +557,124 @@ describe('unratedPrintsOf (rate first, P-20)', () => {
     expect(unratedPrintsOf(new ApiError('RATING_REQUIRED', 'x', undefined, undefined, {}))).toEqual(
       [],
     );
+  });
+});
+
+describe('the live view (P-100)', () => {
+  const OFFER = {
+    available: true,
+    snapshotUrl: `/api/v1/jobs/${JOB}/pipeline/live-view/snapshot`,
+    streamUrl: `/api/v1/jobs/${JOB}/pipeline/live-view/stream`,
+    expiresAt: '2026-11-06T12:02:00Z',
+    maxStreamS: 90,
+    snapshotIntervalS: 1,
+  };
+
+  it('asks for the offer at the job’s live view route and returns it from the wrapper', async () => {
+    expect(endpoints.pipeline.liveView(JOB)).toBe(`/api/v1/jobs/${JOB}/pipeline/live-view`);
+    mockServer.use(
+      http.get(endpoints.pipeline.liveView(JOB), () =>
+        HttpResponse.json({ success: true, data: OFFER }),
+      ),
+    );
+
+    await expect(pipelineApi.liveView(JOB)).resolves.toEqual(OFFER);
+  });
+
+  it('passes the reason when there is no view', async () => {
+    mockServer.use(
+      http.get(endpoints.pipeline.liveView(JOB), () =>
+        HttpResponse.json({ success: true, data: { available: false, reason: 'not_printing' } }),
+      ),
+    );
+
+    await expect(pipelineApi.liveView(JOB)).resolves.toEqual({
+      available: false,
+      reason: 'not_printing',
+    });
+  });
+
+  it('turns a 410 into an error the viewer reads as "the print has finished"', async () => {
+    mockServer.use(
+      http.get(endpoints.pipeline.liveView(JOB), () =>
+        HttpResponse.json(
+          { success: false, error: { code: 'LIVE_VIEW_ENDED', message: 'The print has finished' } },
+          { status: 410 },
+        ),
+      ),
+    );
+
+    const error = await pipelineApi.liveView(JOB).catch((e: unknown) => e);
+
+    expect(isLiveViewEnded(error)).toBe(true);
+    expect(isLiveViewEnded(new Error('x'))).toBe(false);
+  });
+
+  it('a 409 on the offer is a plain error, never a plan change', async () => {
+    mockServer.use(
+      http.get(endpoints.pipeline.liveView(JOB), () =>
+        HttpResponse.json(
+          { success: false, error: { code: 'CONFLICT', message: 'no' } },
+          { status: 409 },
+        ),
+      ),
+    );
+
+    await expect(pipelineApi.liveView(JOB)).rejects.not.toBeInstanceOf(PlanChangedError);
+  });
+
+  it('only accepts the job’s own relay routes as addresses to load pictures from', () => {
+    expect(liveViewRelayUrl(JOB, OFFER.streamUrl)).toBe(OFFER.streamUrl);
+    expect(liveViewRelayUrl(JOB, OFFER.snapshotUrl)).toBe(OFFER.snapshotUrl);
+    for (const url of [
+      null,
+      undefined,
+      '',
+      'https://camera.example/stream',
+      '//camera.example/stream',
+      '/api/v1/jobs/other-job/pipeline/live-view/stream',
+      `/api/v1/jobs/${JOB}/pipeline/live-view/stream/../../x`,
+      `/api/v1/jobs/${JOB}/pipeline/live-view/stream?x=1`,
+      `/api/v1/jobs/${JOB}/pipeline/live-view/other`,
+    ]) {
+      expect(liveViewRelayUrl(JOB, url)).toBeNull();
+    }
+  });
+
+  describe('liveViewFrame', () => {
+    const frame = () =>
+      new HttpResponse(new Uint8Array([1, 2, 3]), { headers: { 'Content-Type': 'image/jpeg' } });
+
+    it('returns the picture as a blob', async () => {
+      mockServer.use(http.get(OFFER.snapshotUrl, () => frame()));
+
+      const blob = await pipelineApi.liveViewFrame(OFFER.snapshotUrl);
+
+      expect(blob.size).toBe(3);
+    });
+
+    it.each([
+      [410, 'ended'],
+      [429, 'too-often'],
+      [403, 'forbidden'],
+      [404, 'forbidden'],
+      [503, 'unavailable'],
+      [500, 'failed'],
+    ])('says why there is no picture on a %i', async (status, reason) => {
+      mockServer.use(http.get(OFFER.snapshotUrl, () => new HttpResponse(null, { status })));
+
+      const error = await pipelineApi.liveViewFrame(OFFER.snapshotUrl).catch((e: unknown) => e);
+
+      expect(error).toBeInstanceOf(LiveViewFrameError);
+      expect((error as LiveViewFrameError).reason).toBe(reason);
+    });
+
+    it('a network failure is a failed picture, not a crash', async () => {
+      mockServer.use(http.get(OFFER.snapshotUrl, () => HttpResponse.error()));
+
+      const error = await pipelineApi.liveViewFrame(OFFER.snapshotUrl).catch((e: unknown) => e);
+
+      expect((error as LiveViewFrameError).reason).toBe('failed');
+    });
   });
 });

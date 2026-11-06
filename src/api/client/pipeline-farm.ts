@@ -1,12 +1,16 @@
 import type {
+  BedBlock,
+  ClearBedBlockRequest,
   ClearQuarantineRequest,
   FarmActionResult,
   HeldFarmJob,
   QuarantinedPrinter,
   ResolveHeldRequest,
+  SetBedReferenceRequest,
   WaiveRatingRequest,
 } from '@/types/pipeline-farm';
 import { apiRequest } from './base';
+import { ApiError, ErrorCodes } from './errors';
 import { endpoints } from './endpoints';
 import { getBaseUrl } from './utils';
 
@@ -55,4 +59,51 @@ export const pipelineFarmApi = {
    */
   clearQuarantine: (printerId: string, body: ClearQuarantineRequest) =>
     post<FarmActionResult>(endpoints.pipelineFarm.clearQuarantine(printerId), body),
+
+  /** Printers the empty-bed check holds back (P-106), oldest first; empty while the check is off. */
+  bedBlocks: (options?: RequestInit) =>
+    request<BedBlock[]>(endpoints.pipelineFarm.bedBlocks, { method: 'GET', ...options }),
+
+  /** "I looked, the bed is clear": lifts the block. The note is optional; 409 when the printer has no block. */
+  clearBedBlock: (printerId: string, body: ClearBedBlockRequest = {}) =>
+    post<FarmActionResult>(endpoints.pipelineFarm.clearBedBlock(printerId), body),
+
+  /**
+   * The camera's picture now becomes the printer's empty-bed reference, and a block on it is lifted.
+   * Only for a person looking at an empty bed with the chamber light on (`confirmed: true`).
+   * Takes a few seconds; 409 when the pipeline could not use the picture (no camera, too dark or flat).
+   */
+  setBedReference: (printerId: string, body: SetBedReferenceRequest) =>
+    post<FarmActionResult>(endpoints.pipelineFarm.bedReference(printerId), body),
+
+  /**
+   * The saved reference picture as an image, or null when none is saved yet (404). Throws an
+   * ApiError (503) when the pipeline cannot show reference pictures yet.
+   */
+  bedReference: async (printerId: string, options: { signal?: AbortSignal } = {}) => {
+    let response: Response;
+    try {
+      response = await fetch(`${getBaseUrl()}${endpoints.pipelineFarm.bedReference(printerId)}`, {
+        method: 'GET',
+        credentials: 'include',
+        cache: 'no-store',
+        signal: options.signal,
+      });
+    } catch (error) {
+      if (options.signal?.aborted) throw error;
+      throw new ApiError(ErrorCodes.REQUEST_FAILED, 'The reference picture could not be loaded');
+    }
+    if (response.ok) return response.blob();
+    if (response.status === 404) return null;
+    let message = 'The reference picture could not be loaded.';
+    let code: string = ErrorCodes.REQUEST_FAILED;
+    try {
+      const body = (await response.json()) as { error?: { code?: string; message?: string } };
+      if (body.error?.message) message = body.error.message;
+      if (body.error?.code) code = body.error.code;
+    } catch {
+      // Not JSON: the fixed message above stands.
+    }
+    throw new ApiError(code, message);
+  },
 };

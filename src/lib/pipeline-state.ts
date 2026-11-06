@@ -26,6 +26,8 @@ export interface PipelineState {
   ratingPending: boolean | null;
   /** The rating the student gave on this screen. */
   rating: Rating | null;
+  /** The backend says a live view of this print is on (P-100); only the snapshot knows, events do not carry it. */
+  liveView: boolean;
   /** Highest event `seq` applied; older or repeated events are ignored (delivery is at least once). */
   lastSeq: number;
 }
@@ -41,6 +43,7 @@ export const initialPipelineState: PipelineState = {
   handledFollowups: [],
   ratingPending: null,
   rating: null,
+  liveView: false,
   lastSeq: 0,
 };
 
@@ -105,6 +108,7 @@ export function pipelineReducer(state: PipelineState, action: PipelineAction): P
         followups: snapshot.followups ?? state.followups,
         // A rating given here outlasts a snapshot that doesn't know about it yet.
         ratingPending: state.rating ? false : (snapshot.ratingPending ?? state.ratingPending),
+        liveView: snapshot.liveView === true,
         // The snapshot's own number, as is (the student's gap-free numbering, 0 when none): events up
         // to it are already included, later ones apply. Never a number remembered from before.
         lastSeq: snapshot.lastSeq ?? state.lastSeq,

@@ -6,6 +6,7 @@ import type {
   DisagreeQuestion,
   FollowupAnswer,
   FollowupAnswerRequest,
+  LiveViewOffer,
   PipelineSnapshot,
   PipelineStreamEvent,
   Plan,
@@ -59,6 +60,41 @@ const isPlan = (value: unknown): value is Plan =>
 export function planFromConflictBody(body: unknown): Plan | null {
   const plan = (body as { data?: { plan?: unknown } } | null)?.data?.plan;
   return isPlan(plan) ? plan : null;
+}
+
+/** The backend's code for "the print is over" on the live view routes (HTTP 410). */
+export const LIVE_VIEW_ENDED = 'LIVE_VIEW_ENDED';
+
+/** True when a live view request failed because the print is over (the viewer says "the print has finished"). */
+export const isLiveViewEnded = (error: unknown): boolean =>
+  error instanceof ApiError && error.code === LIVE_VIEW_ENDED;
+
+/**
+ * A live view picture could not be fetched. `ended`: the print is over (410). `too-often`: the
+ * camera is asked too often or has all the viewers it allows (429). `unavailable`: the camera gave
+ * nothing or the pipeline is down (503). `forbidden`: not allowed to watch this job (403/404).
+ */
+export class LiveViewFrameError extends Error {
+  constructor(
+    public reason: 'ended' | 'too-often' | 'unavailable' | 'forbidden' | 'failed',
+    message?: string,
+  ) {
+    super(message ?? reason);
+    this.name = 'LiveViewFrameError';
+  }
+}
+
+/**
+ * The only addresses a viewer may load a picture from: the backend's own relay routes of this job.
+ * Anything else (another host, another job, a path trick) is ignored, so a wrong answer can never
+ * make the page load something from elsewhere.
+ */
+export function liveViewRelayUrl(jobId: string, url: string | null | undefined): string | null {
+  if (!url) return null;
+  return url === `/api/v1/jobs/${jobId}/pipeline/live-view/snapshot` ||
+    url === `/api/v1/jobs/${jobId}/pipeline/live-view/stream`
+    ? url
+    : null;
 }
 
 /** Error code of a 409 on an action that is not about the plan (not ready to rate, already answered). */
@@ -368,4 +404,50 @@ export const pipelineApi = {
       },
       { conflictIsPlanChange: false },
     ),
+
+  /**
+   * May this job be watched, and where (P-100)? Answers `available: false` with a `reason` when
+   * not; the `snapshotUrl` / `streamUrl` are the backend's own routes (see `liveViewRelayUrl`).
+   * Throws an ApiError: `FORBIDDEN` (not your job), `LIVE_VIEW_ENDED`, `RATE_LIMIT_EXCEEDED`,
+   * `PIPELINE_UNAVAILABLE`. Never cached.
+   */
+  liveView: (jobId: string, options: { signal?: AbortSignal } = {}) =>
+    pipelineRequest<LiveViewOffer>(
+      endpoints.pipeline.liveView(jobId),
+      { method: 'GET', cache: 'no-store', signal: options.signal },
+      { conflictIsPlanChange: false },
+    ),
+
+  /**
+   * One picture of the print, from the offer's `snapshotUrl`. Throws a LiveViewFrameError that says
+   * why there is none; the caller turns the blob into an object URL and frees it.
+   */
+  liveViewFrame: async (url: string, options: { signal?: AbortSignal } = {}): Promise<Blob> => {
+    let response: Response;
+    try {
+      response = await fetch(`${getBaseUrl()}${url}`, {
+        method: 'GET',
+        credentials: 'include',
+        cache: 'no-store',
+        signal: options.signal,
+      });
+    } catch (error) {
+      if (options.signal?.aborted) throw error;
+      throw new LiveViewFrameError('failed', 'The picture could not be loaded');
+    }
+    if (response.ok) return response.blob();
+    switch (response.status) {
+      case 410:
+        throw new LiveViewFrameError('ended');
+      case 429:
+        throw new LiveViewFrameError('too-often');
+      case 403:
+      case 404:
+        throw new LiveViewFrameError('forbidden');
+      case 503:
+        throw new LiveViewFrameError('unavailable');
+      default:
+        throw new LiveViewFrameError('failed');
+    }
+  },
 };

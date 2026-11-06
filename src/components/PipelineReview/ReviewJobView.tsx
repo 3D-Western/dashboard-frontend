@@ -12,6 +12,7 @@ import { Routes } from '@/lib/routes';
 import { formatAgo } from '@/lib/signoff-format';
 import type { StaffJobView } from '@/types/pipeline-review';
 import { DecisionPanel } from './DecisionPanel';
+import { WatchItPrint } from '@/components/Pipeline/WatchItPrint';
 import { JobDetails } from './JobDetails';
 import { WaiveRating } from './WaiveRating';
 import { StaffStatusBadge, reviewErrorMessage } from './ReviewBits';
@@ -141,6 +142,9 @@ export function ReviewJobView({
           </header>
 
           <FailedSubmission job={job} onRequeued={() => void load()} />
+
+          {/* On a printer with a live view on (P-100): staff may watch any print. No controls over the printer. */}
+          {job.liveView && <WatchItPrint key={job.jobId} jobId={job.jobId} audience="staff" />}
 
           <DecisionPanel
             key={job.jobId}

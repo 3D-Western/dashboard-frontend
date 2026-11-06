@@ -32,6 +32,26 @@ describe('pipelineReducer', () => {
     expect(state.steps).toHaveLength(1);
   });
 
+  it('knows from the snapshot only whether a live view is on (events do not carry it)', () => {
+    let state = pipelineReducer(initialPipelineState, {
+      type: 'snapshot',
+      snapshot: createMockSnapshot({ studentStatus: 'printing', liveView: true }),
+    });
+    expect(state.liveView).toBe(true);
+
+    state = pipelineReducer(state, {
+      type: 'event',
+      event: createMockEvent({ seq: 4, type: 'status', studentStatus: 'printing' }),
+    });
+    expect(state.liveView).toBe(true);
+
+    state = pipelineReducer(state, {
+      type: 'snapshot',
+      snapshot: createMockSnapshot({ studentStatus: 'ready_for_pickup' }),
+    });
+    expect(state.liveView).toBe(false); // an older backend, or a print that is over: no control
+  });
+
   it('updates a step in place when it finishes, and adds new ones in order', () => {
     let state = pipelineReducer(initialPipelineState, {
       type: 'event',

@@ -36,6 +36,8 @@ export const endpoints = {
     report: (jobId: string) => `/api/v1/jobs/${jobId}/pipeline/report`,
     rating: (jobId: string) => `/api/v1/jobs/${jobId}/pipeline/rating`,
     quality: (jobId: string) => `/api/v1/jobs/${jobId}/pipeline/quality`,
+    // Watch it print (P-100): the offer; its snapshot and stream URLs are routes under it
+    liveView: (jobId: string) => `/api/v1/jobs/${jobId}/pipeline/live-view`,
     // The "Ask why" assistant and its one-click hand-over to the crew (P-54)
     disagree: (jobId: string) => `/api/v1/jobs/${jobId}/pipeline/disagree`,
     disagreeEscalate: (jobId: string) => `/api/v1/jobs/${jobId}/pipeline/disagree/escalate`,
@@ -77,6 +79,12 @@ export const endpoints = {
     waiveRating: (jobId: string) => `/api/v1/admin/pipeline/farm/jobs/${jobId}/waive-rating`,
     clearQuarantine: (printerId: string) =>
       `/api/v1/admin/pipeline/farm/printers/${encodeURIComponent(printerId)}/clear-quarantine`,
+    // The empty-bed check (P-106): printers held back, "the bed is clear", and the reference picture
+    bedBlocks: '/api/v1/admin/pipeline/farm/bed-blocks',
+    clearBedBlock: (printerId: string) =>
+      `/api/v1/admin/pipeline/farm/printers/${encodeURIComponent(printerId)}/clear-bed-block`,
+    bedReference: (printerId: string) =>
+      `/api/v1/admin/pipeline/farm/printers/${encodeURIComponent(printerId)}/bed-reference`,
   },
   files: {
     list: '/api/v1/files',

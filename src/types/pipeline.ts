@@ -182,10 +182,34 @@ export interface PipelineSnapshot {
    */
   ratingPending?: boolean | null;
   /**
+   * True while the print is on a printer and a live view of it is on (P-100): the "Watch it print"
+   * control is shown only then. A hint made without asking the pipeline: the live view endpoint
+   * has the last word (it can still say no). Absent on an older backend (no control).
+   */
+  liveView?: boolean | null;
+  /**
    * The highest event `seq` this snapshot already includes. The stream starts after it, so the
    * history is not replayed on top of the snapshot. Absent on an older backend (stream from the start).
    */
   lastSeq?: number;
+}
+
+/** Why there is no live view (`LiveViewOffer.reason`); a later backend may send others. */
+export type LiveViewReason = 'disabled' | 'not_printing' | 'no_camera' | (string & {});
+
+/**
+ * GET /api/v1/jobs/{id}/pipeline/live-view (P-100). The URLs are the backend's own relay routes
+ * (never the pipeline's or the camera's); `streamUrl` plays in an `<img>` (MJPEG) and ends by itself
+ * after `maxStreamS`, `snapshotUrl` is one JPEG, asked no more often than every `snapshotIntervalS`.
+ */
+export interface LiveViewOffer {
+  available: boolean;
+  reason?: LiveViewReason | null;
+  snapshotUrl?: string | null;
+  streamUrl?: string | null;
+  expiresAt?: string | null;
+  maxStreamS?: number | null;
+  snapshotIntervalS?: number | null;
 }
 
 /** A collected print the student has not rated (an item of `data.unratedPrints` of `RATING_REQUIRED`). */

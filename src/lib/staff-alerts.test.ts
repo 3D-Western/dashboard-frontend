@@ -86,4 +86,13 @@ describe('kinds', () => {
     expect(KIND_ORDER).toContain('student_disagrees');
     expect(KIND_LABEL.student_disagrees).toBe('Student disagrees');
   });
+
+  it('offers the clear_bed task of the empty-bed check, and sends it to the farm page', () => {
+    expect(KIND_ORDER).toContain('clear_bed');
+    expect(KIND_LABEL.clear_bed).toBe('Bed to check');
+    expect(alertLink({ type: 'printer', id: 'P09' })).toEqual({
+      href: '/admin/review/farm',
+      label: 'Open the print farm',
+    });
+  });
 });

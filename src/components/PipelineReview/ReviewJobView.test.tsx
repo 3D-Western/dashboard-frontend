@@ -15,6 +15,12 @@ import { ReviewJobView } from './ReviewJobView';
 vi.mock('@/api/client/pipeline-review', () => ({
   pipelineReviewApi: { job: vi.fn(), requeue: vi.fn(), decide: vi.fn(), resolveReport: vi.fn() },
 }));
+// The watch-it-print viewer is its own tested component; here only that staff are offered it.
+vi.mock('@/components/Pipeline/WatchItPrint', () => ({
+  WatchItPrint: ({ jobId, audience }: { jobId: string; audience?: string }) => (
+    <div data-testid="watch-it-print-slot" data-job={jobId} data-audience={audience} />
+  ),
+}));
 // The 3D viewer is its own tested component; here only that it is given the regions matters.
 vi.mock('@/components/Pipeline/PartViewerSlot', () => ({
   PartViewerSlot: ({
@@ -254,5 +260,22 @@ describe('ReviewJobView screening renders from the real wire shape', () => {
     render(<ReviewJobView jobId={HELD_JOB_ID} refreshMs={0} />, { user: staff });
 
     expect(await screen.findByTestId('part-viewer')).toHaveAttribute('data-audience', 'staff');
+  });
+
+  it('offers staff the live view of a print that is on a printer with a live view on', async () => {
+    api.job.mockResolvedValue(createStaffJobView({ studentStatus: 'printing', liveView: true }));
+    render(<ReviewJobView jobId={HELD_JOB_ID} refreshMs={0} />, { user: staff });
+
+    const slot = await screen.findByTestId('watch-it-print-slot');
+    expect(slot).toHaveAttribute('data-job', HELD_JOB_ID);
+    expect(slot).toHaveAttribute('data-audience', 'staff');
+  });
+
+  it.each([[undefined], [false]])('offers no live view when the flag is %s', async (liveView) => {
+    api.job.mockResolvedValue(createStaffJobView({ liveView }));
+    render(<ReviewJobView jobId={HELD_JOB_ID} refreshMs={0} />, { user: staff });
+
+    await screen.findByText('walls.too_thin');
+    expect(screen.queryByTestId('watch-it-print-slot')).not.toBeInTheDocument();
   });
 });

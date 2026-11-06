@@ -19,6 +19,8 @@ vi.mock('@/api/client/pipeline', async (importOriginal) => ({
   pipelineApi: {
     getState: vi.fn(),
     stream: vi.fn(),
+    liveView: vi.fn(),
+    liveViewFrame: vi.fn(),
     saveInputs: vi.fn(),
     confirm: vi.fn(),
     choose: vi.fn(),
@@ -530,5 +532,56 @@ describe('Ask why', () => {
     await user.click(screen.getByRole('button', { name: 'Ask' }));
 
     expect(await screen.findByText(/earlier version of your plan/)).toBeInTheDocument();
+  });
+});
+
+describe('Watch it print', () => {
+  it('shows the control while the job prints and the snapshot says a live view is on', async () => {
+    api.getState.mockResolvedValue(
+      createMockSnapshot({ studentStatus: 'printing', liveView: true }),
+    );
+    openStream();
+    render(<PipelineJobPanel jobId="job-1" />);
+
+    expect(await screen.findByRole('button', { name: 'Watch it print' })).toBeInTheDocument();
+  });
+
+  it.each([
+    ['the snapshot does not say it is on', { studentStatus: 'printing' as const }],
+    ['it says it is off', { studentStatus: 'printing' as const, liveView: false }],
+    ['the job is not on a printer', { studentStatus: 'queued' as const, liveView: true }],
+    [
+      'the print is waiting for pickup',
+      { studentStatus: 'ready_for_pickup' as const, liveView: true },
+    ],
+  ])('hides the control when %s', async (_name, snapshot) => {
+    api.getState.mockResolvedValue(createMockSnapshot(snapshot));
+    openStream();
+    render(<PipelineJobPanel jobId="job-1" />);
+    await screen.findByTestId('pipeline-panel');
+
+    expect(screen.queryByRole('button', { name: 'Watch it print' })).not.toBeInTheDocument();
+  });
+
+  it('shows the control for a reprint too', async () => {
+    api.getState.mockResolvedValue(
+      createMockSnapshot({ studentStatus: 'reprinting', liveView: true }),
+    );
+    openStream();
+    render(<PipelineJobPanel jobId="job-1" />);
+
+    expect(await screen.findByRole('button', { name: 'Watch it print' })).toBeInTheDocument();
+  });
+
+  it('asks nothing of the camera until the student presses the button', async () => {
+    api.getState.mockResolvedValue(
+      createMockSnapshot({ studentStatus: 'printing', liveView: true }),
+    );
+    openStream();
+    render(<PipelineJobPanel jobId="job-1" />);
+    await screen.findByRole('button', { name: 'Watch it print' });
+
+    expect(api.liveView).not.toHaveBeenCalled();
+    expect(screen.queryByTestId('watch-it-print')).not.toBeInTheDocument();
   });
 });

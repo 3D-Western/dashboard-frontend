@@ -270,6 +270,11 @@ export interface StaffJobView {
   screeningRenders?: StaffRender[];
   /** Students who asked the crew after the "Ask why" assistant, oldest first. Staff only. */
   studentDisagreements?: StudentDisagreement[];
+  /**
+   * True while the job is on a printer and a live view is on (P-100): staff may watch any print.
+   * A hint; the live view endpoint has the last word.
+   */
+  liveView?: boolean | null;
 }
 
 // -- Decisions --------------------------------------------------------------------------------

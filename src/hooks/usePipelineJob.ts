@@ -28,6 +28,12 @@ const REREAD_STATUSES: ReadonlySet<StudentStatus> = new Set<StudentStatus>([
   'collected',
 ]);
 
+/** Statuses in which a live view can exist: the flag comes with the snapshot, so entering one re-reads it (P-100). */
+const LIVE_VIEW_STATUSES: ReadonlySet<StudentStatus> = new Set<StudentStatus>([
+  'printing',
+  'reprinting',
+]);
+
 /**
  * Follows one job's pipeline run: loads the snapshot at once, then streams events live (steps,
  * status, plan) and applies them in order. If the stream breaks it reconnects with backoff and
@@ -54,6 +60,8 @@ export function usePipelineJob(
   const [connection, setConnection] = useState<StreamConnection>('connecting');
   const [error, setError] = useState<Error | null>(null);
   const lastSeq = useRef(initialSnapshot?.lastSeq ?? 0);
+  // The status last seen, to tell a job that has just gone on a printer from one already printing.
+  const lastStatus = useRef<StudentStatus | null>(initialSnapshot?.studentStatus ?? null);
   // Only the first run may start from the server's snapshot; after that it would be stale.
   const seed = useRef(initialSnapshot);
   const [refreshToken, setRefreshToken] = useState(0);
@@ -96,6 +104,7 @@ export function usePipelineJob(
           lastSeq.current = snapshot.lastSeq ?? lastSeq.current;
           setError(null);
           status = snapshot.studentStatus;
+          lastStatus.current = status;
         } catch (caught) {
           if (signal.aborted) return;
           setError(caught instanceof Error ? caught : new Error('Could not load the job'));
@@ -120,6 +129,14 @@ export function usePipelineJob(
               // The snapshot carries what a stream event does not (e.g. ratingPending after pickup),
               // so re-read it when the student's screen changes to one of these.
               if (REREAD_STATUSES.has(event.studentStatus)) refresh();
+              // The live view flag is in the snapshot only: read it when the job goes on a printer.
+              else if (
+                LIVE_VIEW_STATUSES.has(event.studentStatus) &&
+                lastStatus.current !== event.studentStatus
+              ) {
+                refresh();
+              }
+              lastStatus.current = event.studentStatus;
               if (isTerminalStatus(event.studentStatus)) {
                 finished = true;
                 controller.abort();

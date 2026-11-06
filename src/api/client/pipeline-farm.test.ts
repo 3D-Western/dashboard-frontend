@@ -106,4 +106,114 @@ describe('pipelineFarmApi', () => {
       'Not quarantined',
     );
   });
+
+  describe('the empty-bed check (P-106)', () => {
+    it('uses the backend paths, encoding the printer id', () => {
+      expect(endpoints.pipelineFarm.bedBlocks).toBe('/api/v1/admin/pipeline/farm/bed-blocks');
+      expect(endpoints.pipelineFarm.clearBedBlock('-01P00C581401090')).toBe(
+        '/api/v1/admin/pipeline/farm/printers/-01P00C581401090/clear-bed-block',
+      );
+      expect(endpoints.pipelineFarm.bedReference('P 12')).toBe(
+        '/api/v1/admin/pipeline/farm/printers/P%2012/bed-reference',
+      );
+    });
+
+    it('reads the held-back printers', async () => {
+      const blocks = [{ printerId: 'P09', verdict: 'not_clear', code: 'c', reason: 'r' }];
+      mockServer.use(
+        http.get(endpoints.pipelineFarm.bedBlocks, () =>
+          HttpResponse.json({ success: true, data: blocks }),
+        ),
+      );
+
+      await expect(pipelineFarmApi.bedBlocks()).resolves.toEqual(blocks);
+    });
+
+    it('clears a block with an optional note, and sends an empty body without one', async () => {
+      const received = vi.fn();
+      mockServer.use(
+        http.post(endpoints.pipelineFarm.clearBedBlock('P09'), async ({ request }) => {
+          received(await request.json());
+          return HttpResponse.json({ success: true, data: { ok: true, message: 'Lifted' } });
+        }),
+      );
+
+      await pipelineFarmApi.clearBedBlock('P09', { note: 'plate was clean' });
+      await pipelineFarmApi.clearBedBlock('P09');
+
+      expect(received).toHaveBeenNthCalledWith(1, { note: 'plate was clean' });
+      expect(received).toHaveBeenNthCalledWith(2, {});
+    });
+
+    it('saves a reference only with the confirmation in the body', async () => {
+      const received = vi.fn();
+      mockServer.use(
+        http.post(endpoints.pipelineFarm.bedReference('P09'), async ({ request }) => {
+          received(await request.json());
+          return HttpResponse.json({ success: true, data: { ok: true, message: 'Saved' } });
+        }),
+      );
+
+      await pipelineFarmApi.setBedReference('P09', { confirmed: true, note: 'light on' });
+
+      expect(received).toHaveBeenCalledWith({ confirmed: true, note: 'light on' });
+    });
+
+    it('turns a picture the pipeline could not use into an error with the backend’s words', async () => {
+      mockServer.use(
+        http.post(endpoints.pipelineFarm.bedReference('P09'), () =>
+          HttpResponse.json(
+            { success: false, error: { code: 'CONFLICT', message: 'Is the chamber light on?' } },
+            { status: 409 },
+          ),
+        ),
+      );
+
+      await expect(pipelineFarmApi.setBedReference('P09', { confirmed: true })).rejects.toThrow(
+        'Is the chamber light on?',
+      );
+    });
+
+    it('returns the saved reference as an image', async () => {
+      mockServer.use(
+        http.get(
+          endpoints.pipelineFarm.bedReference('P09'),
+          () =>
+            new HttpResponse(new Uint8Array([1, 2, 3]), {
+              headers: { 'Content-Type': 'image/jpeg' },
+            }),
+        ),
+      );
+
+      const blob = await pipelineFarmApi.bedReference('P09');
+
+      expect(blob?.type).toBe('image/jpeg');
+      expect(blob?.size).toBe(3);
+    });
+
+    it('returns null when no reference is saved yet, and throws for any other failure', async () => {
+      mockServer.use(
+        http.get(endpoints.pipelineFarm.bedReference('P09'), () =>
+          HttpResponse.json(
+            { success: false, error: { code: 'NOT_FOUND', message: 'none' } },
+            { status: 404 },
+          ),
+        ),
+        http.get(endpoints.pipelineFarm.bedReference('P10'), () =>
+          HttpResponse.json(
+            { success: false, error: { code: 'PIPELINE_UNAVAILABLE', message: 'Not offered yet' } },
+            { status: 503 },
+          ),
+        ),
+        http.get(
+          endpoints.pipelineFarm.bedReference('P11'),
+          () => new HttpResponse('boom', { status: 500 }),
+        ),
+      );
+
+      await expect(pipelineFarmApi.bedReference('P09')).resolves.toBeNull();
+      await expect(pipelineFarmApi.bedReference('P10')).rejects.toThrow('Not offered yet');
+      await expect(pipelineFarmApi.bedReference('P11')).rejects.toThrow(/could not be loaded/);
+    });
+  });
 });
