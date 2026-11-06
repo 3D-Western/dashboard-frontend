@@ -5,7 +5,7 @@ import { PipelineJobPanel } from '@/components/Pipeline/PipelineJobPanel';
 import { ReportProblem } from '@/components/Pipeline/ReportProblem';
 import { cn } from '@/lib/utils';
 import { JobDetail } from '@/types/jobs';
-import type { StudentStatus } from '@/types/pipeline';
+import type { PipelineSnapshot, StudentStatus } from '@/types/pipeline';
 import { FeatureProjectCta } from './FeatureProjectCta';
 import { JobDetailHeader } from './JobDetailHeader';
 import { JobInfo } from './JobInfo';
@@ -19,9 +19,12 @@ import { PipelineTimeline } from './PipelineTimeline';
 export function PipelineJobView({
   job,
   initialStatus,
+  initialSnapshot = null,
 }: {
   job: JobDetail;
   initialStatus: StudentStatus;
+  /** Read on the server with the job, so the review shows without a client round trip. */
+  initialSnapshot?: PipelineSnapshot | null;
 }) {
   const [status, setStatus] = useState<StudentStatus>(initialStatus);
 
@@ -33,6 +36,7 @@ export function PipelineJobView({
         jobId={job.id}
         jobName={job.name}
         initialStatus={initialStatus}
+        initialSnapshot={initialSnapshot}
         onStatusChange={setStatus}
       />
 

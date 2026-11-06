@@ -3,8 +3,8 @@
 import { useCallback, useEffect, useReducer, useRef, useState } from 'react';
 import { pipelineApi } from '@/api/client/pipeline';
 import { isTerminalStatus } from '@/lib/student-status';
-import { initialPipelineState, pipelineReducer } from '@/lib/pipeline-state';
-import type { Plan, Rating, StudentStatus } from '@/types/pipeline';
+import { initialPipelineState, pipelineReducer, type PipelineState } from '@/lib/pipeline-state';
+import type { PipelineSnapshot, Plan, Rating, StudentStatus } from '@/types/pipeline';
 
 export type StreamConnection = 'connecting' | 'live' | 'reconnecting' | 'closed';
 
@@ -14,10 +14,19 @@ export interface UsePipelineJobOptions {
   maxRetryMs?: number;
   /** Off for jobs the pipeline has nothing to say about. */
   enabled?: boolean;
+  /**
+   * A snapshot the server already read (the job page does). The screen starts from it, so a review
+   * is there on the first paint, and the stream opens at once from its `lastSeq` instead of after
+   * a second read; later reads (after an action, or a dropped stream) fetch fresh.
+   */
+  initialSnapshot?: PipelineSnapshot | null;
 }
 
 /** Statuses after which the snapshot has facts the stream events lack (the rating card needs `ratingPending`). */
-const REREAD_STATUSES: ReadonlySet<StudentStatus> = new Set<StudentStatus>(['ready_for_pickup', 'collected']);
+const REREAD_STATUSES: ReadonlySet<StudentStatus> = new Set<StudentStatus>([
+  'ready_for_pickup',
+  'collected',
+]);
 
 /**
  * Follows one job's pipeline run: loads the snapshot at once, then streams events live (steps,
@@ -27,12 +36,26 @@ const REREAD_STATUSES: ReadonlySet<StudentStatus> = new Set<StudentStatus>(['rea
  */
 export function usePipelineJob(
   jobId: string,
-  { retryBaseMs = 1000, maxRetryMs = 10_000, enabled = true }: UsePipelineJobOptions = {},
+  {
+    retryBaseMs = 1000,
+    maxRetryMs = 10_000,
+    enabled = true,
+    initialSnapshot = null,
+  }: UsePipelineJobOptions = {},
 ) {
-  const [state, dispatch] = useReducer(pipelineReducer, initialPipelineState);
+  const [state, dispatch] = useReducer(
+    pipelineReducer,
+    initialSnapshot,
+    (snapshot): PipelineState =>
+      snapshot
+        ? pipelineReducer(initialPipelineState, { type: 'snapshot', snapshot })
+        : initialPipelineState,
+  );
   const [connection, setConnection] = useState<StreamConnection>('connecting');
   const [error, setError] = useState<Error | null>(null);
-  const lastSeq = useRef(0);
+  const lastSeq = useRef(initialSnapshot?.lastSeq ?? 0);
+  // Only the first run may start from the server's snapshot; after that it would be stale.
+  const seed = useRef(initialSnapshot);
   const [refreshToken, setRefreshToken] = useState(0);
 
   /** Re-reads the snapshot and reopens the stream (after an action, or on "try again"). */
@@ -60,7 +83,9 @@ export function usePipelineJob(
       while (!signal.aborted) {
         let status: StudentStatus | null = null;
         try {
-          const snapshot = await pipelineApi.getState(jobId, { signal });
+          const seeded = seed.current;
+          seed.current = null;
+          const snapshot = seeded ?? (await pipelineApi.getState(jobId, { signal }));
           if (signal.aborted) return;
           dispatch({ type: 'snapshot', snapshot });
           // Stream from where the snapshot ends instead of replaying the whole history.

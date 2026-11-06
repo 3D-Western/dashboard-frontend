@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, waitFor, within } from '@testing-library/react';
+import { act, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { PlanChangedError, pipelineApi } from '@/api/client/pipeline';
 import { trackPrintSubmitted } from '@/lib/analytics';
@@ -309,6 +309,39 @@ describe('Review', () => {
   });
 });
 
+describe('Review straight from the server', () => {
+  it('shows the review on the first paint when the server already read the snapshot', async () => {
+    openStream();
+    api.getState.mockImplementation(() => new Promise(() => {})); // never answers: not needed
+    render(
+      <PipelineJobPanel
+        jobId="job-1"
+        initialStatus="needs_confirmation"
+        initialSnapshot={createMockSnapshot({
+          studentStatus: 'needs_confirmation',
+          plan: createMockPlan(),
+          lastSeq: 9,
+        })}
+      />,
+    );
+
+    expect(screen.getByRole('button', { name: 'Yes, print this' })).toBeInTheDocument();
+    // The stream opens at once, after the snapshot's seq, without a second read first
+    await waitFor(() => expect(api.stream).toHaveBeenCalled());
+    expect(api.stream.mock.calls[0][1].lastSeq).toBe(9);
+    expect(api.getState).not.toHaveBeenCalled();
+  });
+
+  it('holds a review skeleton, not the steps, while a review status waits for its plan', async () => {
+    openStream();
+    api.getState.mockImplementation(() => new Promise(() => {}));
+    render(<PipelineJobPanel jobId="job-1" initialStatus="needs_confirmation" />);
+
+    expect(screen.getByRole('status', { name: 'Loading your review' })).toBeInTheDocument();
+    expect(screen.queryByText('Preparing your print')).not.toBeInTheDocument();
+  });
+});
+
 describe("Can't print", () => {
   it('says why and what to change', async () => {
     vi.stubEnv('NEXT_PUBLIC_JOB_CREATION_ENABLED', 'true');
@@ -381,18 +414,30 @@ describe('Ready for pickup', () => {
   });
 
   it('picks up the slot from a pickup event on the stream', async () => {
-    api.getState.mockResolvedValue(createMockSnapshot({ studentStatus: 'printing' }));
+    // The event makes the panel re-read the job (the rating card needs it), which now says the same.
+    api.getState
+      .mockResolvedValueOnce(createMockSnapshot({ studentStatus: 'printing' }))
+      .mockResolvedValue(
+        createMockSnapshot({
+          studentStatus: 'ready_for_pickup',
+          pickup: createMockPickup({ slot: '3', tag: 'ZZ99' }),
+        }),
+      );
     const live = openStream();
     render(<PipelineJobPanel jobId="job-1" />);
     await screen.findByRole('heading', { name: 'Printing' });
+    // The stream opens just after the snapshot is shown; events sent before that would be lost.
+    await waitFor(() => expect(api.stream).toHaveBeenCalled());
 
-    live.emit(
-      createMockEvent({
-        seq: 1,
-        type: 'pickup',
-        studentStatus: 'ready_for_pickup',
-        pickup: createMockPickup({ slot: '3', tag: 'ZZ99' }),
-      }),
+    act(() =>
+      live.emit(
+        createMockEvent({
+          seq: 1,
+          type: 'pickup',
+          studentStatus: 'ready_for_pickup',
+          pickup: createMockPickup({ slot: '3', tag: 'ZZ99' }),
+        }),
+      ),
     );
 
     expect(await screen.findByRole('heading', { name: 'Slot 3, tag ZZ99' })).toBeInTheDocument();

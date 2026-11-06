@@ -20,8 +20,22 @@ import { getBaseUrl } from './utils';
 /**
  * The browser side of the print pipeline: the "Browser ↔ backend" endpoints in
  * slicing-pipeline/docs/design/dashboard-contract.md. Meant for client components (it uses the
- * relative base URL and the session cookie); the server never needs the live stream.
+ * relative base URL and the session cookie). A server component can read a snapshot too (the job
+ * page does, so the review is in the first HTML): there the session cookies are forwarded by hand.
+ * The server never needs the live stream.
  */
+
+/** Server side only: the auth cookies of the current request, as apiRequest forwards them. */
+async function serverCookieHeader(): Promise<Record<string, string>> {
+  if (typeof window !== 'undefined') return {};
+  const { cookies } = await import('next/headers');
+  const store = await cookies();
+  const pairs = ['sessionToken', 'mfaToken']
+    .map((name) => [name, store.get(name)?.value] as const)
+    .filter(([, value]) => value)
+    .map(([name, value]) => `${name}=${value}`);
+  return pairs.length > 0 ? { Cookie: pairs.join('; ') } : {};
+}
 
 /** The plan changed while the student was looking at the old one (HTTP 409): ask again. */
 export class PlanChangedError extends Error {
@@ -90,6 +104,7 @@ async function pipelineRequest<T>(
       credentials: 'include',
       headers: {
         ...(init.body ? { 'Content-Type': 'application/json' } : {}),
+        ...(await serverCookieHeader()),
         ...init.headers,
       },
     });

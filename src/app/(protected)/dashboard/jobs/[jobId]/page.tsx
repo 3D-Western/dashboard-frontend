@@ -2,9 +2,11 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
 import { jobApi } from '@/api/client/job';
+import { pipelineApi } from '@/api/client/pipeline';
 import { ReportProblem } from '@/components/Pipeline/ReportProblem';
 import { Routes } from '@/lib/routes';
 import { JobDetail } from '@/types/jobs';
+import type { PipelineSnapshot } from '@/types/pipeline';
 import { FeatureProjectCta } from './components/FeatureProjectCta';
 import { JobDetailHeader } from './components/JobDetailHeader';
 import { JobInfo } from './components/JobInfo';
@@ -23,17 +25,37 @@ interface PageProps {
   }>;
 }
 
+/** How long the page waits for the pipeline's state before showing what it has. */
+const SNAPSHOT_TIMEOUT_MS = 4000;
+
+/**
+ * The pipeline's state for the job, read with the job itself (in parallel, so it adds no wait):
+ * it says whether this is a pipeline job at all, even before the first event has given the job row
+ * a `studentStatus`, and lets the review show in the first paint. null when there is none.
+ */
+async function readSnapshot(jobId: string): Promise<PipelineSnapshot | null> {
+  try {
+    return await pipelineApi.getState(jobId, { signal: AbortSignal.timeout(SNAPSHOT_TIMEOUT_MS) });
+  } catch {
+    return null;
+  }
+}
+
 export default async function JobDetailPage({ params }: PageProps) {
   const { jobId } = await params;
 
   let job: JobDetail | null = null;
-  try {
-    const response = await jobApi.getJobById(jobId);
-    const res = response as { data?: JobDetail };
-    job = res.data ? res.data : response;
-  } catch (error) {
-    console.error('Failed to fetch job:', error);
+  const [jobResult, snapshotResult] = await Promise.allSettled([
+    jobApi.getJobById(jobId),
+    readSnapshot(jobId),
+  ]);
+  if (jobResult.status === 'fulfilled') {
+    const res = jobResult.value as { data?: JobDetail };
+    job = res.data ? res.data : jobResult.value;
+  } else {
+    console.error('Failed to fetch job:', jobResult.reason);
   }
+  const snapshot = snapshotResult.status === 'fulfilled' ? snapshotResult.value : null;
 
   if (!job) {
     return (
@@ -56,8 +78,19 @@ export default async function JobDetailPage({ params }: PageProps) {
   }
 
   // A job that went through the print pipeline has its own live page, worded and dated by
-  // studentStatus only
-  if (job.studentStatus) return <PipelineJobView job={job} initialStatus={job.studentStatus} />;
+  // studentStatus only. A new job has no studentStatus on its row until the first event, but the
+  // pipeline already knows it, so the snapshot counts too: it never shows the old static page.
+  const pipelineStatus =
+    job.studentStatus ?? (job.category === 'ThreeDPrint' ? snapshot?.studentStatus : undefined);
+  if (pipelineStatus) {
+    return (
+      <PipelineJobView
+        job={job}
+        initialStatus={pipelineStatus}
+        initialSnapshot={job.category === 'ThreeDPrint' ? snapshot : null}
+      />
+    );
+  }
 
   const hasHistory = Boolean(job.statusHistory?.length);
   // Ask to feature the project once they've actually picked it up, not while it's waiting
@@ -96,7 +129,8 @@ export default async function JobDetailPage({ params }: PageProps) {
         />
       </div>
 
-      <ReportProblem jobId={job.id} />
+      {/* Not a pipeline job: the pipeline has no such job to report on, so it is the email version. */}
+      <ReportProblem />
     </div>
   );
 }

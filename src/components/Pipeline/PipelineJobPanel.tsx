@@ -12,7 +12,7 @@ import { Routes } from '@/lib/routes';
 import { studentStage } from '@/lib/student-status';
 import { TONE_CLASSES } from '@/app/(protected)/dashboard/jobs/lib/job-stages';
 import { cn } from '@/lib/utils';
-import type { Plan, Rating, StudentStatus } from '@/types/pipeline';
+import type { PipelineSnapshot, Plan, Rating, StudentStatus } from '@/types/pipeline';
 import { AfterPickup } from './AfterPickup';
 import { CannotPrint } from './CannotPrint';
 import { PickupCard } from './PickupCard';
@@ -42,6 +42,11 @@ interface PipelineJobPanelProps {
    */
   answersRevision?: number;
   /**
+   * What the server already read for this job (the job page does), so the review is in the first
+   * paint instead of after a client fetch.
+   */
+  initialSnapshot?: PipelineSnapshot | null;
+  /**
    * The student has typed answers that are not saved yet. The review stays on screen (the yes does
    * not disappear while they type) but the yes waits, so it never confirms a plan that is about to change.
    */
@@ -63,10 +68,11 @@ export function PipelineJobPanel({
   stepsOnly = false,
   answersRevision = 0,
   inputsPending = false,
+  initialSnapshot = null,
   onStatusChange,
   retryBaseMs,
 }: PipelineJobPanelProps) {
-  const pipeline = usePipelineJob(jobId, { retryBaseMs });
+  const pipeline = usePipelineJob(jobId, { retryBaseMs, initialSnapshot });
   const { plan, steps, message, loaded, connection, error } = pipeline;
   const status = pipeline.studentStatus ?? initialStatus ?? null;
   const { pickup } = pipeline;
@@ -181,7 +187,11 @@ export function PipelineJobPanel({
         onStudentChange={() => setBaselinePlanId(null)}
       />
     );
-  } else if (status === null || status === 'preparing' || reviewing) {
+  } else if (reviewing) {
+    // The job row already says a review is waiting but the plan has not arrived: hold its place
+    // instead of showing the steps and then jumping.
+    body = <ReviewSkeleton />;
+  } else if (status === null || status === 'preparing') {
     body = preparing;
   } else {
     body = (
@@ -229,6 +239,21 @@ export function PipelineJobPanel({
   return (
     <div data-testid="pipeline-panel" data-status={status ?? 'loading'}>
       {body}
+    </div>
+  );
+}
+
+function ReviewSkeleton() {
+  return (
+    <div className="space-y-4" role="status" aria-label="Loading your review">
+      <Skeleton className="h-7 w-3/4 rounded-md" />
+      <Skeleton className="h-4 w-full rounded-md" />
+      <Skeleton className="h-56 w-full rounded-lg" />
+      <div className="grid grid-cols-2 gap-3">
+        <Skeleton className="h-16 rounded-lg" />
+        <Skeleton className="h-16 rounded-lg" />
+      </div>
+      <Skeleton className="h-11 w-full rounded-md md:w-48" />
     </div>
   );
 }
