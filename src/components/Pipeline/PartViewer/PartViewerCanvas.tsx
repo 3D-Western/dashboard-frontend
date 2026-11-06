@@ -6,10 +6,9 @@
 import { useEffect, useRef, useState } from 'react';
 import { RotateCcw } from 'lucide-react';
 import {
-  highlightsFromCards,
   artifactKey,
-  mergeHighlights,
   parseHighlights,
+  viewerHighlights,
   type PartHighlight,
 } from '@/lib/part-viewer';
 import type { LessonCard } from '@/types/pipeline';
@@ -24,6 +23,8 @@ export interface PartViewerCanvasProps {
   modelUrl: string;
   highlightsUrl?: string;
   cards?: LessonCard[];
+  /** Students never get `hold` highlights (a staff hold looks like "preparing" to them). */
+  audience?: 'student' | 'staff';
   onStatus: (status: ViewerStatus) => void;
 }
 
@@ -43,6 +44,7 @@ export default function PartViewerCanvas({
   modelUrl,
   highlightsUrl,
   cards,
+  audience = 'student',
   onStatus,
 }: PartViewerCanvasProps) {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -52,9 +54,9 @@ export default function PartViewerCanvas({
   const focus = usePartFocus();
 
   // Latest values for the long-lived effect below, which must not restart when they change.
-  const latest = useRef({ modelUrl, highlightsUrl, cards, onStatus, focus });
+  const latest = useRef({ modelUrl, highlightsUrl, cards, audience, onStatus, focus });
   useEffect(() => {
-    latest.current = { modelUrl, highlightsUrl, cards, onStatus, focus };
+    latest.current = { modelUrl, highlightsUrl, cards, audience, onStatus, focus };
   });
   const { setLinked, focus: focusRequest } = focus;
 
@@ -98,7 +100,7 @@ export default function PartViewerCanvas({
           fetchHighlights(latest.current.highlightsUrl, abort.signal),
         ]);
         if (cancelled) return;
-        const merged = mergeHighlights(fromFile, highlightsFromCards(latest.current.cards));
+        const merged = viewerHighlights(fromFile, latest.current.cards, latest.current.audience);
         const drawn = new Set(scene.setHighlights(merged));
         const shown = merged.filter((h) => drawn.has(h.code));
         setLinked([...drawn]);

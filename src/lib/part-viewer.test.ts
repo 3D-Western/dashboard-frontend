@@ -9,6 +9,8 @@ import {
   parseBox,
   parseHighlights,
   resolveHighlights,
+  viewerHighlights,
+  withoutHolds,
 } from './part-viewer';
 
 describe('parseHighlights', () => {
@@ -93,6 +95,39 @@ describe('highlights from the lesson cards', () => {
     expect(mergeHighlights(file, cards).map((h) => [h.code, h.label])).toEqual([
       ['a', 'From file'],
       ['z', 'Only on the card'],
+    ]);
+  });
+});
+
+describe('hold highlights are staff-only (P-43)', () => {
+  const fromFile = parseHighlights({
+    highlights: [
+      { code: 'moderation.review', severity: 'hold', label: 'Held for review', faces: [1, 2] },
+      { code: 'overhang', severity: 'adjusted', label: 'Supports', faces: [3] },
+    ],
+  });
+  const cards = [
+    createMockLessonCard({ code: 'held.card', severity: 'hold', region: { faces: [9] } }),
+    createMockLessonCard({ code: 'cp', severity: 'cannot_print', region: { faces: [5] } }),
+  ];
+
+  it('drops hold severities', () => {
+    expect(withoutHolds(fromFile).map((h) => h.code)).toEqual(['overhang']);
+  });
+
+  it('shows students neither a hold from the file nor a hold card region', () => {
+    expect(viewerHighlights(fromFile, cards).map((h) => h.code)).toEqual(['overhang', 'cp']);
+    expect(viewerHighlights(fromFile, cards, 'student').some((h) => h.severity === 'hold')).toBe(
+      false,
+    );
+  });
+
+  it('leaves them for staff', () => {
+    expect(viewerHighlights(fromFile, cards, 'staff').map((h) => h.code)).toEqual([
+      'moderation.review',
+      'overhang',
+      'held.card',
+      'cp',
     ]);
   });
 });

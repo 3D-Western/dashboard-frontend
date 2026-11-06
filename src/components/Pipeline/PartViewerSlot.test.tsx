@@ -114,6 +114,15 @@ describe('Part viewer wording', () => {
     expect(document.body.textContent).not.toMatch(/your part/i);
   });
 
+  it('does not tell a student about an area flagged by a staff hold, but tells staff', () => {
+    const held = [createMockLessonCard({ code: 'held', severity: 'hold', region: { faces: [1] } })];
+    const { rerender } = render(<PartViewerSlot previewUrl="/preview.png" highlights={held} />);
+    expect(screen.queryByText(/flagged/i)).not.toBeInTheDocument();
+
+    rerender(<PartViewerSlot previewUrl="/preview.png" highlights={held} audience="staff" />);
+    expect(screen.getByText('1 area of the part is flagged.')).toBeVisible();
+  });
+
   it('counts several flagged areas for staff', () => {
     render(
       <PartViewerSlot

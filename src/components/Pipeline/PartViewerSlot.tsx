@@ -8,6 +8,7 @@ import {
   artifactKey,
   isWebGLAvailable,
   shouldAskBeforeLoading,
+  withoutHolds,
   type PartHighlight,
 } from '@/lib/part-viewer';
 import { cn } from '@/lib/utils';
@@ -75,7 +76,11 @@ function PartViewer({
   const askFirst = useSyncExternalStore(subscribeNever, shouldAskBeforeLoading, () => false);
 
   const modelKey = artifactKey(modelUrl);
-  const flagged = highlights.filter((card) => card.region).length;
+  const staff = audience === 'staff';
+  // Students are not told about areas flagged by a staff hold (P-43).
+  const flagged = (staff ? highlights : withoutHolds(highlights)).filter(
+    (card) => card.region,
+  ).length;
   // What the viewer reported belongs to the model it loaded; a new model starts over.
   const current = result.key === modelKey ? result : { state: 'idle' as ViewerState, drawn: [] };
   const state = current.state;
@@ -112,7 +117,6 @@ function PartViewer({
   }
 
   const ready = state === 'ready';
-  const staff = audience === 'staff';
   const flaggedLabel = staff
     ? flagged === 1
       ? '1 area of the part is flagged.'
@@ -160,6 +164,7 @@ function PartViewer({
               modelUrl={modelUrl}
               highlightsUrl={highlightsUrl}
               cards={highlights}
+              audience={audience}
               onStatus={handleStatus}
             />
           </Suspense>

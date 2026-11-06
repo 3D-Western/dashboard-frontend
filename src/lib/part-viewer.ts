@@ -109,6 +109,14 @@ export function highlightsFromCards(cards: LessonCard[] | undefined): PartHighli
   return result;
 }
 
+/**
+ * Students never see a `hold` highlight: a staff hold reads as plain "preparing" to them (P-43), so
+ * a region marked for it (in the file or on a card) would give the moderation away.
+ */
+export function withoutHolds<T extends { severity: Severity }>(items: T[]): T[] {
+  return items.filter((item) => item.severity !== 'hold');
+}
+
 /** The highlights file wins; a card's region fills in for any code the file does not cover. */
 export function mergeHighlights(
   fromFile: PartHighlight[],
@@ -116,6 +124,16 @@ export function mergeHighlights(
 ): PartHighlight[] {
   const codes = new Set(fromFile.map((h) => h.code));
   return [...fromFile, ...fromCards.filter((h) => !codes.has(h.code))];
+}
+
+/** What the viewer draws for one screen: the file and the cards merged, minus holds for students. */
+export function viewerHighlights(
+  fromFile: PartHighlight[],
+  cards: LessonCard[] | undefined,
+  audience: 'student' | 'staff' = 'student',
+): PartHighlight[] {
+  const merged = mergeHighlights(fromFile, highlightsFromCards(cards));
+  return audience === 'staff' ? merged : withoutHolds(merged);
 }
 
 /**
