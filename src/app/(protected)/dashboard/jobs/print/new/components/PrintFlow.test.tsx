@@ -318,6 +318,73 @@ describe('PrintFlow', () => {
     });
   });
 
+  describe('saving while typing (P-192)', () => {
+    it('saves the description once per pause, and no more often than every 8 seconds while the student keeps typing', async () => {
+      vi.useFakeTimers({ shouldAdvanceTime: true });
+      try {
+        const user = userEvent.setup({
+          pointerEventsCheck: 0,
+          advanceTimers: vi.advanceTimersByTime,
+        });
+        const { container } = render(<PrintFlow />);
+        await chooseFile(container);
+        await waitFor(() => expect(jobs.completeUpload).toHaveBeenCalled());
+        await user.click(await screen.findByRole('radio', { name: 'Personal project' }));
+        await vi.advanceTimersByTimeAsync(800);
+        const words = screen.getByRole('textbox', { name: /tell us about your part/i });
+        pipeline.saveInputs.mockClear();
+
+        await user.type(words, 'A phone holder shaped like a keychain');
+        await vi.advanceTimersByTimeAsync(2600); // the pause: saved
+        expect(pipeline.saveInputs).toHaveBeenCalledTimes(1);
+
+        await user.type(words, ' with a loop');
+        await vi.advanceTimersByTimeAsync(2600); // another pause, but it is too soon after the last save
+        expect(pipeline.saveInputs).toHaveBeenCalledTimes(1);
+        await vi.advanceTimersByTimeAsync(6000);
+        expect(pipeline.saveInputs).toHaveBeenCalledTimes(2);
+        expect(pipeline.saveInputs).toHaveBeenLastCalledWith(
+          'job-9',
+          expect.objectContaining({
+            description: 'A phone holder shaped like a keychain with a loop',
+          }),
+        );
+      } finally {
+        vi.useRealTimers();
+      }
+    });
+
+    it('saves again by itself a little later when the pipeline says there were too many changes (429)', async () => {
+      vi.useFakeTimers({ shouldAdvanceTime: true });
+      try {
+        const user = userEvent.setup({
+          pointerEventsCheck: 0,
+          advanceTimers: vi.advanceTimersByTime,
+        });
+        const { container } = render(<PrintFlow />);
+        await chooseFile(container);
+        await waitFor(() => expect(jobs.completeUpload).toHaveBeenCalled());
+        await user.click(await screen.findByRole('radio', { name: 'Personal project' }));
+        await vi.advanceTimersByTimeAsync(800);
+        pipeline.saveInputs.mockClear();
+        pipeline.saveInputs.mockRejectedValueOnce(new ApiError('RATE_LIMIT_EXCEEDED', 'Slow down'));
+
+        await user.type(
+          screen.getByRole('textbox', { name: /tell us about your part/i }),
+          'A desk hook',
+        );
+        await user.tab();
+        await vi.advanceTimersByTimeAsync(100);
+        expect(pipeline.saveInputs).toHaveBeenCalledTimes(1);
+        expect(screen.queryByText(/couldn.t save your answers/i)).not.toBeInTheDocument();
+        await vi.advanceTimersByTimeAsync(31_000);
+        expect(pipeline.saveInputs).toHaveBeenCalledTimes(2);
+      } finally {
+        vi.useRealTimers();
+      }
+    });
+  });
+
   it('puts a returning student straight into the description', async () => {
     const user = setup();
     const first = render(<PrintFlow />);

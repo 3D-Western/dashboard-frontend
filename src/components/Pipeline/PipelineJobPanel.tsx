@@ -19,6 +19,7 @@ import { DisagreePanel } from './DisagreePanel';
 import { PickupCard } from './PickupCard';
 import { PartViewerSlot } from './PartViewerSlot';
 import { PreparingSteps } from './PreparingSteps';
+import { TAKING_LONGER_AFTER_MS, TakingLongerNotice, useTakingLonger } from './TakingLongerNotice';
 import { WatchItPrint } from './WatchItPrint';
 import { highlightsUrlOf, modelUrlOf, PlanFacts, previewUrlOf, ReviewPlan } from './ReviewPlan';
 
@@ -63,6 +64,8 @@ interface PipelineJobPanelProps {
   actionRereadMs?: number;
   /** Test hook: how quickly a broken stream is retried. */
   retryBaseMs?: number;
+  /** Test hook: how long "preparing" lasts before the student is told it is taking longer than usual. */
+  takingLongerAfterMs?: number;
 }
 
 /**
@@ -82,11 +85,17 @@ export function PipelineJobPanel({
   onStatusChange,
   actionRereadMs = ACTION_REREAD_MS,
   retryBaseMs,
+  takingLongerAfterMs = TAKING_LONGER_AFTER_MS,
 }: PipelineJobPanelProps) {
   const pipeline = usePipelineJob(jobId, { retryBaseMs, initialSnapshot });
   const { plan, steps, message, loaded, connection, error } = pipeline;
   const status = pipeline.studentStatus ?? initialStatus ?? null;
   const { pickup } = pipeline;
+  // Preparing that goes on (a big part, or one the crew is looking at: the student cannot tell which) is said out loud (P-194).
+  const takingLonger = useTakingLonger(
+    status === null || status === 'preparing',
+    takingLongerAfterMs,
+  );
 
   useEffect(() => {
     if (pipeline.studentStatus) onStatusChange?.(pipeline.studentStatus);
@@ -202,6 +211,7 @@ export function PipelineJobPanel({
       </p>
       <PreparingSteps steps={steps} />
       {message && <p className="text-sm text-muted-foreground">{message}</p>}
+      {takingLonger && <TakingLongerNotice />}
     </section>
   );
 

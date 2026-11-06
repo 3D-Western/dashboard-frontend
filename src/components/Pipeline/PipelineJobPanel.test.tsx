@@ -97,6 +97,45 @@ describe('Preparing your print', () => {
     expect(screen.getByText('Live')).toBeInTheDocument();
   });
 
+  it('says honestly that it is taking longer than usual, lets the student leave, and goes away with the plan (P-194)', async () => {
+    api.getState.mockResolvedValue(createMockSnapshot());
+    const live = openStream();
+    render(<PipelineJobPanel jobId="job-1" takingLongerAfterMs={60} />);
+    await screen.findByRole('heading', { name: 'Preparing your print' });
+
+    const notice = await screen.findByTestId('taking-longer');
+    expect(within(notice).getByText(/taking longer than usual/i)).toBeInTheDocument();
+    expect(within(notice).getByText(/do not need to wait here/i)).toBeInTheDocument();
+    expect(within(notice).getByRole('link', { name: 'Back to my jobs' })).toHaveAttribute(
+      'href',
+      '/dashboard/jobs',
+    );
+    expect(within(notice).getByRole('link', { name: 'Start another upload' })).toHaveAttribute(
+      'href',
+      '/dashboard/jobs/print/new',
+    );
+    expect(notice.textContent).not.toMatch(/review|screen|hold|crew|staff/i); // a held part looks like a slow one (P-43)
+
+    live.emit(
+      createMockEvent({
+        seq: 1,
+        type: 'plan',
+        studentStatus: 'needs_confirmation',
+        plan: createMockPlan(),
+      }),
+    );
+    await screen.findByRole('button', { name: /yes, print this/i });
+    expect(screen.queryByTestId('taking-longer')).not.toBeInTheDocument();
+  });
+
+  it('shows nothing extra for a normal wait', async () => {
+    api.getState.mockResolvedValue(createMockSnapshot());
+    openStream();
+    render(<PipelineJobPanel jobId="job-1" />);
+    await screen.findByRole('heading', { name: 'Preparing your print' });
+    expect(screen.queryByTestId('taking-longer')).not.toBeInTheDocument();
+  });
+
   it('turns into the review the moment the plan arrives', async () => {
     api.getState.mockResolvedValue(createMockSnapshot());
     const live = openStream();

@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import { AlertTriangle, Check, FileBox, Loader2 } from 'lucide-react';
 import { RadioGroup as RadioGroupPrimitive } from 'radix-ui';
 import { isConflictError, pipelineApi } from '@/api/client/pipeline';
+import { ApiError, ErrorCodes } from '@/api/client/errors';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -35,9 +36,16 @@ const SAVE_DELAY_MS = 600;
  * "Continue" to tap (P-137): after a pause of this long, shorter for a real sentence, longer for a
  * word or two that may not be finished.
  */
-const DESCRIPTION_IDLE_MS = 1500;
-const SHORT_DESCRIPTION_IDLE_MS = 3000;
+const DESCRIPTION_IDLE_MS = 2500;
+const SHORT_DESCRIPTION_IDLE_MS = 4000;
 const SENTENCE_LENGTH = 12;
+/**
+ * Every save makes the pipeline look at the part again (P-192): while the student keeps typing, saves
+ * are at least this far apart. Leaving the field saves at once; the pipeline also waits for the typing to settle.
+ */
+const MIN_SAVE_GAP_MS = 8000;
+/** The pipeline said "too many changes" (429): try again after this long. */
+const RATE_LIMITED_RETRY_MS = 30_000;
 
 const CHIP =
   'min-h-11 rounded-full border border-control-border px-3.5 py-1.5 text-sm transition-colors outline-none hover:border-purple-light focus-visible:ring-3 focus-visible:ring-ring/50 data-[state=checked]:border-purple-light data-[state=checked]:bg-purple-light/25 fine:min-h-0';
@@ -70,6 +78,8 @@ export function PrintFlow({ mockMode = false }: { mockMode?: boolean }) {
   const [leftDescription, setLeftDescription] = useState(false);
   const [focusDescription, setFocusDescription] = useState(false);
   const descriptionRef = useRef<HTMLTextAreaElement>(null);
+  // When the last save of the description went out, so typing does not make a save at every pause (see MIN_SAVE_GAP_MS).
+  const lastDescriptionSaveAt = useRef<number | null>(null);
   // Rate first (P-20): the prints to rate before the file is asked for, looked up as the screen
   // opens. null = nothing to rate (or the lookup failed: the 409 on create is the fallback).
   // The live status of the job, and whether the review has been on screen already.
@@ -154,8 +164,17 @@ export function PrintFlow({ mockMode = false }: { mockMode?: boolean }) {
         : descriptionText.length >= SENTENCE_LENGTH
           ? DESCRIPTION_IDLE_MS
           : SHORT_DESCRIPTION_IDLE_MS;
+    const sinceLastSave =
+      lastDescriptionSaveAt.current === null
+        ? Infinity
+        : Date.now() - lastDescriptionSaveAt.current;
+    const spaced =
+      !descriptionPending || leftDescription
+        ? delay
+        : Math.max(delay, MIN_SAVE_GAP_MS - sinceLastSave);
     const timer = setTimeout(async () => {
       setSaveState('saving');
+      if (descriptionPending) lastDescriptionSaveAt.current = Date.now();
       try {
         await pipelineApi.saveInputs(uploadJobId, inputs);
         if (cancelled) return;
@@ -168,14 +187,20 @@ export function PrintFlow({ mockMode = false }: { mockMode?: boolean }) {
         if (isConflictError(error)) {
           setClosedByServer(true);
           setSaveState('idle');
+        } else if (error instanceof ApiError && error.code === ErrorCodes.RATE_LIMIT_EXCEEDED) {
+          // Too many changes in a short time: nothing is lost, the answers are saved a little later by themselves.
+          setSaveState('saving');
+          retryTimer = setTimeout(() => setSaveAttempt((n) => n + 1), RATE_LIMITED_RETRY_MS);
         } else {
           setSaveState('error');
         }
       }
-    }, delay);
+    }, spaced);
+    let retryTimer: ReturnType<typeof setTimeout> | undefined;
     return () => {
       cancelled = true;
       clearTimeout(timer);
+      clearTimeout(retryTimer);
     };
     // inputs and descriptionText are derived from inputsKey's parts
     // eslint-disable-next-line react-hooks/exhaustive-deps
