@@ -97,6 +97,8 @@ interface ReviewPlanProps {
   planWasUpdated?: boolean;
   /** The student has answers still being saved: the yes waits so it quotes the plan they will get. */
   inputsPending?: boolean;
+  /** A message from the pipeline for the student (e.g. why a yes or an answer was not taken). */
+  notice?: string | null;
 }
 
 /**
@@ -113,6 +115,7 @@ export function ReviewPlan({
   onStudentChange,
   planWasUpdated = false,
   inputsPending = false,
+  notice = null,
 }: ReviewPlanProps) {
   // The review is a screen of its own in the steps-to-submit metric (P-137)
   useEffect(() => {
@@ -198,6 +201,14 @@ export function ReviewPlan({
   return (
     <PartFocusProvider>
       <div className="space-y-5">
+        {notice && (
+          <Alert variant="warning" role="status">
+            <AlertTriangle aria-hidden="true" />
+            <AlertTitle>A note about your last step</AlertTitle>
+            <AlertDescription>{notice}</AlertDescription>
+          </Alert>
+        )}
+
         {planWasUpdated && (
           <Alert variant="warning">
             <AlertTriangle aria-hidden="true" />

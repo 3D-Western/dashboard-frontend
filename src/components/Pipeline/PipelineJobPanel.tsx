@@ -23,6 +23,12 @@ import { highlightsUrlOf, modelUrlOf, PlanFacts, previewUrlOf, ReviewPlan } from
 /** How long after a rating the job is read again to pick up the follow-up questions. */
 const RATED_REREAD_MS = 4000;
 
+/**
+ * How long after an accepted yes, choice or answer the job is read once more. The pipeline can
+ * refuse it later without a stream frame; the reason then only shows in the snapshot's message.
+ */
+const ACTION_REREAD_MS = 2500;
+
 const REVIEW_STATUSES: StudentStatus[] = ['needs_confirmation', 'needs_choice'];
 
 interface PipelineJobPanelProps {
@@ -51,6 +57,8 @@ interface PipelineJobPanelProps {
    * not disappear while they type) but the yes waits, so it never confirms a plan that is about to change.
    */
   inputsPending?: boolean;
+  /** Test hook: how long after an accepted action the job is read again. */
+  actionRereadMs?: number;
   /** Test hook: how quickly a broken stream is retried. */
   retryBaseMs?: number;
 }
@@ -70,6 +78,7 @@ export function PipelineJobPanel({
   inputsPending = false,
   initialSnapshot = null,
   onStatusChange,
+  actionRereadMs = ACTION_REREAD_MS,
   retryBaseMs,
 }: PipelineJobPanelProps) {
   const pipeline = usePipelineJob(jobId, { retryBaseMs, initialSnapshot });
@@ -106,6 +115,26 @@ export function PipelineJobPanel({
     return () => timers.forEach(clearTimeout);
   }, []);
   const { refresh, setOptimisticStatus, markRated, markRatingFailed } = pipeline;
+  // The backend accepted an action (202) but the pipeline may refuse it afterwards, and that only
+  // shows as a message in the snapshot: read it once, a moment later (one pending read at a time).
+  const rereadTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const rereadSoon = useCallback(() => {
+    if (rereadTimer.current) clearTimeout(rereadTimer.current);
+    rereadTimer.current = setTimeout(() => {
+      rereadTimer.current = null;
+      refresh();
+    }, actionRereadMs);
+  }, [refresh, actionRereadMs]);
+  useEffect(
+    () => () => {
+      if (rereadTimer.current) clearTimeout(rereadTimer.current);
+    },
+    [],
+  );
+  // The student's answers were saved on the new-print screen.
+  useEffect(() => {
+    if (answersRevision > 0) rereadSoon();
+  }, [answersRevision, rereadSoon]);
   const wasReady = status === 'ready_for_pickup';
   // The tap shows its result at once; the re-reads wait until the server has the rating (reading
   // sooner would bring back the old status), and a failed save takes the result back.
@@ -192,9 +221,14 @@ export function PipelineJobPanel({
           pipeline.setOptimisticStatus('queued');
           setBaselinePlanId(null);
           trackPrintSubmitted(jobId);
+          rereadSoon();
         }}
         onPlanChanged={handlePlanChanged}
-        onStudentChange={() => setBaselinePlanId(null)}
+        onStudentChange={() => {
+          setBaselinePlanId(null);
+          rereadSoon();
+        }}
+        notice={message}
       />
     );
   } else if (reviewing) {

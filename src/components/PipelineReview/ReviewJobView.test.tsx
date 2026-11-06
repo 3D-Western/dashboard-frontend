@@ -85,6 +85,16 @@ describe('ReviewJobView', () => {
     expect(screen.queryByRole('heading', { name: 'Screening renders' })).not.toBeInTheDocument();
   });
 
+  it('shows a decision by a removed staff account as a former staff member', async () => {
+    api.job.mockResolvedValue(
+      createStaffJobView({ decisions: [createStaffDecisionRecord({ decidedBy: null })] }),
+    );
+    render(<ReviewJobView jobId={HELD_JOB_ID} refreshMs={0} />, { user: staff });
+
+    expect(await screen.findByText(/former staff member/i)).toBeInTheDocument();
+    expect(screen.queryByText(/staff null/i)).not.toBeInTheDocument();
+  });
+
   it('lists the student inputs, past decisions and events', async () => {
     api.job.mockResolvedValue(
       createStaffJobView({

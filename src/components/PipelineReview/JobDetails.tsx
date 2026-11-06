@@ -243,7 +243,8 @@ export function JobDetails({
                     {d.delivery}
                   </Badge>
                   <span className="text-muted-foreground">
-                    staff {d.decidedBy} · {formatAgo(d.createdAt, now)}
+                    {d.decidedBy == null ? 'former staff member' : `staff ${d.decidedBy}`} ·{' '}
+                    {formatAgo(d.createdAt, now)}
                     {d.staffStatusBefore
                       ? ` · from ${d.staffStatusBefore.replaceAll('_', ' ')}`
                       : ''}

@@ -99,8 +99,9 @@ export function pipelineReducer(state: PipelineState, action: PipelineAction): P
         followups: snapshot.followups ?? state.followups,
         // A rating given here outlasts a snapshot that doesn't know about it yet.
         ratingPending: state.rating ? false : (snapshot.ratingPending ?? state.ratingPending),
-        // Events the snapshot already includes are not applied again.
-        lastSeq: Math.max(state.lastSeq, snapshot.lastSeq ?? 0),
+        // The snapshot's own number, as is (the student's gap-free numbering, 0 when none): events up
+        // to it are already included, later ones apply. Never a number remembered from before.
+        lastSeq: snapshot.lastSeq ?? state.lastSeq,
       };
     }
     case 'event': {

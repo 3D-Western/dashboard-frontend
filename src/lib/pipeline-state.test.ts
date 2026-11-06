@@ -152,7 +152,25 @@ describe('pipelineReducer', () => {
     expect(next.studentStatus).toBe('queued');
   });
 
-  it('keeps a higher seq when a snapshot has none (older backend)', () => {
+  it("takes the snapshot's lastSeq as is, even below an earlier number (renumbered streams)", () => {
+    const afterEvent = pipelineReducer(initialPipelineState, {
+      type: 'event',
+      event: createMockEvent({ seq: 40 }),
+    });
+    const snap = pipelineReducer(afterEvent, {
+      type: 'snapshot',
+      snapshot: createMockSnapshot({ lastSeq: 3 }),
+    });
+    expect(snap.lastSeq).toBe(3);
+    expect(
+      pipelineReducer(snap, {
+        type: 'event',
+        event: createMockEvent({ seq: 4, studentStatus: 'queued' }),
+      }).studentStatus,
+    ).toBe('queued');
+  });
+
+  it('keeps its seq when a snapshot has none (older backend)', () => {
     const afterEvent = pipelineReducer(initialPipelineState, {
       type: 'event',
       event: createMockEvent({ seq: 4 }),

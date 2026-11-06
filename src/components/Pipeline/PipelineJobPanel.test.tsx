@@ -186,6 +186,21 @@ describe('Review', () => {
     expect(await screen.findByRole('heading', { name: 'Queued' })).toBeInTheDocument();
   });
 
+  it('reads the job once more after an accepted yes, and shows the reason when the pipeline refused it later', async () => {
+    api.getState.mockResolvedValueOnce(reviewSnapshot({ planId: 'plan-1' })).mockResolvedValue({
+      ...reviewSnapshot({ planId: 'plan-1' }),
+      message: 'We could not take your yes: the printer settings changed. Please look again.',
+    });
+    openStream();
+    const user = setup();
+    render(<PipelineJobPanel jobId="job-1" actionRereadMs={20} />);
+
+    await user.click(await screen.findByRole('button', { name: 'Yes, print this' }));
+
+    expect(await screen.findByText(/could not take your yes/i)).toBeInTheDocument();
+    expect(api.getState).toHaveBeenCalledTimes(2);
+  });
+
   it('counts the yes as the submitted print for the steps-to-submit metric, and a refused yes is not one', async () => {
     api.getState.mockResolvedValue(reviewSnapshot({ planId: 'plan-1' }));
     openStream();

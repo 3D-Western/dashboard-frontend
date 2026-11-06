@@ -169,7 +169,8 @@ export interface StaffDecisionRecord {
   decision: string;
   codes: string[];
   reason: string;
-  decidedBy: number;
+  /** Null once the staff member's account is gone. */
+  decidedBy: number | null;
   staffStatusBefore?: string | null;
   delivery: DecisionDelivery;
   /** Why a FAILED or still-queued delivery has not gone through. */
