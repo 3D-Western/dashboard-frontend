@@ -22,6 +22,8 @@ const SUPPORTED_FILES = {
   '.stl': 'model/stl',
   '.obj': 'model/obj',
   '.3mf': 'application/3mf',
+  '.step': 'model/step',
+  '.stp': 'model/step',
 } as const;
 
 const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB in bytes

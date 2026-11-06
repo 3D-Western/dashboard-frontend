@@ -22,19 +22,13 @@ import {
   rememberPurpose,
 } from '@/lib/purpose-memory';
 import { trackScreen } from '@/lib/analytics';
+import {
+  PRINT_MODEL_ACCEPT,
+  REJECTED_FILE_MESSAGE,
+  validateModelFile,
+} from '@/lib/model-files';
 import type { Purpose, StudentInputs, StudentStatus, UnratedPrint } from '@/types/pipeline';
 import { useJobUpload } from './useJobUpload';
-
-// STL, STEP, or 3MF (as plain geometry, or as a project carrying the student's own settings; P-53).
-const ACCEPTED_FILES = {
-  'model/stl': ['.stl'],
-  'application/sla': ['.stl'],
-  'model/3mf': ['.3mf'],
-  'application/vnd.ms-package.3dmanufacturing-3dmodel+xml': ['.3mf'],
-  'model/step': ['.step', '.stp'],
-  'application/step': ['.step', '.stp'],
-  'application/octet-stream': ['.stl', '.3mf', '.step', '.stp'],
-};
 
 const MAX_DESCRIPTION = 1000;
 const MIN_DESCRIPTION = 2;
@@ -85,6 +79,8 @@ export function PrintFlow({ mockMode = false }: { mockMode?: boolean }) {
   // The live status of the job, and whether the review has been on screen already.
   const [jobStatus, setJobStatus] = useState<StudentStatus | null>(null);
   const [reviewShown, setReviewShown] = useState(false);
+  // Why the chosen file was not taken (wrong type, too big): nothing was uploaded.
+  const [fileProblem, setFileProblem] = useState<string | null>(null);
   // The server refused an answer because the job is closed (the student already said yes).
   const [closedByServer, setClosedByServer] = useState(false);
   const [rateFirst, setRateFirst] = useState<UnratedPrint[] | null>(null);
@@ -215,6 +211,9 @@ export function PrintFlow({ mockMode = false }: { mockMode?: boolean }) {
 
   function handleFile(accepted: File | null) {
     if (!accepted || file) return;
+    const problem = validateModelFile(accepted);
+    setFileProblem(problem);
+    if (problem) return;
     setFile(accepted);
     if (purpose) setFocusDescription(true);
     void upload.start(accepted);
@@ -269,7 +268,11 @@ export function PrintFlow({ mockMode = false }: { mockMode?: boolean }) {
             </div>
           ) : (
             <div data-track="choose_file">
-              <FileUploadDropzone onFileAccepted={handleFile} accept={ACCEPTED_FILES} />
+              <FileUploadDropzone
+                onFileAccepted={handleFile}
+                accept={PRINT_MODEL_ACCEPT}
+                onError={() => setFileProblem(REJECTED_FILE_MESSAGE)}
+              />
             </div>
           )}
           {!file && (
@@ -277,6 +280,13 @@ export function PrintFlow({ mockMode = false }: { mockMode?: boolean }) {
               STL, STEP or 3MF. A 3MF project can carry your own settings. We start checking the
               moment it arrives.
             </p>
+          )}
+          {fileProblem && !file && (
+            <Alert variant="destructive" data-testid="file-problem">
+              <AlertTriangle aria-hidden="true" />
+              <AlertTitle>That file can&apos;t be uploaded</AlertTitle>
+              <AlertDescription>{fileProblem}</AlertDescription>
+            </Alert>
           )}
           {uploadError &&
             uploadError.kind !== 'orientation' &&

@@ -271,7 +271,7 @@ export const pipelineFarmHandlers = [
     },
   ),
 
-  // Staff thermometer readings (P-174): the pipeline refuses a typing mistake (outside -10 to 50 C) with its reason.
+  // Staff thermometer readings (P-175): the pipeline refuses a typing mistake (outside -10 to 50 C) with its reason.
   http.get(`${apiUrl}${endpoints.pipelineFarm.roomTemperatureReadings}`, ({ cookies }) => {
     const { response } = staff(cookies);
     if (response) return response;

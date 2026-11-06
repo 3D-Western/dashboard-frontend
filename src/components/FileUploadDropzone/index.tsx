@@ -8,6 +8,8 @@ type FileUploadDropzoneProps = {
   initialFile?: File;
   accept?: Record<string, string[]>;
   maxFiles?: number;
+  /** Called with the reason when the dropzone itself refuses what was dropped (wrong type, several files). */
+  onError?: (error: Error) => void;
 };
 
 /**
@@ -20,6 +22,7 @@ export function FileUploadDropzone({
   initialFile,
   accept,
   maxFiles = 1,
+  onError,
 }: FileUploadDropzoneProps) {
   const [localFiles, setLocalFiles] = useState<File[] | undefined>(
     initialFile ? [initialFile] : undefined,
@@ -30,6 +33,7 @@ export function FileUploadDropzone({
       src={localFiles}
       maxFiles={maxFiles}
       accept={accept}
+      onError={onError}
       onDrop={(acceptedFiles: File[]) => {
         if (!acceptedFiles || acceptedFiles.length === 0) {
           setLocalFiles(undefined);

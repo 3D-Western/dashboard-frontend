@@ -88,7 +88,7 @@ export const endpoints = {
     // Read-only status cards of the staff farm page: the room-temperature watch and the farm agent
     roomTemperature: '/api/v1/admin/pipeline/farm/room-temperature',
     agent: '/api/v1/admin/pipeline/farm/agent',
-    // Staff thermometer readings (P-174): enter (POST) and list (GET) at the same path
+    // Staff thermometer readings (P-175): enter (POST) and list (GET) at the same path
     roomTemperatureReadings: '/api/v1/admin/pipeline/farm/room-temperature/readings',
     withdrawRoomTemperature: (readingId: number | string) =>
       `/api/v1/admin/pipeline/farm/room-temperature/readings/${readingId}/withdraw`,

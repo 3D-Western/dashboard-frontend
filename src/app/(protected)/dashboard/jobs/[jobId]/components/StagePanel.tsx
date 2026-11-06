@@ -9,9 +9,11 @@ import { jobApi } from '@/api/client/job';
 import { Button } from '@/components/ui/button';
 import { useLocalTime } from '@/hooks/useLocalTime';
 import { calculateFileChecksum } from '@/lib/file-utils';
+import { PRINT_MODEL_INPUT_ACCEPT, validateModelFile } from '@/lib/model-files';
 import { Routes } from '@/lib/routes';
 import { cn } from '@/lib/utils';
 import { JobDetail, PrintJobStatus, StatusHistory } from '@/types/jobs';
+import { contentTypeOf } from '../../print/new/components/useJobUpload';
 import { JOB_STAGES, TONE_CLASSES } from '../../lib/job-stages';
 import { PrintProgress } from '../../components/PrintProgress';
 import { EmailUsButton } from './EmailUsButton';
@@ -24,7 +26,8 @@ function LocalTime({ date }: { date: string }) {
   return <time dateTime={date}>{time}</time>;
 }
 
-function RetryUploadButton({ jobId }: { jobId: string }) {
+/** A 3D print takes STL, 3MF or STEP; other jobs keep STL (CNC) as before. */
+function RetryUploadButton({ jobId, isPrint }: { jobId: string; isPrint: boolean }) {
   const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isUploading, setIsUploading] = useState(false);
@@ -33,6 +36,13 @@ function RetryUploadButton({ jobId }: { jobId: string }) {
     const file = e.target.files?.[0];
     e.target.value = '';
     if (!file) return;
+    if (isPrint) {
+      const problem = validateModelFile(file);
+      if (problem) {
+        toast.error('That file was not uploaded', { description: problem });
+        return;
+      }
+    }
 
     setIsUploading(true);
     try {
@@ -42,7 +52,7 @@ function RetryUploadButton({ jobId }: { jobId: string }) {
       await jobApi.completeUpload(jobId, {
         fileName: file.name,
         fileSize: file.size,
-        contentType: file.type || 'application/sla',
+        contentType: file.type || (isPrint ? contentTypeOf(file) : 'application/sla'),
         checksum,
       });
       toast.success('File uploaded', { description: 'Your job has been submitted.' });
@@ -62,10 +72,10 @@ function RetryUploadButton({ jobId }: { jobId: string }) {
       <input
         ref={fileInputRef}
         type="file"
-        accept=".stl"
+        accept={isPrint ? PRINT_MODEL_INPUT_ACCEPT : '.stl'}
         className="hidden"
         onChange={handleFileSelected}
-        aria-label="STL file to upload"
+        aria-label={isPrint ? 'Model file to upload' : 'STL file to upload'}
       />
       <Button
         size="lg"
@@ -74,7 +84,7 @@ function RetryUploadButton({ jobId }: { jobId: string }) {
         disabled={isUploading}
       >
         {isUploading ? <Loader2 className="animate-spin" /> : <Upload />}
-        {isUploading ? 'Uploading...' : 'Upload STL file'}
+        {isUploading ? 'Uploading...' : isPrint ? 'Upload your file' : 'Upload STL file'}
       </Button>
     </>
   );
@@ -104,9 +114,12 @@ export function StagePanel({ job }: { job: JobDetail }) {
       title = 'Upload your file to submit this job';
       content = (
         <>
-          <p>Your STL file didn&apos;t finish uploading, so this job hasn&apos;t been submitted.</p>
+          <p>
+            Your {job.category === 'ThreeDPrint' ? 'file' : 'STL file'} didn&apos;t finish
+            uploading, so this job hasn&apos;t been submitted.
+          </p>
           <div className="mt-4">
-            <RetryUploadButton jobId={job.id} />
+            <RetryUploadButton jobId={job.id} isPrint={job.category === 'ThreeDPrint'} />
           </div>
         </>
       );

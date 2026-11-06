@@ -35,16 +35,27 @@ export interface FileMetadata {
 export type FileListItem = FileMetadata;
 
 // Supported file MIME types
-export type FileMimeType = 'model/stl' | 'model/obj' | 'application/3mf';
+export type FileMimeType =
+  | 'model/stl'
+  | 'model/obj'
+  | 'application/3mf'
+  | 'model/step'
+  | 'application/step';
 
 // Supported file extensions
-export type FileExtension = '.stl' | '.obj' | '.3mf';
+export type FileExtension = '.stl' | '.obj' | '.3mf' | '.step' | '.stp';
 
 // File validation constraints
 export const FILE_CONSTRAINTS = {
   MAX_SIZE: 50 * 1024 * 1024, // 50MB in bytes
-  SUPPORTED_EXTENSIONS: ['.stl', '.obj', '.3mf'] as const,
-  SUPPORTED_MIME_TYPES: ['model/stl', 'model/obj', 'application/3mf'] as const,
+  SUPPORTED_EXTENSIONS: ['.stl', '.obj', '.3mf', '.step', '.stp'] as const,
+  SUPPORTED_MIME_TYPES: [
+    'model/stl',
+    'model/obj',
+    'application/3mf',
+    'model/step',
+    'application/step',
+  ] as const,
 } as const;
 
 // File list response using generic pagination

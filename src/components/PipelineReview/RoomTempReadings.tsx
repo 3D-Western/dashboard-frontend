@@ -20,7 +20,7 @@ import type { ManualTempReading } from '@/types/pipeline-farm';
 import { reviewErrorMessage } from './ReviewBits';
 
 /**
- * Staff thermometer readings for the room-temperature card (P-174): type what a thermometer in the
+ * Staff thermometer readings for the room-temperature card (P-175): type what a thermometer in the
  * room shows, and see the recent entries with who entered each. A reading counts for as long as the
  * pipeline counts a reading; the idle printers can still outvote it, and a wrong entry is withdrawn
  * (it stays on the list, marked). `refreshKey` reloads the list when the desk reloads.

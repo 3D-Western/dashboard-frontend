@@ -76,6 +76,59 @@ describe('PrintFlow', () => {
     expect(screen.getByText(/STL, STEP or 3MF/)).toBeInTheDocument();
   });
 
+  it.each([
+    ['bracket.step', ''],
+    ['Bracket.STP', 'application/step'],
+    ['housing.step', 'model/step'],
+    ['housing.step', 'application/octet-stream'],
+  ])('takes a STEP file (%s, reported as "%s") like any model and uploads it at once', async (name, type) => {
+    const { container } = render(<PrintFlow />);
+
+    await chooseFile(container, new File(['ISO-10303-21;'], name, { type }));
+
+    await waitFor(() => expect(jobs.completeUpload).toHaveBeenCalled());
+    expect(jobs.createJob).toHaveBeenCalledWith(
+      expect.objectContaining({
+        jobName: name.replace(/\.[^.]+$/, ''),
+        category: 'ThreeDPrint',
+        formAnswerJson: expect.stringContaining('"contentType":"' + (type || 'model/step') + '"'),
+      }),
+    );
+    expect(jobs.uploadJobFile).toHaveBeenCalledWith('https://storage.example/upload', expect.any(File));
+    expect(jobs.completeUpload).toHaveBeenCalledWith(
+      'job-9',
+      expect.objectContaining({ fileName: name, contentType: type || 'model/step' }),
+    );
+    expect(screen.queryByTestId('file-problem')).not.toBeInTheDocument();
+  });
+
+  it('refuses a model over the size limit, and a file of another type, before anything is uploaded', async () => {
+    const user = userEvent.setup({ applyAccept: false });
+    const { container } = render(<PrintFlow />);
+    const input = container.querySelector('input[type="file"]') as HTMLInputElement;
+
+    const huge = new File(['x'], 'big.step', { type: 'application/step' });
+    Object.defineProperty(huge, 'size', { value: 51 * 1024 * 1024 });
+    await user.upload(input, huge);
+    expect(await screen.findByTestId('file-problem')).toHaveTextContent('limit is 50 MB');
+
+    await user.upload(input, new File(['x'], 'notes.pdf', { type: 'application/pdf' }));
+    await waitFor(() => expect(screen.getByTestId('file-problem')).toBeInTheDocument());
+    expect(jobs.createJob).not.toHaveBeenCalled();
+    expect(jobs.uploadJobFile).not.toHaveBeenCalled();
+  });
+
+  it('accepts a STEP file exactly at the size limit', async () => {
+    const { container } = render(<PrintFlow />);
+    const exactly = new File(['x'], 'limit.stp', { type: '' });
+    Object.defineProperty(exactly, 'size', { value: 50 * 1024 * 1024 });
+
+    await chooseFile(container, exactly);
+
+    await waitFor(() => expect(jobs.createJob).toHaveBeenCalled());
+    expect(screen.queryByTestId('file-problem')).not.toBeInTheDocument();
+  });
+
   it('uploads at once, in the background, then opens the live progress while the student answers', async () => {
     const { container } = render(<PrintFlow />);
 

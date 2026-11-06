@@ -1,4 +1,7 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+import userEvent from '@testing-library/user-event';
+import { waitFor } from '@testing-library/react';
+import { jobApi } from '@/api/client/job';
 import { render, screen, within } from '@test/utils/render';
 import { JobDetail } from '@/types/jobs';
 import { JobDetailHeader } from './JobDetailHeader';
@@ -7,6 +10,10 @@ import { StagePanel } from './StagePanel';
 import { StatusStepper } from './StatusStepper';
 
 vi.mock('next/navigation', () => ({ useRouter: () => ({ push: vi.fn(), refresh: vi.fn() }) }));
+vi.mock('@/api/client/job', () => ({
+  jobApi: { retryUpload: vi.fn(), uploadJobFile: vi.fn(), completeUpload: vi.fn() },
+}));
+vi.mock('@/lib/file-utils', () => ({ calculateFileChecksum: vi.fn(async () => 'sha256:test') }));
 
 const baseJob: JobDetail = {
   id: 'job-123',
@@ -22,6 +29,54 @@ const baseJob: JobDetail = {
   filepath: 'uploads/gear.stl',
   formAnswersJson: '{}',
 };
+
+describe('StagePanel retry of an upload that did not finish', () => {
+  const api = vi.mocked(jobApi);
+  beforeEach(() => {
+    api.retryUpload.mockReset().mockResolvedValue({
+      fileId: 'f1',
+      presignedUrl: 'https://storage.example/put',
+      expiresIn: 900,
+      storageKey: 'k',
+    });
+    api.uploadJobFile.mockReset().mockResolvedValue(new Response());
+    api.completeUpload.mockReset().mockResolvedValue(null);
+  });
+
+  it('lets a student upload STEP, STL or 3MF again for a print, and sends the file with its type', async () => {
+    render(<StagePanel job={{ ...baseJob, status: 'PendingFile' }} />);
+    const input = screen.getByLabelText('Model file to upload') as HTMLInputElement;
+    expect(input.accept).toBe('.stl,.3mf,.step,.stp');
+    expect(screen.getByRole('button', { name: /Upload your file/ })).toBeVisible();
+
+    await userEvent.upload(input, new File(['ISO-10303-21;'], 'bracket.step', { type: '' }));
+
+    await waitFor(() => expect(api.completeUpload).toHaveBeenCalled());
+    expect(api.uploadJobFile).toHaveBeenCalledWith('https://storage.example/put', expect.any(File));
+    expect(api.completeUpload).toHaveBeenCalledWith(
+      'job-123',
+      expect.objectContaining({ fileName: 'bracket.step', contentType: 'model/step' }),
+    );
+  });
+
+  it('does not upload a file the backend would refuse', async () => {
+    const user = userEvent.setup({ applyAccept: false });
+    render(<StagePanel job={{ ...baseJob, status: 'PendingFile' }} />);
+    const input = screen.getByLabelText('Model file to upload') as HTMLInputElement;
+
+    await user.upload(input, new File(['x'], 'notes.pdf', { type: 'application/pdf' }));
+
+    expect(api.retryUpload).not.toHaveBeenCalled();
+    expect(api.uploadJobFile).not.toHaveBeenCalled();
+  });
+
+  it('keeps STL only for a CNC job', () => {
+    render(<StagePanel job={{ ...baseJob, category: 'CNC', status: 'PendingFile' }} />);
+
+    expect((screen.getByLabelText('STL file to upload') as HTMLInputElement).accept).toBe('.stl');
+    expect(screen.getByRole('button', { name: /Upload STL file/ })).toBeVisible();
+  });
+});
 
 describe('StagePanel', () => {
   it('tells the user where to pick up a finished print', () => {
@@ -68,7 +123,7 @@ describe('StagePanel', () => {
   it('lets the user upload the file for a job whose upload never finished', () => {
     render(<StagePanel job={{ ...baseJob, status: 'PendingFile' }} />);
 
-    expect(screen.getByRole('button', { name: /upload stl file/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /upload your file/i })).toBeInTheDocument();
   });
 });
 

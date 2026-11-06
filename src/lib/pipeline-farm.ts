@@ -189,7 +189,7 @@ export const KILL_LABEL: Record<KillSwitch, string> = {
   all: 'On: refuses everything',
 };
 
-// -- Staff thermometer readings (P-174) -------------------------------------------------------
+// -- Staff thermometer readings (P-175) -------------------------------------------------------
 
 /** The backend's bounds on a typed temperature, and on the note. The pipeline's own typo check is narrower (-10 to 50 °C by default). */
 export const TEMP_MIN_C = -60;
