@@ -63,6 +63,8 @@ export function usePipelineJob(
           const snapshot = await pipelineApi.getState(jobId, { signal });
           if (signal.aborted) return;
           dispatch({ type: 'snapshot', snapshot });
+          // Stream from where the snapshot ends instead of replaying the whole history.
+          lastSeq.current = Math.max(lastSeq.current, snapshot.lastSeq ?? 0);
           setError(null);
           status = snapshot.studentStatus;
         } catch (caught) {

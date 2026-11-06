@@ -109,6 +109,8 @@ export interface Plan {
   lessonCards?: LessonCard[];
   choices?: Choice[];
   artifacts?: PlanArtifact[];
+  /** When the plan expires without a yes (ISO date-time), so the screen can remind the student. */
+  respondBy?: string | null;
 }
 
 export type StepState = 'started' | 'done' | 'skipped';
@@ -178,7 +180,12 @@ export interface PipelineSnapshot {
    * True when the print is collected and the student has not rated it yet: the screen shows the
    * one-tap rating, and a new 3D-print job is refused (`RATING_REQUIRED`) until it is given (P-20).
    */
-  ratingPending?: boolean;
+  ratingPending?: boolean | null;
+  /**
+   * The highest event `seq` this snapshot already includes. The stream starts after it, so the
+   * history is not replayed on top of the snapshot. Absent on an older backend (stream from the start).
+   */
+  lastSeq?: number;
 }
 
 /** A collected print the student has not rated (an item of `data.unratedPrints` of `RATING_REQUIRED`). */

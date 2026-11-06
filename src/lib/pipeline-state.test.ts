@@ -6,6 +6,7 @@ import {
   pipelineReducer,
 } from './pipeline-state';
 import { settingReasons, settingsDiffer, settingsFromPlan } from './pipeline-settings';
+import type { Answer } from '@/types/pipeline';
 import { isTerminalStatus, studentStage } from './student-status';
 import {
   createMockEvent,
@@ -115,6 +116,49 @@ describe('pipelineReducer', () => {
     const state = pipelineReducer(initialPipelineState, { type: 'plan', plan: next });
 
     expect(state).toMatchObject({ plan: next, studentStatus: 'needs_confirmation' });
+  });
+
+  it('derives the status of a plan from a 409 from its answer', () => {
+    const statusAfter = (answer: Answer) =>
+      pipelineReducer(initialPipelineState, {
+        type: 'plan',
+        plan: createMockPlan({ planId: 'plan-2', answer }),
+      }).studentStatus;
+
+    expect(statusAfter('works')).toBe('needs_confirmation');
+    expect(statusAfter('works_with_adjustments')).toBe('needs_confirmation');
+    expect(statusAfter('needs_choice')).toBe('needs_choice');
+    expect(statusAfter('cannot_print')).toBe('cannot_print');
+    expect(statusAfter('held')).toBe('preparing');
+  });
+
+  it('starts after the events a snapshot already includes (no history replay)', () => {
+    const snap = pipelineReducer(initialPipelineState, {
+      type: 'snapshot',
+      snapshot: createMockSnapshot({ lastSeq: 7 }),
+    });
+    expect(snap.lastSeq).toBe(7);
+
+    const stale = pipelineReducer(snap, {
+      type: 'event',
+      event: createMockEvent({ seq: 6, studentStatus: 'preparing' }),
+    });
+    expect(stale).toBe(snap);
+
+    const next = pipelineReducer(snap, {
+      type: 'event',
+      event: createMockEvent({ seq: 8, studentStatus: 'queued' }),
+    });
+    expect(next.studentStatus).toBe('queued');
+  });
+
+  it('keeps a higher seq when a snapshot has none (older backend)', () => {
+    const afterEvent = pipelineReducer(initialPipelineState, {
+      type: 'event',
+      event: createMockEvent({ seq: 4 }),
+    });
+    const snap = pipelineReducer(afterEvent, { type: 'snapshot', snapshot: createMockSnapshot() });
+    expect(snap.lastSeq).toBe(4);
   });
 });
 

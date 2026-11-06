@@ -49,7 +49,7 @@ export type PipelineAction =
   | { type: 'event'; event: PipelineStreamEvent }
   /** Show a status before the server confirms it (the student's yes); the next snapshot corrects it. */
   | { type: 'optimistic'; studentStatus: StudentStatus }
-  /** A 409 carried the new plan: show it for a second yes. */
+  /** A 409 carried the new plan: show it for a second yes (or choice, per its answer). */
   | { type: 'plan'; plan: Plan }
   /** The student tapped thumbs up or down (the server accepted it). */
   | { type: 'rated'; rating: Rating }
@@ -63,6 +63,23 @@ const upsertStep = (steps: StepProgress[], step: StepProgress): StepProgress[] =
   next[index] = step;
   return next;
 };
+
+/**
+ * The student status a plan implies, for a plan that arrives outside the stream (a 409 carries the
+ * new one). A plan that needs a choice asks for it; a held plan reads as preparing to students (P-43).
+ */
+export function statusForPlan(plan: Plan): StudentStatus {
+  switch (plan.answer) {
+    case 'needs_choice':
+      return 'needs_choice';
+    case 'cannot_print':
+      return 'cannot_print';
+    case 'held':
+      return 'preparing';
+    default:
+      return 'needs_confirmation';
+  }
+}
 
 export function pipelineReducer(state: PipelineState, action: PipelineAction): PipelineState {
   switch (action.type) {
@@ -80,6 +97,8 @@ export function pipelineReducer(state: PipelineState, action: PipelineAction): P
         followups: snapshot.followups ?? state.followups,
         // A rating given here outlasts a snapshot that doesn't know about it yet.
         ratingPending: state.rating ? false : (snapshot.ratingPending ?? state.ratingPending),
+        // Events the snapshot already includes are not applied again.
+        lastSeq: Math.max(state.lastSeq, snapshot.lastSeq ?? 0),
       };
     }
     case 'event': {
@@ -100,7 +119,7 @@ export function pipelineReducer(state: PipelineState, action: PipelineAction): P
     case 'optimistic':
       return { ...state, studentStatus: action.studentStatus };
     case 'plan':
-      return { ...state, plan: action.plan, studentStatus: 'needs_confirmation' };
+      return { ...state, plan: action.plan, studentStatus: statusForPlan(action.plan) };
     case 'rated':
       return { ...state, ratingPending: false, rating: action.rating };
     case 'followup-handled':

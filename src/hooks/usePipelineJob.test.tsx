@@ -93,6 +93,19 @@ describe('usePipelineJob', () => {
     await waitFor(() => expect(result.current.connection).toBe('live'));
   });
 
+  it("opens the stream after the snapshot's lastSeq instead of replaying the history", async () => {
+    getState.mockResolvedValue(createMockSnapshot({ lastSeq: 12 }));
+    const live = openStream();
+
+    const { result } = renderHook(() => usePipelineJob('job-1'));
+
+    await waitFor(() => expect(result.current.connection).toBe('live'));
+    expect(stream.mock.calls[0][1].lastSeq).toBe(12);
+    // An event the snapshot already covers changes nothing.
+    act(() => live.emit(createMockEvent({ seq: 12, studentStatus: 'cannot_print' })));
+    expect(result.current.studentStatus).not.toBe('cannot_print');
+  });
+
   it('keeps retrying when the first load fails, then recovers', async () => {
     getState.mockRejectedValueOnce(new Error('offline'));
     getState.mockResolvedValue(createMockSnapshot({ studentStatus: 'queued' }));
@@ -126,7 +139,9 @@ describe('usePipelineJob', () => {
   it('re-reads the job when it becomes ready for pickup, and keeps streaming', async () => {
     getState
       .mockResolvedValueOnce(createMockSnapshot({ studentStatus: 'printing', ratingPending: null }))
-      .mockResolvedValue(createMockSnapshot({ studentStatus: 'ready_for_pickup', ratingPending: false }));
+      .mockResolvedValue(
+        createMockSnapshot({ studentStatus: 'ready_for_pickup', ratingPending: false }),
+      );
     const live = openStream();
     openStream();
     const { result } = renderHook(() => usePipelineJob('job-1'));
