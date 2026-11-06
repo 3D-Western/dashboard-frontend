@@ -678,3 +678,33 @@ describe('the live view (P-100)', () => {
     });
   });
 });
+
+describe('pipelineApi X-Requested-With', () => {
+  it('sends it on a pipeline write', async () => {
+    let capturedHeaders: Headers | null = null;
+    mockServer.use(
+      http.post('*' + endpoints.pipeline.report(JOB), ({ request }) => {
+        capturedHeaders = request.headers;
+        return HttpResponse.json({ success: true, data: null });
+      }),
+    );
+
+    await pipelineApi.report(JOB, 'the print looks wrong');
+
+    expect((capturedHeaders as Headers | null)?.get('X-Requested-With')).toBe('XMLHttpRequest');
+  });
+
+  it('does not send it on a read', async () => {
+    let capturedHeaders: Headers | null = null;
+    mockServer.use(
+      http.get('*' + endpoints.pipeline.pendingRatings, ({ request }) => {
+        capturedHeaders = request.headers;
+        return HttpResponse.json({ success: true, data: [] });
+      }),
+    );
+
+    await pipelineApi.pendingRatings();
+
+    expect((capturedHeaders as Headers | null)?.has('X-Requested-With')).toBe(false);
+  });
+});

@@ -330,3 +330,21 @@ describe('sessionApi', () => {
     });
   });
 });
+
+describe('sessionApi login headers', () => {
+  it('sends the browser device id and the write marker with the login', async () => {
+    let capturedHeaders: Headers | null = null;
+    mockServer.use(
+      http.post('*' + endpoints.auth.login, ({ request }) => {
+        capturedHeaders = request.headers;
+        return HttpResponse.json({ success: true, data: { sessionToken: 'token' } });
+      }),
+    );
+
+    await sessionApi.login(251000001, 'password123');
+
+    const headers = capturedHeaders as Headers | null;
+    expect(headers?.get('X-Device-Id')).toMatch(/^[A-Za-z0-9_-]{8,64}$/);
+    expect(headers?.get('X-Requested-With')).toBe('XMLHttpRequest');
+  });
+});

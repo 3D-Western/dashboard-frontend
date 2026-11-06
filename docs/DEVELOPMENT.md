@@ -59,6 +59,9 @@ NEXT_PUBLIC_SERVER_URL=http://localhost:3000
 # Enable mock server for development
 MOCK_ENABLED=true
 
+# Server only: the backend's AUTH_PROXY_SECRET (leave empty locally; see docs/ARCHITECTURE.md)
+AUTH_PROXY_SECRET=
+
 # Editor for error overlays
 REACT_EDITOR=code
 ```

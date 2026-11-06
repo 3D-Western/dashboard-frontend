@@ -209,7 +209,10 @@ export async function flush(): Promise<void> {
           credentials: 'include',
           // keepalive lets the last batch leave while the page is closing
           keepalive: true,
-          headers: { 'Content-Type': 'application/json' },
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest',
+          },
           body: JSON.stringify({ sessionId, events: events.slice(i, i + MAX_BATCH) }),
         });
       } catch {

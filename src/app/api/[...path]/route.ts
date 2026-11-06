@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { setProxyAuthHeaders } from '@/lib/proxy-headers';
 
 const API_URL = process.env.API_URL || 'http://localhost:8000';
 
@@ -51,6 +52,10 @@ async function proxyRequest(request: NextRequest, params: { path: string[] }) {
     }
     headers.set(key, value);
   });
+
+  // The backend's auth limits count the real browser address, which it trusts only with this
+  // secret (server-only env var, never sent to the browser). Overwrites anything the browser sent.
+  setProxyAuthHeaders(headers, request.headers, process.env.AUTH_PROXY_SECRET);
 
   // Never advertise Brotli upstream: the runtime here cannot decompress `br`
   // responses, which makes response bodies come back empty (login returned

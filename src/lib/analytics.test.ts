@@ -306,3 +306,13 @@ describe('labels', () => {
     expect(sanitizeLabel('x'.repeat(100))).toHaveLength(48);
   });
 });
+
+describe('analytics sender', () => {
+  it('marks its POST as a same-origin request for the backend CSRF check', async () => {
+    trackScreen('dashboard.jobs');
+    await vi.advanceTimersByTimeAsync(FLUSH_DELAY_MS);
+
+    const [, init] = fetchMock.mock.calls[0];
+    expect(new Headers(init?.headers).get('X-Requested-With')).toBe('XMLHttpRequest');
+  });
+});

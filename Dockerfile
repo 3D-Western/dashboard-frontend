@@ -2,7 +2,7 @@
 # Build context is this folder:  docker build -t makerspace-frontend frontend
 # The public website (website/) stays on Vercel and has no Dockerfile.
 # Run-time env: API_URL (where the backend is, e.g. http://backend:8000). MOCK_ENABLED must be absent or false.
-# Nothing secret is needed or baked in.
+# AUTH_PROXY_SECRET (server only, the backend's value) is set at run time, never baked in (docs/ARCHITECTURE.md).
 
 FROM node:24.22.0-alpine3.24 AS base
 RUN npm install -g pnpm@11.28.7

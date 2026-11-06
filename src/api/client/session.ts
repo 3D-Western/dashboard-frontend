@@ -12,6 +12,7 @@ import { getBaseUrl } from './utils';
 import { isNoSessionError } from './errors';
 import { transformUserResponse } from './transformers';
 import { User } from '@/types/user';
+import { getDeviceId } from '@/lib/device-id';
 
 export const sessionApi = {
   /**
@@ -48,11 +49,17 @@ export const sessionApi = {
   login: async (studentId: number, password: string, options?: RequestInit) => {
     const serverUrl = getBaseUrl();
 
+    // The device id keeps this browser's failed-login lockout separate from other clients (P-159)
+    const deviceId = getDeviceId();
     return apiRequest<ApiLoginResponse>(`${serverUrl}${endpoints.auth.login}`, {
       method: 'POST',
       body: JSON.stringify({ studentId, password }),
       credentials: 'include',
       ...options,
+      headers: {
+        ...(options?.headers as Record<string, string> | undefined),
+        ...(deviceId ? { 'X-Device-Id': deviceId } : {}),
+      },
     });
   },
   logout: async (options?: RequestInit) => {

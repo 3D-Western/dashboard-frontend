@@ -591,3 +591,35 @@ describe('apiRequest', () => {
     });
   });
 });
+
+describe('apiRequest X-Requested-With', () => {
+  const url = 'http://api.test/requested-with';
+
+  it('sends it on writes, which the backend checks for cookie-authenticated requests', async () => {
+    let capturedHeaders: Headers | null = null;
+    mockServer.use(
+      http.delete(url, ({ request }) => {
+        capturedHeaders = request.headers;
+        return HttpResponse.json({ success: true, data: null });
+      }),
+    );
+
+    await apiRequest(url, { method: 'DELETE' });
+
+    expect((capturedHeaders as Headers | null)?.get('X-Requested-With')).toBe('XMLHttpRequest');
+  });
+
+  it('does not send it on reads', async () => {
+    let capturedHeaders: Headers | null = null;
+    mockServer.use(
+      http.get(url, ({ request }) => {
+        capturedHeaders = request.headers;
+        return HttpResponse.json({ success: true, data: null });
+      }),
+    );
+
+    await apiRequest(url);
+
+    expect((capturedHeaders as Headers | null)?.has('X-Requested-With')).toBe(false);
+  });
+});

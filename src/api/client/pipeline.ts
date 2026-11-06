@@ -143,6 +143,10 @@ async function pipelineRequest<T>(
       credentials: 'include',
       headers: {
         ...(init.body ? { 'Content-Type': 'application/json' } : {}),
+        // Every write needs it (the backend's CSRF header check); reads do not
+        ...((init.method ?? 'GET').toUpperCase() !== 'GET'
+          ? { 'X-Requested-With': 'XMLHttpRequest' }
+          : {}),
         ...(await serverCookieHeader()),
         ...init.headers,
       },

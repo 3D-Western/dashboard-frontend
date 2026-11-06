@@ -757,6 +757,9 @@ NEXT_PUBLIC_SERVER_URL=http://localhost:3000
 # Enable MSW mocking
 MOCK_ENABLED=false
 
+# Server only: the backend's AUTH_PROXY_SECRET (empty = not sent)
+AUTH_PROXY_SECRET=
+
 # Editor for error overlays
 REACT_EDITOR=code
 ```
@@ -770,6 +773,27 @@ const apiUrl = process.env.API_URL;
 // Client-side (NEXT_PUBLIC_ only)
 const serverUrl = process.env.NEXT_PUBLIC_SERVER_URL;
 ```
+
+### AUTH_PROXY_SECRET and the auth abuse protection (P-159)
+
+The backend rate-limits and locks out the unauthenticated auth routes per real client address. It believes the address only
+from a request through this frontend's proxy (`src/app/api/[...path]/route.ts`) that carries the same secret. The proxy then:
+
+- removes any `X-Proxy-Secret` / `X-Client-IP` the browser sent, and sets `X-Proxy-Secret` from `AUTH_PROXY_SECRET` (only when it is set)
+  and `X-Client-IP` from the first entry of `x-vercel-forwarded-for`, else `x-real-ip`, else `x-forwarded-for` (`src/lib/proxy-headers.ts`);
+- sends `X-Requested-With: XMLHttpRequest` on every write (`apiRequest`, `pipelineRequest`, the analytics sender), which the backend's CSRF
+  check requires for cookie-authenticated writes. Presigned storage uploads go straight to storage and do not carry it.
+- sends `X-Device-Id` on login: a random per-browser id in `localStorage` (`src/lib/device-id.ts`), so people sharing one campus address
+  with the same browser do not lock each other out. Without storage the header is left out.
+
+**Rollout order matters:**
+
+1. Deploy this frontend with `AUTH_PROXY_SECRET` set on the server (Vercel: a server-only variable). The headers are harmless to an older backend.
+2. Set the same value as the backend's `AUTH_PROXY_SECRET`. Until then the backend logs a warning and counts the socket address.
+3. Deploy the backend (`docs/deploy-print-pipeline.md` in the backend repo, "Auth abuse protection").
+
+If a screen answers 403 mentioning `X-Requested-With`, the backend's `CSRF_HEADER_REQUIRED=false` restores the old behaviour while it is fixed.
+Never put the secret in the repo, `NEXT_PUBLIC_*` variables or the browser.
 
 ## Best Practices
 

@@ -48,6 +48,12 @@ export async function apiRequest<T>(
     headersObj.set('Content-Type', 'application/json');
   }
 
+  // The backend refuses a cookie-authenticated write without this header (CSRF_HEADER_REQUIRED).
+  // Presigned storage uploads do not go through here and must not carry it.
+  if ((options.method ?? 'GET').toUpperCase() !== 'GET') {
+    headersObj.set('X-Requested-With', 'XMLHttpRequest');
+  }
+
   // For server-side requests, manually forward cookies from Next.js headers
   // This is necessary because credentials: 'include' doesn't work for cross-origin
   // server-side requests in Next.js

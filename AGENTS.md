@@ -333,6 +333,7 @@ NEXT_BACKEND_URL=         # Backend API base URL
 MOCK_ENABLED=false        # Enable MSW mocking
 API_URL=http://localhost:8000
 NEXT_PUBLIC_SERVER_URL=http://localhost:3000
+AUTH_PROXY_SECRET=        # Server only; equals the backend's AUTH_PROXY_SECRET (see docs/ARCHITECTURE.md)
 REACT_EDITOR=code         # Preferred editor for error overlays
 ```
 

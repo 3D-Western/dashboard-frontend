@@ -741,3 +741,20 @@ describe('jobApi', () => {
     });
   });
 });
+
+describe('uploadJobFile X-Requested-With', () => {
+  it('does not send it to the storage bucket (only to this API)', async () => {
+    const uploadUrl = 'https://storage.example.com/presigned-url';
+    let capturedHeaders: Headers | null = null;
+    mockServer.use(
+      http.put(uploadUrl, ({ request }) => {
+        capturedHeaders = request.headers;
+        return new HttpResponse(null, { status: 200 });
+      }),
+    );
+
+    await jobApi.uploadJobFile(uploadUrl, new File(['stl'], 'part.stl', { type: 'model/stl' }));
+
+    expect((capturedHeaders as Headers | null)?.has('X-Requested-With')).toBe(false);
+  });
+});

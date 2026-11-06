@@ -2,7 +2,10 @@ import { describe, it, expect, vi, afterEach } from 'vitest';
 import { NextRequest } from 'next/server';
 import { GET, POST } from './route';
 
-afterEach(() => vi.unstubAllGlobals());
+afterEach(() => {
+  vi.unstubAllGlobals();
+  delete process.env.AUTH_PROXY_SECRET;
+});
 
 const ctx = (path: string[]) => ({ params: Promise.resolve({ path }) });
 
@@ -75,5 +78,34 @@ describe('API proxy', () => {
 
     expect(response.status).toBe(204);
     expect(await response.text()).toBe('');
+  });
+
+  it('sends the server secret and the real client address, and drops what the browser sent', async () => {
+    process.env.AUTH_PROXY_SECRET = 'server-secret';
+    const fetchMock = vi.fn(
+      async () =>
+        new Response(JSON.stringify({ success: true, data: null }), {
+          status: 200,
+          headers: { 'content-type': 'application/json' },
+        }),
+    );
+    vi.stubGlobal('fetch', fetchMock);
+
+    const request = new NextRequest('http://localhost:3000/api/v1/auth/login', {
+      method: 'POST',
+      body: '{}',
+      headers: {
+        'content-type': 'application/json',
+        'x-proxy-secret': 'forged',
+        'x-client-ip': '1.2.3.4',
+        'x-vercel-forwarded-for': '203.0.113.9, 10.0.0.1',
+      },
+    });
+    await POST(request, { params: Promise.resolve({ path: ['v1', 'auth', 'login'] }) });
+
+    const [, init] = fetchMock.mock.calls[0] as unknown as [string, RequestInit];
+    const sent = new Headers(init.headers);
+    expect(sent.get('x-proxy-secret')).toBe('server-secret');
+    expect(sent.get('x-client-ip')).toBe('203.0.113.9');
   });
 });
