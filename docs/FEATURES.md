@@ -144,6 +144,23 @@ Upload first: the file goes up in the background the moment it is chosen (`creat
 
 ---
 
+## Admin — Print farm desk
+
+**Route:** `/admin/review/farm`  
+**Files:** `src/app/(protected)/admin/review/farm/page.tsx`, `src/components/PipelineReview/FarmDesk.tsx`, `FarmStatusCards.tsx`; client `src/api/client/pipeline-farm.ts`, logic `src/lib/pipeline-farm.ts`  
+**Permission:** `jobs:update_status` (any scope), staff only
+
+Refreshes itself every 15 seconds. From the top:
+
+- **Farm status**, two read-only cards, each read on its own (one that cannot be read says why and leaves the rest of the desk alone):
+  - **Room temperature** (`GET .../farm/room-temperature`): the watch's state, the last reading and how old it is, the allowed band, the jobs held back while it holds, and the open supervisor task. **No reading and a stale reading are shown as a hold ("No reading: holding new prints"), never as fine**; a watch the pipeline has stopped asking is "Not being checked". "Watch is off" while the pipeline's `farm.room_temp.enabled` is off (the default).
+  - **Farm agent** (`GET .../farm/agent`): last contact and heartbeat, version, whether AutoFarm3D is reachable from the agent, the live switches (pipeline live, the agent's own, its kill switch, live view, empty-bed check, room-temperature watch). An agent **silent for more than five minutes**, never seen, with a kill switch on, or with the pipeline live while the agent is not, is shown as a problem with the pipeline's own sentence.
+- **Held jobs** (print again, or close and tell the student), **Beds to check** (the empty-bed check's `clear_bed` tasks, "Bed is clear", the reference picture), **Quarantined printers** (put back live with the cause), and a box to look at any printer's empty-bed reference.
+
+The "Watch it print" viewer (`src/components/Pipeline/WatchItPrint.tsx`) is on the student's job page and on the staff review page of a job; it shows only when the backend says the job is printing and watching is allowed (students: off until a person decides, backend `PIPELINE_LIVE_VIEW_STUDENTS`; staff always).
+
+---
+
 ## Admin — Invitation Management
 
 **Route:** `/admin/invitations`  
