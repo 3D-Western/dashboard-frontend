@@ -14,7 +14,13 @@ describe('/dashboard/jobs/print/new', () => {
     vi.unstubAllEnvs();
   });
 
+  it('goes back to My Jobs by default (job creation is off at launch)', () => {
+    expect(() => NewPrintJobLayout({ children: null })).toThrow('REDIRECT');
+    expect(redirect).toHaveBeenCalledWith('/dashboard/jobs');
+  });
+
   it('opens the print flow while job creation is on', () => {
+    vi.stubEnv('NEXT_PUBLIC_JOB_CREATION_ENABLED', 'true');
     NewPrintJobLayout({ children: null });
 
     expect(redirect).not.toHaveBeenCalled();

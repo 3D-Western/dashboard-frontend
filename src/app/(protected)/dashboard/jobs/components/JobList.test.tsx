@@ -22,13 +22,24 @@ function renderList(jobs: JobListEntry[], hasFilters = false) {
 
 describe('JobList', () => {
   it('invites the user to create their first job when they have none', () => {
+    vi.stubEnv('NEXT_PUBLIC_JOB_CREATION_ENABLED', 'true');
+    try {
+      renderList([]);
+
+      expect(screen.getByText(/don't have any jobs yet/i)).toBeInTheDocument();
+      expect(screen.getByRole('link', { name: /create new job/i })).toHaveAttribute(
+        'href',
+        '/dashboard/jobs/print/new',
+      );
+    } finally {
+      vi.unstubAllEnvs();
+    }
+  });
+
+  it('does not invite the user to create a job by default (off at launch)', () => {
     renderList([]);
 
-    expect(screen.getByText(/don't have any jobs yet/i)).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: /create new job/i })).toHaveAttribute(
-      'href',
-      '/dashboard/jobs/print/new',
-    );
+    expect(screen.queryByRole('link', { name: /create new job/i })).not.toBeInTheDocument();
   });
 
   it('offers to clear filters when nothing matches', () => {

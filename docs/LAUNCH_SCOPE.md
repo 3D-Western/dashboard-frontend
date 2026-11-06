@@ -83,8 +83,9 @@ is removed, re-enable and re-verify this spec.
 Job creation is back on the `lane/pipeline-integration` branch (the student print flow: upload first,
 live "Preparing your print", review with an explicit yes). It sits behind one switch,
 `isJobCreationEnabled()` in `src/lib/feature-flags.ts`, which reads `NEXT_PUBLIC_JOB_CREATION_ENABLED`
-(on unless set to `false`; like every `NEXT_PUBLIC_` variable it is fixed at build time). Set it to
-`false` to hide job creation again, as the launch did. It controls:
+(off unless set to `true`, so a build without the variable keeps job creation hidden, as the launch
+did; like every `NEXT_PUBLIC_` variable it is fixed at build time). Set it to `true` to turn the
+print flow on. It controls:
 
 | Where                                                        | What it hides when off                                 |
 | ------------------------------------------------------------ | ------------------------------------------------------ |

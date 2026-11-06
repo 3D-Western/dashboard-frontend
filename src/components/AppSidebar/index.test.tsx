@@ -47,7 +47,14 @@ describe('AppSidebar', () => {
       expect(screen.getByRole('link', { name: /dashboard/i })).toBeInTheDocument();
     });
 
+    it('hides the My Jobs link by default (job creation is off at launch)', () => {
+      renderSidebar(createMockUser());
+
+      expect(screen.queryByRole('link', { name: /my jobs/i })).not.toBeInTheDocument();
+    });
+
     it('shows the My Jobs link while job creation is on', () => {
+      vi.stubEnv('NEXT_PUBLIC_JOB_CREATION_ENABLED', 'true');
       const user = createMockUser();
       renderSidebar(user);
 
@@ -57,7 +64,6 @@ describe('AppSidebar', () => {
       );
     });
 
-    // The launch-scope switch (src/lib/feature-flags.ts, docs/LAUNCH_SCOPE.md) hides it again.
     it('hides the My Jobs link when NEXT_PUBLIC_JOB_CREATION_ENABLED is false', () => {
       vi.stubEnv('NEXT_PUBLIC_JOB_CREATION_ENABLED', 'false');
       try {

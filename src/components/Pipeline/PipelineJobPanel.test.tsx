@@ -54,6 +54,7 @@ beforeEach(() => {
   api.confirm.mockResolvedValue(undefined);
   api.choose.mockResolvedValue(undefined);
   vi.mocked(trackPrintSubmitted).mockClear();
+  vi.unstubAllEnvs();
 });
 
 describe('Preparing your print', () => {
@@ -310,6 +311,7 @@ describe('Review', () => {
 
 describe("Can't print", () => {
   it('says why and what to change', async () => {
+    vi.stubEnv('NEXT_PUBLIC_JOB_CREATION_ENABLED', 'true');
     api.getState.mockResolvedValue(
       createMockSnapshot({
         studentStatus: 'cannot_print',
