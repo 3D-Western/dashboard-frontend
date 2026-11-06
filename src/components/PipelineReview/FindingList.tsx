@@ -51,7 +51,7 @@ export function FindingCard({ finding }: { finding: Finding }) {
       </div>
       <p className="text-sm">{finding.message}</p>
 
-      <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 text-sm">
+      <dl className="grid grid-cols-[auto_minmax(0,1fr)] gap-x-4 gap-y-1 text-sm [overflow-wrap:anywhere]">
         {hasMeasure && (
           <>
             <dt className="text-muted-foreground">Measured</dt>
@@ -89,7 +89,7 @@ export function FindingCard({ finding }: { finding: Finding }) {
         {data.map(([key, value]) => (
           <div key={key} className="contents">
             <dt className="text-muted-foreground">{key.replaceAll('_', ' ')}</dt>
-            <dd className="break-words">{formatEvidence(value)}</dd>
+            <dd>{formatEvidence(value)}</dd>
           </div>
         ))}
       </dl>

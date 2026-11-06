@@ -39,11 +39,11 @@ function Facts({ rows }: { rows: [string, React.ReactNode][] }) {
   const shown = rows.filter(([, value]) => value != null && value !== '');
   if (shown.length === 0) return null;
   return (
-    <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 text-sm">
+    <dl className="grid grid-cols-[auto_minmax(0,1fr)] gap-x-4 gap-y-1 text-sm [overflow-wrap:anywhere]">
       {shown.map(([label, value]) => (
         <div key={label} className="contents">
           <dt className="text-muted-foreground">{label}</dt>
-          <dd className="break-words">{value}</dd>
+          <dd>{value}</dd>
         </div>
       ))}
     </dl>
