@@ -20,6 +20,10 @@ COPY . .
 # next.config.ts switches to standalone output on this variable. GIT_SHA makes the service worker change per deploy.
 ARG GIT_SHA=
 ENV NEXT_OUTPUT=standalone NEXT_TELEMETRY_DISABLED=1 GITHUB_SHA=${GIT_SHA}
+# Inlined into the client bundle at build time (src/lib/feature-flags.ts). Off unless the build passes
+# --build-arg NEXT_PUBLIC_JOB_CREATION_ENABLED=true (launch default, docs/LAUNCH_SCOPE.md).
+ARG NEXT_PUBLIC_JOB_CREATION_ENABLED=false
+ENV NEXT_PUBLIC_JOB_CREATION_ENABLED=${NEXT_PUBLIC_JOB_CREATION_ENABLED}
 RUN pnpm run build
 
 # ---- run ----
