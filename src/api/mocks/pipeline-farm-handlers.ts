@@ -5,9 +5,11 @@ import type {
   ClearBedBlockRequest,
   ClearQuarantineRequest,
   FarmActionResult,
+  FarmAgent,
   HeldFarmJob,
   QuarantinedPrinter,
   ResolveHeldRequest,
+  RoomTemperature,
   SetBedReferenceRequest,
   WaiveRatingRequest,
 } from '@/types/pipeline-farm';
@@ -34,8 +36,75 @@ const bedBlocks = new Map<string, BedBlock>();
 /** Printers with a saved empty-bed reference (the mock keeps no picture: it draws one). */
 const references = new Set<string>();
 
+/** The room-temperature watch and the farm agent as the pipeline would report them (the mock keeps them as plain values). */
+let mockRoom: RoomTemperature;
+let mockAgent: FarmAgent;
+
+const switches = {
+  farmLiveEnabled: false,
+  agentLiveEnabled: true,
+  kill: 'off',
+  liveViewEnabled: false,
+  emptyBedEnabled: false,
+  roomTempEnabled: true,
+} as const;
+
+/** Replace what the mock reports for the room-temperature watch or the farm agent (for tests and demos). */
+export function setMockFarmStatus(status: {
+  room?: Partial<RoomTemperature>;
+  agent?: Partial<FarmAgent>;
+}) {
+  if (status.room) mockRoom = { ...mockRoom, ...status.room };
+  if (status.agent) mockAgent = { ...mockAgent, ...status.agent };
+}
+
 /** Fresh seed data (also used by tests that want a known farm). */
 export function resetMockFarm() {
+  mockRoom = {
+    enabled: true,
+    loopRunning: true,
+    code: 'in_band',
+    holding: false,
+    summary: 'The room is 22.4 C, inside 16-27 C: new prints can start.',
+    celsius: 22.4,
+    readingAt: hoursAgo(0.01),
+    readingAgeS: 36,
+    source: 'idle printers',
+    bandMinC: 16,
+    bandMaxC: 27,
+    hysteresisC: 1,
+    staleAfterS: 900,
+    since: hoursAgo(5),
+    checkedAt: hoursAgo(0.001),
+    checkAgeS: 4,
+    checkStalled: false,
+    heldJobCount: 0,
+    heldJobs: [],
+    task: null,
+  };
+  mockAgent = {
+    configured: true,
+    transport: 'remote',
+    agentId: 'farm-pc',
+    state: 'online',
+    problem: false,
+    problems: [],
+    silentAlertS: 300,
+    lastContactAt: hoursAgo(0.001),
+    silentForS: 3,
+    lastPollAt: hoursAgo(0.001),
+    lastHeartbeatAt: hoursAgo(0.005),
+    heartbeatAgeS: 18,
+    version: '1.0.0',
+    busy: false,
+    uptimeS: 86_400,
+    relayFailures: 0,
+    commandsRun: 412,
+    farmOk: true,
+    farmProblems: [],
+    openCommands: 0,
+    switches: { ...switches },
+  };
   heldJobs.clear();
   quarantined.clear();
   bedBlocks.clear();
@@ -114,6 +183,18 @@ export const pipelineFarmHandlers = [
     const { response } = staff(cookies);
     if (response) return response;
     return HttpResponse.json(generateSuccessResponse([...heldJobs.values()]));
+  }),
+
+  http.get(`${apiUrl}${endpoints.pipelineFarm.roomTemperature}`, ({ cookies }) => {
+    const { response } = staff(cookies);
+    if (response) return response;
+    return HttpResponse.json(generateSuccessResponse(mockRoom));
+  }),
+
+  http.get(`${apiUrl}${endpoints.pipelineFarm.agent}`, ({ cookies }) => {
+    const { response } = staff(cookies);
+    if (response) return response;
+    return HttpResponse.json(generateSuccessResponse(mockAgent));
   }),
 
   http.get(`${apiUrl}${endpoints.pipelineFarm.quarantinedPrinters}`, ({ cookies }) => {

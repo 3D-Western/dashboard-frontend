@@ -85,6 +85,9 @@ export const endpoints = {
       `/api/v1/admin/pipeline/farm/printers/${encodeURIComponent(printerId)}/clear-bed-block`,
     bedReference: (printerId: string) =>
       `/api/v1/admin/pipeline/farm/printers/${encodeURIComponent(printerId)}/bed-reference`,
+    // Read-only status cards of the staff farm page: the room-temperature watch and the farm agent
+    roomTemperature: '/api/v1/admin/pipeline/farm/room-temperature',
+    agent: '/api/v1/admin/pipeline/farm/agent',
   },
   files: {
     list: '/api/v1/files',

@@ -1,6 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import {
   BED_NOTE_MAX,
+  agentHeadline,
+  formatBand,
+  formatCelsius,
+  formatSpan,
+  roomTempHeadline,
   bedBlocksOldestFirst,
   buildClearBedRequest,
   buildReferenceRequest,
@@ -14,6 +19,7 @@ import {
   validateReason,
   buildWaiveRequest,
 } from './pipeline-farm';
+import type { FarmAgent, RoomTemperature } from '@/types/pipeline-farm';
 
 describe('validateReason', () => {
   it('requires a reason of 3 to 1000 characters once trimmed', () => {
@@ -115,5 +121,136 @@ describe('the empty-bed check', () => {
         block('a', '2026-11-06T09:00:00Z'),
       ]).map((b) => b.printerId),
     ).toEqual(['a', 'b']);
+  });
+});
+
+const room = (patch: Partial<RoomTemperature> = {}): RoomTemperature => ({
+  enabled: true,
+  loopRunning: true,
+  code: 'in_band',
+  holding: false,
+  summary: 'The room is 22.4 C.',
+  celsius: 22.4,
+  bandMinC: 16,
+  bandMaxC: 27,
+  checkStalled: false,
+  heldJobCount: 0,
+  heldJobs: [],
+  ...patch,
+});
+
+const agent = (patch: Partial<FarmAgent> = {}): FarmAgent => ({
+  configured: true,
+  transport: 'remote',
+  state: 'online',
+  problem: false,
+  problems: [],
+  farmProblems: [],
+  openCommands: 0,
+  switches: {
+    farmLiveEnabled: false,
+    liveViewEnabled: false,
+    emptyBedEnabled: false,
+    roomTempEnabled: true,
+  },
+  ...patch,
+});
+
+describe('formatting a reading and a span', () => {
+  it('shows a reading to one decimal and says when there is none', () => {
+    expect(formatCelsius(22.44)).toBe('22.4 °C');
+    expect(formatCelsius(null)).toBe('no reading');
+    expect(formatCelsius(undefined)).toBe('no reading');
+    expect(formatCelsius(Number.NaN)).toBe('no reading');
+  });
+
+  it('writes a span in the largest sensible unit', () => {
+    expect(formatSpan(12)).toBe('12 s');
+    expect(formatSpan(299)).toBe('5 min');
+    expect(formatSpan(360)).toBe('6 min');
+    expect(formatSpan(3600)).toBe('1 h');
+    expect(formatSpan(7800)).toBe('2 h 10 min');
+    expect(formatSpan(3 * 86400)).toBe('3 days');
+    expect(formatSpan(86400)).toBe('1 day');
+    expect(formatSpan(null)).toBe('unknown');
+    expect(formatSpan(-1)).toBe('unknown');
+  });
+
+  it('writes the band, or nothing when the pipeline sent none', () => {
+    expect(formatBand({ bandMinC: 16, bandMaxC: 27 })).toBe('16-27 °C');
+    expect(formatBand({})).toBe('');
+  });
+});
+
+describe('roomTempHeadline', () => {
+  it('is fine only for a fresh reading in range that does not hold', () => {
+    expect(roomTempHeadline(room())).toEqual({ tone: 'ok', label: 'In range' });
+  });
+
+  it('reads no reading and a stale reading as a hold, never as fine', () => {
+    expect(roomTempHeadline(room({ code: 'missing', holding: true, celsius: null }))).toEqual({
+      tone: 'hold',
+      label: 'No reading: holding new prints',
+    });
+    expect(roomTempHeadline(room({ code: 'stale', holding: true }))).toEqual({
+      tone: 'hold',
+      label: 'Reading out of date: holding new prints',
+    });
+    expect(roomTempHeadline(room({ code: 'unchecked', holding: true, celsius: null })).tone).toBe(
+      'hold',
+    );
+  });
+
+  it('is a problem, not fine, when the settings let prints go on without a reading', () => {
+    expect(roomTempHeadline(room({ code: 'missing', holding: false, celsius: null }))).toEqual({
+      tone: 'problem',
+      label: 'No reading: printing anyway',
+    });
+  });
+
+  it('says too hot and too cold', () => {
+    expect(roomTempHeadline(room({ code: 'too_hot', holding: true })).label).toBe(
+      'Too hot: holding new prints',
+    );
+    expect(roomTempHeadline(room({ code: 'too_cold', holding: true })).label).toBe(
+      'Too cold: holding new prints',
+    );
+  });
+
+  it('is a problem when nobody has checked for a long time, whatever it last said', () => {
+    expect(roomTempHeadline(room({ checkStalled: true }))).toEqual({
+      tone: 'problem',
+      label: 'Not being checked',
+    });
+  });
+
+  it('is off when the watch is off, and reads a code it does not know as a hold', () => {
+    expect(roomTempHeadline(room({ enabled: false, code: null }))).toEqual({
+      tone: 'off',
+      label: 'Watch is off',
+    });
+    expect(roomTempHeadline(room({ code: 'humid', holding: true })).tone).toBe('hold');
+  });
+});
+
+describe('agentHeadline', () => {
+  it('is ok for a healthy agent and a problem for one that reports trouble', () => {
+    expect(agentHeadline(agent())).toEqual({ tone: 'ok', label: 'Online' });
+    expect(agentHeadline(agent({ problem: true, problems: ['kill switch'] }))).toEqual({
+      tone: 'problem',
+      label: 'Online, with problems',
+    });
+  });
+
+  it('shows silence as a problem with how long', () => {
+    expect(agentHeadline(agent({ state: 'silent', problem: true, silentForS: 360 }))).toEqual({
+      tone: 'problem',
+      label: 'Silent for 6 min',
+    });
+  });
+
+  it('shows an agent that never came as a problem, and a pipeline without one as off', () => {
+    expect(agentHeadline(agent({ state: 'never_connected', problem: true })).tone).toBe('problem');
+    expect(agentHeadline(agent({ state: 'not_used', configured: false })).tone).toBe('off');
   });
 });

@@ -40,8 +40,15 @@ import {
 import { shortId } from '@/lib/pipeline-review';
 import { Routes } from '@/lib/routes';
 import { formatAgo } from '@/lib/signoff-format';
-import type { BedBlock, HeldFarmJob, QuarantinedPrinter } from '@/types/pipeline-farm';
+import type {
+  BedBlock,
+  FarmAgent,
+  HeldFarmJob,
+  QuarantinedPrinter,
+  RoomTemperature,
+} from '@/types/pipeline-farm';
 import { BedReferenceTools } from './BedReferenceTools';
+import { FarmStatusCards, type Section } from './FarmStatusCards';
 import { ReasonForm } from './ReasonForm';
 import { reviewErrorMessage } from './ReviewBits';
 
@@ -53,7 +60,19 @@ interface FarmOverview {
   quarantinedPrinters: QuarantinedPrinter[];
   /** Printers the empty-bed check holds back (P-106): the `clear_bed` tasks. */
   bedBlocks: BedBlock[];
+  /** The two status cards: each read on its own, so one that cannot be read never hides the lists. */
+  room: Section<RoomTemperature>;
+  agent: Section<FarmAgent>;
 }
+
+/** A read that failed becomes a message for its card instead of an error for the whole desk. */
+const settle = async <T,>(read: () => Promise<T>, fallback: string): Promise<Section<T>> => {
+  try {
+    return { ok: true, value: await read() };
+  } catch (err) {
+    return { ok: false, message: reviewErrorMessage(err, fallback) };
+  }
+};
 
 /** What the person is about to do, waiting for a reason and a yes. */
 type Pending =
@@ -360,13 +379,15 @@ export function FarmDesk({ now, refreshMs = FARM_REFRESH_MS }: { now?: Date; ref
   const load = useCallback(async () => {
     setRefreshing(true);
     try {
-      const [heldJobs, quarantinedPrinters, bedBlocks] = await Promise.all([
+      const [heldJobs, quarantinedPrinters, bedBlocks, room, agent] = await Promise.all([
         pipelineFarmApi.heldJobs(),
         pipelineFarmApi.quarantinedPrinters(),
         // A backend or pipeline without the empty-bed check must not take the rest of the desk down.
         pipelineFarmApi.bedBlocks().catch((): BedBlock[] => []),
+        settle(() => pipelineFarmApi.roomTemperature(), "We couldn't read the room temperature."),
+        settle(() => pipelineFarmApi.farmAgent(), "We couldn't read the farm agent's status."),
       ]);
-      setOverview({ heldJobs, quarantinedPrinters, bedBlocks });
+      setOverview({ heldJobs, quarantinedPrinters, bedBlocks, room, agent });
       setError(null);
       setLoadedAt(new Date());
     } catch (err) {
@@ -501,6 +522,8 @@ export function FarmDesk({ now, refreshMs = FARM_REFRESH_MS }: { now?: Date; ref
 
       {overview && (
         <>
+          <FarmStatusCards room={overview.room} agent={overview.agent} now={clock} />
+
           <section aria-labelledby="held-heading" className="space-y-3">
             <h2 id="held-heading" className="text-lg font-semibold">
               Held jobs

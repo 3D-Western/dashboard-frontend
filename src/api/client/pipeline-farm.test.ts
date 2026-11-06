@@ -29,7 +29,40 @@ describe('pipelineFarmApi', () => {
     await expect(pipelineFarmApi.quarantinedPrinters()).resolves.toEqual(printers);
   });
 
+  it('reads the room temperature and the farm agent out of the ApiResponse wrapper', async () => {
+    const room = { enabled: true, loopRunning: true, code: 'missing', holding: true, summary: 'x' };
+    const agent = { configured: true, state: 'silent', problem: true, problems: ['quiet'] };
+    mockServer.use(
+      http.get(endpoints.pipelineFarm.roomTemperature, () =>
+        HttpResponse.json({ success: true, data: room }),
+      ),
+      http.get(endpoints.pipelineFarm.agent, () =>
+        HttpResponse.json({ success: true, data: agent }),
+      ),
+    );
+
+    await expect(pipelineFarmApi.roomTemperature()).resolves.toEqual(room);
+    await expect(pipelineFarmApi.farmAgent()).resolves.toEqual(agent);
+  });
+
+  it('throws the backend’s words when the pipeline does not offer the status routes', async () => {
+    mockServer.use(
+      http.get(endpoints.pipelineFarm.roomTemperature, () =>
+        HttpResponse.json(
+          { success: false, error: { code: 'PIPELINE_UNAVAILABLE', message: 'Not offered yet' } },
+          { status: 503 },
+        ),
+      ),
+    );
+
+    await expect(pipelineFarmApi.roomTemperature()).rejects.toThrow('Not offered yet');
+  });
+
   it('uses the backend paths under /api/v1/admin/pipeline/farm', () => {
+    expect(endpoints.pipelineFarm.roomTemperature).toBe(
+      '/api/v1/admin/pipeline/farm/room-temperature',
+    );
+    expect(endpoints.pipelineFarm.agent).toBe('/api/v1/admin/pipeline/farm/agent');
     expect(endpoints.pipelineFarm.heldJobs).toBe('/api/v1/admin/pipeline/farm/held-jobs');
     expect(endpoints.pipelineFarm.resolveHeld('j1')).toBe(
       '/api/v1/admin/pipeline/farm/held-jobs/j1/resolve',

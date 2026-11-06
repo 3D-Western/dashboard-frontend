@@ -81,6 +81,112 @@ export interface SetBedReferenceRequest {
   note?: string;
 }
 
+/**
+ * The room-temperature watch's states. A value a later pipeline adds still reads (as plain text),
+ * so the card never breaks on it.
+ */
+export type RoomTempCode =
+  | 'in_band'
+  | 'too_cold'
+  | 'too_hot'
+  | 'stale'
+  | 'missing'
+  | 'unchecked'
+  | (string & {});
+
+/** A job waiting for a printer while the room-temperature watch holds. */
+export interface RoomHeldJob {
+  jobId: string;
+  jobName?: string | null;
+  studentName?: string | null;
+  staffStatus?: StaffStatus | null;
+}
+
+/** The open supervisor task of the room-temperature watch (`room_temp`). */
+export interface RoomTempTask {
+  key: string;
+  /** 1 urgent, 2 soon, 3 routine. */
+  priority: number;
+  title: string;
+  detail: string;
+  since?: string | null;
+}
+
+/**
+ * GET .../farm/room-temperature: what the pipeline's room-temperature watch last decided. "No
+ * reading" and "stale" are holds, never fine: `holding` says whether new prints are held back.
+ * When `enabled` is false nothing else is a reading (the watch is off; it is off by default).
+ */
+export interface RoomTemperature {
+  enabled: boolean;
+  loopRunning: boolean;
+  code?: RoomTempCode | null;
+  holding: boolean;
+  /** The pipeline's one-sentence status, for staff. */
+  summary: string;
+  reason?: string | null;
+  celsius?: number | null;
+  readingAt?: string | null;
+  readingAgeS?: number | null;
+  source?: string | null;
+  bandMinC?: number | null;
+  bandMaxC?: number | null;
+  hysteresisC?: number | null;
+  staleAfterS?: number | null;
+  since?: string | null;
+  checkedAt?: string | null;
+  checkAgeS?: number | null;
+  /** The pipeline's farm loop has not asked the watch for a long time: this answer is out of date. */
+  checkStalled: boolean;
+  heldJobCount: number;
+  heldJobs: RoomHeldJob[];
+  task?: RoomTempTask | null;
+}
+
+/** The live switches. The agent's two are absent until it has reported. */
+export interface FarmSwitches {
+  /** `farm.live_enabled`: the pipeline may act on the real farm. */
+  farmLiveEnabled: boolean;
+  /** The farm agent's own switch. */
+  agentLiveEnabled?: boolean | null;
+  /** The agent's kill-switch file. */
+  kill?: 'off' | 'writes' | 'all' | null;
+  liveViewEnabled: boolean;
+  emptyBedEnabled: boolean;
+  roomTempEnabled: boolean;
+}
+
+/**
+ * GET .../farm/agent: the farm agent on the server PC as the pipeline sees it. `state` is
+ * `not_used` (the pipeline talks to the farm directly), `never_connected`, `online` or `silent`;
+ * `problem` is true for anything a person should look at (`problems` says what), including an
+ * agent silent for more than `silentAlertS` (five minutes).
+ */
+export interface FarmAgent {
+  configured: boolean;
+  transport: string;
+  agentId?: string | null;
+  state: 'not_used' | 'never_connected' | 'online' | 'silent' | (string & {});
+  problem: boolean;
+  problems: string[];
+  silentAlertS?: number | null;
+  lastContactAt?: string | null;
+  silentForS?: number | null;
+  lastPollAt?: string | null;
+  lastHeartbeatAt?: string | null;
+  heartbeatAgeS?: number | null;
+  version?: string | null;
+  busy?: boolean | null;
+  uptimeS?: number | null;
+  relayFailures?: number | null;
+  commandsRun?: number | null;
+  farmOk?: boolean | null;
+  farmProblems: string[];
+  openCommands: number;
+  oldestOpenCommandAgeS?: number | null;
+  switches: FarmSwitches;
+}
+
 /** What a farm action did. */
 export interface FarmActionResult {
   ok: boolean;

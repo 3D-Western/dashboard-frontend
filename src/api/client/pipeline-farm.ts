@@ -3,9 +3,11 @@ import type {
   ClearBedBlockRequest,
   ClearQuarantineRequest,
   FarmActionResult,
+  FarmAgent,
   HeldFarmJob,
   QuarantinedPrinter,
   ResolveHeldRequest,
+  RoomTemperature,
   SetBedReferenceRequest,
   WaiveRatingRequest,
 } from '@/types/pipeline-farm';
@@ -59,6 +61,21 @@ export const pipelineFarmApi = {
    */
   clearQuarantine: (printerId: string, body: ClearQuarantineRequest) =>
     post<FarmActionResult>(endpoints.pipelineFarm.clearQuarantine(printerId), body),
+
+  /**
+   * What the room-temperature watch last decided, with its open task and the jobs it holds back.
+   * No reading and a stale reading are holds. 503 when the pipeline cannot be reached or is older
+   * than the route.
+   */
+  roomTemperature: (options?: RequestInit) =>
+    request<RoomTemperature>(endpoints.pipelineFarm.roomTemperature, { method: 'GET', ...options }),
+
+  /**
+   * The farm agent on the server PC: last poll and heartbeat, silent for more than five minutes
+   * (a problem), the live switches. 503 when the pipeline cannot be reached or is older than the route.
+   */
+  farmAgent: (options?: RequestInit) =>
+    request<FarmAgent>(endpoints.pipelineFarm.agent, { method: 'GET', ...options }),
 
   /** Printers the empty-bed check holds back (P-106), oldest first; empty while the check is off. */
   bedBlocks: (options?: RequestInit) =>

@@ -7,9 +7,12 @@ import type {
   BedBlock,
   ClearBedBlockRequest,
   ClearQuarantineRequest,
+  FarmAgent,
+  FarmSwitches,
   HeldFarmJob,
   QuarantinedPrinter,
   ResolveHeldRequest,
+  RoomTemperature,
   SetBedReferenceRequest,
   WaiveRatingRequest,
 } from '@/types/pipeline-farm';
@@ -95,3 +98,91 @@ export const buildReferenceRequest = (note: string): SetBedReferenceRequest => (
   confirmed: true,
   ...(note.trim() ? { note: note.trim() } : {}),
 });
+
+// -- Room temperature and the farm agent (read-only status cards) -------------------------------
+
+/** How a status card is drawn: `ok` fine, `hold` the farm is holding new prints, `problem` look now, `off` not in use. */
+export type StatusTone = 'ok' | 'hold' | 'problem' | 'off';
+
+export interface StatusHeadline {
+  tone: StatusTone;
+  label: string;
+}
+
+/** "22.4 °C", or "no reading" when there is none. */
+export const formatCelsius = (celsius: number | null | undefined) =>
+  typeof celsius === 'number' && Number.isFinite(celsius)
+    ? `${celsius.toFixed(1)} °C`
+    : 'no reading';
+
+/** A length of time in seconds, in words: "12 s", "5 min", "2 h 10 min", "3 days". */
+export function formatSpan(seconds: number | null | undefined): string {
+  if (typeof seconds !== 'number' || !Number.isFinite(seconds) || seconds < 0) return 'unknown';
+  const s = Math.round(seconds);
+  if (s < 60) return `${s} s`;
+  const minutes = Math.round(s / 60);
+  if (minutes < 60) return `${minutes} min`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) {
+    const rest = minutes % 60;
+    return rest ? `${hours} h ${rest} min` : `${hours} h`;
+  }
+  const days = Math.floor(hours / 24);
+  return `${days} ${days === 1 ? 'day' : 'days'}`;
+}
+
+/** "16-27 °C", or an empty string when the pipeline sent no band. */
+export function formatBand(room: Pick<RoomTemperature, 'bandMinC' | 'bandMaxC'>): string {
+  const { bandMinC, bandMaxC } = room;
+  return typeof bandMinC === 'number' && typeof bandMaxC === 'number'
+    ? `${bandMinC}-${bandMaxC} °C`
+    : '';
+}
+
+/**
+ * The one-line verdict of the room-temperature watch. A missing, stale or never-checked reading is
+ * a hold (or a warning when the pipeline's settings let releases go on), never "fine"; a watch that
+ * nobody has asked for a long time (`checkStalled`) is a problem whatever it last said.
+ */
+export function roomTempHeadline(room: RoomTemperature): StatusHeadline {
+  if (!room.enabled) return { tone: 'off', label: 'Watch is off' };
+  if (room.checkStalled) return { tone: 'problem', label: 'Not being checked' };
+  const code = room.code ?? 'unchecked';
+  if (code === 'in_band' && !room.holding) return { tone: 'ok', label: 'In range' };
+  const by: Record<string, string> = {
+    too_hot: 'Too hot',
+    too_cold: 'Too cold',
+    stale: 'Reading out of date',
+    missing: 'No reading',
+    unchecked: 'Not checked yet',
+  };
+  const what = by[code] ?? 'Out of range';
+  return room.holding
+    ? { tone: 'hold', label: `${what}: holding new prints` }
+    : { tone: 'problem', label: `${what}: printing anyway` };
+}
+
+/** The one-line verdict of the farm agent: silent, never seen or reporting trouble is a problem. */
+export function agentHeadline(agent: FarmAgent): StatusHeadline {
+  if (agent.state === 'not_used') return { tone: 'off', label: 'No farm agent in use' };
+  if (agent.state === 'never_connected') return { tone: 'problem', label: 'Never connected' };
+  if (agent.state === 'silent') {
+    const seconds = agent.silentForS;
+    return {
+      tone: 'problem',
+      label: typeof seconds === 'number' ? `Silent for ${formatSpan(seconds)}` : 'Silent',
+    };
+  }
+  return agent.problem
+    ? { tone: 'problem', label: 'Online, with problems' }
+    : { tone: 'ok', label: 'Online' };
+}
+
+export type KillSwitch = NonNullable<FarmSwitches['kill']>;
+
+/** What the agent's kill switch does, in words. */
+export const KILL_LABEL: Record<KillSwitch, string> = {
+  off: 'Off (the agent works)',
+  writes: 'On: refuses everything that changes the farm',
+  all: 'On: refuses everything',
+};

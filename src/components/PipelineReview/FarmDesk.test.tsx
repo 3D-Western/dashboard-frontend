@@ -3,13 +3,21 @@ import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { ApiError } from '@/api/client/errors';
 import { pipelineFarmApi } from '@/api/client/pipeline-farm';
-import type { BedBlock, HeldFarmJob, QuarantinedPrinter } from '@/types/pipeline-farm';
+import type {
+  BedBlock,
+  FarmAgent,
+  HeldFarmJob,
+  QuarantinedPrinter,
+  RoomTemperature,
+} from '@/types/pipeline-farm';
 import { FarmDesk } from './FarmDesk';
 
 vi.mock('@/api/client/pipeline-farm', () => ({
   pipelineFarmApi: {
     heldJobs: vi.fn(),
     quarantinedPrinters: vi.fn(),
+    roomTemperature: vi.fn(),
+    farmAgent: vi.fn(),
     bedBlocks: vi.fn(),
     clearBedBlock: vi.fn(),
     bedReference: vi.fn(),
@@ -74,6 +82,43 @@ const bedBlocks = (): BedBlock[] => [
   },
 ];
 
+const roomTemp = (patch: Partial<RoomTemperature> = {}): RoomTemperature => ({
+  enabled: true,
+  loopRunning: true,
+  code: 'in_band',
+  holding: false,
+  summary: 'The room is 22.4 C, inside 16-27 C: new prints can start.',
+  celsius: 22.4,
+  readingAgeS: 30,
+  bandMinC: 16,
+  bandMaxC: 27,
+  checkAgeS: 3,
+  checkStalled: false,
+  heldJobCount: 0,
+  heldJobs: [],
+  ...patch,
+});
+
+const farmAgent = (patch: Partial<FarmAgent> = {}): FarmAgent => ({
+  configured: true,
+  transport: 'remote',
+  agentId: 'farm-pc',
+  state: 'online',
+  problem: false,
+  problems: [],
+  farmProblems: [],
+  openCommands: 0,
+  switches: {
+    farmLiveEnabled: false,
+    agentLiveEnabled: true,
+    kill: 'off',
+    liveViewEnabled: false,
+    emptyBedEnabled: false,
+    roomTempEnabled: true,
+  },
+  ...patch,
+});
+
 const ok = { ok: true, message: '' };
 
 beforeEach(() => {
@@ -81,6 +126,8 @@ beforeEach(() => {
   api.heldJobs.mockResolvedValue(heldJobs());
   api.quarantinedPrinters.mockResolvedValue(printers());
   api.bedBlocks.mockResolvedValue([]);
+  api.roomTemperature.mockResolvedValue(roomTemp());
+  api.farmAgent.mockResolvedValue(farmAgent());
   api.clearBedBlock.mockResolvedValue(ok);
   api.bedReference.mockResolvedValue(null);
   api.setBedReference.mockResolvedValue(ok);
@@ -106,6 +153,65 @@ describe('FarmDesk', () => {
     expect(within(printer).getByText('Printer P12')).toBeVisible();
     expect(within(printer).getByText(/3 failures in a row/)).toBeVisible();
     expect(screen.getByText('2 held jobs, 1 quarantined printer.')).toBeVisible();
+  });
+
+  it('shows the room-temperature and farm-agent cards above the lists', async () => {
+    renderDesk();
+
+    const room = await screen.findByTestId('room-temperature');
+    expect(within(room).getByText('In range')).toBeVisible();
+    expect(within(room).getByText('22.4 °C')).toBeVisible();
+    const agent = screen.getByTestId('farm-agent');
+    expect(within(agent).getByText('Online')).toBeVisible();
+    expect(screen.getAllByTestId('held-job')).toHaveLength(2);
+  });
+
+  it('shows a missing reading as a hold with the jobs it holds back', async () => {
+    api.roomTemperature.mockResolvedValue(
+      roomTemp({
+        code: 'missing',
+        holding: true,
+        celsius: null,
+        summary: 'There is no room-temperature reading: new prints are held back.',
+        heldJobCount: 1,
+        heldJobs: [{ jobId: '22222222-2222-4222-8222-000000000001', jobName: 'Bracket Mount' }],
+      }),
+    );
+    renderDesk();
+
+    const room = await screen.findByTestId('room-temperature');
+    expect(within(room).getByText('No reading: holding new prints')).toBeVisible();
+    expect(within(room).queryByText('In range')).not.toBeInTheDocument();
+    expect(within(room).getByTestId('room-temperature-held')).toHaveTextContent(
+      '1 job is waiting for a printer',
+    );
+  });
+
+  it('shows an agent silent for more than five minutes as a problem', async () => {
+    api.farmAgent.mockResolvedValue(
+      farmAgent({
+        state: 'silent',
+        problem: true,
+        problems: ['The farm agent has been silent for 6 min'],
+        silentForS: 360,
+      }),
+    );
+    renderDesk();
+
+    const agent = await screen.findByTestId('farm-agent');
+    expect(within(agent).getByText('Silent for 6 min')).toBeVisible();
+    expect(within(agent).getByTestId('farm-agent-problems')).toHaveTextContent('silent for 6 min');
+  });
+
+  it('keeps the lists when a status card cannot be read, and says which card', async () => {
+    api.roomTemperature.mockRejectedValue(new ApiError('PIPELINE_UNAVAILABLE', 'Not offered yet'));
+    api.farmAgent.mockRejectedValue(new Error('boom'));
+    renderDesk();
+
+    expect(await screen.findAllByTestId('status-unreadable')).toHaveLength(2);
+    expect(screen.getByText('Not offered yet')).toBeVisible();
+    expect(screen.queryByTestId('room-temperature')).not.toBeInTheDocument();
+    expect(screen.getAllByTestId('held-job')).toHaveLength(2);
   });
 
   it('says plainly when nothing needs a person', async () => {
