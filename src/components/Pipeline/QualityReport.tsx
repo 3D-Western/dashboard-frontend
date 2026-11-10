@@ -24,7 +24,10 @@ export function QualityReport({
   jobId: string;
   /** Sent, or skipped: either way this step is over. */
   onDone: () => void;
-  /** The thumbs-down is already saved (the rate-first gate): say so, and word the skip as a skip. */
+  /**
+   * The rate-first gate before a new upload (Troy, 2026-11-10): after a thumbs-down the student
+   * says what was off before going on, so there is no skip here.
+   */
   ratingSaved?: boolean;
 }) {
   const [reasons, setReasons] = useState<QualityReason[]>([]);
@@ -50,7 +53,11 @@ export function QualityReport({
       toast.success('Thanks. That helps everyone who prints here.');
       onDone();
     } catch {
-      toast.error("Couldn't send that. You can try again, or skip it.");
+      toast.error(
+        ratingSaved
+          ? "Couldn't send that. Please try again."
+          : "Couldn't send that. You can try again, or skip it.",
+      );
       setSending(false);
     }
   }
@@ -60,10 +67,10 @@ export function QualityReport({
       <div>
         <h3 className="text-base font-semibold">Sorry it wasn&apos;t great</h3>
         <p className="mt-1 text-sm text-muted-foreground">
-          Help improve our system for everyone by sharing what was off. It takes ten seconds, and
-          you can skip it.
+          {ratingSaved
+            ? 'Tap what was off, then you can go on. It takes ten seconds and helps everyone who prints here.'
+            : 'Help improve our system for everyone by sharing what was off. It takes ten seconds, and you can skip it.'}
         </p>
-        {ratingSaved && <p className="mt-1 text-sm text-muted-foreground">Your rating is saved.</p>}
       </div>
 
       <div className="flex flex-wrap gap-2" role="group" aria-label="What was off?">
@@ -106,16 +113,18 @@ export function QualityReport({
           {sending && <Loader2 className="animate-spin" aria-hidden="true" />}
           Send
         </Button>
-        <Button
-          type="button"
-          size="lg"
-          variant="ghost"
-          disabled={sending}
-          onClick={onDone}
-          className="w-full sm:w-auto"
-        >
-          {ratingSaved ? 'Skip this step' : 'No thanks'}
-        </Button>
+        {!ratingSaved && (
+          <Button
+            type="button"
+            size="lg"
+            variant="ghost"
+            disabled={sending}
+            onClick={onDone}
+            className="w-full sm:w-auto"
+          >
+            No thanks
+          </Button>
+        )}
       </div>
     </div>
   );
