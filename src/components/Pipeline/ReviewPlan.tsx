@@ -160,7 +160,7 @@ export function ReviewPlan({
   const headline = ANSWER_HEADLINE[plan.answer] ?? ANSWER_HEADLINE.works;
   const Headline = headline.icon;
   const { consequential, rest } = splitLessonCards(plan.lessonCards);
-  const choices = plan.choices ?? [];
+  const choices = useMemo(() => plan.choices ?? [], [plan.choices]);
   const needsChoice = studentStatus === 'needs_choice';
   // Picks for choices that are no longer in this plan are not shown and do not count.
   const picked = useMemo(() => {
