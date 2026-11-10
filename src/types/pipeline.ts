@@ -124,6 +124,15 @@ export interface StepProgress {
   teaching?: string | null;
   state: StepState;
   durationMs?: number | null;
+  /** What this finished check found on the student's own part, in plain words (P-196). */
+  lesson?: StepLesson | null;
+}
+
+/** The same wording as the lesson card the plan will carry; never sent for anything held. */
+export interface StepLesson {
+  code: string;
+  title: string;
+  body: string;
 }
 
 /** Where the student collects the part (P-78, P-82), known once it is ready for pickup. */

@@ -455,7 +455,7 @@ export function PrintFlow({ mockMode = false }: { mockMode?: boolean }) {
               <h2 id="uploading-heading" className="text-xl">
                 Preparing your print
               </h2>
-              <PreparingSteps steps={[]} file={file} />
+              <PreparingSteps steps={[]} file={file} purpose={purpose} />
             </section>
           )}
         </div>
