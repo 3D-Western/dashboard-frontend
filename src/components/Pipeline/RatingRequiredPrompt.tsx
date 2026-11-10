@@ -7,10 +7,11 @@ import { RateButtons } from './RateButtons';
 
 /**
  * Rate first (SCOPE §2.1, P-20): the backend will not start a new 3D-print job while a collected
- * print has no rating, and says which prints those are. One tap each (oldest first), a thumbs-down
- * offers the quick optional quality step, and when the last one is rated `onDone` lets the upload
- * carry on with the file the student already chose. A hard block on the backend's side, so there
- * is no skip: the cost is one tap per print.
+ * print has no rating, or was rated down without the "what was off" report (Troy, 2026-11-10: the
+ * database is the single source, so a reload cannot skip it). It says which prints those are and
+ * which step each needs (`needs`): the rating tap, or straight to the quality step. Oldest first;
+ * when the last one is done `onDone` lets the upload carry on with the file the student already
+ * chose. A hard block on the backend's side, so there is no skip.
  */
 export function RatingRequiredPrompt({
   prints,
@@ -28,6 +29,8 @@ export function RatingRequiredPrompt({
 
   // An empty list (the backend said "rate first" but not what) leaves nothing to show: just retry.
   const print = prints[index];
+  // A print already rated down opens at the quality step; the rating tap would be refused.
+  const showQuality = print && (qualityFor === print.jobId || print.needs === 'quality');
   if (!print) {
     return (
       <p role="status" className="text-sm text-muted-foreground">
@@ -51,12 +54,12 @@ export function RatingRequiredPrompt({
       className="space-y-4 rounded-xl border bg-card p-5"
       data-testid="rating-required"
     >
-      {qualityFor === print.jobId ? (
+      {showQuality ? (
         <>
           <h2 id="rating-required-heading" className="sr-only">
             Report print quality
           </h2>
-          <QualityReport jobId={print.jobId} onDone={next} ratingSaved />
+          <QualityReport key={print.jobId} jobId={print.jobId} onDone={next} ratingSaved />
         </>
       ) : (
         <>

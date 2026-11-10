@@ -11,7 +11,7 @@ import { cn } from '@/lib/utils';
 import type { QualityReason } from '@/types/pipeline';
 
 /**
- * "Report print quality", the quick optional step after a thumbs-down (P-102): a few reason
+ * "Report print quality", the quick step after a thumbs-down (optional on the job page, required in the rate-first gate) (P-102): a few reason
  * chips and, if they like, a few words. Framed as helping everyone, never as a form to finish;
  * "No thanks" is always right there. Words with no chip are sent as "something else", because the
  * pipeline needs at least one reason.

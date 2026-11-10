@@ -255,15 +255,21 @@ function snapshotFor(jobId: string): PipelineSnapshot {
 
 /**
  * The rate-first gate (P-20), as the backend does it: the collected prints of this student that
- * have no rating yet, oldest first. Creating a 3D-print job answers 409 RATING_REQUIRED with them.
+ * have no rating yet, or were rated down without the quality report, oldest first. Creating a 3D-print job answers 409 RATING_REQUIRED with them.
  */
 export function mockUnratedPrints(studentId: number) {
   return (db.getPrintJobs({ userId: studentId }) as unknown as BasePrintJob[])
-    .filter((job) => job.studentStatus === 'collected' && sessionFor(job.id).rating === null)
+    .filter((job) => {
+      if (job.studentStatus !== 'collected') return false;
+      const session = sessionFor(job.id);
+      // No rating, or rated down and the "what was off" report not logged yet.
+      return session.rating === null || (session.rating === 'down' && !session.qualityReasons);
+    })
     .map((job) => ({
       jobId: job.id,
       name: job.name,
       collectedAt: job.completedAt ?? job.jobPlaced,
+      needs: sessionFor(job.id).rating === null ? ('rating' as const) : ('quality' as const),
     }));
 }
 

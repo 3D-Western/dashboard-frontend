@@ -221,11 +221,16 @@ export interface LiveViewOffer {
   snapshotIntervalS?: number | null;
 }
 
-/** A collected print the student has not rated (an item of `data.unratedPrints` of `RATING_REQUIRED`). */
+/**
+ * A collected print whose feedback is still due (an item of `data.unratedPrints` of
+ * `RATING_REQUIRED` and of the look-ahead). `needs` says which step: `rating` (no rating yet) or
+ * `quality` (rated down, the "what was off" report is not logged yet). Missing means `rating`.
+ */
 export interface UnratedPrint {
   jobId: string;
   name?: string | null;
   collectedAt?: string | null;
+  needs?: 'rating' | 'quality';
 }
 
 export type PipelineEventType =

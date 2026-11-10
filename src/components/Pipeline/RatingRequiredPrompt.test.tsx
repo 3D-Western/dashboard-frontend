@@ -56,6 +56,33 @@ describe('RatingRequiredPrompt', () => {
     expect(onDone).not.toHaveBeenCalled();
   });
 
+  it('opens straight at the quality step for a print already rated down, with no skip and no rating tap', async () => {
+    const onDone = vi.fn();
+    render(
+      <RatingRequiredPrompt
+        prints={[{ ...prints[0], needs: 'quality' }, prints[1]]}
+        onDone={onDone}
+      />,
+    );
+    const user = setup();
+
+    expect(await screen.findByText(/tap what was off, then you can go on/i)).toBeVisible();
+    expect(screen.queryByRole('button', { name: 'Good' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /no thanks|skip/i })).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: /warping|stringing|weak|other/i }));
+    await user.click(screen.getByRole('button', { name: 'Send' }));
+    expect(api.reportQuality).toHaveBeenCalledWith(
+      'a',
+      expect.objectContaining({ reasons: expect.any(Array) }),
+    );
+    // then the next print, which needs its rating, is asked as usual
+    expect(
+      await screen.findByRole('heading', { name: /how did cable clip turn out/i }),
+    ).toBeVisible();
+    expect(api.rate).not.toHaveBeenCalled();
+  });
+
   it('has no way past the question without a saved rating: a failed save keeps asking, Escape does nothing', async () => {
     api.rate.mockRejectedValue(new Error('offline'));
     const onDone = vi.fn();
