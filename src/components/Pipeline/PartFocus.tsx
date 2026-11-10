@@ -2,8 +2,8 @@
 
 import { createContext, useCallback, useContext, useMemo, useRef, useState } from 'react';
 
-/** Who asked: a student tapping a lesson card, or tapping a region on the part. */
-export type FocusSource = 'card' | 'viewer';
+/** Who asked: a lesson card or the panel beside the viewer, or a tap on a region of the part. */
+export type FocusSource = 'card' | 'viewer' | 'panel';
 
 export interface PartFocus {
   /** The lesson code whose region is focused, or null. */

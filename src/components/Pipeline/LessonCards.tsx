@@ -7,7 +7,7 @@ import { cn } from '@/lib/utils';
 import type { LessonCard, Severity } from '@/types/pipeline';
 import { useCardFocus } from './PartFocus';
 
-const SEVERITY_STYLE: Record<Severity, { label: string; bar: string; text: string }> = {
+export const SEVERITY_STYLE: Record<Severity, { label: string; bar: string; text: string }> = {
   info: { label: 'Good to know', bar: 'bg-status-gray', text: 'text-status-gray-foreground' },
   adjusted: { label: 'Fixed for you', bar: 'bg-status-blue', text: 'text-status-blue-foreground' },
   choice: { label: 'Your choice', bar: 'bg-status-yellow', text: 'text-status-yellow-foreground' },

@@ -17,6 +17,7 @@ import {
   DirectionalLight,
   DoubleSide,
   EdgesGeometry,
+  FrontSide,
   GridHelper,
   Group,
   HemisphereLight,
@@ -28,7 +29,9 @@ import {
   MeshStandardMaterial,
   Object3D,
   PerspectiveCamera,
+  Plane,
   PlaneGeometry,
+  Quaternion,
   Raycaster,
   Scene,
   TOUCH,
@@ -39,6 +42,14 @@ import {
 } from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import {
+  COMPONENT_TRIANGLE_CAP,
+  MULTI_PIECE_CODE,
+  candidateViewDirections,
+  connectedComponents,
+  pieceColor,
+  type PieceMode,
+} from '@/lib/part-geometry';
 import { SEVERITY_COLOR, resolveHighlights, type PartHighlight } from '@/lib/part-viewer';
 
 const MAX_PIXEL_RATIO = 2;
@@ -47,6 +58,11 @@ const TWEEN_MS = 550;
 const PULSE_MS = 2000;
 const PULSE_PERIOD_MS = 650;
 const VIEW_DIRECTION = new Vector3(1, -1.25, 0.95).normalize();
+const FLASH_MS = 800;
+/** Above this many triangles the camera does not test whether the part blocks a view. */
+const OCCLUSION_TRIANGLE_CAP = 250_000;
+/** A clipping plane this high cuts nothing. */
+const NO_CUT = 1e6;
 
 export interface SceneOptions {
   /** Holds the canvas. */
@@ -66,6 +82,22 @@ interface Overlay {
   center: Vector3;
   radius: number;
   marker: HTMLButtonElement;
+  /** Lowest and highest point of the region, mm above the bed. */
+  zMin: number;
+  zMax: number;
+  /** Average outward normal of the region's surface (null for a box or a region facing every way). */
+  normal: Vector3 | null;
+  /** Whether the layer slider has reached the region (it is drawn only then). */
+  lit: boolean;
+  /** When the region last lit up (a short flash), or 0. */
+  flashStart: number;
+}
+
+export interface LoadedModel {
+  triangles: number;
+  /** Height of the part above the bed, mm. */
+  height: number;
+  pieces: PieceMode;
 }
 
 function fetchFailed(response: Response): never {
@@ -84,6 +116,13 @@ export class PartScene {
   private readonly abort = new AbortController();
   private readonly resizeObserver: ResizeObserver;
   private readonly home = { position: new Vector3(), target: new Vector3() };
+  private readonly plane = new Plane(new Vector3(0, 0, -1), NO_CUT);
+  private readonly partMaterials: MeshStandardMaterial[] = [];
+  private readonly modelCenter = new Vector3();
+  private requestedCut: number | null = null;
+  private cutMm: number | null = null;
+  private modelHeight = 0;
+  private pieceMode: PieceMode = 'none';
   private meshes: Mesh[] = [];
   private triangleCount = 0;
   private modelRadius = 50;
@@ -95,8 +134,10 @@ export class PartScene {
   private pulseStart = 0;
   private tween: {
     start: number;
-    fromPosition: Vector3;
-    toPosition: Vector3;
+    fromDirection: Vector3;
+    fromLength: number;
+    toLength: number;
+    turn: Quaternion;
     fromTarget: Vector3;
     toTarget: Vector3;
   } | null = null;
@@ -112,6 +153,7 @@ export class PartScene {
     // Phones have 3x screens; shading 9x the pixels for a part viewer is not worth the battery.
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, MAX_PIXEL_RATIO));
     this.renderer.setClearColor(0x000000, 0);
+    this.renderer.localClippingEnabled = true; // the layer slider cuts the part with a plane
     const canvas = this.renderer.domElement;
     canvas.className = 'block size-full';
     canvas.setAttribute('role', 'img');
@@ -149,7 +191,7 @@ export class PartScene {
   // ---- loading ----------------------------------------------------------------------------
 
   /** Fetches and parses the GLB; resolves with its triangle count. Rejects on any failure. */
-  async loadModel(url: string): Promise<{ triangles: number }> {
+  async loadModel(url: string, options: { pieces?: boolean } = {}): Promise<LoadedModel> {
     const timeout = setTimeout(() => this.abort.abort(), LOAD_TIMEOUT_MS);
     try {
       const response = await fetch(url, { signal: this.abort.signal });
@@ -158,26 +200,78 @@ export class PartScene {
       if (this.disposed) throw new Error('closed');
       const gltf = await new GLTFLoader().parseAsync(buffer, '');
       if (this.disposed) throw new Error('closed');
-      this.setModel(gltf.scene);
+      this.setModel(gltf.scene, options.pieces ?? false);
     } finally {
       clearTimeout(timeout);
     }
-    return { triangles: this.triangleCount };
+    return { triangles: this.triangleCount, height: this.modelHeight, pieces: this.pieceMode };
   }
 
-  private setModel(root: Object3D) {
+  private newPartMaterial() {
     const material = new MeshStandardMaterial({
       color: 0xd9dde4,
       roughness: 0.62,
       metalness: 0.05,
       flatShading: true, // no vertex normals needed, and sharp CAD edges stay sharp
+      clippingPlanes: [this.plane],
     });
+    this.partMaterials.push(material);
+    return material;
+  }
+
+  /**
+   * Colours each separate piece differently. Pieces that are separate meshes in the file use
+   * those; a single mesh is split into pieces here, in the browser, unless it is too big.
+   */
+  private colourPieces(meshes: Mesh[], triangles: number): PieceMode {
+    if (meshes.length >= 2) {
+      meshes.forEach((mesh, i) => {
+        const material = this.newPartMaterial();
+        material.color.set(pieceColor(i));
+        mesh.material = material;
+      });
+      return 'meshes';
+    }
+    if (triangles > COMPONENT_TRIANGLE_CAP) return 'box-fallback';
+    const mesh = meshes[0];
+    const position = mesh.geometry.getAttribute('position');
+    const index = mesh.geometry.getIndex();
+    const flat = new Float32Array(position.count * 3);
+    for (let v = 0; v < position.count; v += 1) {
+      flat[v * 3] = position.getX(v);
+      flat[v * 3 + 1] = position.getY(v);
+      flat[v * 3 + 2] = position.getZ(v);
+    }
+    const indices = index
+      ? Uint32Array.from({ length: index.count }, (_, i) => index.getX(i))
+      : null;
+    const { count, component } = connectedComponents(flat, indices);
+    if (count < 2) return 'none';
+    const colors = new Float32Array(position.count * 3);
+    const tint = new Color();
+    for (let t = 0; t < component.length; t += 1) {
+      tint.set(pieceColor(component[t]));
+      for (let k = 0; k < 3; k += 1) {
+        const v = indices ? indices[t * 3 + k] : t * 3 + k;
+        colors[v * 3] = tint.r;
+        colors[v * 3 + 1] = tint.g;
+        colors[v * 3 + 2] = tint.b;
+      }
+    }
+    mesh.geometry.setAttribute('color', new BufferAttribute(colors, 3));
+    const material = this.newPartMaterial();
+    material.vertexColors = true;
+    material.color.set(0xffffff);
+    mesh.material = material;
+    return 'components';
+  }
+
+  private setModel(root: Object3D, separatePieces: boolean) {
     const meshes: Mesh[] = [];
     root.updateMatrixWorld(true);
     root.traverse((object) => {
       const mesh = object as Mesh;
       if (!mesh.isMesh || !mesh.geometry.getAttribute('position')) return;
-      mesh.material = material;
       meshes.push(mesh);
     });
     let triangles = 0;
@@ -187,6 +281,11 @@ export class PartScene {
     }
     if (triangles === 0) throw new Error('The model has no triangles.');
 
+    this.pieceMode = separatePieces ? this.colourPieces(meshes, triangles) : 'none';
+    if (this.pieceMode === 'none' || this.pieceMode === 'box-fallback') {
+      const material = this.newPartMaterial();
+      for (const mesh of meshes) mesh.material = material;
+    }
     this.meshes = meshes;
     this.triangleCount = triangles;
     this.modelGroup.add(root);
@@ -194,6 +293,9 @@ export class PartScene {
     const box = new Box3().setFromObject(root);
     const size = box.getSize(new Vector3());
     const center = box.getCenter(new Vector3());
+    this.modelCenter.copy(center);
+    this.modelHeight = Math.max(box.max.z, 0);
+    this.applyCut();
     this.modelRadius = Math.max(size.length() / 2, 1);
 
     // A simple bed: a square plate under the part with a grid, at z = 0.
@@ -241,9 +343,12 @@ export class PartScene {
     let number = 0;
     for (const entry of resolved) {
       number += 1;
+      // Pieces coloured one by one are the picture of "several pieces": no box over them.
+      const coloured = this.pieceMode === 'meshes' || this.pieceMode === 'components';
+      const quiet = coloured && entry.highlight.code === MULTI_PIECE_CODE;
       const overlay = entry.triangles.length
         ? this.buildFaceOverlay(entry.highlight, entry.triangles, number)
-        : this.buildBoxOverlay(entry.highlight, entry.box!, number);
+        : this.buildBoxOverlay(entry.highlight, entry.box!, number, quiet);
       if (!overlay) {
         number -= 1;
         continue;
@@ -251,9 +356,49 @@ export class PartScene {
       this.overlays.set(entry.highlight.code, overlay);
       this.overlayGroup.add(overlay.group);
     }
+    this.updateLit(false);
     this.applyEmphasis();
     this.requestRender();
     return [...this.overlays.keys()];
+  }
+
+  /** Where each drawn region sits above the bed (lowest, highest point), mm. */
+  regionHeights(): Record<string, [number, number]> {
+    const result: Record<string, [number, number]> = {};
+    for (const overlay of this.overlays.values())
+      result[overlay.code] = [overlay.zMin, overlay.zMax];
+    return result;
+  }
+
+  // ---- layer slider -----------------------------------------------------------------------
+
+  /** Cuts the part at this height above the bed (`null` shows all of it). */
+  setCut(mm: number | null) {
+    this.requestedCut = mm;
+    this.applyCut();
+    this.updateLit(true);
+    this.requestRender();
+  }
+
+  private applyCut() {
+    const mm = this.requestedCut;
+    const cutting = mm !== null && mm < this.modelHeight - 1e-3;
+    this.cutMm = cutting ? mm : null;
+    this.plane.constant = cutting ? mm! : NO_CUT;
+    // The cut shows the inside of the walls, so both faces are drawn while it is on.
+    for (const material of this.partMaterials) material.side = cutting ? DoubleSide : FrontSide;
+  }
+
+  /** A region is drawn once the slider has reached its lowest point, and flashes as it appears. */
+  private updateLit(flash: boolean) {
+    const now = performance.now();
+    for (const overlay of this.overlays.values()) {
+      const lit = this.cutMm === null || this.cutMm >= overlay.zMin - 1e-3;
+      if (lit && !overlay.lit && flash && !this.options.reducedMotion) overlay.flashStart = now;
+      overlay.lit = lit;
+      overlay.group.visible = lit;
+    }
+    if (flash) this.applyEmphasis(1, now);
   }
 
   private makeMarker(highlight: PartHighlight, number: number) {
@@ -289,6 +434,7 @@ export class PartScene {
       opacity,
       side: DoubleSide,
       depthWrite: false,
+      clippingPlanes: [this.plane],
       polygonOffset: true,
       polygonOffsetFactor: -2,
       polygonOffsetUnits: -2,
@@ -301,6 +447,13 @@ export class PartScene {
     const positions: number[] = [];
     let offset = 0;
     const a = new Vector3();
+    const b = new Vector3();
+    const c = new Vector3();
+    const edge = new Vector3();
+    const normalSum = new Vector3();
+    let areaSum = 0;
+    let zMin = Infinity;
+    let zMax = -Infinity;
     for (const mesh of this.meshes) {
       const geometry = mesh.geometry;
       const position = geometry.getAttribute('position');
@@ -308,11 +461,21 @@ export class PartScene {
       const count = (index ? index.count : position.count) / 3;
       for (let t = 0; t < count; t += 1) {
         if (!wanted.has(offset + t)) continue;
+        const corners = [a, b, c];
         for (let corner = 0; corner < 3; corner += 1) {
           const vertex = index ? index.getX(t * 3 + corner) : t * 3 + corner;
-          a.fromBufferAttribute(position, vertex).applyMatrix4(mesh.matrixWorld);
-          positions.push(a.x, a.y, a.z);
+          const p = corners[corner]
+            .fromBufferAttribute(position, vertex)
+            .applyMatrix4(mesh.matrixWorld);
+          positions.push(p.x, p.y, p.z);
+          zMin = Math.min(zMin, p.z);
+          zMax = Math.max(zMax, p.z);
         }
+        // Area-weighted: the cross product of two edges is the triangle's normal, twice its area.
+        edge.subVectors(c, a);
+        const face = b.sub(a).cross(edge);
+        areaSum += face.length();
+        normalSum.add(face);
       }
       offset += count;
     }
@@ -325,6 +488,9 @@ export class PartScene {
     const group = new Group();
     group.add(new Mesh(geometry, material));
     const sphere = geometry.boundingSphere!;
+    // A region whose faces point every way (a closed lump) has no side to look at it from.
+    const normal =
+      areaSum > 0 && normalSum.length() / areaSum > 0.3 ? normalSum.clone().normalize() : null;
     return this.finishOverlay(
       highlight,
       number,
@@ -332,20 +498,22 @@ export class PartScene {
       [{ material, opacity: 0.6 }],
       sphere.center,
       sphere.radius,
+      { zMin, zMax, normal },
     );
   }
 
-  private buildBoxOverlay(highlight: PartHighlight, box: number[], number: number) {
+  private buildBoxOverlay(highlight: PartHighlight, box: number[], number: number, quiet = false) {
     const [x0, y0, z0, x1, y1, z1] = box;
     const size = new Vector3(x1 - x0, y1 - y0, z1 - z0).max(new Vector3(0.4, 0.4, 0.4));
     const center = new Vector3((x0 + x1) / 2, (y0 + y1) / 2, (z0 + z1) / 2);
     const geometry = new BoxGeometry(size.x, size.y, size.z);
     const color = SEVERITY_COLOR[highlight.severity];
-    const fill = this.overlayMaterial(color, 0.35);
+    const fill = this.overlayMaterial(color, quiet ? 0 : 0.35);
     const edgeMaterial = new LineBasicMaterial({
       color: new Color(color),
       transparent: true,
-      opacity: 0.95,
+      opacity: quiet ? 0 : 0.95,
+      clippingPlanes: [this.plane],
     });
     const group = new Group();
     const fillMesh = new Mesh(geometry, fill);
@@ -357,11 +525,12 @@ export class PartScene {
       number,
       group,
       [
-        { material: fill, opacity: 0.35 },
-        { material: edgeMaterial, opacity: 0.95 },
+        { material: fill, opacity: quiet ? 0 : 0.35 },
+        { material: edgeMaterial, opacity: quiet ? 0 : 0.95 },
       ],
       center,
       size.length() / 2,
+      { zMin: Math.min(z0, z1), zMax: Math.max(z0, z1), normal: null },
     );
   }
 
@@ -372,6 +541,7 @@ export class PartScene {
     materials: Overlay['materials'],
     center: Vector3,
     radius: number,
+    extent: { zMin: number; zMax: number; normal: Vector3 | null },
   ): Overlay {
     group.userData.code = highlight.code;
     return {
@@ -381,6 +551,9 @@ export class PartScene {
       center: center.clone(),
       radius: Math.max(radius, 1),
       marker: this.makeMarker(highlight, number),
+      ...extent,
+      lit: true,
+      flashStart: 0,
     };
   }
 
@@ -410,25 +583,59 @@ export class PartScene {
   }
 
   private flyTo(overlay: Overlay) {
-    const direction = this.camera.position.clone().sub(this.controls.target).normalize();
     const distance = MathUtils.clamp(
       (overlay.radius * 3.2) / Math.sin(MathUtils.degToRad(this.camera.fov / 2)) / 2,
       this.controls.minDistance,
       this.controls.maxDistance,
     );
     const toTarget = overlay.center.clone();
-    const toPosition = toTarget.clone().addScaledVector(direction, distance);
+    const direction = this.viewDirectionFor(overlay, distance);
+    this.moveCamera(toTarget.clone().addScaledVector(direction, distance), toTarget);
+  }
+
+  /** The first way of looking at the region that faces it and is not blocked by the part. */
+  private viewDirectionFor(overlay: Overlay, distance: number): Vector3 {
+    const candidates = candidateViewDirections({
+      normal: overlay.normal ? [overlay.normal.x, overlay.normal.y, overlay.normal.z] : null,
+      regionCenter: [overlay.center.x, overlay.center.y, overlay.center.z],
+      partCenter: [this.modelCenter.x, this.modelCenter.y, this.modelCenter.z],
+      fallback: [VIEW_DIRECTION.x, VIEW_DIRECTION.y, VIEW_DIRECTION.z],
+    }).map(([x, y, z]) => new Vector3(x, y, z));
+    if (this.meshes.length === 0 || this.triangleCount > OCCLUSION_TRIANGLE_CAP)
+      return candidates[0];
+    const slack = Math.max(overlay.radius * 1.15, 1.5);
+    for (const direction of candidates) {
+      this.raycaster.set(
+        overlay.center.clone().addScaledVector(direction, distance),
+        direction.clone().negate(),
+      );
+      this.raycaster.far = distance;
+      const hit = this.raycaster.intersectObjects(this.meshes, false)[0];
+      this.raycaster.far = Infinity;
+      if (!hit || hit.distance >= distance - slack) return direction;
+    }
+    return candidates[0];
+  }
+
+  /** Flies the camera to a place (turning around the target, not through the part). */
+  private moveCamera(toPosition: Vector3, toTarget: Vector3) {
     if (this.options.reducedMotion) {
       this.camera.position.copy(toPosition);
       this.controls.target.copy(toTarget);
       this.controls.update();
       return;
     }
+    const fromTarget = this.controls.target.clone();
+    const fromOffset = this.camera.position.clone().sub(fromTarget);
+    const toOffset = toPosition.clone().sub(toTarget);
+    const fromDirection = fromOffset.clone().normalize();
     this.tween = {
       start: performance.now(),
-      fromPosition: this.camera.position.clone(),
-      toPosition,
-      fromTarget: this.controls.target.clone(),
+      fromDirection,
+      fromLength: fromOffset.length(),
+      toLength: toOffset.length(),
+      turn: new Quaternion().setFromUnitVectors(fromDirection, toOffset.clone().normalize()),
+      fromTarget,
       toTarget,
     };
   }
@@ -436,29 +643,20 @@ export class PartScene {
   resetView() {
     this.activeCode = null;
     this.applyEmphasis();
-    const toPosition = this.home.position.clone();
-    const toTarget = this.home.target.clone();
-    if (this.options.reducedMotion) {
-      this.camera.position.copy(toPosition);
-      this.controls.target.copy(toTarget);
-      this.controls.update();
-    } else {
-      this.tween = {
-        start: performance.now(),
-        fromPosition: this.camera.position.clone(),
-        toPosition,
-        fromTarget: this.controls.target.clone(),
-        toTarget,
-      };
-    }
+    this.moveCamera(this.home.position.clone(), this.home.target.clone());
     this.requestRender();
   }
 
-  /** Resting emphasis: the focused region strong, the others quiet. */
-  private applyEmphasis(pulse = 1) {
+  /** Resting emphasis: the focused region strong, the others quiet; a region just lit flashes. */
+  private applyEmphasis(pulse = 1, now = performance.now()) {
     for (const overlay of this.overlays.values()) {
       const active = overlay.code === this.activeCode;
-      const scale = this.activeCode === null ? 1 : active ? Math.min(1.35, pulse * 1.35) : 0.4;
+      let scale = this.activeCode === null ? 1 : active ? Math.min(1.35, pulse * 1.35) : 0.4;
+      if (overlay.flashStart) {
+        const left = 1 - (now - overlay.flashStart) / FLASH_MS;
+        scale *= 1 + 1.2 * Math.max(0, left);
+        if (left <= 0) overlay.flashStart = 0;
+      }
       for (const { material, opacity } of overlay.materials) {
         material.opacity = MathUtils.clamp(opacity * scale, 0, 1);
       }
@@ -494,22 +692,33 @@ export class PartScene {
     if (this.tween) {
       const t = Math.min(1, (now - this.tween.start) / TWEEN_MS);
       const eased = 1 - Math.pow(1 - t, 3);
-      this.camera.position.lerpVectors(this.tween.fromPosition, this.tween.toPosition, eased);
+      const { fromDirection, fromLength, toLength, turn } = this.tween;
+      const step = new Quaternion().slerp(turn, eased);
       this.controls.target.lerpVectors(this.tween.fromTarget, this.tween.toTarget, eased);
+      this.camera.position
+        .copy(fromDirection)
+        .applyQuaternion(step)
+        .multiplyScalar(MathUtils.lerp(fromLength, toLength, eased))
+        .add(this.controls.target);
       this.controls.update();
       if (t >= 1) this.tween = null;
       else animating = true;
     }
 
+    const flashing = [...this.overlays.values()].some((overlay) => overlay.flashStart > 0);
     if (this.activeCode && !this.options.reducedMotion) {
       const elapsed = now - this.pulseStart;
       if (elapsed < PULSE_MS) {
         const wave = 0.5 + 0.5 * Math.sin((elapsed / PULSE_PERIOD_MS) * Math.PI * 2);
-        this.applyEmphasis(0.55 + 0.45 * wave);
+        this.applyEmphasis(0.55 + 0.45 * wave, now);
         animating = true;
-      } else if (elapsed < PULSE_MS + 100) {
-        this.applyEmphasis(1);
+      } else if (elapsed < PULSE_MS + 100 || flashing) {
+        this.applyEmphasis(1, now);
+        animating = animating || flashing;
       }
+    } else if (flashing) {
+      this.applyEmphasis(1, now);
+      animating = true;
     }
 
     this.renderer.render(this.scene, this.camera);
@@ -523,7 +732,7 @@ export class PartScene {
     const { clientWidth: width, clientHeight: height } = this.options.container;
     for (const overlay of this.overlays.values()) {
       const p = this.projected.copy(overlay.center).project(this.camera);
-      const visible = p.z < 1 && Math.abs(p.x) < 1.05 && Math.abs(p.y) < 1.05;
+      const visible = overlay.lit && p.z < 1 && Math.abs(p.x) < 1.05 && Math.abs(p.y) < 1.05;
       const marker = overlay.marker;
       marker.style.visibility = visible ? 'visible' : 'hidden';
       if (!visible) continue;
@@ -589,7 +798,10 @@ export class PartScene {
     );
     this.raycaster.setFromCamera(pointer, this.camera);
     const partHit = this.raycaster.intersectObjects(this.meshes, false)[0];
-    const overlayHit = this.raycaster.intersectObjects(this.overlayGroup.children, true)[0];
+    const overlayHit = this.raycaster.intersectObjects(
+      this.overlayGroup.children.filter((group) => group.visible),
+      true,
+    )[0];
     if (!overlayHit) return;
     if (partHit && overlayHit.distance > partHit.distance + 0.75) return;
     let owner: Object3D | null = overlayHit.object;

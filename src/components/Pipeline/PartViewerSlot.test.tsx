@@ -1,5 +1,5 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { render, screen, waitFor, within } from '@testing-library/react';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { createMockLessonCard } from '@test/utils/pipelineFactories';
 import type { PartHighlight } from '@/lib/part-viewer';
@@ -12,6 +12,8 @@ const env = vi.hoisted(() => ({
   askFirst: false,
   outcome: 'ready' as 'ready' | 'error',
   highlights: [] as PartHighlight[],
+  heights: {} as Record<string, [number, number]>,
+  reducedMotion: false,
   focused: [] as (string | null)[],
 }));
 
@@ -26,7 +28,13 @@ vi.mock('./PartViewer/PartViewerCanvas', async () => {
   const React = await import('react');
   const { usePartFocus } = await import('./PartFocus');
   return {
-    default: function FakeCanvas({ onStatus }: { onStatus: (s: unknown) => void }) {
+    default: function FakeCanvas({
+      onStatus,
+      cutMm,
+    }: {
+      onStatus: (s: unknown) => void;
+      cutMm?: number | null;
+    }) {
       const focus = usePartFocus();
       const { setLinked } = focus;
       React.useEffect(() => {
@@ -35,14 +43,20 @@ vi.mock('./PartViewer/PartViewerCanvas', async () => {
           return;
         }
         setLinked(env.highlights.map((h) => h.code));
-        onStatus({ state: 'ready', highlights: env.highlights });
+        onStatus({
+          state: 'ready',
+          highlights: env.highlights,
+          heights: env.heights,
+          modelHeightMm: 30,
+          pieces: 'none',
+        });
         // eslint-disable-next-line react-hooks/exhaustive-deps
       }, []);
       React.useEffect(() => {
         if (focus.nonce) env.focused.push(focus.code);
       }, [focus.nonce, focus.code]);
       return (
-        <div data-testid="fake-canvas" data-focus={focus.code ?? ''}>
+        <div data-testid="fake-canvas" data-focus={focus.code ?? ''} data-cut={cutMm ?? ''}>
           <button type="button" onClick={() => focus.focus('overhang.supports_added', 'viewer')}>
             tap region
           </button>
@@ -85,6 +99,15 @@ beforeEach(() => {
   env.outcome = 'ready';
   env.highlights = [supports];
   env.focused = [];
+  env.heights = { 'overhang.supports_added': [5, 18] };
+  env.reducedMotion = false;
+  window.localStorage.clear();
+  vi.stubGlobal('matchMedia', (query: string) => ({
+    matches: env.reducedMotion && query.includes('reduce'),
+    media: query,
+    addEventListener: () => {},
+    removeEventListener: () => {},
+  }));
   // Everything is "near the screen" in a test.
   vi.stubGlobal(
     'IntersectionObserver',
@@ -305,5 +328,110 @@ describe('Lesson cards and regions', () => {
       'data-focus',
       'overhang.supports_added',
     );
+  });
+});
+
+describe('Print it yourself: the layer slider', () => {
+  const planViewer = (planId: string) => (
+    <PartViewerSlot
+      previewUrl="/preview.png"
+      modelUrl="https://files.example/part.glb?sig=1"
+      highlights={cards}
+      planId={planId}
+    />
+  );
+  const range = () => screen.getByRole('slider', { name: 'Print it yourself' });
+
+  it('is not there without a plan id (staff, pickup)', async () => {
+    render(<PartViewerSlot previewUrl="/p.png" modelUrl="https://files.example/part.glb?sig=1" />);
+    await screen.findByTestId('fake-canvas');
+    expect(screen.queryByRole('slider')).toBeNull();
+  });
+
+  it('cuts the part where the slider is, with a tick at each flagged height', async () => {
+    env.reducedMotion = true;
+    const { container } = render(planViewer('plan-a'));
+    await screen.findByTestId('fake-canvas');
+    expect(range()).toHaveValue('1000');
+    expect(screen.getByTestId('fake-canvas')).toHaveAttribute('data-cut', '');
+    // 5 mm of 30 mm
+    const tick = container.querySelector('[data-tick="overhang.supports_added"]') as HTMLElement;
+    expect(tick).not.toBeNull();
+
+    fireEvent.change(range(), { target: { value: '500' } });
+    expect(Number(screen.getByTestId('fake-canvas').getAttribute('data-cut'))).toBeCloseTo(15);
+    fireEvent.change(range(), { target: { value: '100' } });
+    expect(tick).not.toHaveAttribute('data-lit');
+    fireEvent.change(range(), { target: { value: '300' } });
+    expect(tick).toHaveAttribute('data-lit');
+  });
+
+  it('brings the slider up to a region when it is chosen', async () => {
+    env.reducedMotion = true;
+    const user = userEvent.setup();
+    render(planViewer('plan-b'));
+    await screen.findByTestId('fake-canvas');
+    fireEvent.change(range(), { target: { value: '0' } });
+    await user.click(screen.getByRole('button', { name: /supports under the arm/i }));
+    // The top of the region, 18 mm of 30 mm
+    expect(Number((range() as HTMLInputElement).value)).toBeGreaterThanOrEqual(600);
+  });
+
+  describe('the first-view build-up', () => {
+    beforeEach(() => {
+      vi.useFakeTimers({
+        toFake: ['requestAnimationFrame', 'cancelAnimationFrame', 'performance'],
+      });
+    });
+    afterEach(() => {
+      vi.useRealTimers();
+    });
+
+    it('builds the part bottom to top in about 4.5 s, then never again for the same plan', async () => {
+      const { unmount } = render(planViewer('plan-c'));
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(50);
+      });
+      await screen.findByTestId('fake-canvas');
+      expect(Number((range() as HTMLInputElement).value)).toBeLessThan(100);
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(2000);
+      });
+      const middle = Number((range() as HTMLInputElement).value);
+      expect(middle).toBeGreaterThan(100);
+      expect(middle).toBeLessThan(1000);
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(3000);
+      });
+      expect((range() as HTMLInputElement).value).toBe('1000');
+      expect(window.localStorage.getItem('3dw.part-reveal.plan-c')).not.toBeNull();
+
+      unmount();
+      render(planViewer('plan-c'));
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(50);
+      });
+      expect((range() as HTMLInputElement).value).toBe('1000');
+    });
+
+    it('is skipped by any interaction', async () => {
+      render(planViewer('plan-d'));
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(1000);
+      });
+      expect(Number((range() as HTMLInputElement).value)).toBeLessThan(1000);
+      fireEvent.pointerDown(screen.getByTestId('fake-canvas'));
+      expect((range() as HTMLInputElement).value).toBe('1000');
+    });
+
+    it('does not play with reduced motion', async () => {
+      env.reducedMotion = true;
+      render(planViewer('plan-e'));
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(50);
+      });
+      expect((range() as HTMLInputElement).value).toBe('1000');
+      expect(window.localStorage.getItem('3dw.part-reveal.plan-e')).toBeNull();
+    });
   });
 });

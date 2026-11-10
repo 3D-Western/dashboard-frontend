@@ -5,6 +5,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { RotateCcw } from 'lucide-react';
+import type { PieceMode } from '@/lib/part-geometry';
 import {
   artifactKey,
   parseHighlights,
@@ -16,7 +17,16 @@ import { usePartFocus } from '../PartFocus';
 import { PartScene } from './partScene';
 
 export type ViewerStatus =
-  | { state: 'ready'; highlights: PartHighlight[] }
+  | {
+      state: 'ready';
+      highlights: PartHighlight[];
+      /** Lowest and highest point of each drawn region, mm above the bed. */
+      heights?: Record<string, [number, number]>;
+      /** Height of the part, mm. */
+      modelHeightMm?: number;
+      /** How separate pieces were coloured (`none` when the plan has no such finding). */
+      pieces?: PieceMode;
+    }
   | { state: 'error'; reason: string };
 
 export interface PartViewerCanvasProps {
@@ -25,6 +35,10 @@ export interface PartViewerCanvasProps {
   cards?: LessonCard[];
   /** Students never get `hold` highlights (a staff hold looks like "preparing" to them). */
   audience?: 'student' | 'staff';
+  /** The plan has the several-pieces finding: colour each piece instead of boxing them. */
+  separatePieces?: boolean;
+  /** Cut the part at this height above the bed (the layer slider); null shows all of it. */
+  cutMm?: number | null;
   onStatus: (status: ViewerStatus) => void;
 }
 
@@ -45,6 +59,8 @@ export default function PartViewerCanvas({
   highlightsUrl,
   cards,
   audience = 'student',
+  separatePieces = false,
+  cutMm = null,
   onStatus,
 }: PartViewerCanvasProps) {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -54,9 +70,27 @@ export default function PartViewerCanvas({
   const focus = usePartFocus();
 
   // Latest values for the long-lived effect below, which must not restart when they change.
-  const latest = useRef({ modelUrl, highlightsUrl, cards, audience, onStatus, focus });
+  const latest = useRef({
+    modelUrl,
+    highlightsUrl,
+    cards,
+    audience,
+    separatePieces,
+    cutMm,
+    onStatus,
+    focus,
+  });
   useEffect(() => {
-    latest.current = { modelUrl, highlightsUrl, cards, audience, onStatus, focus };
+    latest.current = {
+      modelUrl,
+      highlightsUrl,
+      cards,
+      audience,
+      separatePieces,
+      cutMm,
+      onStatus,
+      focus,
+    };
   });
   const { setLinked, focus: focusRequest } = focus;
 
@@ -84,6 +118,7 @@ export default function PartViewerCanvas({
       return;
     }
     sceneRef.current = scene;
+    scene.setCut(latest.current.cutMm);
 
     const observer =
       typeof IntersectionObserver === 'undefined'
@@ -95,8 +130,8 @@ export default function PartViewerCanvas({
 
     (async () => {
       try {
-        const [, fromFile] = await Promise.all([
-          scene.loadModel(latest.current.modelUrl),
+        const [loaded, fromFile] = await Promise.all([
+          scene.loadModel(latest.current.modelUrl, { pieces: latest.current.separatePieces }),
           fetchHighlights(latest.current.highlightsUrl, abort.signal),
         ]);
         if (cancelled) return;
@@ -105,7 +140,13 @@ export default function PartViewerCanvas({
         const shown = merged.filter((h) => drawn.has(h.code));
         setLinked([...drawn]);
         setReady(true);
-        latest.current.onStatus({ state: 'ready', highlights: shown });
+        latest.current.onStatus({
+          state: 'ready',
+          highlights: shown,
+          heights: scene.regionHeights(),
+          modelHeightMm: loaded.height,
+          pieces: loaded.pieces,
+        });
       } catch (error) {
         if (!cancelled) latest.current.onStatus({ state: 'error', reason: String(error) });
       }
@@ -122,12 +163,17 @@ export default function PartViewerCanvas({
     };
   }, [modelKey, highlightsKey, setLinked]);
 
-  // A card or a region was tapped: fly there and pulse it.
+  // The layer slider moved.
+  useEffect(() => {
+    sceneRef.current?.setCut(cutMm);
+  }, [cutMm, ready]);
+
+  // A card, a chip or a region was tapped: fly there and pulse it.
   const { code, nonce, source } = focus;
   useEffect(() => {
     if (!ready || nonce === 0) return;
     sceneRef.current?.focus(code);
-    if (source !== 'card') return;
+    if (source === 'viewer') return;
     const box = containerRef.current?.getBoundingClientRect();
     if (!box) return;
     const visible = Math.min(box.bottom, window.innerHeight) - Math.max(box.top, 0);

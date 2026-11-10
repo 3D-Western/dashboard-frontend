@@ -10,10 +10,8 @@ import { trackScreen } from '@/lib/analytics';
 import { formatGrams, formatPrintTime } from '@/lib/pipeline-state';
 import { settingReasons, settingsDiffer, settingsFromPlan } from '@/lib/pipeline-settings';
 import type { Answer, Plan, StudentSettings, StudentStatus } from '@/types/pipeline';
-import { ChoiceList } from './ChoiceList';
-import { AnalysisDetails, ConsequentialCards, splitLessonCards } from './LessonCards';
 import { PartFocusProvider } from './PartFocus';
-import { PartViewerSlot } from './PartViewerSlot';
+import { ReviewViewer } from './ReviewViewer';
 import { SpecifySettings } from './SpecifySettings';
 
 const ANSWER_HEADLINE: Record<Answer, { text: string; icon: typeof CheckCircle2; tone: string }> = {
@@ -159,7 +157,6 @@ export function ReviewPlan({
 
   const headline = ANSWER_HEADLINE[plan.answer] ?? ANSWER_HEADLINE.works;
   const Headline = headline.icon;
-  const { consequential, rest } = splitLessonCards(plan.lessonCards);
   const choices = useMemo(() => plan.choices ?? [], [plan.choices]);
   const needsChoice = studentStatus === 'needs_choice';
   // Picks for choices that are no longer in this plan are not shown and do not count.
@@ -245,7 +242,7 @@ export function ReviewPlan({
 
   const choicePending = needsChoice && !allPicked;
   const blockedReason = choicePending
-    ? 'Choose an option above first.'
+    ? 'Choose an option under "Needs you" first.'
     : choicesSaving
       ? 'Saving your choice first.'
       : settingsDirty
@@ -284,26 +281,20 @@ export function ReviewPlan({
           <p className="mt-2 text-sm text-muted-foreground">{plan.summary}</p>
         </div>
 
-        <PartViewerSlot
+        <ReviewViewer
+          plan={plan}
           previewUrl={previewUrlOf(plan)}
           modelUrl={modelUrlOf(plan)}
           highlightsUrl={highlightsUrlOf(plan)}
-          highlights={plan.lessonCards}
+          choiceControls={{
+            selected: picked,
+            saving: savingChoice,
+            disabled: confirming,
+            onSelect: handleChoose,
+          }}
         />
 
         <PlanFacts plan={plan} />
-
-        <ConsequentialCards cards={consequential} />
-
-        <ChoiceList
-          choices={choices}
-          selected={picked}
-          saving={savingChoice}
-          disabled={confirming}
-          onSelect={handleChoose}
-        />
-
-        <AnalysisDetails cards={rest} />
 
         <SpecifySettings
           settings={settings}

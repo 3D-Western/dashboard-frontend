@@ -255,8 +255,11 @@ function CitationChip({ citation }: { citation: DisagreeCitation }) {
       aria-label={`${citation.title} (show this card)`}
       onClick={() => {
         const reduced = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
-        card.scrollIntoView?.({ behavior: reduced ? 'auto' : 'smooth', block: 'center' });
+        // Open it first: a lesson that is not the one shown sits hidden until it is selected.
         card.click();
+        // The lesson that opens may be a new element with the same id.
+        const shown = document.getElementById(`lesson-card-${citation.code}`) ?? card;
+        shown.scrollIntoView?.({ behavior: reduced ? 'auto' : 'smooth', block: 'center' });
       }}
     >
       {citation.title}

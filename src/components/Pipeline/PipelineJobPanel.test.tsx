@@ -199,7 +199,7 @@ describe('Review', () => {
   ) =>
     createMockSnapshot({ studentStatus: status, plan: createMockPlan(planOverrides), steps: [] });
 
-  it('shows the answer, consequential cards first, the rest under "How your part was analysed", time and grams', async () => {
+  it('shows the answer, the first lesson in the panel beside the viewer, the others a step away, time and grams', async () => {
     api.getState.mockResolvedValue(reviewSnapshot());
     openStream();
     render(<PipelineJobPanel jobId="job-1" />);
@@ -209,11 +209,13 @@ describe('Review', () => {
     ).toBeInTheDocument();
     expect(screen.getByText(/prints well lying on its back/)).toBeInTheDocument();
 
-    // The consequential card is in the page; the other is hidden until the section opens
-    const upFront = screen.getByRole('region', { name: 'What matters for your part' });
-    expect(within(upFront).getByText('We added supports under the arm')).toBeInTheDocument();
+    // The consequential lesson is open; the other is one arrow away. No accordion any more.
+    const panel = screen.getByRole('complementary', { name: 'About this part' });
+    expect(within(panel).getByText('We added supports under the arm')).toBeInTheDocument();
     expect(screen.queryByText('Small gaps may leave fine strings')).not.toBeInTheDocument();
-    await setup().click(screen.getByRole('button', { name: /how your part was analysed/i }));
+    expect(screen.queryByRole('button', { name: /how your part was analysed/i })).toBeNull();
+    expect(document.getElementById('lesson-card-surface.minor_stringing')).not.toBeNull();
+    await setup().click(within(panel).getByRole('button', { name: 'Next' }));
     expect(await screen.findByText('Small gaps may leave fine strings')).toBeInTheDocument();
 
     expect(screen.getByText('3 h 25 min')).toBeInTheDocument();
@@ -359,10 +361,10 @@ describe('Review', () => {
     render(<PipelineJobPanel jobId="job-1" />);
 
     expect(
-      await screen.findByText('How should we lay your part on the plate?'),
+      await screen.findByRole('heading', { name: 'How should we lay your part on the plate?' }),
     ).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Yes, print this' })).toBeDisabled();
-    expect(screen.getByText('Choose an option above first.')).toBeInTheDocument();
+    expect(screen.getByText('Choose an option under "Needs you" first.')).toBeInTheDocument();
     expect(screen.getByText('Recommended')).toBeInTheDocument();
 
     await user.click(screen.getByRole('radio', { name: /standing up/i }));

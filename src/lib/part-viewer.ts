@@ -4,6 +4,7 @@
 // Nothing here touches three.js or the DOM, so it is cheap to load and easy to test.
 
 import type { LessonCard, Severity } from '@/types/pipeline';
+import { MULTI_PIECE_CODE } from './part-geometry';
 
 /** xmin, ymin, zmin, xmax, ymax, zmax, in the model's own coordinates (millimetres, bed at z = 0). */
 export type Box6 = [number, number, number, number, number, number];
@@ -207,4 +208,9 @@ export function shouldAskBeforeLoading(): boolean {
     navigator as Navigator & { connection?: { saveData?: boolean; effectiveType?: string } }
   ).connection;
   return Boolean(connection?.saveData) || connection?.effectiveType === 'slow-2g';
+}
+
+/** Whether the plan has the several-pieces finding, so the viewer colours each piece. */
+export function hasSeparatePieces(highlights: { code: string }[] | undefined): boolean {
+  return (highlights ?? []).some((h) => h.code === MULTI_PIECE_CODE);
 }
