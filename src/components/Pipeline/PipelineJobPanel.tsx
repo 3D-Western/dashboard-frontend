@@ -270,7 +270,9 @@ export function PipelineJobPanel({
           <WatchItPrint jobId={jobId} />
         )}
         {/* Ready for pickup: where and what, nothing to do or confirm (P-136) */}
-        {status === 'ready_for_pickup' && pickup && <PickupCard pickup={pickup} />}
+        {status === 'ready_for_pickup' && pickup && (
+          <PickupCard pickup={pickup} modelUrl={modelUrlOf(plan)} />
+        )}
         {/* Rating: the next time the student is here (it implies they have the print) */}
         {(status === 'collected' || status === 'ready_for_pickup') && (
           <AfterPickup
