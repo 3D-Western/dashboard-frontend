@@ -19,10 +19,13 @@ import type { QualityReason } from '@/types/pipeline';
 export function QualityReport({
   jobId,
   onDone,
+  ratingSaved = false,
 }: {
   jobId: string;
   /** Sent, or skipped: either way this step is over. */
   onDone: () => void;
+  /** The thumbs-down is already saved (the rate-first gate): say so, and word the skip as a skip. */
+  ratingSaved?: boolean;
 }) {
   const [reasons, setReasons] = useState<QualityReason[]>([]);
   const [text, setText] = useState('');
@@ -60,6 +63,7 @@ export function QualityReport({
           Help improve our system for everyone by sharing what was off. It takes ten seconds, and
           you can skip it.
         </p>
+        {ratingSaved && <p className="mt-1 text-sm text-muted-foreground">Your rating is saved.</p>}
       </div>
 
       <div className="flex flex-wrap gap-2" role="group" aria-label="What was off?">
@@ -110,7 +114,7 @@ export function QualityReport({
           onClick={onDone}
           className="w-full sm:w-auto"
         >
-          No thanks
+          {ratingSaved ? 'Skip this step' : 'No thanks'}
         </Button>
       </div>
     </div>

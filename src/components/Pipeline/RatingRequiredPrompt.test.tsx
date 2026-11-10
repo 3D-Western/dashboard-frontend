@@ -52,10 +52,34 @@ describe('RatingRequiredPrompt', () => {
     await user.click(screen.getByRole('button', { name: 'Not great' }));
     expect(await screen.findByText(/help improve our system for everyone/i)).toBeVisible();
     expect(onDone).not.toHaveBeenCalled();
-    await user.click(screen.getByRole('button', { name: 'No thanks' }));
+    await user.click(screen.getByRole('button', { name: 'Skip this step' }));
 
     expect(api.reportQuality).not.toHaveBeenCalled();
     expect(onDone).toHaveBeenCalledTimes(1);
+  });
+
+  it('has no way past the question without a saved rating: a failed save keeps asking, Escape does nothing', async () => {
+    api.rate.mockRejectedValue(new Error('offline'));
+    const onDone = vi.fn();
+    render(<RatingRequiredPrompt prints={[prints[0]]} onDone={onDone} />);
+    const user = setup();
+
+    await user.click(screen.getByRole('button', { name: 'Not great' }));
+    await user.keyboard('{Escape}');
+
+    expect(await screen.findByRole('button', { name: 'Not great' })).toBeEnabled();
+    expect(screen.queryByRole('button', { name: 'Skip this step' })).not.toBeInTheDocument();
+    expect(onDone).not.toHaveBeenCalled();
+  });
+
+  it('says on the quality step that the thumbs-down is already saved', async () => {
+    render(<RatingRequiredPrompt prints={[prints[0]]} onDone={vi.fn()} />);
+    const user = setup();
+
+    await user.click(screen.getByRole('button', { name: 'Not great' }));
+
+    expect(api.rate).toHaveBeenCalledWith('a', 'down');
+    expect(await screen.findByText('Your rating is saved.')).toBeVisible();
   });
 
   it('sends the quality report for the print that was rated down, then carries on', async () => {

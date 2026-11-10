@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { AlertTriangle, CheckCircle2, Clock, Loader2, Scale, Wrench } from 'lucide-react';
 import { toast } from 'sonner';
 import { PlanChangedError, pipelineApi } from '@/api/client/pipeline';
@@ -83,6 +83,26 @@ export function PlanFacts({ plan }: { plan: Plan }) {
   );
 }
 
+/**
+ * The student's picks, kept per job outside the component. A pick makes the pipeline write a new
+ * plan, and the screen may remount for it (PipelineJobPanel keys the review by plan id); the picks
+ * made on the other cards must still be there. Only choices that still exist in the plan on screen
+ * are used, matched by choice id.
+ */
+const pickMemory = new Map<string, Record<string, string>>();
+
+function picksFor(jobId: string, choices: Plan['choices']): Record<string, string> {
+  const remembered = pickMemory.get(jobId) ?? {};
+  const kept: Record<string, string> = {};
+  for (const choice of choices ?? []) {
+    const optionId = remembered[choice.choiceId];
+    if (optionId && choice.options.some((option) => option.optionId === optionId)) {
+      kept[choice.choiceId] = optionId;
+    }
+  }
+  return kept;
+}
+
 interface ReviewPlanProps {
   jobId: string;
   plan: Plan;
@@ -122,8 +142,12 @@ export function ReviewPlan({
     trackScreen('review');
   }, []);
 
-  const [picked, setPicked] = useState<Record<string, string>>({});
-  const [savingChoice, setSavingChoice] = useState<string | null>(null);
+  const [pickedRaw, setPickedRaw] = useState<Record<string, string>>(() =>
+    picksFor(jobId, plan.choices),
+  );
+  // Several picks can be saving at once (one per card); the last one started shows the spinner.
+  const [savingChoices, setSavingChoices] = useState<string[]>([]);
+  const savingChoice = savingChoices[savingChoices.length - 1] ?? null;
   const [confirming, setConfirming] = useState(false);
   const [applying, setApplying] = useState(false);
   // The student's edits belong to the plan they were made on; a new plan starts from its own.
@@ -138,26 +162,54 @@ export function ReviewPlan({
   const { consequential, rest } = splitLessonCards(plan.lessonCards);
   const choices = plan.choices ?? [];
   const needsChoice = studentStatus === 'needs_choice';
+  // Picks for choices that are no longer in this plan are not shown and do not count.
+  const picked = useMemo(() => {
+    const kept: Record<string, string> = {};
+    for (const choice of choices) {
+      const optionId = pickedRaw[choice.choiceId];
+      if (optionId) kept[choice.choiceId] = optionId;
+    }
+    return kept;
+  }, [choices, pickedRaw]);
+  // Picking is the answer: once every choice on screen has one, the yes is open (the pipeline may
+  // still be writing the plan that says so).
+  const allPicked = choices.length > 0 && choices.every((choice) => picked[choice.choiceId]);
+  const choicesSaving = savingChoices.length > 0;
+
+  function setPicks(update: (previous: Record<string, string>) => Record<string, string>) {
+    setPickedRaw((previous) => {
+      const next = update(previous);
+      pickMemory.set(jobId, next);
+      return next;
+    });
+  }
 
   async function handleChoose(choiceId: string, optionId: string) {
-    setPicked((previous) => ({ ...previous, [choiceId]: optionId }));
-    setSavingChoice(choiceId);
+    setPicks((previous) => ({ ...previous, [choiceId]: optionId }));
+    setSavingChoices((previous) => [...previous, choiceId]);
     try {
       await pipelineApi.choose(jobId, { planId: plan.planId, choiceId, optionId });
       onStudentChange();
     } catch (error) {
       if (error instanceof PlanChangedError) {
-        setPicked({});
+        // Only the pick that was refused is dropped; the others were taken.
+        setPicks((previous) => {
+          const { [choiceId]: _dropped, ...kept } = previous;
+          return kept;
+        });
         onPlanChanged(error.plan);
       } else {
-        setPicked((previous) => {
+        setPicks((previous) => {
           const { [choiceId]: _dropped, ...kept } = previous;
           return kept;
         });
         toast.error("Couldn't save your choice. Please try again.");
       }
     } finally {
-      setSavingChoice(null);
+      setSavingChoices((previous) => {
+        const at = previous.indexOf(choiceId);
+        return at < 0 ? previous : previous.filter((_, index) => index !== at);
+      });
     }
   }
 
@@ -178,6 +230,7 @@ export function ReviewPlan({
     setConfirming(true);
     try {
       await pipelineApi.confirm(jobId, plan.planId);
+      pickMemory.delete(jobId);
       onConfirmed();
     } catch (error) {
       if (error instanceof PlanChangedError) {
@@ -190,13 +243,16 @@ export function ReviewPlan({
     }
   }
 
-  const blockedReason = needsChoice
+  const choicePending = needsChoice && !allPicked;
+  const blockedReason = choicePending
     ? 'Choose an option above first.'
-    : settingsDirty
-      ? 'Update your plan with your new settings first.'
-      : inputsPending
-        ? 'Saving your changes first, then your plan updates.'
-        : null;
+    : choicesSaving
+      ? 'Saving your choice first.'
+      : settingsDirty
+        ? 'Update your plan with your new settings first.'
+        : inputsPending
+          ? 'Saving your changes first, then your plan updates.'
+          : null;
 
   return (
     <PartFocusProvider>
@@ -265,7 +321,11 @@ export function ReviewPlan({
             type="button"
             size="lg"
             disabled={
-              confirming || studentStatus !== 'needs_confirmation' || settingsDirty || inputsPending
+              confirming ||
+              choicesSaving ||
+              !(studentStatus === 'needs_confirmation' || (needsChoice && allPicked)) ||
+              settingsDirty ||
+              inputsPending
             }
             aria-busy={confirming}
             data-track="confirm_print"

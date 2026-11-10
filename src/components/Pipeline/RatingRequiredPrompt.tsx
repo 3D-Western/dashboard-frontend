@@ -56,7 +56,7 @@ export function RatingRequiredPrompt({
           <h2 id="rating-required-heading" className="sr-only">
             Report print quality
           </h2>
-          <QualityReport jobId={print.jobId} onDone={next} />
+          <QualityReport jobId={print.jobId} onDone={next} ratingSaved />
         </>
       ) : (
         <>
