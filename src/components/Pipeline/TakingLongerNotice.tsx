@@ -6,26 +6,43 @@ import { Clock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Routes } from '@/lib/routes';
 
-/** How long a part may be "preparing" before the student is told it is taking longer than usual (P-194). */
-export const TAKING_LONGER_AFTER_MS = 90_000;
+/** No new step for this long: the student is told it is taking longer than usual (P-194). Real slicing often runs past 90 s, so a busy run never trips it. */
+export const TAKING_LONGER_STALL_MS = 120_000;
+/** Whatever the steps are doing, preparing for this long in total is told too. */
+export const TAKING_LONGER_TOTAL_MS = 360_000;
+
+export interface TakingLongerTimes {
+  stallMs?: number;
+  totalMs?: number;
+}
 
 /**
- * True once `afterMs` have passed since this was first shown. The count starts when the preparing
- * screen appears: it is a courtesy to the student, not a measurement, so a reload simply starts it again.
+ * True once no new step event has arrived for `stallMs`, or `totalMs` have passed in all, whichever
+ * comes first. `activity` is anything that changes with each step event (e.g. a count of them). The
+ * count starts when the preparing screen appears: it is a courtesy to the student, not a measurement,
+ * so a reload simply starts it again.
  */
 export function useTakingLonger(
   active: boolean,
-  afterMs: number = TAKING_LONGER_AFTER_MS,
+  activity: unknown = 0,
+  { stallMs = TAKING_LONGER_STALL_MS, totalMs = TAKING_LONGER_TOTAL_MS }: TakingLongerTimes = {},
 ): boolean {
   const [late, setLate] = useState(false);
+  // The total clock: runs from when preparing began, untouched by step events.
   useEffect(() => {
     if (!active) return;
-    const timer = setTimeout(() => setLate(true), afterMs);
+    const timer = setTimeout(() => setLate(true), totalMs);
     return () => {
       clearTimeout(timer);
       setLate(false); // preparing again later (after an edit) starts the count again
     };
-  }, [active, afterMs]);
+  }, [active, totalMs]);
+  // The stall clock: every new step event starts it over.
+  useEffect(() => {
+    if (!active) return;
+    const timer = setTimeout(() => setLate(true), stallMs);
+    return () => clearTimeout(timer);
+  }, [active, activity, stallMs]);
   return active && late;
 }
 

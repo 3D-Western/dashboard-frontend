@@ -60,15 +60,19 @@ beforeEach(() => {
 });
 
 describe('Preparing your print', () => {
-  it('lists each step with its teaching line as it streams in', async () => {
+  it("shows only the plain checks as a gentle carousel, never the pipeline's internals", async () => {
     api.getState.mockResolvedValue(
       createMockSnapshot({
         steps: [
+          createMockStep({ step: 'screening.ai_pass', title: 'Asking the AI', state: 'done' }),
           createMockStep({
-            step: 'a',
-            title: 'Checking your file',
-            teaching: 'We look for holes.',
+            step: 'intake.load_mesh',
+            title: 'Reading the mesh',
+            teaching: 'We read the triangles.',
+            state: 'done',
           }),
+          createMockStep({ step: 'checks.thin_walls', title: 'Thin walls', state: 'done' }),
+          createMockStep({ step: 'tweaks.settings', title: 'Checking for useful setting tweaks' }),
         ],
       }),
     );
@@ -78,29 +82,34 @@ describe('Preparing your print', () => {
     expect(
       await screen.findByRole('heading', { name: 'Preparing your print' }),
     ).toBeInTheDocument();
-    expect(screen.getByText('We look for holes.')).toBeInTheDocument();
+    expect(screen.getByText('Opening your file')).toBeInTheDocument();
+    expect(screen.getByText('We read the triangles.')).toBeInTheDocument();
+    for (const hidden of ['Asking the AI', 'Thin walls', /setting tweaks/i, 'Reading the mesh']) {
+      expect(screen.queryByText(hidden)).not.toBeInTheDocument();
+    }
 
     live.emit(
       createMockEvent({
         seq: 1,
-        step: createMockStep({
-          step: 'b',
-          title: 'Measuring your part',
-          teaching: 'Thin walls decide how it prints.',
-          state: 'started',
-        }),
+        step: createMockStep({ step: 'verify.something', title: 'Verifying', state: 'started' }),
       }),
     );
-
-    expect(await screen.findByText('Measuring your part')).toBeInTheDocument();
-    expect(screen.getByText('Thin walls decide how it prints.')).toBeInTheDocument();
+    live.emit(
+      createMockEvent({
+        seq: 2,
+        step: createMockStep({ step: 'checks.units', title: 'Units', state: 'done' }),
+      }),
+    );
+    await waitFor(() => expect(screen.getByTestId('preparing-progress')).toBeInTheDocument());
+    expect(screen.queryByText('Verifying')).not.toBeInTheDocument();
     expect(screen.getByText('Live')).toBeInTheDocument();
+    expect(screen.getByTestId('preparing-stage')).toHaveAttribute('data-viewer', 'plain'); // no WebGL in tests
   });
 
   it('says honestly that it is taking longer than usual, lets the student leave, and goes away with the plan (P-194)', async () => {
     api.getState.mockResolvedValue(createMockSnapshot());
     const live = openStream();
-    render(<PipelineJobPanel jobId="job-1" takingLongerAfterMs={60} />);
+    render(<PipelineJobPanel jobId="job-1" takingLongerAfter={{ stallMs: 60, totalMs: 5000 }} />);
     await screen.findByRole('heading', { name: 'Preparing your print' });
 
     const notice = await screen.findByTestId('taking-longer');
@@ -126,6 +135,26 @@ describe('Preparing your print', () => {
     );
     await screen.findByRole('button', { name: /yes, print this/i });
     expect(screen.queryByTestId('taking-longer')).not.toBeInTheDocument();
+  });
+
+  it('does not say it is taking longer while steps keep arriving, until the total limit', async () => {
+    api.getState.mockResolvedValue(createMockSnapshot());
+    const live = openStream();
+    render(<PipelineJobPanel jobId="job-1" takingLongerAfter={{ stallMs: 400, totalMs: 900 }} />);
+    await screen.findByRole('heading', { name: 'Preparing your print' });
+    for (let i = 1; i <= 3; i++) {
+      await new Promise((r) => setTimeout(r, 200));
+      act(() => {
+        live.emit(
+          createMockEvent({
+            seq: i,
+            step: createMockStep({ step: `slice.s${i}`, title: `s${i}`, state: 'done' }),
+          }),
+        );
+      });
+    }
+    expect(screen.queryByTestId('taking-longer')).not.toBeInTheDocument(); // 600 ms in, last step 0 ms ago
+    expect(await screen.findByTestId('taking-longer')).toBeInTheDocument(); // total limit passes
   });
 
   it('shows nothing extra for a normal wait', async () => {

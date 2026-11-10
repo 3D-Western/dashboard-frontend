@@ -443,6 +443,7 @@ export function PrintFlow({ mockMode = false }: { mockMode?: boolean }) {
             <PipelineJobPanel
               jobId={uploadJobId}
               jobName={file.name}
+              file={file}
               stepsOnly={!answered && !reviewShown}
               answersRevision={answersRevision}
               inputsPending={inputsPending}
@@ -454,17 +455,7 @@ export function PrintFlow({ mockMode = false }: { mockMode?: boolean }) {
               <h2 id="uploading-heading" className="text-xl">
                 Preparing your print
               </h2>
-              <PreparingSteps
-                steps={[
-                  {
-                    step: 'upload',
-                    title: 'Uploading your file',
-                    teaching:
-                      'Your file goes to safe storage first. Checking starts the moment it arrives.',
-                    state: 'started',
-                  },
-                ]}
-              />
+              <PreparingSteps steps={[]} file={file} />
             </section>
           )}
         </div>

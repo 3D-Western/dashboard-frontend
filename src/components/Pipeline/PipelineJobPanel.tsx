@@ -19,7 +19,7 @@ import { DisagreePanel } from './DisagreePanel';
 import { PickupCard } from './PickupCard';
 import { PartViewerSlot } from './PartViewerSlot';
 import { PreparingSteps } from './PreparingSteps';
-import { TAKING_LONGER_AFTER_MS, TakingLongerNotice, useTakingLonger } from './TakingLongerNotice';
+import { TakingLongerNotice, useTakingLonger, type TakingLongerTimes } from './TakingLongerNotice';
 import { WatchItPrint } from './WatchItPrint';
 import { highlightsUrlOf, modelUrlOf, PlanFacts, previewUrlOf, ReviewPlan } from './ReviewPlan';
 
@@ -64,8 +64,10 @@ interface PipelineJobPanelProps {
   actionRereadMs?: number;
   /** Test hook: how quickly a broken stream is retried. */
   retryBaseMs?: number;
-  /** Test hook: how long "preparing" lasts before the student is told it is taking longer than usual. */
-  takingLongerAfterMs?: number;
+  /** Test hook: when the student is told preparing is taking longer than usual (stall / total). */
+  takingLongerAfter?: TakingLongerTimes;
+  /** The student's own file, when still in memory (new-print screen): drawn greyed while preparing. */
+  file?: File | null;
 }
 
 /**
@@ -85,7 +87,8 @@ export function PipelineJobPanel({
   onStatusChange,
   actionRereadMs = ACTION_REREAD_MS,
   retryBaseMs,
-  takingLongerAfterMs = TAKING_LONGER_AFTER_MS,
+  takingLongerAfter,
+  file = null,
 }: PipelineJobPanelProps) {
   const pipeline = usePipelineJob(jobId, { retryBaseMs, initialSnapshot });
   const { plan, steps, message, loaded, connection, error } = pipeline;
@@ -94,7 +97,8 @@ export function PipelineJobPanel({
   // Preparing that goes on (a big part, or one the crew is looking at: the student cannot tell which) is said out loud (P-194).
   const takingLonger = useTakingLonger(
     status === null || status === 'preparing',
-    takingLongerAfterMs,
+    `${steps.length}:${steps.filter((step) => step.state !== 'started').length}`,
+    takingLongerAfter,
   );
 
   useEffect(() => {
@@ -207,9 +211,9 @@ export function PipelineJobPanel({
         <LiveBadge connection={connection} />
       </div>
       <p className="text-sm text-muted-foreground">
-        We check your part the way a print-farm expert would. Here is what is happening, and why.
+        We are getting your part ready, the way a print-farm expert would.
       </p>
-      <PreparingSteps steps={steps} />
+      <PreparingSteps steps={steps} file={file} modelUrl={modelUrlOf(plan)} />
       {message && <p className="text-sm text-muted-foreground">{message}</p>}
       {takingLonger && <TakingLongerNotice />}
     </section>
