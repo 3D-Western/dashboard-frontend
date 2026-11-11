@@ -48,26 +48,22 @@ export function PipelineJobView({
     />
   );
 
-  if (full) {
-    return (
-      <div className="sf">
-        <h1 className="sr-only">{job.name}</h1>
-        <div className="sf-work">{panel}</div>
-        <ReportProblem jobId={job.id} />
-      </div>
-    );
-  }
-
+  // One tree for both layouts, so the panel (and the story in it) is never remounted when the page
+  // changes between the full-height views and the ordinary job page.
   return (
-    <div className="mx-auto w-full max-w-5xl space-y-6 p-6 max-md:pr-11">
-      <JobDetailHeader job={{ ...job, studentStatus: status }} />
+    <div className={full ? 'sf' : 'mx-auto w-full max-w-5xl space-y-6 p-6 max-md:pr-11'}>
+      {full ? (
+        <h1 className="sr-only">{job.name}</h1>
+      ) : (
+        <JobDetailHeader job={{ ...job, studentStatus: status }} />
+      )}
 
-      {panel}
+      <div className={full ? 'sf-work' : undefined}>{panel}</div>
 
-      {status === 'collected' && <FeatureProjectCta jobName={job.name} jobId={job.id} />}
+      {!full && status === 'collected' && <FeatureProjectCta jobName={job.name} jobId={job.id} />}
 
       {/* Phones: timeline first, then details. Desktop: details left, timeline right. */}
-      <div className="grid gap-6 xl:grid-cols-3">
+      <div className="grid gap-6 xl:grid-cols-3" hidden={full}>
         <section
           aria-labelledby="status-history-heading"
           className="rounded-lg border bg-card xl:col-start-3 xl:row-start-1"

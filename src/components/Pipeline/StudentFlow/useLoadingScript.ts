@@ -63,8 +63,8 @@ export function useLoadingScript({
   const [facts] = useState(() => orderFacts(loadSeenFacts()));
   const pool = useMemo(() => {
     const full = buildPool(steps, dims, purpose, facts);
-    // What the checks found goes in the popups; the card on the side is for learning.
-    return { ...full, findings: [] };
+    // What the checks found and the plain checks go in the popups; the card on the side is for learning.
+    return { ...full, findings: [], plain: [] };
   }, [steps, dims, purpose, facts]);
 
   const [shown, setShown] = useState<ShownEvent[]>([]);

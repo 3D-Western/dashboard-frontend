@@ -328,7 +328,12 @@
       color-mix(in srgb, var(--sf-bg) 55%, transparent) 80%
     );
 }
-.sf > *:not(.sf-bgv) {
+.sf-top,
+.sf-in,
+.sf-bar,
+.sf-sum,
+.sf-work,
+.sf-sp {
   position: relative;
   z-index: 1;
 }
@@ -1647,5 +1652,20 @@
 @container sf (min-aspect-ratio: 1/1) and (min-width: 700px) {
   .sf-clamp {
     -webkit-line-clamp: 12;
+  }
+}
+
+.sf-sumtext {
+  display: none;
+}
+@container sf (min-width: 700px) {
+  .sf-sumtext {
+    display: block;
+    font-size: 14.5px;
+    margin: 4px 0 6px;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 3;
+    overflow: hidden;
   }
 }

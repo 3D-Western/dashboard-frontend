@@ -59,8 +59,37 @@ beforeEach(() => {
   vi.unstubAllEnvs();
 });
 
+/** Plays the paced loading view to its end (it never ends before the analysis is really done). */
+async function playLoading(ms = 40_000) {
+  // In small steps, so React commits (and the loading view reads its props) between them
+  for (let done = 0; done < ms; done += 500) {
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(500);
+    });
+  }
+}
+
+/** The story card on show (the others stay in the page, hidden, so links to them work). */
+const shownCard = () => screen.getAllByTestId('story-card').find((c) => !c.hasAttribute('hidden'))!;
+
+function useFakeClock() {
+  vi.useFakeTimers({
+    shouldAdvanceTime: true,
+    toFake: [
+      'setTimeout',
+      'clearTimeout',
+      'setInterval',
+      'clearInterval',
+      'Date',
+      'requestAnimationFrame',
+      'cancelAnimationFrame',
+      'performance',
+    ],
+  });
+}
+
 describe('Preparing your print', () => {
-  it("shows only the plain checks as a gentle carousel, never the pipeline's internals", async () => {
+  it("shows the loading view with a status line, a learning card and what finished, never the pipeline's internals", async () => {
     api.getState.mockResolvedValue(
       createMockSnapshot({
         steps: [
@@ -76,72 +105,105 @@ describe('Preparing your print', () => {
         ],
       }),
     );
-    const live = openStream();
+    openStream();
     render(<PipelineJobPanel jobId="job-1" />);
 
-    expect(
-      await screen.findByRole('heading', { name: 'Preparing your print' }),
-    ).toBeInTheDocument();
-    expect(screen.getByText('Opening your file')).toBeInTheDocument();
-    expect(screen.getByText('We read the triangles.')).toBeInTheDocument();
+    expect(await screen.findByTestId('loading-view')).toBeInTheDocument();
+    expect(screen.getByTestId('loading-status')).not.toBeEmpty();
+    // The first finished plain check is a popup; the learning card is on the side
+    expect(await screen.findByText('We read the triangles.')).toBeInTheDocument();
+    expect(await screen.findByTestId('loading-card')).toBeInTheDocument();
     for (const hidden of ['Asking the AI', 'Thin walls', /setting tweaks/i, 'Reading the mesh']) {
       expect(screen.queryByText(hidden)).not.toBeInTheDocument();
     }
+    expect(screen.getByTestId('loading-stage')).toHaveAttribute('data-viewer', 'plain'); // no WebGL in tests
+    // Nothing is found yet, so there are no pins or findings
+    expect(screen.queryByText('Found on your part')).not.toBeInTheDocument();
+  });
 
-    live.emit(
-      createMockEvent({
-        seq: 1,
-        step: createMockStep({ step: 'verify.something', title: 'Verifying', state: 'started' }),
-      }),
-    );
-    live.emit(
-      createMockEvent({
-        seq: 2,
-        step: createMockStep({ step: 'checks.units', title: 'Units', state: 'done' }),
-      }),
-    );
-    await waitFor(() => expect(screen.getByTestId('preparing-progress')).toBeInTheDocument());
-    expect(screen.queryByText('Verifying')).not.toBeInTheDocument();
-    expect(screen.getByText('Live')).toBeInTheDocument();
-    expect(screen.getByTestId('preparing-stage')).toHaveAttribute('data-viewer', 'plain'); // no WebGL in tests
+  it('shows at most two popups, and a real finding with its number', async () => {
+    useFakeClock();
+    try {
+      api.getState.mockResolvedValue(
+        createMockSnapshot({
+          steps: [
+            createMockStep({ step: 'intake.load_mesh', state: 'done' }),
+            createMockStep({
+              step: 'checks.bodies',
+              state: 'done',
+              lesson: {
+                code: 'pieces.several',
+                title: 'Your file has two separate pieces',
+                body: 'Each prints on its own.',
+              },
+            }),
+            createMockStep({ step: 'checks.units', state: 'done' }),
+          ],
+        }),
+      );
+      openStream();
+      render(<PipelineJobPanel jobId="job-1" />);
+      await screen.findByTestId('loading-view');
+      await playLoading(2000);
+      await playLoading(3500);
+      await playLoading(3500);
+      await playLoading(6000);
+
+      const popups = screen.getByTestId('loading-popups');
+      expect(popups.querySelectorAll('li').length).toBeLessThanOrEqual(2);
+      // ...and the finding was shown at some point, numbered 1
+      const log = screen.getByRole('button', { name: /History/ });
+      await setup().click(log);
+      expect(
+        await screen.findByText(/Found on your part: Your file has two separate pieces/),
+      ).toBeInTheDocument();
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it('says honestly that it is taking longer than usual, lets the student leave, and goes away with the plan (P-194)', async () => {
-    api.getState.mockResolvedValue(createMockSnapshot());
-    const live = openStream();
-    render(<PipelineJobPanel jobId="job-1" takingLongerAfter={{ stallMs: 60, totalMs: 5000 }} />);
-    await screen.findByRole('heading', { name: 'Preparing your print' });
+    useFakeClock();
+    try {
+      api.getState.mockResolvedValue(createMockSnapshot());
+      const live = openStream();
+      render(<PipelineJobPanel jobId="job-1" takingLongerAfter={{ stallMs: 60, totalMs: 5000 }} />);
+      await screen.findByTestId('loading-view');
 
-    const notice = await screen.findByTestId('taking-longer');
-    expect(within(notice).getByText(/taking longer than usual/i)).toBeInTheDocument();
-    expect(within(notice).getByText(/do not need to wait here/i)).toBeInTheDocument();
-    expect(within(notice).getByRole('link', { name: 'Back to my jobs' })).toHaveAttribute(
-      'href',
-      '/dashboard/jobs',
-    );
-    expect(within(notice).getByRole('link', { name: 'Start another upload' })).toHaveAttribute(
-      'href',
-      '/dashboard/jobs/print/new',
-    );
-    expect(notice.textContent).not.toMatch(/review|screen|hold|crew|staff/i); // a held part looks like a slow one (P-43)
+      const notice = await screen.findByTestId('taking-longer');
+      expect(within(notice).getByText(/taking longer than usual/i)).toBeInTheDocument();
+      expect(within(notice).getByText(/do not need to wait here/i)).toBeInTheDocument();
+      expect(within(notice).getByRole('link', { name: 'Back to my jobs' })).toHaveAttribute(
+        'href',
+        '/dashboard/jobs',
+      );
+      expect(within(notice).getByRole('link', { name: 'Start another upload' })).toHaveAttribute(
+        'href',
+        '/dashboard/jobs/print/new',
+      );
+      expect(notice.textContent).not.toMatch(/review|screen|hold|crew|staff/i); // a held part looks like a slow one (P-43)
 
-    live.emit(
-      createMockEvent({
-        seq: 1,
-        type: 'plan',
-        studentStatus: 'needs_confirmation',
-        plan: createMockPlan(),
-      }),
-    );
-    await screen.findByRole('button', { name: /yes, print this/i });
-    expect(screen.queryByTestId('taking-longer')).not.toBeInTheDocument();
+      live.emit(
+        createMockEvent({
+          seq: 1,
+          type: 'plan',
+          studentStatus: 'needs_confirmation',
+          plan: createMockPlan(),
+        }),
+      );
+      await playLoading();
+      await screen.findByTestId('story-view');
+      expect(screen.queryByTestId('taking-longer')).not.toBeInTheDocument();
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it('does not say it is taking longer while steps keep arriving, until the total limit', async () => {
     api.getState.mockResolvedValue(createMockSnapshot());
     const live = openStream();
     render(<PipelineJobPanel jobId="job-1" takingLongerAfter={{ stallMs: 400, totalMs: 900 }} />);
-    await screen.findByRole('heading', { name: 'Preparing your print' });
+    await screen.findByTestId('loading-view');
     for (let i = 1; i <= 3; i++) {
       await new Promise((r) => setTimeout(r, 200));
       act(() => {
@@ -161,26 +223,38 @@ describe('Preparing your print', () => {
     api.getState.mockResolvedValue(createMockSnapshot());
     openStream();
     render(<PipelineJobPanel jobId="job-1" />);
-    await screen.findByRole('heading', { name: 'Preparing your print' });
+    await screen.findByTestId('loading-view');
     expect(screen.queryByTestId('taking-longer')).not.toBeInTheDocument();
   });
 
-  it('turns into the review the moment the plan arrives', async () => {
-    api.getState.mockResolvedValue(createMockSnapshot());
-    const live = openStream();
-    render(<PipelineJobPanel jobId="job-1" />);
-    await screen.findByRole('heading', { name: 'Preparing your print' });
+  it('ends only when the analysis is really done, then turns into the story in place', async () => {
+    useFakeClock();
+    try {
+      api.getState.mockResolvedValue(createMockSnapshot());
+      const live = openStream();
+      render(<PipelineJobPanel jobId="job-1" />);
+      await screen.findByTestId('loading-view');
 
-    live.emit(
-      createMockEvent({
-        seq: 1,
-        type: 'plan',
-        studentStatus: 'needs_confirmation',
-        plan: createMockPlan(),
-      }),
-    );
+      // Plenty of time passes, but the analysis is not done: still loading
+      await playLoading(60_000);
+      expect(screen.getByTestId('loading-view')).toBeInTheDocument();
+      expect(screen.queryByTestId('story-view')).not.toBeInTheDocument();
 
-    expect(await screen.findByRole('button', { name: 'Yes, print this' })).toBeInTheDocument();
+      live.emit(
+        createMockEvent({
+          seq: 1,
+          type: 'plan',
+          studentStatus: 'needs_confirmation',
+          plan: createMockPlan(),
+        }),
+      );
+      await playLoading();
+
+      expect(await screen.findByTestId('story-view')).toBeInTheDocument();
+      expect(screen.queryByTestId('loading-view')).not.toBeInTheDocument();
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it('offers a retry when the job cannot be loaded at all', async () => {
@@ -192,42 +266,71 @@ describe('Preparing your print', () => {
   });
 });
 
-describe('Review', () => {
+describe('The story and the summary', () => {
   const reviewSnapshot = (
     planOverrides = {},
     status: 'needs_confirmation' | 'needs_choice' = 'needs_confirmation',
   ) =>
     createMockSnapshot({ studentStatus: status, plan: createMockPlan(planOverrides), steps: [] });
+  // A student who opens a job that is still in review gets the story at once.
+  const renderStory = (status: 'needs_confirmation' | 'needs_choice' = 'needs_confirmation') =>
+    render(<PipelineJobPanel jobId="job-1" initialStatus={status} actionRereadMs={20} />);
+  const toSummary = async (user: ReturnType<typeof setup>) =>
+    user.click(await screen.findByRole('button', { name: 'Skip to summary' }));
 
-  it('shows the answer, the first lesson in the panel beside the viewer, the others a step away, time and grams', async () => {
-    api.getState.mockResolvedValue(reviewSnapshot());
-    openStream();
-    render(<PipelineJobPanel jobId="job-1" />);
-
-    expect(
-      await screen.findByRole('heading', { name: /print, with a few automatic adjustments/i }),
-    ).toBeInTheDocument();
-    expect(screen.getByText(/prints well lying on its back/)).toBeInTheDocument();
-
-    // The consequential lesson is open; the other is one arrow away. No accordion any more.
-    const panel = screen.getByRole('complementary', { name: 'About this part' });
-    expect(within(panel).getByText('We added supports under the arm')).toBeInTheDocument();
-    expect(screen.queryByText('Small gaps may leave fine strings')).not.toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: /how your part was analysed/i })).toBeNull();
-    expect(document.getElementById('lesson-card-surface.minor_stringing')).not.toBeNull();
-    await setup().click(within(panel).getByRole('button', { name: 'Next' }));
-    expect(await screen.findByText('Small gaps may leave fine strings')).toBeInTheDocument();
-
-    expect(screen.getByText('3 h 25 min')).toBeInTheDocument();
-    expect(screen.getByText('42 g')).toBeInTheDocument();
-    expect(screen.getByAltText(/preview of your part/i)).toHaveAttribute('src', '/preview.png');
-  });
-
-  it('keeps "Specify settings" closed, prefilled with the pipeline choices and its reasons', async () => {
+  it('steps through cards tagged by what they are, then the summary with time and grams', async () => {
     api.getState.mockResolvedValue(reviewSnapshot());
     openStream();
     const user = setup();
-    render(<PipelineJobPanel jobId="job-1" />);
+    renderStory();
+
+    await screen.findByTestId('story-view');
+    const first = shownCard();
+    expect(within(first).getByText('Handled for you')).toBeInTheDocument();
+    expect(within(first).getByText('We added supports under the arm')).toBeInTheDocument();
+    expect(within(first).getByText('1 of 3')).toBeInTheDocument();
+    // The second card is in the page (for links) but not shown until the student steps to it
+    expect(document.getElementById('lesson-card-surface.minor_stringing')).toHaveAttribute(
+      'hidden',
+    );
+    await user.click(within(first).getByRole('button', { name: 'Next' }));
+    const second = shownCard();
+    expect(within(second).getByText('Worth knowing')).toBeInTheDocument();
+    expect(within(second).getByText('Small gaps may leave fine strings')).toBeInTheDocument();
+
+    await user.click(within(second).getByRole('button', { name: 'Summary' }));
+    const summary = screen.getByTestId('story-summary');
+    expect(summary).toBeVisible();
+    expect(within(summary).getByText('3 h 25 min · 42 g')).toBeInTheDocument();
+    expect(within(summary).getByText('Handled for you')).toBeInTheDocument();
+    expect(within(summary).getByText('Worth knowing')).toBeInTheDocument();
+    expect(within(summary).getByRole('button', { name: 'Yes, print this' })).toBeEnabled();
+    // The pipeline's preview image stands in until the 3D view is up
+    expect(screen.getByAltText(/preview of your part/i)).toHaveAttribute('src', '/preview.png');
+  });
+
+  it('leaves out anything a staff hold marked: a held part looks like preparing to the student (P-43)', async () => {
+    api.getState.mockResolvedValue(
+      reviewSnapshot({
+        lessonCards: [
+          createMockLessonCard({ code: 'screen.hold', title: 'Needs a person', severity: 'hold' }),
+          createMockLessonCard(),
+        ],
+      }),
+    );
+    openStream();
+    renderStory();
+    await screen.findByTestId('story-view');
+    expect(screen.queryByText('Needs a person')).not.toBeInTheDocument();
+  });
+
+  it('keeps "Specify settings" in a dialog, prefilled with the pipeline choices and its reasons', async () => {
+    api.getState.mockResolvedValue(reviewSnapshot());
+    openStream();
+    const user = setup();
+    renderStory();
+    await toSummary(user);
+    await user.click(screen.getByRole('button', { name: /change print settings/i }));
     const trigger = await screen.findByRole('button', { name: /specify settings/i });
     expect(trigger).toHaveAttribute('aria-expanded', 'false');
 
@@ -244,32 +347,33 @@ describe('Review', () => {
     expect(screen.getByText(/3MF project/)).toBeInTheDocument();
   });
 
-  it('sends nothing to the farm until the explicit yes, and quotes the plan it showed', async () => {
+  it('sends nothing to the farm until the explicit yes, quotes the plan it showed, and then says "Sent to print queue"', async () => {
     api.getState.mockResolvedValue(reviewSnapshot({ planId: 'plan-77' }));
     openStream();
     const user = setup();
-    render(<PipelineJobPanel jobId="job-1" />);
-    await screen.findByRole('button', { name: 'Yes, print this' });
+    renderStory();
+    await toSummary(user);
     expect(api.confirm).not.toHaveBeenCalled();
 
     await user.click(screen.getByRole('button', { name: 'Yes, print this' }));
 
     expect(api.confirm).toHaveBeenCalledWith('job-1', 'plan-77');
-    expect(await screen.findByRole('heading', { name: 'Queued' })).toBeInTheDocument();
+    expect(await screen.findByText('Sent to print queue')).toBeInTheDocument();
   });
 
-  it('keeps showing "Queued" after the yes when the re-read finds nothing new (no flick back to the review)', async () => {
+  it('keeps "Sent to print queue" after the yes when the re-read finds nothing new (no flick back to the story)', async () => {
     api.getState.mockResolvedValue(reviewSnapshot({ planId: 'plan-1' }));
     openStream();
     const user = setup();
-    render(<PipelineJobPanel jobId="job-1" actionRereadMs={20} />);
+    renderStory();
+    await toSummary(user);
 
-    await user.click(await screen.findByRole('button', { name: 'Yes, print this' }));
-    await screen.findByRole('heading', { name: 'Queued' });
-    await waitFor(() => expect(api.getState).toHaveBeenCalledTimes(2));
-    await new Promise((resolve) => setTimeout(resolve, 50));
+    await user.click(screen.getByRole('button', { name: 'Yes, print this' }));
+    await screen.findByText('Sent to print queue');
+    await waitFor(() => expect(api.getState).toHaveBeenCalledTimes(1));
+    await new Promise((resolve) => setTimeout(resolve, 80));
 
-    expect(screen.getByRole('heading', { name: 'Queued' })).toBeInTheDocument();
+    expect(screen.getByText('Sent to print queue')).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Yes, print this' })).not.toBeInTheDocument();
   });
 
@@ -280,9 +384,10 @@ describe('Review', () => {
     });
     openStream();
     const user = setup();
-    render(<PipelineJobPanel jobId="job-1" actionRereadMs={20} />);
+    renderStory();
+    await toSummary(user);
 
-    await user.click(await screen.findByRole('button', { name: 'Yes, print this' }));
+    await user.click(screen.getByRole('button', { name: 'Yes, print this' }));
 
     expect(await screen.findByText(/could not take your yes/i)).toBeInTheDocument();
     expect(api.getState).toHaveBeenCalledTimes(2);
@@ -293,14 +398,16 @@ describe('Review', () => {
     openStream();
     api.confirm.mockRejectedValueOnce(new PlanChangedError(createMockPlan({ planId: 'plan-2' })));
     const user = setup();
-    render(<PipelineJobPanel jobId="job-1" />);
+    renderStory();
+    await toSummary(user);
 
-    await user.click(await screen.findByRole('button', { name: 'Yes, print this' }));
+    await user.click(screen.getByRole('button', { name: 'Yes, print this' }));
+    await toSummary(user);
     await screen.findByRole('button', { name: 'Yes, print this updated plan' });
     expect(trackPrintSubmitted).not.toHaveBeenCalled();
 
     await user.click(screen.getByRole('button', { name: 'Yes, print this updated plan' }));
-    await screen.findByRole('heading', { name: 'Queued' });
+    await screen.findByText('Sent to print queue');
     expect(trackPrintSubmitted).toHaveBeenCalledTimes(1);
     expect(trackPrintSubmitted).toHaveBeenCalledWith('job-1');
   });
@@ -314,59 +421,61 @@ describe('Review', () => {
     });
     api.confirm.mockRejectedValueOnce(new PlanChangedError(changed));
     const user = setup();
-    render(<PipelineJobPanel jobId="job-1" />);
+    renderStory();
+    await toSummary(user);
 
-    await user.click(await screen.findByRole('button', { name: 'Yes, print this' }));
+    await user.click(screen.getByRole('button', { name: 'Yes, print this' }));
 
     expect(
       await screen.findByText(/your plan changed while you were reading it/i),
     ).toBeInTheDocument();
-    expect(screen.getByText('We found a better way to lay your part down.')).toBeInTheDocument();
+    await toSummary(user);
     await user.click(screen.getByRole('button', { name: 'Yes, print this updated plan' }));
     expect(api.confirm).toHaveBeenLastCalledWith('job-1', 'plan-2');
-    expect(await screen.findByRole('heading', { name: 'Queued' })).toBeInTheDocument();
+    expect(await screen.findByText('Sent to print queue')).toBeInTheDocument();
   });
 
-  it('shows a choice with its options, blocks the yes until it is answered, and sends the answer', async () => {
-    api.getState.mockResolvedValue(
-      reviewSnapshot(
-        {
-          planId: 'plan-3',
-          answer: 'needs_choice',
-          choices: [
-            {
-              choiceId: 'orientation',
-              question: 'How should we lay your part on the plate?',
-              options: [
-                {
-                  optionId: 'flat',
-                  label: 'Lying flat',
-                  explanation: 'Sticks best.',
-                  recommended: true,
-                },
-                {
-                  optionId: 'upright',
-                  label: 'Standing up',
-                  explanation: 'Stronger along the hook.',
-                },
-              ],
-            },
-          ],
-        },
-        'needs_choice',
-      ),
-    );
+  const choicePlan = {
+    planId: 'plan-3',
+    answer: 'needs_choice' as const,
+    lessonCards: [
+      createMockLessonCard({
+        code: 'orient.choice',
+        title: 'How should we lay your part?',
+        severity: 'choice' as const,
+      }),
+      createMockLessonCard(),
+    ],
+    choices: [
+      {
+        choiceId: 'orientation',
+        question: 'How should we lay your part on the plate?',
+        findingCodes: ['orient.choice'],
+        options: [
+          { optionId: 'flat', label: 'Lying flat', explanation: 'Sticks best.', recommended: true },
+          { optionId: 'upright', label: 'Standing up', explanation: 'Stronger along the hook.' },
+        ],
+      },
+    ],
+  };
+
+  it('puts a choice first, inline on its card, holds the next step and the yes until it is made, and sends the pick', async () => {
+    api.getState.mockResolvedValue(reviewSnapshot(choicePlan, 'needs_choice'));
     openStream();
     const user = setup();
-    render(<PipelineJobPanel jobId="job-1" />);
+    renderStory('needs_choice');
 
-    expect(
-      await screen.findByRole('heading', { name: 'How should we lay your part on the plate?' }),
-    ).toBeInTheDocument();
+    await screen.findByTestId('story-view');
+    const card = shownCard();
+    expect(within(card).getByText('Your choice')).toBeInTheDocument();
+    expect(within(card).getByText('Pick one to continue')).toBeInTheDocument();
+    expect(within(card).getByText(/Recommended\. Sticks best/)).toBeInTheDocument();
+    expect(within(card).getByRole('button', { name: 'Next' })).toBeDisabled();
+    await user.click(within(card).getByRole('button', { name: 'Skip to summary' }));
     expect(screen.getByRole('button', { name: 'Yes, print this' })).toBeDisabled();
-    expect(screen.getByText('Choose an option under "Needs you" first.')).toBeInTheDocument();
-    expect(screen.getByText('Recommended')).toBeInTheDocument();
+    expect(screen.getByText('Make your choice on the cards first.')).toBeInTheDocument();
 
+    await user.click(screen.getByRole('button', { name: 'Back to the story' }));
     await user.click(screen.getByRole('radio', { name: /standing up/i }));
 
     expect(api.choose).toHaveBeenCalledWith('job-1', {
@@ -374,19 +483,26 @@ describe('Review', () => {
       choiceId: 'orientation',
       optionId: 'upright',
     });
+    // The summary says what was picked, and the yes opens
+    await user.click(screen.getByRole('button', { name: 'Skip to summary' }));
+    expect(
+      within(screen.getByTestId('story-summary')).getByText('Standing up'),
+    ).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Yes, print this' })).toBeEnabled();
   });
 
   it('asks for an updated plan before the yes when the student changes a setting', async () => {
     api.getState.mockResolvedValue(reviewSnapshot());
     openStream();
     const user = setup();
-    render(<PipelineJobPanel jobId="job-1" />);
+    renderStory();
+    await toSummary(user);
+    await user.click(screen.getByRole('button', { name: /change print settings/i }));
     await user.click(await screen.findByRole('button', { name: /specify settings/i }));
 
     await user.click(screen.getByRole('radio', { name: 'Strong' }));
-
-    expect(screen.getByRole('button', { name: 'Yes, print this' })).toBeDisabled();
     await user.click(screen.getByRole('button', { name: 'Update my plan' }));
+
     await waitFor(() => expect(api.saveInputs).toHaveBeenCalled());
     expect(api.saveInputs).toHaveBeenCalledWith('job-1', {
       settings: {
@@ -402,17 +518,27 @@ describe('Review', () => {
   it('leaves a place for the 3D viewer, which the preview image fills for now', async () => {
     api.getState.mockResolvedValue(reviewSnapshot({ lessonCards: [createMockLessonCard()] }));
     openStream();
-    const { container } = render(<PipelineJobPanel jobId="job-1" />);
-    await screen.findByRole('button', { name: 'Yes, print this' });
+    const { container } = renderStory();
+    await screen.findByTestId('story-view');
 
     const slot = container.querySelector('[data-slot="part-viewer"]');
     expect(slot).not.toBeNull();
-    expect(slot).toHaveAttribute('data-highlights', '1');
+    expect(slot).toHaveAttribute('data-viewer', 'preview');
+  });
+
+  it('says nothing needs a decision when the plan has nothing to tell', async () => {
+    api.getState.mockResolvedValue(reviewSnapshot({ lessonCards: [], choices: [] }));
+    openStream();
+    renderStory();
+
+    expect(await screen.findByTestId('story-summary')).toBeVisible();
+    expect(screen.getByText('Nothing needs your decision.')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Yes, print this' })).toBeEnabled();
   });
 });
 
 describe('Review straight from the server', () => {
-  it('shows the review on the first paint when the server already read the snapshot', async () => {
+  it('shows the story on the first paint when the server already read the snapshot', async () => {
     openStream();
     api.getState.mockImplementation(() => new Promise(() => {})); // never answers: not needed
     render(
@@ -427,20 +553,21 @@ describe('Review straight from the server', () => {
       />,
     );
 
-    expect(screen.getByRole('button', { name: 'Yes, print this' })).toBeInTheDocument();
+    expect(screen.getByTestId('story-view')).toBeInTheDocument();
+    expect(screen.queryByTestId('loading-view')).not.toBeInTheDocument();
     // The stream opens at once, after the snapshot's seq, without a second read first
     await waitFor(() => expect(api.stream).toHaveBeenCalled());
     expect(api.stream.mock.calls[0][1].lastSeq).toBe(9);
     expect(api.getState).not.toHaveBeenCalled();
   });
 
-  it('holds a review skeleton, not the steps, while a review status waits for its plan', async () => {
+  it('holds the loading view, not a flash of anything else, while a review status waits for its plan', async () => {
     openStream();
     api.getState.mockImplementation(() => new Promise(() => {}));
     render(<PipelineJobPanel jobId="job-1" initialStatus="needs_confirmation" />);
 
-    expect(screen.getByRole('status', { name: 'Loading your review' })).toBeInTheDocument();
-    expect(screen.queryByText('Preparing your print')).not.toBeInTheDocument();
+    expect(screen.getByTestId('loading-view')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /yes, print this/i })).not.toBeInTheDocument();
   });
 });
 
@@ -548,8 +675,6 @@ describe('Ready for pickup', () => {
 
 describe('Ask why', () => {
   it.each([
-    ['needs_confirmation', 'a plan waiting for its yes'],
-    ['needs_choice', 'a plan waiting for a choice'],
     ['cannot_print', "a part that can't print"],
     ['collected', 'a closed job'],
     ['rejected', 'a rejected job'],
@@ -563,11 +688,28 @@ describe('Ask why', () => {
     expect(within(panel).getByLabelText('Your question')).toBeInTheDocument();
   });
 
+  it.each(['needs_confirmation', 'needs_choice'] as const)(
+    'is "Ask about this" on the story card for %s, with Ask the crew',
+    async (studentStatus) => {
+      api.getState.mockResolvedValue(createMockSnapshot({ studentStatus, plan: createMockPlan() }));
+      openStream();
+      const user = setup();
+      render(<PipelineJobPanel jobId="job-1" initialStatus={studentStatus} />);
+
+      expect(screen.queryByTestId('disagree-panel')).not.toBeInTheDocument();
+      await user.click(await screen.findByRole('button', { name: 'Ask about this' }));
+
+      const panel = await screen.findByTestId('disagree-panel');
+      expect(within(panel).getByRole('button', { name: 'Ask the crew' })).toBeEnabled();
+      expect(within(panel).getByLabelText('Your question')).toBeInTheDocument();
+    },
+  );
+
   it('is not shown while the part is still being prepared, or on the steps-only screen', async () => {
     api.getState.mockResolvedValue(createMockSnapshot({ studentStatus: 'preparing' }));
     openStream();
     const { unmount } = render(<PipelineJobPanel jobId="job-1" />);
-    await screen.findByRole('heading', { name: 'Preparing your print' });
+    await screen.findByTestId('loading-view');
     expect(screen.queryByTestId('disagree-panel')).not.toBeInTheDocument();
     unmount();
 
@@ -575,7 +717,7 @@ describe('Ask why', () => {
       createMockSnapshot({ studentStatus: 'needs_confirmation', plan: createMockPlan() }),
     );
     render(<PipelineJobPanel jobId="job-1" stepsOnly />);
-    await screen.findByRole('heading', { name: 'Preparing your print' });
+    await screen.findByTestId('loading-view');
     expect(screen.queryByTestId('disagree-panel')).not.toBeInTheDocument();
   });
 
@@ -596,8 +738,9 @@ describe('Ask why', () => {
       planId: 'plan-1',
     });
     const user = setup();
-    render(<PipelineJobPanel jobId="job-1" />);
+    render(<PipelineJobPanel jobId="job-1" initialStatus="needs_confirmation" />);
 
+    await user.click(await screen.findByRole('button', { name: 'Ask about this' }));
     await user.type(await screen.findByLabelText('Your question'), 'Why?');
     await user.click(screen.getByRole('button', { name: 'Ask' }));
 

@@ -198,7 +198,9 @@ export function PipelineJobPanel({
   };
 
   // The student said yes on this screen: "Sent to print queue" until they move on.
-  const [sent, setSent] = useState(false);
+  const [sentOnce, setSent] = useState(false);
+  // If the pipeline refused the yes afterwards the job is back in review: the story shows again.
+  const sent = sentOnce && !reviewing;
   const preparingNow = status === null || status === 'preparing';
   const inStage = !held && !sent && status !== 'cannot_print' && (preparingNow || reviewing);
   const stageName: 'loading' | 'story' | 'sent' | null = held

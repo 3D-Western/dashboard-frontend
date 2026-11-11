@@ -355,6 +355,7 @@ function StoryInner({
           </div>
           <div className="sf-bcb">
             {facts.length > 0 && <p className="sf-facts">{facts.join(' · ')}</p>}
+            {plan.summary && <p className="sf-p sf-sumtext">{plan.summary}</p>}
             {story.length === 0 && <p className="sf-p">Nothing needs your decision.</p>}
             <div className="sf-rows">
               {story.map((c, k) => (

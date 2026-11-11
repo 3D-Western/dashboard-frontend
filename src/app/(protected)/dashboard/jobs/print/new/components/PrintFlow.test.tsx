@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { jobApi } from '@/api/client/job';
@@ -71,8 +71,8 @@ describe('PrintFlow', () => {
   it('starts with the upload, before anything is asked', async () => {
     render(<PrintFlow />);
 
-    expect(screen.getByRole('heading', { name: '1. Your file' })).toBeInTheDocument();
-    expect(screen.queryByRole('heading', { name: /what's it for/i })).not.toBeInTheDocument();
+    expect(screen.getByText('Drop your 3D model here')).toBeInTheDocument();
+    expect(screen.queryByText(/what is this print for/i)).not.toBeInTheDocument();
     expect(screen.getByText(/STL, STEP or 3MF/)).toBeInTheDocument();
   });
 
@@ -135,7 +135,7 @@ describe('PrintFlow', () => {
     expect(screen.queryByTestId('file-problem')).not.toBeInTheDocument();
   });
 
-  it('uploads at once, in the background, then opens the live progress while the student answers', async () => {
+  it('uploads at once, in the background, then asks what the print is for on the intake card', async () => {
     const { container } = render(<PrintFlow />);
 
     await chooseFile(container);
@@ -147,21 +147,42 @@ describe('PrintFlow', () => {
     );
     // The student's own words come later, through the pipeline inputs: no placeholder text
     expect(jobs.createJob.mock.calls[0][0]).not.toHaveProperty('description');
-    expect(jobs.uploadJobFile).toHaveBeenCalledWith(
-      'https://storage.example/upload',
-      expect.any(File),
-    );
     expect(jobs.completeUpload).toHaveBeenCalledWith(
       'job-9',
       expect.objectContaining({ fileName: 'robot-arm-gear.stl', checksum: 'sha256:test' }),
     );
-    // The questions are on screen while it processes, and the steps are streaming
-    expect(screen.getByRole('heading', { name: /what's it for/i })).toBeInTheDocument();
-    expect(screen.getByRole('heading', { name: /tell us about your part/i })).toBeInTheDocument();
-    expect(
-      await screen.findByRole('heading', { name: 'Preparing your print' }),
-    ).toBeInTheDocument();
+    expect(screen.getByText(/what is this print for/i)).toBeInTheDocument();
+    expect(screen.getByRole('textbox', { name: /tell us about it/i })).toBeInTheDocument();
+    expect(await screen.findByText('Uploaded. We are already checking it.')).toBeInTheDocument();
+    // The pipeline is followed in the background; nothing of it shows until Continue
     await waitFor(() => expect(pipeline.getState).toHaveBeenCalledWith('job-9', expect.anything()));
+    expect(screen.queryByTestId('loading-view')).not.toBeInTheDocument();
+  });
+
+  it('offers the five purposes, the venture first with its "No usage limits" tag, and never "something else"', async () => {
+    const user = setup();
+    const { container } = render(<PrintFlow />);
+    await chooseFile(container);
+
+    const radios = await screen.findAllByRole('radio');
+    expect(radios.map((r) => r.textContent?.split(/(?=[A-Z][a-z]+ [a-z])/)[0])).toHaveLength(5);
+    expect(screen.getByRole('radio', { name: /^Startup \/ venture/ })).toHaveTextContent(
+      'No usage limits',
+    );
+    for (const name of [/^Class/, /^Club or student team/, /^Research/, /^Personal/]) {
+      expect(screen.getByRole('radio', { name })).toBeInTheDocument();
+    }
+    expect(screen.queryByRole('radio', { name: /something else/i })).not.toBeInTheDocument();
+    // Nothing is chosen for the student
+    expect(radios.every((r) => r.getAttribute('aria-checked') === 'false')).toBe(true);
+
+    await user.click(screen.getByRole('radio', { name: /^Startup \/ venture/ }));
+    expect(screen.getByText("Venture prints don't count toward your usage limit.")).toBeVisible();
+    expect(screen.getByLabelText('Venture name')).toBeInTheDocument();
+    await user.click(screen.getByRole('radio', { name: /^Personal/ }));
+    // Personal has no extra field and no venture note
+    expect(screen.queryByLabelText('Venture name')).not.toBeInTheDocument();
+    expect(screen.queryByText(/don't count toward/i)).not.toBeInTheDocument();
   });
 
   it('saves the purpose as soon as it is picked, then the student’s own words once they stop typing', async () => {
@@ -170,8 +191,8 @@ describe('PrintFlow', () => {
     await chooseFile(container);
     await waitFor(() => expect(jobs.completeUpload).toHaveBeenCalled());
 
-    await user.click(screen.getByRole('radio', { name: 'Class project' }));
-    await user.type(screen.getByLabelText('Course'), 'MME 4499');
+    await user.click(screen.getByRole('radio', { name: /^Class/ }));
+    await user.type(screen.getByLabelText('Course code'), 'MME 4499');
     await waitFor(() =>
       expect(pipeline.saveInputs).toHaveBeenLastCalledWith('job-9', {
         purpose: 'class',
@@ -179,10 +200,10 @@ describe('PrintFlow', () => {
       }),
     );
 
-    const words = screen.getByRole('textbox', { name: /tell us about your part/i });
+    const words = screen.getByRole('textbox', { name: /tell us about it/i });
     expect(words).toHaveValue('');
     await user.type(words, 'A replacement gear for my robot arm');
-    // No Continue to tap: the pause after typing saves it
+    // Saved in the background after the pause, without Continue
     await waitFor(
       () =>
         expect(pipeline.saveInputs).toHaveBeenLastCalledWith('job-9', {
@@ -192,8 +213,7 @@ describe('PrintFlow', () => {
         }),
       { timeout: 5000 },
     );
-    expect(await screen.findByText('Your answers are saved')).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'Continue' })).not.toBeInTheDocument();
+    expect(await screen.findByText('Saved')).toBeInTheDocument();
   });
 
   it('saves the words at once when the student leaves the field', async () => {
@@ -201,12 +221,9 @@ describe('PrintFlow', () => {
     const { container } = render(<PrintFlow />);
     await chooseFile(container);
     await waitFor(() => expect(jobs.completeUpload).toHaveBeenCalled());
-    await user.click(screen.getByRole('radio', { name: 'Personal project' }));
+    await user.click(screen.getByRole('radio', { name: /^Personal/ }));
 
-    await user.type(
-      screen.getByRole('textbox', { name: /tell us about your part/i }),
-      'A desk hook',
-    );
+    await user.type(screen.getByRole('textbox', { name: /tell us about it/i }), 'A desk hook');
     await user.tab();
 
     await waitFor(() =>
@@ -217,101 +234,210 @@ describe('PrintFlow', () => {
     );
   });
 
-  it('shows the review below the form only once the purpose and the student’s own words are in, with no Continue step', async () => {
-    pipeline.getState.mockResolvedValue(
-      createMockSnapshot({ studentStatus: 'needs_confirmation', plan: createMockPlan() }),
-    );
-    const user = setup();
-    const { container } = render(<PrintFlow />);
-    await chooseFile(container);
-    await screen.findByRole('radio', { name: 'Personal project' });
-
-    expect(screen.queryByRole('button', { name: 'Continue' })).not.toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: /yes, print this/i })).not.toBeInTheDocument();
-
-    await user.click(screen.getByRole('radio', { name: 'Personal project' }));
-    await user.type(
-      screen.getByRole('textbox', { name: /tell us about your part/i }),
-      'A desk hook',
-    );
-    expect(screen.queryByRole('button', { name: /yes, print this/i })).not.toBeInTheDocument();
-    await user.tab();
-
-    // The form stays on screen, editable, with the review right under it
-    expect(await screen.findByRole('button', { name: /yes, print this/i })).toBeEnabled();
-    expect(screen.getByRole('textbox', { name: /tell us about your part/i })).toBeEnabled();
-  });
-
-  describe('after the review is shown', () => {
-    async function openReview() {
-      pipeline.getState.mockResolvedValue(
-        createMockSnapshot({ studentStatus: 'needs_confirmation', plan: createMockPlan() }),
-      );
+  describe('Continue', () => {
+    it('opens only when the answers are valid, and collapses the intake to a line the student can reopen and edit', async () => {
       const user = setup();
       const { container } = render(<PrintFlow />);
       await chooseFile(container);
-      await user.click(await screen.findByRole('radio', { name: 'Personal project' }));
-      await user.type(
-        screen.getByRole('textbox', { name: /tell us about your part/i }),
-        'A desk hook',
-      );
+      const cont = await screen.findByRole('button', { name: 'Continue' });
+      expect(cont).toBeDisabled();
+
+      await user.click(screen.getByRole('radio', { name: /^Class/ }));
+      await user.type(screen.getByRole('textbox', { name: /tell us about it/i }), 'A gear');
+      // a class needs its course code
+      expect(cont).toBeDisabled();
+      await user.type(screen.getByLabelText('Course code'), 'MME 2202');
+      expect(cont).toBeEnabled();
+
+      await user.click(cont);
+
+      // The part comes forward into the loading view; the intake is a one-line summary
+      expect(await screen.findByTestId('loading-view')).toBeInTheDocument();
+      const line = screen.getByTestId('intake-summary');
+      expect(line).toHaveTextContent('robot-arm-gear.stl');
+      expect(line).toHaveTextContent('Class');
+      expect(line).toHaveTextContent('MME 2202');
+      expect(line).toHaveTextContent('A gear');
+      expect(screen.queryByRole('button', { name: 'Continue' })).not.toBeInTheDocument();
+
+      // Editing is still possible: the summary opens the answers again
+      await user.click(line);
+      const words = await screen.findByRole('textbox', { name: /tell us about it/i });
+      expect(words).toHaveValue('A gear');
+      pipeline.saveInputs.mockClear();
+      await user.type(words, ' for my robot');
       await user.tab();
-      await screen.findByRole('button', { name: /yes, print this/i });
       await waitFor(() =>
-        expect(screen.getByRole('button', { name: /yes, print this/i })).toBeEnabled(),
+        expect(pipeline.saveInputs).toHaveBeenLastCalledWith(
+          'job-9',
+          expect.objectContaining({ description: 'A gear for my robot' }),
+        ),
       );
+    });
+
+    it('does not need the Personal purpose to name anything', async () => {
+      const user = setup();
+      const { container } = render(<PrintFlow />);
+      await chooseFile(container);
+      await user.click(await screen.findByRole('radio', { name: /^Personal/ }));
+      await user.type(screen.getByRole('textbox', { name: /tell us about it/i }), 'A desk hook');
+      expect(screen.getByRole('button', { name: 'Continue' })).toBeEnabled();
+    });
+  });
+
+  describe('Recent answers', () => {
+    async function answerOnce(purposeName: RegExp, field: string | null, value: string) {
+      const user = setup();
+      const first = render(<PrintFlow />);
+      await chooseFile(first.container);
+      await user.click(await screen.findByRole('radio', { name: purposeName }));
+      if (field) await user.type(screen.getByLabelText(field), value);
+      await user.type(screen.getByRole('textbox', { name: /tell us about it/i }), 'A thing');
+      await user.click(screen.getByRole('button', { name: 'Continue' }));
+      first.unmount();
       return user;
     }
 
-    it('keeps the review (and the yes) on screen while the student edits, holding the yes until the edit is saved', async () => {
-      const user = await openReview();
-      pipeline.saveInputs.mockClear();
+    it('offers past answers in the Recent pill, and never fills anything in by itself', async () => {
+      await answerOnce(/^Club or student team/, 'Club or team name', 'Robotics Club');
+      const user = setup();
+      const second = render(<PrintFlow />);
+      await chooseFile(second.container);
 
-      await user.type(
-        screen.getByRole('textbox', { name: /tell us about your part/i }),
-        ' on a wall',
+      // Nothing is chosen or typed
+      const radios = await screen.findAllByRole('radio');
+      expect(radios.every((r) => r.getAttribute('aria-checked') === 'false')).toBe(true);
+      expect(screen.getByRole('textbox', { name: /tell us about it/i })).toHaveValue('');
+      expect(screen.queryByLabelText('Club or team name')).not.toBeInTheDocument();
+
+      await user.click(screen.getByRole('button', { name: /recent/i }));
+      expect(screen.getByText('Nothing is filled until you tap one.')).toBeInTheDocument();
+      await user.click(
+        screen.getByRole('menuitem', { name: /Club or student team.*Robotics Club/ }),
       );
 
-      // Not back to the steps-only view: the yes is still there, waiting for the save
-      const yes = screen.getByRole('button', { name: /yes, print this/i });
-      expect(yes).toBeDisabled();
-      expect(screen.getByText(/saving your changes first/i)).toBeInTheDocument();
+      // Tapping fills the purpose and the name, not the description
+      expect(screen.getByRole('radio', { name: /^Club or student team/ })).toBeChecked();
+      expect(screen.getByLabelText('Club or team name')).toHaveValue('Robotics Club');
+      expect(screen.getByRole('textbox', { name: /tell us about it/i })).toHaveValue('');
+    });
+
+    it('has no Recent pill for a first-time student', async () => {
+      const { container } = render(<PrintFlow />);
+      await chooseFile(container);
+      await screen.findAllByRole('radio');
+      expect(screen.queryByRole('button', { name: /recent/i })).not.toBeInTheDocument();
+    });
+
+    it('lists the past answers of a field when it is focused, and fills only the one tapped', async () => {
+      await answerOnce(/^Class/, 'Course code', 'MME 2202');
+      const user = setup();
+      const second = render(<PrintFlow />);
+      await chooseFile(second.container);
+      await user.click(await screen.findByRole('radio', { name: /^Class/ }));
+      const field = screen.getByLabelText('Course code');
+      expect(field).toHaveValue('');
+
+      await user.click(field);
+      await user.click(await screen.findByRole('option', { name: 'MME 2202' }));
+
+      expect(field).toHaveValue('MME 2202');
+    });
+  });
+
+  describe('the story and the yes', () => {
+    /** Fills the intake, presses Continue and plays the loading view to its end. */
+    async function reachStory() {
+      vi.useFakeTimers({
+        shouldAdvanceTime: true,
+        toFake: [
+          'setTimeout',
+          'clearTimeout',
+          'setInterval',
+          'clearInterval',
+          'Date',
+          'requestAnimationFrame',
+          'cancelAnimationFrame',
+          'performance',
+        ],
+      });
+      pipeline.getState.mockResolvedValue(
+        createMockSnapshot({ studentStatus: 'needs_confirmation', plan: createMockPlan() }),
+      );
+      const user = userEvent.setup({
+        pointerEventsCheck: 0,
+        advanceTimers: vi.advanceTimersByTime,
+      });
+      const { container } = render(<PrintFlow />);
+      await chooseFile(container);
+      await user.click(await screen.findByRole('radio', { name: /^Personal/ }));
+      await user.type(screen.getByRole('textbox', { name: /tell us about it/i }), 'A desk hook');
       await user.tab();
+      await vi.advanceTimersByTimeAsync(1000);
+      await user.click(screen.getByRole('button', { name: 'Continue' }));
+      // The loading view never ends before the analysis is really done, then it is read at a calm pace
+      expect(screen.getByTestId('loading-view')).toBeInTheDocument();
+      await vi.advanceTimersByTimeAsync(40_000);
+      return user;
+    }
+
+    afterEach(() => {
+      vi.useRealTimers();
+    });
+
+    it('turns the loading view into the story in place once the analysis is really done, with no menu in between', async () => {
+      await reachStory();
+
+      expect(await screen.findByTestId('story-view')).toBeInTheDocument();
+      expect(screen.queryByTestId('loading-view')).not.toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Skip to summary' })).toBeInTheDocument();
+    });
+
+    it('keeps the yes waiting while an edit is being saved, and does not go back to loading', async () => {
+      const user = await reachStory();
+      await user.click(await screen.findByRole('button', { name: 'Skip to summary' }));
+      expect(await screen.findByRole('button', { name: /yes, print this/i })).toBeEnabled();
+      pipeline.saveInputs.mockClear();
+
+      await user.click(screen.getByTestId('intake-summary'));
+      await user.type(screen.getByRole('textbox', { name: /tell us about it/i }), ' on a wall');
+
+      // Not back to the loading view: the story is still there, its yes waiting for the save
+      expect(screen.queryByTestId('loading-view')).not.toBeInTheDocument();
+      await user.tab();
+      await vi.advanceTimersByTimeAsync(500);
       await waitFor(() =>
         expect(pipeline.saveInputs).toHaveBeenLastCalledWith(
           'job-9',
           expect.objectContaining({ description: 'A desk hook on a wall' }),
         ),
       );
-      await waitFor(() =>
-        expect(screen.getByRole('button', { name: /yes, print this/i })).toBeEnabled(),
-      );
     });
 
-    it('locks the answers once the student says yes, and saves nothing more', async () => {
-      const user = await openReview();
+    it('says "Sent to print queue" after the yes, locks the answers and saves nothing more', async () => {
+      const user = await reachStory();
       pipeline.confirm.mockResolvedValue(undefined);
+      await user.click(await screen.findByRole('button', { name: 'Skip to summary' }));
+      await user.click(await screen.findByRole('button', { name: /yes, print this/i }));
+
+      expect(await screen.findByText('Sent to print queue')).toBeInTheDocument();
+      expect(screen.getByRole('link', { name: 'View this job' })).toBeInTheDocument();
       pipeline.saveInputs.mockClear();
-
-      await user.click(screen.getByRole('button', { name: /yes, print this/i }));
-
-      await waitFor(() =>
-        expect(screen.getByRole('textbox', { name: /tell us about your part/i })).toBeDisabled(),
-      );
-      expect(screen.getByRole('radio', { name: 'Personal project' })).toBeDisabled();
-      expect(screen.getByText(/your answers are locked/i)).toBeInTheDocument();
+      expect(pipeline.confirm).toHaveBeenCalledWith('job-9', 'plan-1');
       expect(pipeline.saveInputs).not.toHaveBeenCalled();
     });
 
     it('treats a 409 on saving the answers as "already sent", not as a changed plan or a save error', async () => {
-      const user = await openReview();
+      const user = await reachStory();
       pipeline.saveInputs.mockRejectedValue(new ApiError('CONFLICT', 'The job is closed'));
 
-      await user.type(screen.getByRole('textbox', { name: /tell us about your part/i }), ' now');
+      await user.click(await screen.findByTestId('intake-summary'));
+      await user.type(screen.getByRole('textbox', { name: /tell us about it/i }), ' now');
       await user.tab();
+      await vi.advanceTimersByTimeAsync(500);
 
       await waitFor(() =>
-        expect(screen.getByRole('textbox', { name: /tell us about your part/i })).toBeDisabled(),
+        expect(screen.getByRole('textbox', { name: /tell us about it/i })).toBeDisabled(),
       );
       expect(screen.queryByText(/couldn.t save your answers/i)).not.toBeInTheDocument();
       expect(screen.queryByText(/plan changed/i)).not.toBeInTheDocument();
@@ -329,9 +455,9 @@ describe('PrintFlow', () => {
         const { container } = render(<PrintFlow />);
         await chooseFile(container);
         await waitFor(() => expect(jobs.completeUpload).toHaveBeenCalled());
-        await user.click(await screen.findByRole('radio', { name: 'Personal project' }));
+        await user.click(await screen.findByRole('radio', { name: /^Personal/ }));
         await vi.advanceTimersByTimeAsync(800);
-        const words = screen.getByRole('textbox', { name: /tell us about your part/i });
+        const words = screen.getByRole('textbox', { name: /tell us about it/i });
         pipeline.saveInputs.mockClear();
 
         await user.type(words, 'A phone holder shaped like a keychain');
@@ -364,55 +490,23 @@ describe('PrintFlow', () => {
         const { container } = render(<PrintFlow />);
         await chooseFile(container);
         await waitFor(() => expect(jobs.completeUpload).toHaveBeenCalled());
-        await user.click(await screen.findByRole('radio', { name: 'Personal project' }));
+        await user.click(await screen.findByRole('radio', { name: /^Personal/ }));
         await vi.advanceTimersByTimeAsync(800);
         pipeline.saveInputs.mockClear();
         pipeline.saveInputs.mockRejectedValueOnce(new ApiError('RATE_LIMIT_EXCEEDED', 'Slow down'));
 
-        await user.type(
-          screen.getByRole('textbox', { name: /tell us about your part/i }),
-          'A desk hook',
-        );
+        await user.type(screen.getByRole('textbox', { name: /tell us about it/i }), 'A desk hook');
         await user.tab();
         await vi.advanceTimersByTimeAsync(100);
         expect(pipeline.saveInputs).toHaveBeenCalledTimes(1);
         expect(screen.queryByText(/couldn.t save your answers/i)).not.toBeInTheDocument();
         await vi.advanceTimersByTimeAsync(31_000);
+        await vi.advanceTimersByTimeAsync(200); // the retry re-renders, then saves
         expect(pipeline.saveInputs).toHaveBeenCalledTimes(2);
       } finally {
         vi.useRealTimers();
       }
     });
-  });
-
-  it('puts a returning student straight into the description', async () => {
-    const user = setup();
-    const first = render(<PrintFlow />);
-    await chooseFile(first.container);
-    await user.click(await screen.findByRole('radio', { name: 'Personal project' }));
-    first.unmount();
-
-    const second = render(<PrintFlow />);
-    await chooseFile(second.container);
-
-    await waitFor(() =>
-      expect(screen.getByRole('textbox', { name: /tell us about your part/i })).toHaveFocus(),
-    );
-  });
-
-  it('remembers the purpose and its sub-form for next time', async () => {
-    const user = setup();
-    const first = render(<PrintFlow />);
-    await chooseFile(first.container);
-    await user.click(await screen.findByRole('radio', { name: 'Startup or venture' }));
-    await user.type(screen.getByLabelText('Venture or business name'), 'Maple Gear Co.');
-    first.unmount();
-
-    const second = render(<PrintFlow />);
-    await chooseFile(second.container);
-
-    expect(await screen.findByRole('radio', { name: 'Startup or venture' })).toBeChecked();
-    expect(screen.getByLabelText('Venture or business name')).toHaveValue('Maple Gear Co.');
   });
 
   it('shows what went wrong and retries the same job when the upload fails', async () => {
@@ -428,8 +522,8 @@ describe('PrintFlow', () => {
 
     await chooseFile(container);
 
-    expect(await screen.findByText("Couldn't upload your file")).toBeInTheDocument();
-    await user.click(screen.getByRole('button', { name: 'Try again' }));
+    expect(await screen.findByText('The upload did not finish.')).toBeInTheDocument();
+    await user.click(await screen.findByRole('button', { name: 'Try again' }));
     await waitFor(() =>
       expect(jobs.completeUpload).toHaveBeenCalledWith('job-9', expect.anything()),
     );
@@ -479,7 +573,7 @@ describe('PrintFlow', () => {
       expect(screen.getByRole('heading', { name: /how did hinge pair turn out/i })).toBeVisible();
       // No upload happened, and the questions about the new part wait
       expect(jobs.uploadJobFile).not.toHaveBeenCalled();
-      expect(screen.queryByRole('heading', { name: /what's it for/i })).not.toBeInTheDocument();
+      expect(screen.queryByText(/what is this print for/i)).not.toBeInTheDocument();
 
       await setup().click(screen.getByRole('button', { name: 'Good' }));
 
@@ -487,7 +581,7 @@ describe('PrintFlow', () => {
       await waitFor(() => expect(jobs.completeUpload).toHaveBeenCalled());
       expect(jobs.createJob).toHaveBeenCalledTimes(2);
       expect(screen.queryByTestId('rating-required')).not.toBeInTheDocument();
-      expect(await screen.findByRole('heading', { name: /what's it for/i })).toBeVisible();
+      expect(await screen.findByText(/what is this print for/i)).toBeVisible();
     });
 
     it('asks when the screen opens and shows the one-tap rating before any upload, then goes straight to the file', async () => {
@@ -500,14 +594,14 @@ describe('PrintFlow', () => {
       expect(await screen.findByTestId('rating-required')).toBeVisible();
       expect(screen.getByRole('heading', { name: /how did hinge pair turn out/i })).toBeVisible();
       // The file is not asked for until the rating is in
-      expect(screen.queryByRole('heading', { name: '1. Your file' })).not.toBeInTheDocument();
+      expect(screen.queryByText('Drop your 3D model here')).not.toBeInTheDocument();
       expect(screen.queryByText(/STL, STEP or 3MF/)).not.toBeInTheDocument();
       expect(jobs.createJob).not.toHaveBeenCalled();
 
       await setup().click(screen.getByRole('button', { name: 'Good' }));
 
       expect(pipeline.rate).toHaveBeenCalledWith('old-1', 'up');
-      expect(await screen.findByRole('heading', { name: '1. Your file' })).toBeVisible();
+      expect(await screen.findByText('Drop your 3D model here')).toBeVisible();
       expect(screen.queryByTestId('rating-required')).not.toBeInTheDocument();
       // ...and then the upload goes ahead with no 409 in between
       await chooseFile(container);
@@ -519,7 +613,7 @@ describe('PrintFlow', () => {
       render(<PrintFlow />);
 
       await waitFor(() => expect(pipeline.pendingRatings).toHaveBeenCalledTimes(1));
-      expect(screen.getByRole('heading', { name: '1. Your file' })).toBeVisible();
+      expect(screen.getByText('Drop your 3D model here')).toBeVisible();
       expect(screen.queryByTestId('rating-required')).not.toBeInTheDocument();
     });
 
@@ -537,7 +631,7 @@ describe('PrintFlow', () => {
       pipeline.rate.mockResolvedValue(createMockSnapshot());
       const { container } = render(<PrintFlow />);
 
-      expect(screen.getByRole('heading', { name: '1. Your file' })).toBeVisible();
+      expect(screen.getByText('Drop your 3D model here')).toBeVisible();
       await chooseFile(container);
 
       expect(await screen.findByTestId('rating-required')).toBeVisible();

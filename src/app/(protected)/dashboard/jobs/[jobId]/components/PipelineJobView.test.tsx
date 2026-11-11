@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import userEvent from '@testing-library/user-event';
 import { render, screen, within } from '@test/utils/render';
 import { pipelineApi } from '@/api/client/pipeline';
 import { createMockPlan, createMockSnapshot } from '@test/utils/pipelineFactories';
@@ -110,15 +111,45 @@ describe('PipelineTimeline', () => {
 });
 
 describe('PipelineJobView', () => {
-  it('words the header, the panel and the timeline by studentStatus, ignoring the legacy status', async () => {
+  it('gives a job still in review the same story view as the new-print screen, filling the page', async () => {
     render(<PipelineJobView job={job} initialStatus="needs_confirmation" />);
 
-    expect(await screen.findByRole('button', { name: 'Yes, print this' })).toBeInTheDocument();
-    expect(screen.getAllByText('Review needed').length).toBeGreaterThan(0);
+    expect(await screen.findByTestId('story-view')).toBeInTheDocument();
+    // The page is the story alone: no job header, no status history below it
+    expect(screen.queryByRole('region', { name: 'Status history' })).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Skip to summary' })).toBeInTheDocument();
+  });
+
+  it('words the header, the panel and the timeline by studentStatus, ignoring the legacy status', async () => {
+    api.getState.mockResolvedValue(
+      createMockSnapshot({ studentStatus: 'queued', plan: createMockPlan() }),
+    );
+    render(<PipelineJobView job={{ ...job, studentStatus: 'queued' }} initialStatus="queued" />);
+
+    expect(await screen.findByRole('heading', { name: 'Queued' })).toBeInTheDocument();
     const history = screen.getByRole('region', { name: 'Status history' });
     expect(within(history).getByText(/Nov 4/)).toBeInTheDocument();
     expect(within(history).queryByText(/Nov 1/)).not.toBeInTheDocument();
     expect(within(history).queryByText('Job submitted')).not.toBeInTheDocument();
-    expect(within(history).getByText(/Your review/).textContent).toMatch(/current step/);
+    expect(within(history).getByText(/Queued/).textContent).toMatch(/current step/);
+  });
+
+  it('shows the job page again after the yes, once the student moves on from "Sent to print queue"', async () => {
+    api.confirm.mockResolvedValue(undefined);
+    // the server has the yes by the next read
+    api.getState
+      .mockResolvedValueOnce(
+        createMockSnapshot({ studentStatus: 'needs_confirmation', plan: createMockPlan() }),
+      )
+      .mockResolvedValue(createMockSnapshot({ studentStatus: 'queued', plan: createMockPlan() }));
+    const user = userEvent.setup({ pointerEventsCheck: 0 });
+    render(<PipelineJobView job={job} initialStatus="needs_confirmation" />);
+
+    await user.click(await screen.findByRole('button', { name: 'Skip to summary' }));
+    await user.click(screen.getByRole('button', { name: 'Yes, print this' }));
+    expect(await screen.findByText('Sent to print queue')).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'See where it is' }));
+
+    expect(await screen.findByRole('region', { name: 'Status history' })).toBeInTheDocument();
   });
 });
