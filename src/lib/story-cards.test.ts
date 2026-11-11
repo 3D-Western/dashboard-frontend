@@ -94,6 +94,21 @@ describe('the story', () => {
     );
     expect(handled[2].text).toMatch(/^Hairline cracks in the file: fixed for you\./);
     expect(noted.map((n) => n.code)).toEqual(['overhang.curl_risk']);
+    // a title that already says what was done is not followed by "fixed for you"
+    const [brim] = splitPlan({
+      lessonCards: [
+        createMockLessonCard({
+          code: 'slice.stability_brim',
+          title: 'We added a brim to keep it standing',
+          body: 'Your part is a little tall or narrow for its footing. A thin brim holds it down.',
+          severity: 'adjusted',
+        }),
+      ],
+      choices: [],
+    }).handled;
+    expect(brim.text).toBe(
+      'We added a brim to keep it standing. Your part is a little tall or narrow for its footing.',
+    );
   });
 
   it('never shows two cards alike: a repeated title folds into the first, keeping its choice', () => {

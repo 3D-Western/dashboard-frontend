@@ -79,8 +79,13 @@ function isHandled(card: LessonCard): boolean {
 
 function noteOf(card: LessonCard): HandledNote {
   const why = firstSentence(card.body);
-  // A pack's body already says the issue, the fix and why ("Your part is tall ..., so we added a brim").
-  const text = isPack(card.code) ? why : `${card.title}: fixed for you. ${why}`;
+  // A pack's body already says the issue, the fix and why ("Your part is tall ..., so we added a brim"), and a title
+  // that starts with "We" says what was done ("We added a brim to keep it standing"): neither needs "fixed for you".
+  const text = isPack(card.code)
+    ? why
+    : /^we\s/i.test(card.title)
+      ? `${card.title}. ${why}`
+      : `${card.title}: fixed for you. ${why}`;
   return { id: `fixed:${card.code}:${card.title}`, code: card.code, title: card.title, text };
 }
 
