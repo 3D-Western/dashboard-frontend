@@ -162,6 +162,31 @@ describe('Preparing your print', () => {
     }
   });
 
+  it('opens the one-line "Did you know" into its card, and History lists what was shown, a page at a time', async () => {
+    api.getState.mockResolvedValue(
+      createMockSnapshot({
+        steps: [createMockStep({ step: 'intake.load_mesh', state: 'done' })],
+      }),
+    );
+    openStream();
+    const user = setup();
+    render(<PipelineJobPanel jobId="job-1" />);
+    await screen.findByTestId('loading-card');
+
+    const view = screen.getByTestId('loading-view');
+    expect(view).not.toHaveAttribute('data-dyopen');
+    await user.click(screen.getByRole('button', { name: /did you know/i }));
+    expect(view).toHaveAttribute('data-dyopen');
+    await user.click(screen.getByRole('button', { name: 'Close' }));
+    expect(view).not.toHaveAttribute('data-dyopen');
+
+    await user.click(screen.getByRole('button', { name: /history \(\d+\)/i }));
+    expect(await screen.findByTestId('loading-history')).toHaveTextContent('Opening your file');
+    expect(screen.queryByTestId('loading-card')).not.toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Back to the card' }));
+    expect(screen.getByTestId('loading-card')).toBeInTheDocument();
+  });
+
   it('says honestly that it is taking longer than usual, lets the student leave, and goes away with the plan (P-194)', async () => {
     useFakeClock();
     try {
