@@ -494,7 +494,8 @@ describe('The story and the summary', () => {
     const card = shownCard();
     expect(within(card).getByText('Your choice')).toBeInTheDocument();
     expect(within(card).getByText('Pick one to continue')).toBeInTheDocument();
-    expect(within(card).getByText(/Recommended\. Sticks best/)).toBeInTheDocument();
+    expect(within(card).getByText('Recommended')).toBeInTheDocument();
+    expect(within(card).getByText('Sticks best.')).toBeInTheDocument();
     expect(within(card).getByRole('button', { name: 'Next' })).toBeDisabled();
     await user.click(within(card).getByRole('button', { name: 'Skip to summary' }));
     expect(screen.getByRole('button', { name: 'Yes, print this' })).toBeDisabled();

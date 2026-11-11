@@ -551,13 +551,10 @@ function StoryCardView({
                     >
                       <span>
                         {option.label}
+                        {option.recommended && <em className="sf-rec">Recommended</em>}
                         {on && <Check className="sf-tick" aria-hidden="true" />}
                       </span>
-                      <small>
-                        {option.recommended
-                          ? `Recommended. ${option.explanation}`
-                          : option.explanation}
-                      </small>
+                      <small>{option.explanation}</small>
                     </button>
                   );
                 })}
