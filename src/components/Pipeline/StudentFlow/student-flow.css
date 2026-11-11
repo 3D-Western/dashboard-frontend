@@ -1550,7 +1550,9 @@
   vertical-align: 2px;
 }
 .sf-stp {
-  display: table;
+  display: block;
+  width: fit-content;
+  justify-self: start;
   font: 700 10.5px var(--sf-mono);
   letter-spacing: 0.06em;
   border: 1.5px solid;
@@ -1680,4 +1682,29 @@
     -webkit-line-clamp: 3;
     overflow: hidden;
   }
+}
+
+/* wide screens: the card's words sit in the middle of its height, as in the mockup */
+@container sf (min-width: 700px) {
+  .sf-t-choice .sf-bcb,
+  .sf-t-handled .sf-bcb,
+  .sf-t-worth .sf-bcb {
+    justify-content: center;
+  }
+}
+
+/* a short phone: the file strip shrinks when the intake still does not fit */
+.sf[data-tight] .sf-top {
+  flex-basis: 72px;
+  min-height: 72px;
+}
+.sf[data-tight] .sf-prev {
+  width: 84px;
+  height: 56px;
+}
+.sf[data-tight] .sf-finfo span {
+  display: none;
+}
+.sf[data-tight] .sf-mpanel {
+  padding: 10px;
 }

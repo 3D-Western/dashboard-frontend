@@ -221,9 +221,12 @@ export function PrintFlow({ mockMode = false }: { mockMode?: boolean }) {
     const body = bodyRef.current;
     if (!root || !body) return;
     body.classList.remove('t1', 't2', 't3');
+    delete root.dataset.tight;
     for (let tier = 1; tier <= 3 && root.scrollHeight > root.clientHeight + 1; tier++) {
       body.classList.add(`t${tier}`);
     }
+    // Still too tall (a short phone): the file strip at the top gives up some height too.
+    if (root.scrollHeight > root.clientHeight + 1) root.dataset.tight = '1';
   };
   useLayoutEffect(fit);
   useEffect(() => {
