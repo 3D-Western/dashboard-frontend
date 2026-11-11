@@ -107,7 +107,7 @@ export function PipelineJobPanel({
   onStageChange,
 }: PipelineJobPanelProps) {
   const pipeline = usePipelineJob(jobId, { retryBaseMs, initialSnapshot });
-  const { plan, steps, message, loaded, connection, error } = pipeline;
+  const { plan, steps, message, loaded, error } = pipeline;
   const status = pipeline.studentStatus ?? initialStatus ?? null;
   const { pickup } = pipeline;
   // Preparing that goes on (a big part, or one the crew is looking at: the student cannot tell which) is said out loud (P-194).
