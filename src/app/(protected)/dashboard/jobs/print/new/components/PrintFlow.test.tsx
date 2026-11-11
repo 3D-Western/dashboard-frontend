@@ -285,6 +285,25 @@ describe('PrintFlow', () => {
     });
   });
 
+  it('tells the student at once, before Continue, when the part cannot be printed, and closes the intake', async () => {
+    pipeline.getState.mockResolvedValue(
+      createMockSnapshot({
+        studentStatus: 'cannot_print',
+        plan: createMockPlan({
+          answer: 'cannot_print',
+          summary: 'The part is too big for every printer.',
+        }),
+      }),
+    );
+    const { container } = render(<PrintFlow />);
+    await chooseFile(container);
+
+    expect(await screen.findByText(/can't be printed as it is/i)).toBeInTheDocument();
+    expect(screen.getByText('The part is too big for every printer.')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Continue' })).not.toBeInTheDocument();
+    expect(screen.queryByTestId('intake')).not.toBeInTheDocument();
+  });
+
   describe('Recent answers', () => {
     async function answerOnce(purposeName: RegExp, field: string | null, value: string) {
       const user = setup();

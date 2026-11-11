@@ -142,7 +142,10 @@ export function PrintFlow({ mockMode = false }: { mockMode?: boolean }) {
   const valid = purpose !== null && descriptionOk && detailsComplete(purpose, details[purpose]);
   // Past the review (the yes was said, or the job was refused) the answers are locked: the pipeline
   // no longer takes them, and editing would only fail.
-  const locked = closedByServer || (jobStatus !== null && !EDITABLE_STATUSES.includes(jobStatus));
+  const closed = jobStatus !== null && !EDITABLE_STATUSES.includes(jobStatus);
+  const locked = closedByServer || closed;
+  // A part that cannot print (or any closed job) is told at once, not after Continue: the intake has no use then.
+  const working = continued || closed;
   // Once the review was shown it stays: an edit never sends the student back to the loading view.
   if (!reviewShown && answered && jobStatus !== null && REVIEW_STATUSES.includes(jobStatus)) {
     setReviewShown(true);
@@ -208,7 +211,7 @@ export function PrintFlow({ mockMode = false }: { mockMode?: boolean }) {
 
   // Which screen of the new-print flow the student is on, for the steps-to-submit metric (P-137)
   const stage =
-    ratingFirst || ratingBlocked ? 'rate_first' : !file ? 'file' : continued ? 'loading' : 'form';
+    ratingFirst || ratingBlocked ? 'rate_first' : !file ? 'file' : working ? 'loading' : 'form';
   useEffect(() => {
     trackScreen(`print_new.${stage}`);
   }, [stage]);
@@ -235,7 +238,7 @@ export function PrintFlow({ mockMode = false }: { mockMode?: boolean }) {
     const observer = new ResizeObserver(fit);
     observer.observe(root);
     return () => observer.disconnect();
-  }, [file, continued]);
+  }, [file, working]);
 
   function choosePurpose(next: Purpose) {
     if (locked) return;
@@ -325,7 +328,13 @@ export function PrintFlow({ mockMode = false }: { mockMode?: boolean }) {
   const hasUploadError = Boolean(uploadError);
 
   const saveStatus = locked ? (
-    'Your print is on its way, so your answers are locked.'
+    closed &&
+    jobStatus &&
+    ['cannot_print', 'rejected', 'cancelled', 'expired'].includes(jobStatus) ? (
+      'This job is closed, so your answers are locked.'
+    ) : (
+      'Your print is on its way, so your answers are locked.'
+    )
   ) : saveState === 'saving' ? (
     'Saving'
   ) : saveState === 'saved' && answered ? (
@@ -367,19 +376,19 @@ export function PrintFlow({ mockMode = false }: { mockMode?: boolean }) {
     <div
       ref={rootRef}
       className="sf"
-      data-stage={!file ? 'up' : continued ? 'work' : 'in'}
+      data-stage={!file ? 'up' : working ? 'work' : 'in'}
       data-view={stageName ?? undefined}
     >
       <h1 className="sr-only">Create 3D Print Job</h1>
 
       {/* The part, full-bleed behind the intake, dimmed and blurred */}
-      {file && !continued && (
+      {file && !working && (
         <div className="sf-bgv" data-on aria-hidden="true">
           <PartBackdrop file={file} />
         </div>
       )}
 
-      {!continued && (
+      {!working && (
         <div
           className="sf-top"
           {...rootProps}
@@ -446,9 +455,9 @@ export function PrintFlow({ mockMode = false }: { mockMode?: boolean }) {
         </button>
       )}
 
-      {file && !continued && <div className="sf-sp" aria-hidden="true" />}
+      {file && !working && <div className="sf-sp" aria-hidden="true" />}
 
-      {file && !continued && (
+      {file && !working && (
         <div className="sf-in" data-testid="intake">
           <div className="sf-mpanel">
             <div ref={bodyRef} className="sf-form-wrap">
@@ -458,7 +467,7 @@ export function PrintFlow({ mockMode = false }: { mockMode?: boolean }) {
         </div>
       )}
 
-      {file && !continued && (
+      {file && !working && (
         <div className="sf-bar">
           <button
             type="button"
@@ -473,13 +482,13 @@ export function PrintFlow({ mockMode = false }: { mockMode?: boolean }) {
       )}
 
       {file && uploadJobId && (
-        <div className="sf-work" hidden={!continued}>
+        <div className="sf-work" hidden={!working}>
           <PipelineJobPanel
             jobId={uploadJobId}
             jobName={file.name}
             file={file}
             purpose={purpose}
-            held={!continued}
+            held={!working}
             stepsOnly={!answered && !reviewShown}
             answersRevision={answersRevision}
             inputsPending={inputsPending}

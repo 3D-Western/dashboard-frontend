@@ -1708,3 +1708,8 @@
 .sf[data-tight] .sf-mpanel {
   padding: 10px;
 }
+
+/* a refused part or another closed job (not the loading view or the story) is an ordinary card: it may scroll */
+.sf-work:not(:has(.sf-panel)):not(:has(.sf-grid)) {
+  overflow-y: auto;
+}
