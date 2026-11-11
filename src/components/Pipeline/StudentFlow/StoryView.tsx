@@ -379,52 +379,63 @@ function StoryInner({
               {story.length + 1} of {story.length + 1}
             </span>
           </div>
-          <div className="sf-bcb">
-            {facts.length > 0 && <p className="sf-facts">{facts.join(' · ')}</p>}
-            {plan.summary && <p className="sf-p sf-sumtext">{plan.summary}</p>}
-            {story.length === 0 && <p className="sf-p">Nothing needs your decision.</p>}
-            <SummaryList>
-              {story.map((c, k) => (
-                <button
-                  type="button"
-                  key={c.key}
-                  data-row
-                  className="sf-rowt"
-                  onClick={() => go(k)}
-                  aria-label={`${TAG_LABEL[c.tag]}: ${c.title}`}
-                >
-                  <span className={`sf-pnb sf-pnb-${c.tag}`}>{numberOf(c) ?? k + 1}</span>
-                  <span className="sf-rowt-tx">
-                    <span className={`sf-stp sf-stp-${c.tag}`}>{TAG_LABEL[c.tag]}</span>
-                    <b>{c.title}</b>
-                    <span className="sf-d">{summaryLine(c, picked)}</span>
-                  </span>
+          {askOpen && atSummary ? (
+            <div className="sf-bcb">
+              <div className="sf-askp">
+                <DisagreePanel jobId={jobId} currentPlanId={plan.planId} embedded />
+                <button type="button" className="sf-lk" onClick={() => setAskOpen(false)}>
+                  Back
                 </button>
-              ))}
-              {parts.handled.length > 0 && (
-                <div className="sf-sumhead" data-testid="summary-handled-head">
-                  Found and fixed
-                </div>
-              )}
-              {parts.handled.map((note) => (
-                <div key={note.id} data-row className="sf-line" data-testid="summary-handled">
-                  <i aria-hidden="true">&#10003;</i>
-                  <span>
-                    <b>{note.title}</b>
-                  </span>
-                </div>
-              ))}
-              {parts.noted.length > 0 && <div className="sf-sumhead">Also noted</div>}
-              {parts.noted.map((note) => (
-                <div key={note.id} data-row className="sf-line" data-testid="summary-noted">
-                  <i aria-hidden="true">&middot;</i>
-                  <span>
-                    <b>{note.title}</b>
-                  </span>
-                </div>
-              ))}
-            </SummaryList>
-          </div>
+              </div>
+            </div>
+          ) : (
+            <div className="sf-bcb">
+              {facts.length > 0 && <p className="sf-facts">{facts.join(' · ')}</p>}
+              {plan.summary && <p className="sf-p sf-sumtext">{plan.summary}</p>}
+              {story.length === 0 && <p className="sf-p">Nothing needs your decision.</p>}
+              <SummaryList>
+                {story.map((c, k) => (
+                  <button
+                    type="button"
+                    key={c.key}
+                    data-row
+                    className="sf-rowt"
+                    onClick={() => go(k)}
+                    aria-label={`${TAG_LABEL[c.tag]}: ${c.title}`}
+                  >
+                    <span className={`sf-pnb sf-pnb-${c.tag}`}>{numberOf(c) ?? k + 1}</span>
+                    <span className="sf-rowt-tx">
+                      <span className={`sf-stp sf-stp-${c.tag}`}>{TAG_LABEL[c.tag]}</span>
+                      <b>{c.title}</b>
+                      <span className="sf-d">{summaryLine(c, picked)}</span>
+                    </span>
+                  </button>
+                ))}
+                {parts.handled.length > 0 && (
+                  <div className="sf-sumhead" data-testid="summary-handled-head">
+                    Found and fixed
+                  </div>
+                )}
+                {parts.handled.map((note) => (
+                  <div key={note.id} data-row className="sf-line" data-testid="summary-handled">
+                    <i aria-hidden="true">&#10003;</i>
+                    <span>
+                      <b>{note.title}</b>
+                    </span>
+                  </div>
+                ))}
+                {parts.noted.length > 0 && <div className="sf-sumhead">Also noted</div>}
+                {parts.noted.map((note) => (
+                  <div key={note.id} data-row className="sf-line" data-testid="summary-noted">
+                    <i aria-hidden="true">&middot;</i>
+                    <span>
+                      <b>{note.title}</b>
+                    </span>
+                  </div>
+                ))}
+              </SummaryList>
+            </div>
+          )}
           <div className="sf-bfoot" data-sumfoot>
             {blockedReason && <p className="sf-fine">{blockedReason}</p>}
             <button
@@ -446,6 +457,14 @@ function StoryInner({
               )}
               <button type="button" className="sf-lk" onClick={() => setSettingsOpen(true)}>
                 Specify settings
+              </button>
+              <button
+                type="button"
+                className="sf-lk"
+                onClick={() => setAskOpen((v) => !v)}
+                aria-expanded={askOpen && atSummary}
+              >
+                Ask about this plan
               </button>
             </div>
             <p className="sf-fine sf-fine-note">Nothing goes to the printers until you say yes.</p>

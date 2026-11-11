@@ -773,6 +773,25 @@ describe('Ask why', () => {
     },
   );
 
+  it('can still be asked from the summary when the short story has no card at all', async () => {
+    api.getState.mockResolvedValue(
+      createMockSnapshot({
+        studentStatus: 'needs_confirmation',
+        plan: createMockPlan({ lessonCards: [], choices: [] }),
+      }),
+    );
+    openStream();
+    const user = setup();
+    render(<PipelineJobPanel jobId="job-1" initialStatus="needs_confirmation" />);
+
+    await user.click(await screen.findByRole('button', { name: 'Ask about this plan' }));
+
+    const panel = await screen.findByTestId('disagree-panel');
+    expect(within(panel).getByRole('button', { name: 'Ask the crew' })).toBeEnabled();
+    await user.click(screen.getByRole('button', { name: 'Back' }));
+    expect(screen.queryByTestId('disagree-panel')).not.toBeInTheDocument();
+  });
+
   it('is not shown while the part is still being prepared, or on the steps-only screen', async () => {
     api.getState.mockResolvedValue(createMockSnapshot({ studentStatus: 'preparing' }));
     openStream();
