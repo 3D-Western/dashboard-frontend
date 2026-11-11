@@ -441,7 +441,7 @@ export function PrintFlow({ mockMode = false }: { mockMode?: boolean }) {
         </div>
       )}
 
-      {continued && file && (
+      {continued && file && stageName !== 'sent' && (
         <button
           type="button"
           className="sf-sum"

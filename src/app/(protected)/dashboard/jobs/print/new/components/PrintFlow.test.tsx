@@ -441,6 +441,8 @@ describe('PrintFlow', () => {
 
       expect(await screen.findByText('Sent to print queue')).toBeInTheDocument();
       expect(screen.getByRole('link', { name: 'View this job' })).toBeInTheDocument();
+      // the sent screen stands alone, centred: the intake's one-line summary goes
+      expect(screen.queryByTestId('intake-summary')).not.toBeInTheDocument();
       pipeline.saveInputs.mockClear();
       expect(pipeline.confirm).toHaveBeenCalledWith('job-9', 'plan-1');
       expect(pipeline.saveInputs).not.toHaveBeenCalled();
