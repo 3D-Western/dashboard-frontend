@@ -4,6 +4,7 @@ import userEvent from '@testing-library/user-event';
 import { jobApi } from '@/api/client/job';
 import { ApiError } from '@/api/client/errors';
 import { pipelineApi } from '@/api/client/pipeline';
+import { userApi } from '@/api/client/user';
 import { createMockPlan, createMockSnapshot } from '@test/utils/pipelineFactories';
 import { PrintFlow } from './PrintFlow';
 
@@ -31,12 +32,24 @@ vi.mock('@/api/client/pipeline', async (importOriginal) => ({
   },
 }));
 
+vi.mock('@/api/client/user', () => ({
+  userApi: { getCurrentUserJobs: vi.fn() },
+}));
+
 vi.mock('@/lib/file-utils', () => ({
   calculateFileChecksum: vi.fn(() => Promise.resolve('sha256:test')),
 }));
 
 const jobs = vi.mocked(jobApi);
 const pipeline = vi.mocked(pipelineApi);
+const users = vi.mocked(userApi);
+const openJob = {
+  id: 'job-7',
+  name: 'Hinge Pair',
+  category: 'ThreeDPrint',
+  status: 'InQueue',
+  studentStatus: 'queued',
+};
 const setup = () => userEvent.setup({ pointerEventsCheck: 0 });
 const model = () => new File(['solid'], 'robot-arm-gear.stl', { type: 'model/stl' });
 
@@ -49,6 +62,8 @@ beforeEach(() => {
   window.localStorage.clear();
   Object.values(jobs).forEach((fn) => fn.mockReset());
   Object.values(pipeline).forEach((fn) => fn.mockReset());
+  users.getCurrentUserJobs.mockReset();
+  users.getCurrentUserJobs.mockResolvedValue({ data: [], pagination: {} } as never);
   jobs.createJob.mockResolvedValue({
     jobId: 'job-9',
     createdAt: '2026-11-04T10:00:00Z',
@@ -310,6 +325,66 @@ describe('PrintFlow', () => {
     expect(screen.queryByTestId('intake')).not.toBeInTheDocument();
   });
 
+  describe('when the student already has a print in progress', () => {
+    it('says so at the drop zone, before a file is chosen, with a link to that job', async () => {
+      users.getCurrentUserJobs.mockResolvedValue({ data: [openJob], pagination: {} } as never);
+      render(<PrintFlow />);
+
+      const notice = await screen.findByTestId('active-job-notice');
+      expect(notice).toHaveTextContent('Hinge Pair');
+      expect(screen.getByRole('link', { name: 'Open it' })).toHaveAttribute(
+        'href',
+        '/dashboard/jobs/job-7',
+      );
+    });
+
+    it('does not count a finished or refused print', async () => {
+      users.getCurrentUserJobs.mockResolvedValue({
+        data: [
+          { ...openJob, studentStatus: 'collected' },
+          { ...openJob, id: 'j2', studentStatus: 'cannot_print' },
+        ],
+        pagination: {},
+      } as never);
+      render(<PrintFlow />);
+      await waitFor(() => expect(users.getCurrentUserJobs).toHaveBeenCalled());
+      expect(screen.queryByTestId('active-job-notice')).not.toBeInTheDocument();
+    });
+
+    it('gives a refused upload a screen of its own: what happened, a link to the open job, and no "Try again"', async () => {
+      users.getCurrentUserJobs.mockResolvedValue({ data: [openJob], pagination: {} } as never);
+      jobs.createJob.mockRejectedValue(
+        new ApiError('JOB_LIMIT_REACHED', 'You already have 1 active job(s).'),
+      );
+      const { container } = render(<PrintFlow />);
+
+      await chooseFile(container);
+
+      const problem = await screen.findByTestId('upload-problem');
+      expect(problem).toHaveTextContent('You already have a print in progress');
+      expect(problem).toHaveTextContent('Hinge Pair');
+      expect(screen.getByRole('link', { name: 'Open Hinge Pair' })).toHaveAttribute(
+        'href',
+        '/dashboard/jobs/job-7',
+      );
+      expect(screen.queryByRole('button', { name: 'Try again' })).not.toBeInTheDocument();
+      // the intake does not carry on as if all were well
+      expect(screen.queryByTestId('intake')).not.toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: 'Continue' })).not.toBeInTheDocument();
+    });
+
+    it('offers "Try again" and a fresh file only for a failure that retrying could fix', async () => {
+      jobs.uploadJobFile.mockRejectedValueOnce(new Error('File upload failed with status 500'));
+      const { container } = render(<PrintFlow />);
+      await chooseFile(container);
+
+      const problem = await screen.findByTestId('upload-problem');
+      expect(problem).toHaveTextContent('File upload failed with status 500');
+      expect(screen.getByRole('button', { name: 'Try again' })).toBeInTheDocument();
+      expect(screen.getByRole('link', { name: 'Choose another file' })).toBeInTheDocument();
+    });
+  });
+
   describe('Recent answers', () => {
     async function answerOnce(purposeName: RegExp, field: string | null, value: string) {
       const user = setup();
@@ -549,7 +624,7 @@ describe('PrintFlow', () => {
 
     await chooseFile(container);
 
-    expect(await screen.findByText('The upload did not finish.')).toBeInTheDocument();
+    expect(await screen.findByText('The upload did not finish')).toBeInTheDocument();
     await user.click(await screen.findByRole('button', { name: 'Try again' }));
     await waitFor(() =>
       expect(jobs.completeUpload).toHaveBeenCalledWith('job-9', expect.anything()),

@@ -2,8 +2,12 @@
 
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { AlertTriangle, Check, Loader2, UploadCloud } from 'lucide-react';
+import Link from 'next/link';
 import { useDropzone } from 'react-dropzone';
 import { isConflictError, pipelineApi } from '@/api/client/pipeline';
+import { userApi } from '@/api/client/user';
+import { findActiveJob } from '@/lib/active-job';
+import { Routes } from '@/lib/routes';
 import { ApiError, ErrorCodes } from '@/api/client/errors';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/components/ui/dialog';
@@ -14,6 +18,7 @@ import { ReportProblem } from '@/components/Pipeline/ReportProblem';
 import '@/components/Pipeline/StudentFlow/student-flow.css';
 import { IntakeForm } from '@/components/Pipeline/StudentFlow/IntakeForm';
 import { LoadingView } from '@/components/Pipeline/StudentFlow/LoadingView';
+import { UploadProblem, type ActiveJobRef } from '@/components/Pipeline/StudentFlow/UploadProblem';
 import { PartBackdrop } from '@/components/Pipeline/StudentFlow/PartBackdrop';
 import {
   cleanPurposeDetails,
@@ -90,6 +95,8 @@ export function PrintFlow({ mockMode = false }: { mockMode?: boolean }) {
   const [continued, setContinued] = useState(false);
   const [editing, setEditing] = useState(false);
   const [recent, setRecent] = useState<RecentAnswer[]>([]);
+  // The print that already holds the student's place under the cap on active jobs, if any.
+  const [activeJob, setActiveJob] = useState<ActiveJobRef | null>(null);
   const [stageName, setStageName] = useState<'loading' | 'story' | 'sent' | null>(null);
 
   const uploadJobId = upload.state.phase === 'done' ? upload.state.jobId : null;
@@ -109,6 +116,21 @@ export function PrintFlow({ mockMode = false }: { mockMode?: boolean }) {
       }
     };
     void look();
+    return () => controller.abort();
+  }, []);
+
+  // Look for an open print ahead of the upload: the drop zone says so before a file is chosen.
+  useEffect(() => {
+    const controller = new AbortController();
+    userApi
+      .getCurrentUserJobs({ pageSize: 20 }, { signal: controller.signal })
+      .then((response) => {
+        const job = findActiveJob(response?.data);
+        if (job && !controller.signal.aborted) setActiveJob({ id: job.id, name: job.name });
+      })
+      .catch(() => {
+        // Not fatal: a refused upload explains itself.
+      });
     return () => controller.abort();
   }, []);
 
@@ -309,6 +331,28 @@ export function PrintFlow({ mockMode = false }: { mockMode?: boolean }) {
     );
   }
 
+  if (
+    uploadError &&
+    (uploadError.kind === 'job-limit' ||
+      uploadError.kind === 'rate-limit' ||
+      uploadError.kind === 'other')
+  ) {
+    return (
+      <div className="sf" data-stage="work">
+        <h1 className="sr-only">Create 3D Print Job</h1>
+        <div className="sf-work">
+          <UploadProblem
+            kind={uploadError.kind}
+            message={uploadError.message}
+            activeJob={activeJob}
+            onRetry={upload.retry}
+          />
+        </div>
+        <ReportProblem jobId={knownJobId} />
+      </div>
+    );
+  }
+
   const option = optionFor(purpose);
   const summaryParts = [
     file?.name,
@@ -324,8 +368,6 @@ export function PrintFlow({ mockMode = false }: { mockMode?: boolean }) {
         : upload.state.phase === 'error'
           ? 'The upload did not finish.'
           : 'Receiving file';
-  // (orientation and rate-first errors returned above)
-  const hasUploadError = Boolean(uploadError);
 
   const saveStatus = locked ? (
     closed &&
@@ -405,6 +447,19 @@ export function PrintFlow({ mockMode = false }: { mockMode?: boolean }) {
                   STL, STEP or 3MF. We start checking the moment it arrives.
                 </span>
                 <span className="sf-btn sf-btn-inline">Choose a file</span>
+                {activeJob && (
+                  <p className="sf-notice-open" data-testid="active-job-notice">
+                    You already have a print in progress: {activeJob.name}. Only one can be active
+                    at a time, so a new upload may be refused until it is done.{' '}
+                    <Link
+                      href={Routes.jobs.detail(activeJob.id)}
+                      className="sf-lk"
+                      onClick={(event) => event.stopPropagation()}
+                    >
+                      Open it
+                    </Link>
+                  </p>
+                )}
                 {fileProblem && (
                   <p className="sf-problem" role="alert" data-testid="file-problem">
                     <AlertTriangle aria-hidden="true" /> {fileProblem}
@@ -421,16 +476,6 @@ export function PrintFlow({ mockMode = false }: { mockMode?: boolean }) {
               <div className="sf-finfo">
                 <b>{file.name}</b>
                 <span role="status">{uploadMessage}</span>
-                {hasUploadError && uploadError && (
-                  <span className="sf-problem" role="alert">
-                    {uploadError.message}{' '}
-                    {uploadError.kind === 'other' && (
-                      <button type="button" className="sf-lk" onClick={upload.retry}>
-                        Try again
-                      </button>
-                    )}
-                  </span>
-                )}
               </div>
               {upload.state.phase === 'uploading' && (
                 <Loader2 className="sf-spin" aria-hidden="true" />

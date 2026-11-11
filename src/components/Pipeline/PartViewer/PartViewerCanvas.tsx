@@ -174,6 +174,7 @@ export default function PartViewerCanvas({
   useEffect(() => {
     if (exploring === undefined) return;
     sceneRef.current?.setExplore(exploring);
+    sceneRef.current?.setLabels(false);
   }, [exploring, ready]);
 
   // The layer slider moved.

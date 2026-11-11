@@ -15,7 +15,7 @@ export type UploadState =
   | {
       phase: 'error';
       jobId: string | null;
-      kind: 'orientation' | 'rate-limit' | 'other';
+      kind: 'orientation' | 'rate-limit' | 'job-limit' | 'other';
       message: string;
     }
   // The backend holds new 3D-print jobs until these collected prints are rated (P-20, 409
@@ -64,6 +64,15 @@ function describeError(error: unknown): Extract<UploadState, { phase: 'error' }>
       jobId: null,
       kind: 'orientation',
       message: 'Finish Maker Orientation to submit prints.',
+    };
+  }
+  // The backend allows only so many jobs at once (JOB_LIMIT_REACHED, 409): retrying cannot help
+  if (error instanceof ApiError && /JOB_LIMIT/.test(error.code)) {
+    return {
+      phase: 'error',
+      jobId: null,
+      kind: 'job-limit',
+      message: 'You already have a print in progress.',
     };
   }
   if (error instanceof ApiError && error.code === ErrorCodes.RATE_LIMIT_EXCEEDED) {

@@ -644,6 +644,15 @@ export class PartScene {
    * Free rotation on or off. Off, the part is a calm picture: dragging does nothing (and does not
    * grab the page), the markers still work. On, one finger or the mouse turns it and a pinch zooms.
    */
+  /** The name beside the focused marker. The student print flow turns it off: the card and the view's caption already say it. */
+  setLabels(on: boolean) {
+    this.labelsOn = on;
+    this.applyEmphasis();
+    this.requestRender();
+  }
+
+  private labelsOn = true;
+
   setExplore(on: boolean) {
     this.controls.enabled = on;
     this.renderer.domElement.style.touchAction = on ? 'none' : 'auto';
@@ -673,7 +682,7 @@ export class PartScene {
       overlay.marker.style.zIndex = active ? '2' : '1';
       overlay.marker
         .querySelector<HTMLElement>('[data-role="label"]')!
-        .classList.toggle('hidden', !active);
+        .classList.toggle('hidden', !active || !this.labelsOn);
     }
   }
 

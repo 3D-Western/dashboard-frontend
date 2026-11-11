@@ -1747,3 +1747,88 @@
     overflow: hidden;
   }
 }
+
+/* a refused or failed upload: a screen of its own */
+.sf-block {
+  height: 100%;
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: 10px;
+  text-align: center;
+  max-width: 440px;
+  margin: 0 auto;
+  padding: 16px;
+}
+.sf-block svg {
+  width: 48px;
+  height: 48px;
+  fill: none;
+  stroke: var(--sf-ye);
+  stroke-width: 1.6;
+}
+.sf-block h3 {
+  font-size: 22px;
+}
+.sf-block p {
+  margin: 0;
+  color: var(--sf-muted);
+}
+.sf-block .sf-btn {
+  width: auto;
+  padding: 0 18px;
+}
+.sf-block-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+.sf-notice-open {
+  margin: 0;
+  max-width: 420px;
+  font-size: 13px;
+  color: var(--sf-ye);
+}
+
+/* phone story: the part keeps at least a third of the height; the card compacts first */
+@container sf (max-width: 699px) and (max-aspect-ratio: 1/1) {
+  .sf-story {
+    grid-template-rows: minmax(36cqh, 1fr) minmax(0, auto);
+  }
+  .sf-story .sf-vpcol {
+    min-height: 0;
+  }
+  .sf-story .sf-bc {
+    padding: 10px 12px;
+  }
+  .sf-story .sf-sub {
+    display: none;
+  }
+  .sf-story .sf-clamp {
+    -webkit-line-clamp: 3;
+  }
+  .sf-story .sf-bc h4 {
+    font-size: 16px;
+  }
+  .sf-story .sf-top-row {
+    margin-bottom: 2px;
+  }
+  .sf-story .sf-dt {
+    padding: 10px 3px;
+  }
+  .sf-story .sf-bmeta .sf-lk {
+    min-height: 30px;
+  }
+}
+@container sf (max-width: 699px) and (max-aspect-ratio: 1/1) and (max-height: 760px) {
+  .sf-story .sf-choice small {
+    display: none;
+  }
+  .sf-story .sf-choice button:not(.sf-lk) {
+    min-height: 40px;
+  }
+  .sf-story .sf-clamp {
+    -webkit-line-clamp: 2;
+  }
+}
