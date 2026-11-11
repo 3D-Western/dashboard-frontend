@@ -1832,3 +1832,17 @@
     -webkit-line-clamp: 2;
   }
 }
+@container sf (max-width: 699px) and (max-aspect-ratio: 1/1) and (max-height: 650px) {
+  .sf-story {
+    grid-template-rows: minmax(33cqh, 1fr) minmax(0, auto);
+  }
+  .sf-story .sf-q {
+    display: none;
+  }
+  .sf-story .sf-clamp {
+    -webkit-line-clamp: 1;
+  }
+  .sf-story .sf-choice {
+    margin-top: 2px;
+  }
+}
