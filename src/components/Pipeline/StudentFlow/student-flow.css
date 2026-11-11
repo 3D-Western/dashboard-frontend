@@ -42,6 +42,15 @@
     --sf-hdr: 3rem;
   }
 }
+/* the "Report a problem" tab is pinned to the right edge of every job screen: keep clear of it */
+.sf {
+  padding-right: 2.75rem;
+}
+@media (min-width: 700px) {
+  .sf {
+    padding-left: 2.75rem;
+  }
+}
 @media (min-width: 1024px) {
   /* the inset sidebar variant leaves a margin above and below the page */
   .sf {
@@ -814,12 +823,15 @@
     grid-template-rows: minmax(0, 1fr);
   }
 }
-@container sf (min-width: 700px) {
+/* (the container itself cannot be styled by its own container query: viewport media for the root) */
+@media (min-width: 700px) {
   .sf {
     align-items: center;
     justify-content: center;
     gap: 14px;
   }
+}
+@container sf (min-width: 700px) {
   .sf-top,
   .sf-in,
   .sf-bar,

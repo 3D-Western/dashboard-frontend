@@ -580,7 +580,7 @@ function StoryCardView({
               <button
                 type="button"
                 key={k}
-                className={`sf-dt${k === index ? 'on' : k < index ? 'past' : ''}`}
+                className={`sf-dt${k === index ? ' on' : k < index ? ' past' : ''}`}
                 aria-label={`Step ${k + 1} of ${total}`}
                 aria-current={k === index ? 'step' : undefined}
                 onClick={() => go(k)}

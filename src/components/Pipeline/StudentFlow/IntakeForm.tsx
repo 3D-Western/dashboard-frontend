@@ -83,7 +83,7 @@ export function IntakeForm({
             role="radio"
             aria-checked={purpose === venture.value}
             disabled={disabled}
-            className={`sf-featb${purpose === venture.value ? 'on' : ''}`}
+            className={`sf-featb${purpose === venture.value ? ' on' : ''}`}
             data-track="purpose"
             onClick={() => onPurpose(venture.value)}
           >
@@ -102,7 +102,7 @@ export function IntakeForm({
                 role="radio"
                 aria-checked={purpose === item.value}
                 disabled={disabled}
-                className={`sf-tile${purpose === item.value ? 'on' : ''}`}
+                className={`sf-tile${purpose === item.value ? ' on' : ''}`}
                 data-track="purpose"
                 onClick={() => onPurpose(item.value)}
               >
