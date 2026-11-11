@@ -183,12 +183,6 @@ describe('PrintFlow', () => {
       'on',
     );
     expect(screen.getByRole('radio', { name: /^Class/ })).not.toHaveClass('on');
-    // the chosen purpose is styled as chosen (a class that is really there, not run into the base class)
-    expect(screen.getByRole('radio', { name: /^Startup \/ venture/ })).toHaveClass(
-      'sf-featb',
-      'on',
-    );
-    expect(screen.getByRole('radio', { name: /^Class/ })).not.toHaveClass('on');
     expect(screen.getByText("Venture prints don't count toward your usage limit.")).toBeVisible();
     expect(screen.getByLabelText('Venture name')).toBeInTheDocument();
     await user.click(screen.getByRole('radio', { name: /^Personal/ }));
