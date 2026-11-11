@@ -640,6 +640,16 @@ export class PartScene {
     };
   }
 
+  /**
+   * Free rotation on or off. Off, the part is a calm picture: dragging does nothing (and does not
+   * grab the page), the markers still work. On, one finger or the mouse turns it and a pinch zooms.
+   */
+  setExplore(on: boolean) {
+    this.controls.enabled = on;
+    this.renderer.domElement.style.touchAction = on ? 'none' : 'auto';
+    this.renderer.domElement.style.cursor = on ? 'grab' : '';
+  }
+
   resetView() {
     this.activeCode = null;
     this.applyEmphasis();

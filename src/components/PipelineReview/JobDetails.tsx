@@ -4,7 +4,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { PartFocusProvider } from '@/components/Pipeline/PartFocus';
 import { PartViewerSlot } from '@/components/Pipeline/PartViewerSlot';
-import { highlightsUrlOf, modelUrlOf, previewUrlOf } from '@/components/Pipeline/ReviewPlan';
+import { highlightsUrlOf, modelUrlOf, previewUrlOf } from '@/lib/plan-artifacts';
 import { Badge } from '@/components/ui/badge';
 import {
   findingsAsCards,

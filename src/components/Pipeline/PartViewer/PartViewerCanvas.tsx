@@ -40,6 +40,11 @@ export interface PartViewerCanvasProps {
   /** Cut the part at this height above the bed (the layer slider); null shows all of it. */
   cutMm?: number | null;
   onStatus: (status: ViewerStatus) => void;
+  /**
+   * The student print flow's mode (P-200): with this set the part is a calm picture until Explore is
+   * pressed, the buttons are Explore / Reset view / Done, and a focus request never scrolls the page.
+   */
+  explore?: { on: boolean; onChange: (on: boolean) => void };
 }
 
 async function fetchHighlights(url: string | undefined, signal: AbortSignal) {
@@ -62,12 +67,14 @@ export default function PartViewerCanvas({
   separatePieces = false,
   cutMm = null,
   onStatus,
+  explore,
 }: PartViewerCanvasProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const markerLayerRef = useRef<HTMLDivElement>(null);
   const sceneRef = useRef<PartScene | null>(null);
   const [ready, setReady] = useState(false);
   const focus = usePartFocus();
+  const exploring = explore?.on;
 
   // Latest values for the long-lived effect below, which must not restart when they change.
   const latest = useRef({
@@ -163,6 +170,12 @@ export default function PartViewerCanvas({
     };
   }, [modelKey, highlightsKey, setLinked]);
 
+  // Explore on or off (the student print flow).
+  useEffect(() => {
+    if (exploring === undefined) return;
+    sceneRef.current?.setExplore(exploring);
+  }, [exploring, ready]);
+
   // The layer slider moved.
   useEffect(() => {
     sceneRef.current?.setCut(cutMm);
@@ -173,6 +186,11 @@ export default function PartViewerCanvas({
   useEffect(() => {
     if (!ready || nonce === 0) return;
     sceneRef.current?.focus(code);
+    // The print flow has no page scroll; a card with no region on the part shows the whole part.
+    if (explore) {
+      if (code === null && source !== 'viewer') sceneRef.current?.resetView();
+      return;
+    }
     if (source === 'viewer') return;
     const box = containerRef.current?.getBoundingClientRect();
     if (!box) return;
@@ -184,13 +202,52 @@ export default function PartViewerCanvas({
         block: 'nearest',
       });
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- `explore` is a mode, not a trigger
   }, [ready, code, nonce, source]);
 
   return (
     <div className="absolute inset-0">
-      <div ref={containerRef} className="absolute inset-0 touch-pan-y" />
+      <div
+        ref={containerRef}
+        className={explore ? 'absolute inset-0' : 'absolute inset-0 touch-pan-y'}
+      />
       <div ref={markerLayerRef} className="pointer-events-none absolute inset-0 overflow-hidden" />
-      {ready && (
+      {ready && explore && (
+        <div className="sf-vtools">
+          {explore.on ? (
+            <>
+              <button
+                type="button"
+                className="sf-xb"
+                onClick={() => {
+                  sceneRef.current?.resetView();
+                  if (code) focusRequest(null, 'viewer');
+                }}
+              >
+                Reset view
+              </button>
+              <button
+                type="button"
+                className="sf-xb sf-xb-pri"
+                onClick={() => explore.onChange(false)}
+              >
+                Done
+              </button>
+            </>
+          ) : (
+            <button
+              type="button"
+              className="sf-xb"
+              aria-pressed={false}
+              onClick={() => explore.onChange(true)}
+            >
+              <RotateCcw aria-hidden="true" />
+              Explore
+            </button>
+          )}
+        </div>
+      )}
+      {ready && !explore && (
         <button
           type="button"
           onClick={() => {

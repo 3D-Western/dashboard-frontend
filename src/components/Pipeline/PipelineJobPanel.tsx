@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
-import { AlertTriangle, Loader2, Radio } from 'lucide-react';
+import { AlertTriangle } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -12,16 +12,17 @@ import { Routes } from '@/lib/routes';
 import { studentStage } from '@/lib/student-status';
 import { TONE_CLASSES } from '@/app/(protected)/dashboard/jobs/lib/job-stages';
 import { cn } from '@/lib/utils';
-import type { PipelineSnapshot, Plan, Rating, StudentStatus } from '@/types/pipeline';
+import type { PipelineSnapshot, Plan, Purpose, Rating, StudentStatus } from '@/types/pipeline';
 import { AfterPickup } from './AfterPickup';
 import { CannotPrint } from './CannotPrint';
 import { DisagreePanel } from './DisagreePanel';
 import { PickupCard } from './PickupCard';
 import { PartViewerSlot } from './PartViewerSlot';
-import { PreparingSteps } from './PreparingSteps';
-import { TakingLongerNotice, useTakingLonger, type TakingLongerTimes } from './TakingLongerNotice';
+import { useTakingLonger, type TakingLongerTimes } from './TakingLongerNotice';
 import { WatchItPrint } from './WatchItPrint';
-import { highlightsUrlOf, modelUrlOf, PlanFacts, previewUrlOf, ReviewPlan } from './ReviewPlan';
+import { PlanFacts } from './PlanFacts';
+import { SentView, StudentStage } from './StudentFlow/StudentStage';
+import { highlightsUrlOf, modelUrlOf, previewUrlOf } from '@/lib/plan-artifacts';
 
 /** How long after a rating the job is read again to pick up the follow-up questions. */
 const RATED_REREAD_MS = 4000;
@@ -68,6 +69,18 @@ interface PipelineJobPanelProps {
   takingLongerAfter?: TakingLongerTimes;
   /** The student's own file, when still in memory (new-print screen): drawn greyed while preparing. */
   file?: File | null;
+  /** What the student said the print is for (new-print screen): the loading view's tips fit it. */
+  purpose?: Purpose | null;
+  /**
+   * The new-print screen's intake is still on screen (Continue not pressed): the job is followed in
+   * the background and nothing of it shows yet.
+   */
+  held?: boolean;
+  /**
+   * Told which full-height view the panel shows: the loading view, the story, the "sent" screen, or
+   * null for the ordinary status cards. Those views fill the page and never scroll (P-200).
+   */
+  onStageChange?: (stage: 'loading' | 'story' | 'sent' | null) => void;
 }
 
 /**
@@ -89,6 +102,9 @@ export function PipelineJobPanel({
   retryBaseMs,
   takingLongerAfter,
   file = null,
+  purpose = null,
+  held = false,
+  onStageChange,
 }: PipelineJobPanelProps) {
   const pipeline = usePipelineJob(jobId, { retryBaseMs, initialSnapshot });
   const { plan, steps, message, loaded, connection, error } = pipeline;
@@ -181,6 +197,23 @@ export function PipelineJobPanel({
     }
   };
 
+  // The student said yes on this screen: "Sent to print queue" until they move on.
+  const [sent, setSent] = useState(false);
+  const preparingNow = status === null || status === 'preparing';
+  const inStage = !held && !sent && status !== 'cannot_print' && (preparingNow || reviewing);
+  const stageName: 'loading' | 'story' | 'sent' | null = held
+    ? null
+    : sent
+      ? 'sent'
+      : inStage
+        ? reviewing && plan && !stepsOnly
+          ? 'story'
+          : 'loading'
+        : null;
+  useEffect(() => {
+    onStageChange?.(stageName);
+  }, [stageName, onStageChange]);
+
   if (!loaded && !status) {
     if (error) {
       return (
@@ -202,58 +235,46 @@ export function PipelineJobPanel({
   const stage = studentStage(status ?? 'preparing');
   const tone = TONE_CLASSES[stage.tone];
 
-  const preparing = (
-    <section aria-labelledby="preparing-heading" className="space-y-4">
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <h2 id="preparing-heading" className="text-xl">
-          Preparing your print
-        </h2>
-        <LiveBadge connection={connection} />
-      </div>
-      <p className="text-sm text-muted-foreground">
-        We are getting your part ready, the way a print-farm expert would.
-      </p>
-      <PreparingSteps steps={steps} file={file} modelUrl={modelUrlOf(plan)} />
-      {message && <p className="text-sm text-muted-foreground">{message}</p>}
-      {takingLonger && <TakingLongerNotice />}
-    </section>
-  );
-
   let body: React.ReactNode;
-  if (stepsOnly) {
-    body = preparing;
+  if (held) {
+    body = null;
+  } else if (sent) {
+    body = <SentView jobId={jobId} showJobLink={showJobLink} onClose={() => setSent(false)} />;
   } else if (status === 'cannot_print') {
     body = <CannotPrint plan={plan} message={message} jobName={jobName} />;
-  } else if (reviewing && plan) {
+  } else if (inStage) {
     body = (
-      <ReviewPlan
-        // A different plan starts a fresh review: choices and edits belong to the old one.
-        key={plan.planId}
-        jobId={jobId}
+      <StudentStage
+        steps={steps}
         plan={plan}
-        studentStatus={status as StudentStatus}
-        planWasUpdated={planWasUpdated}
-        inputsPending={inputsPending}
-        onConfirmed={() => {
-          pipeline.setOptimisticStatus('queued');
-          setBaselinePlanId(null);
-          trackPrintSubmitted(jobId);
-          rereadSoon();
+        status={status}
+        file={file}
+        purpose={purpose}
+        ready={reviewing && plan !== null && !stepsOnly}
+        skipLoading={
+          !file && initialStatus !== undefined && REVIEW_STATUSES.includes(initialStatus)
+        }
+        takingLonger={takingLonger}
+        story={{
+          jobId,
+          planWasUpdated,
+          inputsPending,
+          notice: message,
+          onConfirmed: () => {
+            pipeline.setOptimisticStatus('queued');
+            setBaselinePlanId(null);
+            trackPrintSubmitted(jobId);
+            setSent(true);
+            rereadSoon();
+          },
+          onPlanChanged: handlePlanChanged,
+          onStudentChange: () => {
+            setBaselinePlanId(null);
+            rereadSoon();
+          },
         }}
-        onPlanChanged={handlePlanChanged}
-        onStudentChange={() => {
-          setBaselinePlanId(null);
-          rereadSoon();
-        }}
-        notice={message}
       />
     );
-  } else if (reviewing) {
-    // The job row already says a review is waiting but the plan has not arrived: hold its place
-    // instead of showing the steps and then jumping.
-    body = <ReviewSkeleton />;
-  } else if (status === null || status === 'preparing') {
-    body = preparing;
   } else {
     body = (
       <section aria-labelledby="stage-heading" className="space-y-4">
@@ -305,13 +326,17 @@ export function PipelineJobPanel({
     );
   }
 
-  // "Ask why" goes with a plan or a finished decision; while the part is still being prepared there
-  // is nothing to ask about yet.
-  const canAskWhy =
-    !stepsOnly && status !== null && status !== 'preparing' && !(reviewing && !plan);
+  // "Ask why" goes with the status cards and a finished decision; in the story it is "Ask about
+  // this" on each card, and while the part is being prepared there is nothing to ask about yet.
+  const canAskWhy = !held && !inStage && !sent && status !== null && status !== 'preparing';
 
   return (
-    <div data-testid="pipeline-panel" data-status={status ?? 'loading'}>
+    <div
+      data-testid="pipeline-panel"
+      data-status={status ?? 'loading'}
+      data-stage={stageName ?? undefined}
+      className={stageName ? 'sf-panel' : undefined}
+    >
       {body}
       {canAskWhy && (
         <div className="mt-6">
@@ -320,39 +345,4 @@ export function PipelineJobPanel({
       )}
     </div>
   );
-}
-
-function ReviewSkeleton() {
-  return (
-    <div className="space-y-4" role="status" aria-label="Loading your review">
-      <Skeleton className="h-7 w-3/4 rounded-md" />
-      <Skeleton className="h-4 w-full rounded-md" />
-      <Skeleton className="h-56 w-full rounded-lg" />
-      <div className="grid grid-cols-2 gap-3">
-        <Skeleton className="h-16 rounded-lg" />
-        <Skeleton className="h-16 rounded-lg" />
-      </div>
-      <Skeleton className="h-11 w-full rounded-md md:w-48" />
-    </div>
-  );
-}
-
-function LiveBadge({ connection }: { connection: string }) {
-  if (connection === 'live') {
-    return (
-      <span className="inline-flex items-center gap-1.5 text-xs text-status-green-foreground">
-        <Radio className="size-3.5" aria-hidden="true" />
-        Live
-      </span>
-    );
-  }
-  if (connection === 'reconnecting') {
-    return (
-      <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
-        <Loader2 className="size-3.5 animate-spin" aria-hidden="true" />
-        Reconnecting
-      </span>
-    );
-  }
-  return null;
 }

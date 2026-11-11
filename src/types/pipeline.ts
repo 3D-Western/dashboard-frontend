@@ -19,7 +19,11 @@ export type StudentStatus =
   | 'cancelled'
   | 'expired';
 
-export type Purpose = 'venture' | 'class' | 'personal' | 'other';
+/**
+ * What the print is for. The student is offered the first five; `other` stays for jobs made before
+ * the 2026-11-10 intake (P-200) and is never offered again.
+ */
+export type Purpose = 'venture' | 'class' | 'club' | 'research' | 'personal' | 'other';
 
 export type PrintProfile = 'draft' | 'standard' | 'fine' | 'strong';
 export type SupportsMode = 'auto' | 'always' | 'never';

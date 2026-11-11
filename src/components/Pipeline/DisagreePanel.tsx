@@ -23,10 +23,13 @@ import type { DisagreeAnswer, DisagreeCitation } from '@/types/pipeline';
 export function DisagreePanel({
   jobId,
   currentPlanId,
+  embedded = false,
 }: {
   jobId: string;
   /** The plan on screen, to flag an answer that was about an earlier one. */
   currentPlanId?: string | null;
+  /** Inside a story card (P-200, "Ask about this"): no frame, shorter wording, the card's own width. */
+  embedded?: boolean;
 }) {
   const { turns, ask, retry, escalation, askCrew } = useDisagree(jobId);
   const [text, setText] = useState('');
@@ -50,17 +53,18 @@ export function DisagreePanel({
   return (
     <section
       aria-labelledby="ask-why-heading"
-      className="space-y-3 rounded-lg border bg-card p-4"
+      className={cn('space-y-3', !embedded && 'rounded-lg border bg-card p-4')}
       data-testid="disagree-panel"
     >
       <div>
         <h2 id="ask-why-heading" className="flex items-center gap-2 text-base">
           <MessageSquare className="size-4 shrink-0" aria-hidden="true" />
-          Ask why
+          {embedded ? 'Ask about this' : 'Ask why'}
         </h2>
         <p className="mt-1 text-sm text-muted-foreground">
-          Disagree with a decision? Ask, and the assistant explains from your print&apos;s record.
-          It can&apos;t change anything; the crew can.
+          {embedded
+            ? "Ask, and the assistant explains from your print's record. It can't change anything; the crew can."
+            : "Disagree with a decision? Ask, and the assistant explains from your print's record. It can't change anything; the crew can."}
         </p>
       </div>
 
@@ -70,7 +74,10 @@ export function DisagreePanel({
           role="log"
           aria-label="Conversation"
           aria-live="polite"
-          className="max-h-80 space-y-3 overflow-y-auto overscroll-contain"
+          className={cn(
+            'space-y-3 overflow-y-auto overscroll-contain',
+            embedded ? 'max-h-40' : 'max-h-80',
+          )}
         >
           {turns.map((turn) => (
             <TurnView

@@ -312,6 +312,16 @@ const PURPOSE_CARDS: Partial<Record<Purpose, PreparingCard>> = {
     'For a venture',
     'Repeat parts need to match each other. Keeping the same orientation and settings from print to print is what makes the tenth one look like the first.',
   ),
+  club: card2(
+    'purpose-club',
+    'For a club or team',
+    'Parts for a team get used hard and often. Print a spare of anything that wears, and write down the settings so a teammate can reprint it exactly.',
+  ),
+  research: card2(
+    'purpose-research',
+    'For research',
+    'Print what a rig needs to be the same every time. Keep the file and the settings with your notes: a part that cannot be reproduced is hard to cite.',
+  ),
   personal: card2(
     'purpose-personal',
     'For your own project',

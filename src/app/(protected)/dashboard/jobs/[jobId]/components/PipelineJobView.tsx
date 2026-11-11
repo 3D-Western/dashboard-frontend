@@ -27,18 +27,42 @@ export function PipelineJobView({
   initialSnapshot?: PipelineSnapshot | null;
 }) {
   const [status, setStatus] = useState<StudentStatus>(initialStatus);
+  // The loading view, the story and the "sent" screen fill the page and never scroll (P-200).
+  const [stage, setStage] = useState<'loading' | 'story' | 'sent' | null>(
+    initialStatus === 'preparing' ||
+      initialStatus === 'needs_confirmation' ||
+      initialStatus === 'needs_choice'
+      ? 'loading'
+      : null,
+  );
+  const full = stage !== null;
+
+  const panel = (
+    <PipelineJobPanel
+      jobId={job.id}
+      jobName={job.name}
+      initialStatus={initialStatus}
+      initialSnapshot={initialSnapshot}
+      onStatusChange={setStatus}
+      onStageChange={setStage}
+    />
+  );
+
+  if (full) {
+    return (
+      <div className="sf">
+        <h1 className="sr-only">{job.name}</h1>
+        <div className="sf-work">{panel}</div>
+        <ReportProblem jobId={job.id} />
+      </div>
+    );
+  }
 
   return (
     <div className="mx-auto w-full max-w-5xl space-y-6 p-6 max-md:pr-11">
       <JobDetailHeader job={{ ...job, studentStatus: status }} />
 
-      <PipelineJobPanel
-        jobId={job.id}
-        jobName={job.name}
-        initialStatus={initialStatus}
-        initialSnapshot={initialSnapshot}
-        onStatusChange={setStatus}
-      />
+      {panel}
 
       {status === 'collected' && <FeatureProjectCta jobName={job.name} jobId={job.id} />}
 

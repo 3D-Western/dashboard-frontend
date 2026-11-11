@@ -10,7 +10,7 @@ import { EmailUsButton } from '@/app/(protected)/dashboard/jobs/[jobId]/componen
 import { AnalysisDetails, ConsequentialCards, splitLessonCards } from './LessonCards';
 import { PartFocusProvider } from './PartFocus';
 import { PartViewerSlot } from './PartViewerSlot';
-import { highlightsUrlOf, modelUrlOf, previewUrlOf } from './ReviewPlan';
+import { highlightsUrlOf, modelUrlOf, previewUrlOf } from '@/lib/plan-artifacts';
 
 /**
  * "Can't print": why, and what to change. The pipeline's summary says why; its consequential
