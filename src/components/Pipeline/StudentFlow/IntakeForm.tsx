@@ -11,6 +11,7 @@ import {
   type PurposeOption,
   type RecentAnswer,
 } from '@/lib/purpose-memory';
+import { cn } from '@/lib/utils';
 import type { Purpose } from '@/types/pipeline';
 
 const MAX_DESCRIPTION = 1000;
@@ -83,7 +84,7 @@ export function IntakeForm({
             role="radio"
             aria-checked={purpose === venture.value}
             disabled={disabled}
-            className={`sf-featb${purpose === venture.value ? 'on' : ''}`}
+            className={cn('sf-featb', purpose === venture.value && 'on')}
             data-track="purpose"
             onClick={() => onPurpose(venture.value)}
           >
@@ -102,7 +103,7 @@ export function IntakeForm({
                 role="radio"
                 aria-checked={purpose === item.value}
                 disabled={disabled}
-                className={`sf-tile${purpose === item.value ? 'on' : ''}`}
+                className={cn('sf-tile', purpose === item.value && 'on')}
                 data-track="purpose"
                 onClick={() => onPurpose(item.value)}
               >

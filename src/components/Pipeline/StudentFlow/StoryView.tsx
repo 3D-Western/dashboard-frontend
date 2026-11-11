@@ -32,6 +32,7 @@ import {
   type PartHighlight,
 } from '@/lib/part-viewer';
 import { TAG_LABEL, allChosen, buildStory, summaryLine, type StoryCard } from '@/lib/story-cards';
+import { cn } from '@/lib/utils';
 import type { Plan, StudentSettings, StudentStatus } from '@/types/pipeline';
 import { DisagreePanel } from '../DisagreePanel';
 import { PartFocusProvider, usePartFocus } from '../PartFocus';
@@ -580,7 +581,7 @@ function StoryCardView({
               <button
                 type="button"
                 key={k}
-                className={`sf-dt${k === index ? 'on' : k < index ? 'past' : ''}`}
+                className={cn('sf-dt', k === index ? 'on' : k < index && 'past')}
                 aria-label={`Step ${k + 1} of ${total}`}
                 aria-current={k === index ? 'step' : undefined}
                 onClick={() => go(k)}
