@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { createMockLessonCard } from '@test/utils/pipelineFactories';
+import type { PartHighlight } from './part-viewer';
 import {
   SEVERITY_COLOR,
   artifactKey,
@@ -8,6 +9,7 @@ import {
   mergeHighlights,
   parseBox,
   parseHighlights,
+  pickGroups,
   resolveHighlights,
   viewerHighlights,
   withoutHolds,
@@ -201,5 +203,29 @@ describe('colour and artifact keys', () => {
     expect(artifactKey('data:model/gltf-binary;base64,AAA')).toBe(
       'data:model/gltf-binary;base64,AAA',
     );
+  });
+});
+
+describe('pickGroups', () => {
+  const h = (code: string): PartHighlight => ({
+    code,
+    severity: 'info',
+    label: code,
+    faces: [0],
+    bboxMm: null,
+  });
+
+  it('draws one region per group, the first code that has one, in group order', () => {
+    const all = [h('a'), h('b'), h('c'), h('z')];
+    expect(pickGroups(all, [['c'], ['x', 'b', 'a'], ['nothing']]).map((x) => x.code)).toEqual([
+      'c',
+      'b',
+    ]);
+  });
+
+  it('draws everything without groups, and nothing for no groups', () => {
+    const all = [h('a')];
+    expect(pickGroups(all, undefined)).toBe(all);
+    expect(pickGroups(all, [])).toEqual([]);
   });
 });

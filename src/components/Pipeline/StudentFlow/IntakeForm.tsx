@@ -7,14 +7,14 @@ import {
   PURPOSES,
   describeRecent,
   loadFieldHistory,
+  MAX_DESCRIPTION,
+  MIN_DESCRIPTION,
   optionFor,
   type PurposeOption,
   type RecentAnswer,
 } from '@/lib/purpose-memory';
 import { cn } from '@/lib/utils';
 import type { Purpose } from '@/types/pipeline';
-
-const MAX_DESCRIPTION = 1000;
 
 const subscribePhone = (notify: () => void) => {
   const query = window.matchMedia?.('(max-width: 699px)');
@@ -177,6 +177,7 @@ function DescriptionBox({
     const least = phone ? 48 : 92;
     el.style.height = `${Math.min(limit, Math.max(least, el.scrollHeight + 2))}px`;
   }, [value, phone, inDialog]);
+  const tooShort = value.trim().length > 0 && value.trim().length < MIN_DESCRIPTION;
   const example = option?.descriptionExample ?? NO_PURPOSE_EXAMPLE;
   const shortExample = phone ? example.split('. ')[0].replace(/\.$/, '') + '.' : example;
   return (
@@ -189,17 +190,31 @@ function DescriptionBox({
         ref={inner}
         value={value}
         maxLength={MAX_DESCRIPTION}
+        aria-describedby="sf-description-help"
         disabled={disabled}
         placeholder={shortExample}
         onChange={(event) => onChange(event.target.value)}
         onBlur={onBlur}
       />
-      <div className="sf-cnt-row">
+      <div className="sf-cnt-row" id="sf-description-help">
         <span role="status" className="sf-save">
           {status}
         </span>
-        <span>
-          {value.length}/{MAX_DESCRIPTION}
+        <span
+          className="sf-count"
+          data-msg={tooShort || undefined}
+          data-near={value.length >= MAX_DESCRIPTION - 30 || undefined}
+        >
+          {tooShort ? (
+            <span data-testid="description-short">
+              A little more, please: at least {MIN_DESCRIPTION} characters ({value.trim().length}/
+              {MIN_DESCRIPTION})
+            </span>
+          ) : (
+            <span data-testid="description-count">
+              {value.length}/{MAX_DESCRIPTION}
+            </span>
+          )}
         </span>
       </div>
     </div>

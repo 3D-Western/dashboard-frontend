@@ -541,6 +541,14 @@
   margin-top: 4px;
   min-height: 16px;
 }
+.sf-count {
+  opacity: 0.7;
+  font-size: 11.5px;
+}
+.sf-count[data-near] {
+  opacity: 1;
+  color: var(--sf-fg);
+}
 .sf-saved {
   display: inline-flex;
   align-items: center;
@@ -678,7 +686,7 @@
 }
 /* when the card does not fit the screen, the small print goes first */
 .sf-form-wrap.t1 .sf-cnote,
-.sf-form-wrap.t1 .sf-cnt-row > span:last-child {
+.sf-form-wrap.t1 .sf-cnt-row > span:last-child:not([data-msg]) {
   display: none;
 }
 .sf-form-wrap.t1 .sf-form {
@@ -952,6 +960,12 @@
 }
 .sf-fd li.f {
   border-left-color: var(--sf-pu);
+}
+.sf-fd li.f.ok {
+  border-left-color: var(--sf-gr);
+}
+.sf-pn-ok {
+  background: #238636;
 }
 .sf-d {
   width: 7px;
@@ -1491,6 +1505,98 @@
 }
 .sf-rows {
   display: grid;
+  align-content: start;
+}
+/* the summary's list scrolls inside itself, never the page */
+.sf-scrollwrap {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+.sf-scroller {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  touch-action: pan-y;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+  outline: none;
+}
+.sf-scrollwrap::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 48px;
+  background: linear-gradient(180deg, transparent, var(--sf-card) 85%);
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+.sf-scrollwrap[data-more]::after {
+  opacity: 1;
+}
+.sf-morehint {
+  position: absolute;
+  left: 50%;
+  bottom: 4px;
+  transform: translateX(-50%);
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  min-height: 28px;
+  padding: 0 10px 0 12px;
+  border-radius: 999px;
+  border: 1px solid var(--sf-bd);
+  background: var(--sf-sec);
+  color: var(--sf-fg);
+  font: 600 12px var(--sf-mono);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.4);
+}
+.sf-morehint svg {
+  width: 14px;
+  height: 14px;
+}
+.sf-sumhead {
+  padding: 8px 0 2px;
+  font: 700 10.5px var(--sf-mono);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--sf-muted);
+}
+.sf-line {
+  display: flex;
+  gap: 8px;
+  align-items: baseline;
+  padding: 3px 0;
+  font-size: 13px;
+  line-height: 1.35;
+  color: color-mix(in srgb, var(--sf-fg) 75%, transparent);
+}
+.sf-line > i {
+  font-style: normal;
+  color: var(--sf-gr);
+  flex: none;
+}
+.sf-line > span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.sf-line b {
+  color: var(--sf-fg);
+  font-weight: 600;
+}
+.sf-region-note {
+  margin: 0;
+  font-size: 12.5px;
+  color: var(--sf-muted);
 }
 .sf-rowt {
   display: flex;

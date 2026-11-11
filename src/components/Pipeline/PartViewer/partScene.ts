@@ -70,6 +70,13 @@ export interface SceneOptions {
   /** Holds the numbered markers (positioned over the canvas). */
   markerLayer: HTMLElement;
   reducedMotion: boolean;
+  /** The part's colour (the student flow uses the filament orange of the mockup); grey when unset. */
+  partColor?: string;
+  /**
+   * The student flow: the focused region alone glows on the part (the others stay clear, with a quiet
+   * glow when nothing is focused), while every marker stays on screen.
+   */
+  solo?: boolean;
   /** A region was tapped (its marker or its surface). */
   onSelect: (code: string) => void;
   onContextLost: () => void;
@@ -113,6 +120,7 @@ export class PartScene {
   private readonly modelGroup = new Group();
   private readonly overlayGroup = new Group();
   private readonly overlays = new Map<string, Overlay>();
+  private tones: Record<string, string> = {};
   private readonly abort = new AbortController();
   private readonly resizeObserver: ResizeObserver;
   private readonly home = { position: new Vector3(), target: new Vector3() };
@@ -209,7 +217,7 @@ export class PartScene {
 
   private newPartMaterial() {
     const material = new MeshStandardMaterial({
-      color: 0xd9dde4,
+      color: this.options.partColor ?? 0xd9dde4,
       roughness: 0.62,
       metalness: 0.05,
       flatShading: true, // no vertex normals needed, and sharp CAD edges stay sharp
@@ -337,8 +345,9 @@ export class PartScene {
   }
 
   /** Draws the regions (after the model is in). Resolves with the codes that got a region. */
-  setHighlights(highlights: PartHighlight[]): string[] {
+  setHighlights(highlights: PartHighlight[], tones: Record<string, string> = {}): string[] {
     this.clearOverlays();
+    this.tones = tones;
     const resolved = resolveHighlights(highlights, this.triangleCount);
     let number = 0;
     for (const entry of resolved) {
@@ -402,29 +411,39 @@ export class PartScene {
   }
 
   private makeMarker(highlight: PartHighlight, number: number) {
-    const color = SEVERITY_COLOR[highlight.severity];
+    const color = this.colorOf(highlight);
     const marker = document.createElement('button');
     marker.type = 'button';
     marker.setAttribute('aria-label', `${highlight.label} (show details)`);
     marker.className =
       'pointer-events-auto absolute left-0 top-0 flex size-11 items-center justify-center will-change-transform';
+    // The marker glows in its type colour (as in the mockup) and a soft ring pulses around it.
+    const ring = document.createElement('span');
+    ring.className =
+      'pointer-events-none absolute size-6 animate-ping rounded-full opacity-60 motion-reduce:animate-none';
+    ring.style.background = color;
     const dot = document.createElement('span');
     dot.className =
-      'flex size-6 items-center justify-center rounded-full border-2 border-white text-xs font-semibold text-white shadow-md';
+      'relative flex size-6 items-center justify-center rounded-full border-2 border-white text-xs font-semibold text-white shadow-md';
     dot.style.background = color;
+    dot.style.boxShadow = `0 0 0 3px ${color}55, 0 0 12px 4px ${color}`;
     dot.textContent = String(number);
     const label = document.createElement('span');
     label.dataset.role = 'label';
     label.className =
       'pointer-events-none absolute top-full hidden w-max max-w-44 -translate-y-1.5 rounded-md bg-foreground px-2 py-1 text-xs font-medium text-background shadow-md';
     label.textContent = highlight.label;
-    marker.append(dot, label);
+    marker.append(ring, dot, label);
     marker.addEventListener('click', (event) => {
       event.stopPropagation();
       this.options.onSelect(highlight.code);
     });
     this.options.markerLayer.appendChild(marker);
     return marker;
+  }
+
+  private colorOf(highlight: PartHighlight) {
+    return this.tones[highlight.code] ?? SEVERITY_COLOR[highlight.severity];
   }
 
   private overlayMaterial(color: string, opacity: number) {
@@ -483,8 +502,8 @@ export class PartScene {
     const geometry = new BufferGeometry();
     geometry.setAttribute('position', new BufferAttribute(new Float32Array(positions), 3));
     geometry.computeBoundingSphere();
-    const color = SEVERITY_COLOR[highlight.severity];
-    const material = this.overlayMaterial(color, 0.6);
+    const color = this.colorOf(highlight);
+    const material = this.overlayMaterial(color, 0.75);
     const group = new Group();
     group.add(new Mesh(geometry, material));
     const sphere = geometry.boundingSphere!;
@@ -495,7 +514,7 @@ export class PartScene {
       highlight,
       number,
       group,
-      [{ material, opacity: 0.6 }],
+      [{ material, opacity: 0.75 }],
       sphere.center,
       sphere.radius,
       { zMin, zMax, normal },
@@ -507,7 +526,7 @@ export class PartScene {
     const size = new Vector3(x1 - x0, y1 - y0, z1 - z0).max(new Vector3(0.4, 0.4, 0.4));
     const center = new Vector3((x0 + x1) / 2, (y0 + y1) / 2, (z0 + z1) / 2);
     const geometry = new BoxGeometry(size.x, size.y, size.z);
-    const color = SEVERITY_COLOR[highlight.severity];
+    const color = this.colorOf(highlight);
     const fill = this.overlayMaterial(color, quiet ? 0 : 0.35);
     const edgeMaterial = new LineBasicMaterial({
       color: new Color(color),
@@ -670,7 +689,10 @@ export class PartScene {
   private applyEmphasis(pulse = 1, now = performance.now()) {
     for (const overlay of this.overlays.values()) {
       const active = overlay.code === this.activeCode;
-      let scale = this.activeCode === null ? 1 : active ? Math.min(1.35, pulse * 1.35) : 0.4;
+      const resting = this.options.solo ? 0.45 : 1;
+      const others = this.options.solo ? 0 : 0.4;
+      let scale =
+        this.activeCode === null ? resting : active ? Math.min(1.35, pulse * 1.35) : others;
       if (overlay.flashStart) {
         const left = 1 - (now - overlay.flashStart) / FLASH_MS;
         scale *= 1 + 1.2 * Math.max(0, left);
@@ -687,6 +709,13 @@ export class PartScene {
   }
 
   // ---- rendering --------------------------------------------------------------------------
+
+  /** Draws a frame now (not on the next animation frame), so the canvas is never shown empty. */
+  renderNow() {
+    if (this.disposed) return;
+    this.renderer.render(this.scene, this.camera);
+    this.updateMarkers();
+  }
 
   /** Called with the viewer's visibility; nothing is drawn or scheduled while it is false. */
   setOnScreen(visible: boolean) {

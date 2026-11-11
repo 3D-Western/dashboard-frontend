@@ -83,7 +83,12 @@ export const PURPOSES: PurposeOption[] = [
   },
 ];
 
-export const NO_PURPOSE_EXAMPLE = 'Choose what it is for above, then describe it here.';
+/** "Tell us about it" is a sentence or two (P-202): at least this many characters before Continue, at most this many. */
+export const MIN_DESCRIPTION = 20;
+export const MAX_DESCRIPTION = 280;
+
+export const NO_PURPOSE_EXAMPLE =
+  'Choose what it is for above, then say in a sentence or two what it is and what it has to do.';
 
 export const optionFor = (purpose: Purpose | null | undefined): PurposeOption | undefined =>
   PURPOSES.find((option) => option.value === purpose);

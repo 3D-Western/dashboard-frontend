@@ -20,6 +20,7 @@ import {
   type ShownEvent,
 } from '@/lib/loading-script';
 import type { Dims } from '@/lib/preparing-steps';
+import type { HandledNote } from '@/lib/story-cards';
 import type { Purpose, StepProgress } from '@/types/pipeline';
 
 const TICK_MS = 250;
@@ -50,16 +51,19 @@ export function useLoadingScript({
   dims,
   purpose,
   ready,
+  handled,
   paused = false,
 }: {
   steps: StepProgress[];
   dims: Dims | null;
   purpose: Purpose | null;
   ready: boolean;
+  /** Small things the plan says were found and fixed: taught after the real steps, before the story. */
+  handled?: readonly HandledNote[];
   /** Holds everything (a card is open, or the view is hidden): nothing advances. */
   paused?: boolean;
 }): LoadingScript {
-  const events = useMemo(() => collectEvents(steps, dims), [steps, dims]);
+  const events = useMemo(() => collectEvents(steps, dims, handled), [steps, dims, handled]);
   const [facts] = useState(() => orderFacts(loadSeenFacts()));
   const pool = useMemo(() => {
     const full = buildPool(steps, dims, purpose, facts);
@@ -126,7 +130,13 @@ export function useLoadingScript({
       setStage(stageLabel(progress.current));
       const lagged = readySince.current !== null && t - readySince.current > MAX_LAG_AFTER_READY_MS;
       const next = nextToShow(l.events, l.shown, t, lagged);
-      if (next) setShown((current) => [...current, { event: next, at: t }]);
+      // (two ticks can run before React has rendered once: never show the same thing twice)
+      if (next)
+        setShown((current) =>
+          current.some((s) => s.event.id === next.id)
+            ? current
+            : [...current, { event: next, at: t }],
+        );
       const lastLearn = l.learned[l.learned.length - 1];
       if (!lastLearn || t - lastLearn.at >= LEARN_GAP_MS) {
         const card = pickNext(

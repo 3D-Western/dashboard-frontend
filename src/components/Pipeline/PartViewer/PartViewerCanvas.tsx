@@ -9,6 +9,7 @@ import type { PieceMode } from '@/lib/part-geometry';
 import {
   artifactKey,
   parseHighlights,
+  pickGroups,
   viewerHighlights,
   type PartHighlight,
 } from '@/lib/part-viewer';
@@ -39,6 +40,16 @@ export interface PartViewerCanvasProps {
   separatePieces?: boolean;
   /** Cut the part at this height above the bed (the layer slider); null shows all of it. */
   cutMm?: number | null;
+  /**
+   * The student flow draws exactly one region per story card: each group is the codes that stand for
+   * one card, and the first with a region on the part gets the marker, numbered in group order. Without
+   * it every region is drawn.
+   */
+  groups?: string[][];
+  /** Marker and glow colour per code (the story card's type colour); severity colours without it. */
+  tones?: Record<string, string>;
+  /** The part's colour; grey without it. */
+  partColor?: string;
   onStatus: (status: ViewerStatus) => void;
   /**
    * The student print flow's mode (P-200): with this set the part is a calm picture until Explore is
@@ -66,6 +77,9 @@ export default function PartViewerCanvas({
   audience = 'student',
   separatePieces = false,
   cutMm = null,
+  groups,
+  tones,
+  partColor,
   onStatus,
   explore,
 }: PartViewerCanvasProps) {
@@ -84,6 +98,10 @@ export default function PartViewerCanvas({
     audience,
     separatePieces,
     cutMm,
+    groups,
+    tones,
+    partColor,
+    solo: exploring !== undefined,
     onStatus,
     focus,
   });
@@ -95,6 +113,10 @@ export default function PartViewerCanvas({
       audience,
       separatePieces,
       cutMm,
+      groups,
+      tones,
+      partColor,
+      solo: exploring !== undefined,
       onStatus,
       focus,
     };
@@ -117,6 +139,8 @@ export default function PartViewerCanvas({
         container,
         markerLayer,
         reducedMotion: window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false,
+        partColor: latest.current.partColor,
+        solo: latest.current.solo,
         onSelect: (code) => latest.current.focus.focus(code, 'viewer'),
         onContextLost: () => latest.current.onStatus({ state: 'error', reason: 'context lost' }),
       });
@@ -142,10 +166,13 @@ export default function PartViewerCanvas({
           fetchHighlights(latest.current.highlightsUrl, abort.signal),
         ]);
         if (cancelled) return;
-        const merged = viewerHighlights(fromFile, latest.current.cards, latest.current.audience);
-        const drawn = new Set(scene.setHighlights(merged));
+        const all = viewerHighlights(fromFile, latest.current.cards, latest.current.audience);
+        const merged = pickGroups(all, latest.current.groups);
+        const drawn = new Set(scene.setHighlights(merged, latest.current.tones));
         const shown = merged.filter((h) => drawn.has(h.code));
         setLinked([...drawn]);
+        // A first frame is on the canvas before it is shown: never an empty or half-set picture.
+        scene.renderNow();
         setReady(true);
         latest.current.onStatus({
           state: 'ready',
@@ -210,7 +237,12 @@ export default function PartViewerCanvas({
     <div className="absolute inset-0">
       <div
         ref={containerRef}
-        className={explore ? 'absolute inset-0' : 'absolute inset-0 touch-pan-y'}
+        className={
+          explore
+            ? 'absolute inset-0 transition-opacity duration-300 ' +
+              (ready ? 'opacity-100' : 'opacity-0')
+            : 'absolute inset-0 touch-pan-y'
+        }
       />
       <div ref={markerLayerRef} className="pointer-events-none absolute inset-0 overflow-hidden" />
       {ready && explore && (

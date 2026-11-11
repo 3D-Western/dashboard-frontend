@@ -23,6 +23,51 @@ const finding = (id: string, n: number): LoadingEvent => ({
   n,
 });
 
+describe('found and fixed notes (P-202)', () => {
+  const note = (code: string, title: string) => ({
+    id: `fixed:${code}:${title}`,
+    code,
+    title,
+    text: `${title}: fixed for you. Why.`,
+  });
+
+  it('come after the real steps, as "Found and fixed" events', () => {
+    const events = collectEvents(
+      [createMockStep({ step: 'intake.load_mesh', state: 'done' })],
+      null,
+      [note('soundness.hairline_cracks', 'Hairline cracks in the file')],
+    );
+    expect(events.map((e) => [e.kind, e.label])).toEqual([
+      ['step', 'Opening your file'],
+      ['fixed', 'Found and fixed'],
+    ]);
+    expect(events[1].text).toContain('Hairline cracks in the file');
+  });
+
+  it('skip a note a step lesson already showed, but not a second card with the same code', () => {
+    const events = collectEvents(
+      [
+        createMockStep({
+          step: 'checks.soundness',
+          state: 'done',
+          lesson: { code: 'pack.applied', title: 'Brim', body: 'A brim keeps it down.' },
+        }),
+      ],
+      null,
+      [note('pack.applied', 'Brim'), note('pack.applied', 'Curl slowdown')],
+    );
+    expect(events.filter((e) => e.kind === 'fixed').map((e) => e.title)).toEqual(['Curl slowdown']);
+  });
+
+  it('are paced like findings: a longer gap after one', () => {
+    const fixed: LoadingEvent = { id: 'f', kind: 'fixed', label: 'Found and fixed', text: 'x' };
+    const next = step('s2');
+    const shown: ShownEvent[] = [{ event: fixed, at: 0 }];
+    expect(nextToShow([fixed, next], shown, POPUP_GAP_MS)).toBeNull();
+    expect(nextToShow([fixed, next], shown, POPUP_GAP_AFTER_FINDING_MS)).toBe(next);
+  });
+});
+
 describe('the loading view script', () => {
   describe('what is worth a popup', () => {
     it('lists the plain checks that finished and the findings, in the order they happened, and nothing internal', () => {

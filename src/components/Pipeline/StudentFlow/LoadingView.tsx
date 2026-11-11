@@ -4,6 +4,7 @@ import { Suspense, lazy, useEffect, useRef, useState, useSyncExternalStore } fro
 import { isWebGLAvailable } from '@/lib/part-viewer';
 import type { Dims } from '@/lib/preparing-steps';
 import { POPUP_STAY_MS } from '@/lib/loading-script';
+import type { HandledNote } from '@/lib/story-cards';
 import type { Purpose, StepProgress } from '@/types/pipeline';
 import { TakingLongerNotice } from '../TakingLongerNotice';
 import { useLoadingScript } from './useLoadingScript';
@@ -33,6 +34,7 @@ export function LoadingView({
   modelUrl,
   purpose,
   ready,
+  handled,
   takingLonger,
   onFinished,
 }: {
@@ -42,6 +44,8 @@ export function LoadingView({
   purpose: Purpose | null;
   /** The analysis is really done (the plan is in). */
   ready: boolean;
+  /** Found and fixed (P-202): shown as notes once the plan is in, before the story takes over. */
+  handled?: readonly HandledNote[];
   takingLonger?: boolean;
   onFinished: () => void;
 }) {
@@ -53,7 +57,7 @@ export function LoadingView({
   const [showLog, setShowLog] = useState(false);
   const [didYouOpen, setDidYouOpen] = useState(false);
 
-  const script = useLoadingScript({ steps, dims, purpose, ready });
+  const script = useLoadingScript({ steps, dims, purpose, ready, handled });
   const { progress, popups, history, learning, learned, stage, finished } = script;
 
   const rootRef = useRef<HTMLDivElement>(null);
@@ -118,7 +122,7 @@ export function LoadingView({
             <Suspense fallback={null}>
               <PreparingPartCanvas
                 file={file}
-                modelUrl={modelUrl}
+                modelUrl={file ? undefined : modelUrl}
                 reducedMotion={reduced}
                 onDims={setDims}
                 onUnavailable={() => setFailed(true)}
@@ -138,11 +142,17 @@ export function LoadingView({
               <li
                 key={event.id}
                 data-kind={event.kind}
-                className={event.kind === 'finding' ? 'f' : undefined}
+                className={
+                  event.kind === 'step' ? undefined : event.kind === 'fixed' ? 'f ok' : 'f'
+                }
                 style={{ ['--sf-stay' as string]: `${POPUP_STAY_MS}ms` }}
               >
                 {event.kind === 'finding' ? (
                   <i className="sf-pn">{event.n}</i>
+                ) : event.kind === 'fixed' ? (
+                  <i className="sf-pn sf-pn-ok" aria-hidden="true">
+                    &#10003;
+                  </i>
                 ) : (
                   <i className="sf-d" />
                 )}

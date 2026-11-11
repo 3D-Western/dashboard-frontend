@@ -1,10 +1,11 @@
 'use client';
 
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import Link from 'next/link';
 import { CircleCheck } from 'lucide-react';
 import { Routes } from '@/lib/routes';
 import { modelUrlOf } from '@/lib/plan-artifacts';
+import { splitPlan } from '@/lib/story-cards';
 import type { Plan, Purpose, StepProgress, StudentStatus } from '@/types/pipeline';
 import './student-flow.css';
 import { LoadingView } from './LoadingView';
@@ -40,6 +41,7 @@ export function StudentStage({
   story: Omit<StoryViewProps, 'plan' | 'studentStatus'>;
 }) {
   const [shown, setShown] = useState(skipLoading);
+  const handled = useMemo(() => (plan ? splitPlan(plan).handled : []), [plan]);
   if (plan && status && (shown || (skipLoading && ready))) {
     return (
       <StoryView
@@ -58,6 +60,7 @@ export function StudentStage({
       modelUrl={modelUrlOf(plan)}
       purpose={purpose}
       ready={ready}
+      handled={handled}
       takingLonger={takingLonger}
       onFinished={() => setShown(true)}
     />

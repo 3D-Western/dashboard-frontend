@@ -31,17 +31,28 @@ import {
   shouldAskBeforeLoading,
   type PartHighlight,
 } from '@/lib/part-viewer';
-import { TAG_LABEL, allChosen, buildStory, summaryLine, type StoryCard } from '@/lib/story-cards';
+import {
+  TAG_COLOR,
+  TAG_LABEL,
+  allChosen,
+  splitPlan,
+  summaryLine,
+  type StoryCard,
+} from '@/lib/story-cards';
 import { cn } from '@/lib/utils';
 import type { Plan, StudentSettings, StudentStatus } from '@/types/pipeline';
 import { DisagreePanel } from '../DisagreePanel';
 import { PartFocusProvider, usePartFocus } from '../PartFocus';
 import type { ViewerStatus } from '../PartViewer/PartViewerCanvas';
 import { SpecifySettings } from '../SpecifySettings';
+import { SummaryList } from './SummaryList';
 
 const PartViewerCanvas = lazy(() => import('../PartViewer/PartViewerCanvas'));
 
 const subscribeNever = () => () => {};
+
+/** The filament orange of the approved mockup. */
+const PART_COLOR = '#e8833a';
 
 /**
  * The student's picks, kept per job outside the component. A pick makes the pipeline write a new
@@ -110,7 +121,18 @@ function StoryInner({
   }, []);
 
   const focus = usePartFocus();
-  const story = useMemo(() => buildStory(plan), [plan]);
+  const parts = useMemo(() => splitPlan(plan), [plan]);
+  const story = parts.story;
+  // One marker per story card (the first of its codes with a region), in the card's type colour.
+  const groups = useMemo(
+    () => story.filter((c) => c.codes.length > 0).map((c) => c.codes),
+    [story],
+  );
+  const tones = useMemo(() => {
+    const colours: Record<string, string> = {};
+    for (const c of story) for (const code of c.codes) colours[code] = TAG_COLOR[c.tag];
+    return colours;
+  }, [story]);
   const choices = useMemo(() => plan.choices ?? [], [plan.choices]);
   const summaryAt = story.length;
   // The first card that still needs the student, else the first card.
@@ -211,19 +233,19 @@ function StoryInner({
   }
 
   // Each step of the story brings its place on the part into view (or the whole part).
-  const regionOf = (key: string | undefined) =>
-    key && drawn.some((h) => h.code === key) ? key : null;
+  const markerOf = (c: StoryCard | undefined) =>
+    c ? (drawn.find((h) => c.codes.includes(h.code))?.code ?? null) : null;
   const { focus: requestFocus } = focus;
   useEffect(() => {
     if (viewerState !== 'ready') return;
-    requestFocus(regionOf(card?.key), 'panel');
-    // regionOf reads `drawn`, which is final once the viewer is ready
+    requestFocus(markerOf(card), 'panel');
+    // markerOf reads `drawn`, which is final once the viewer is ready
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [card?.key, atSummary, viewerState, requestFocus]);
   // A marker tapped on the part opens its card.
   useEffect(() => {
     if (focus.source !== 'viewer' || !focus.code) return;
-    const at = story.findIndex((c) => c.key === focus.code);
+    const at = story.findIndex((c) => c.codes.includes(focus.code!));
     // eslint-disable-next-line react-hooks/set-state-in-effect -- the tapped marker is the source of the step
     if (at >= 0) setIndex(at);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -254,13 +276,13 @@ function StoryInner({
     !inputsPending &&
     (studentStatus === 'needs_confirmation' || (needsChoice && everyChoiceMade));
 
-  const numberOf = (key: string) => {
-    const at = drawn.findIndex((h) => h.code === key);
+  const numberOf = (c: StoryCard) => {
+    const at = drawn.findIndex((h) => c.codes.includes(h.code));
     return at >= 0 ? at + 1 : null;
   };
   const label = atSummary
     ? 'Whole part'
-    : regionOf(card?.key)
+    : markerOf(card)
       ? `Close-up: ${card?.title}`
       : 'Whole part';
 
@@ -281,6 +303,8 @@ function StoryInner({
         <StoryViewport
           plan={plan}
           cards={plan.lessonCards}
+          groups={groups}
+          tones={tones}
           exploring={exploring}
           onExplore={setExploring}
           onViewer={(status) => {
@@ -326,7 +350,8 @@ function StoryInner({
             position={k + 1}
             total={story.length + 1}
             active={k === index && !atSummary}
-            number={numberOf(c.key)}
+            number={numberOf(c)}
+            regionKnown={viewerState === 'ready'}
             picked={picked}
             saving={savingChoices[savingChoices.length - 1] ?? null}
             disabled={confirming}
@@ -358,16 +383,17 @@ function StoryInner({
             {facts.length > 0 && <p className="sf-facts">{facts.join(' · ')}</p>}
             {plan.summary && <p className="sf-p sf-sumtext">{plan.summary}</p>}
             {story.length === 0 && <p className="sf-p">Nothing needs your decision.</p>}
-            <div className="sf-rows">
+            <SummaryList>
               {story.map((c, k) => (
                 <button
                   type="button"
                   key={c.key}
+                  data-row
                   className="sf-rowt"
                   onClick={() => go(k)}
                   aria-label={`${TAG_LABEL[c.tag]}: ${c.title}`}
                 >
-                  <span className={`sf-pnb sf-pnb-${c.tag}`}>{numberOf(c.key) ?? k + 1}</span>
+                  <span className={`sf-pnb sf-pnb-${c.tag}`}>{numberOf(c) ?? k + 1}</span>
                   <span className="sf-rowt-tx">
                     <span className={`sf-stp sf-stp-${c.tag}`}>{TAG_LABEL[c.tag]}</span>
                     <b>{c.title}</b>
@@ -375,7 +401,29 @@ function StoryInner({
                   </span>
                 </button>
               ))}
-            </div>
+              {parts.handled.length > 0 && (
+                <div className="sf-sumhead" data-testid="summary-handled-head">
+                  Found and fixed
+                </div>
+              )}
+              {parts.handled.map((note) => (
+                <div key={note.id} data-row className="sf-line" data-testid="summary-handled">
+                  <i aria-hidden="true">&#10003;</i>
+                  <span>
+                    <b>{note.title}</b>
+                  </span>
+                </div>
+              ))}
+              {parts.noted.length > 0 && <div className="sf-sumhead">Also noted</div>}
+              {parts.noted.map((note) => (
+                <div key={note.id} data-row className="sf-line" data-testid="summary-noted">
+                  <i aria-hidden="true">&middot;</i>
+                  <span>
+                    <b>{note.title}</b>
+                  </span>
+                </div>
+              ))}
+            </SummaryList>
           </div>
           <div className="sf-bfoot" data-sumfoot>
             {blockedReason && <p className="sf-fine">{blockedReason}</p>}
@@ -397,7 +445,7 @@ function StoryInner({
                 </button>
               )}
               <button type="button" className="sf-lk" onClick={() => setSettingsOpen(true)}>
-                Change print settings
+                Specify settings
               </button>
             </div>
             <p className="sf-fine sf-fine-note">Nothing goes to the printers until you say yes.</p>
@@ -406,9 +454,9 @@ function StoryInner({
       </div>
 
       <Dialog open={settingsOpen} onOpenChange={setSettingsOpen}>
-        <DialogContent>
+        <DialogContent className="max-h-[90dvh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Print settings</DialogTitle>
+            <DialogTitle>Specify settings</DialogTitle>
             <DialogDescription>
               We pick these for you. Change one and we check your part again before the yes.
             </DialogDescription>
@@ -433,6 +481,7 @@ function StoryCardView({
   total,
   active,
   number,
+  regionKnown,
   picked,
   saving,
   disabled,
@@ -451,6 +500,8 @@ function StoryCardView({
   total: number;
   active: boolean;
   number: number | null;
+  /** The 3D view has drawn its markers, so a card without one can say it applies to the whole part. */
+  regionKnown: boolean;
   picked: Record<string, string>;
   saving: string | null;
   disabled: boolean;
@@ -514,6 +565,11 @@ function StoryCardView({
             {card.body && (
               <p ref={bodyRef} className="sf-p sf-clamp">
                 {card.body}
+              </p>
+            )}
+            {regionKnown && number === null && (
+              <p className="sf-region-note" data-testid="story-whole-part">
+                Applies to the whole part.
               </p>
             )}
             {clamped && (
@@ -613,6 +669,8 @@ function StoryCardView({
 function StoryViewport({
   plan,
   cards,
+  groups,
+  tones,
   exploring,
   onExplore,
   onViewer,
@@ -621,6 +679,8 @@ function StoryViewport({
 }: {
   plan: Plan;
   cards: Plan['lessonCards'];
+  groups: string[][];
+  tones: Record<string, string>;
   exploring: boolean;
   onExplore: (on: boolean) => void;
   onViewer: (status: ViewerStatus) => void;
@@ -648,7 +708,11 @@ function StoryViewport({
       data-viewer={here.ready ? 'ready' : here.failed ? 'failed' : mount ? 'loading' : 'preview'}
       data-testid="story-viewer"
     >
-      <div className={here.ready ? 'sf-preview sf-invisible' : 'sf-preview'}>
+      {/* The pipeline's picture of the plate is only the fallback (no WebGL, or the 3D view failed): shown
+          while the 3D view loads it was the wrong picture for a moment (another angle and look). */}
+      <div
+        className={here.ready || (mount && !here.failed) ? 'sf-preview sf-invisible' : 'sf-preview'}
+      >
         {previewUrl ? (
           // A short-lived signed link from another origin, so next/image's optimiser doesn't apply.
           // eslint-disable-next-line @next/next/no-img-element
@@ -663,6 +727,9 @@ function StoryViewport({
             modelUrl={modelUrl}
             highlightsUrl={highlightsUrl}
             cards={cards}
+            groups={groups}
+            tones={tones}
+            partColor={PART_COLOR}
             audience="student"
             explore={{ on: exploring, onChange: onExplore }}
             onStatus={(status) => {

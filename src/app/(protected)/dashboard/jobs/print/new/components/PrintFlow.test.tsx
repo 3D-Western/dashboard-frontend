@@ -237,6 +237,25 @@ describe('PrintFlow', () => {
     expect(await screen.findByText('Saved')).toBeInTheDocument();
   });
 
+  it('keeps "Tell us about it" short: 280 characters at most, 20 before Continue, with a quiet counter', async () => {
+    const user = setup();
+    const { container } = render(<PrintFlow />);
+    await chooseFile(container);
+    await user.click(screen.getByRole('radio', { name: /^Personal/ }));
+    const cont = await screen.findByRole('button', { name: 'Continue' });
+    const words = screen.getByRole('textbox', { name: /tell us about it/i });
+    expect(words).toHaveAttribute('maxlength', '280');
+
+    await user.type(words, 'A desk hook');
+    expect(cont).toBeDisabled();
+    expect(screen.getByTestId('description-short')).toHaveTextContent(/at least 20 characters/i);
+
+    await user.type(words, ' for my dorm room');
+    expect(cont).toBeEnabled();
+    expect(screen.queryByTestId('description-short')).not.toBeInTheDocument();
+    expect(screen.getByTestId('description-count')).toHaveTextContent('28/280');
+  });
+
   it('saves the words at once when the student leaves the field', async () => {
     const user = setup();
     const { container } = render(<PrintFlow />);
@@ -244,13 +263,19 @@ describe('PrintFlow', () => {
     await waitFor(() => expect(jobs.completeUpload).toHaveBeenCalled());
     await user.click(screen.getByRole('radio', { name: /^Personal/ }));
 
-    await user.type(screen.getByRole('textbox', { name: /tell us about it/i }), 'A desk hook');
+    await user.type(
+      screen.getByRole('textbox', { name: /tell us about it/i }),
+      'A desk hook for my dorm room',
+    );
     await user.tab();
 
     await waitFor(() =>
       expect(pipeline.saveInputs).toHaveBeenLastCalledWith(
         'job-9',
-        expect.objectContaining({ purpose: 'personal', description: 'A desk hook' }),
+        expect.objectContaining({
+          purpose: 'personal',
+          description: 'A desk hook for my dorm room',
+        }),
       ),
     );
   });
@@ -264,7 +289,10 @@ describe('PrintFlow', () => {
       expect(cont).toBeDisabled();
 
       await user.click(screen.getByRole('radio', { name: /^Class/ }));
-      await user.type(screen.getByRole('textbox', { name: /tell us about it/i }), 'A gear');
+      await user.type(
+        screen.getByRole('textbox', { name: /tell us about it/i }),
+        'A gear for my robot arm',
+      );
       // a class needs its course code
       expect(cont).toBeDisabled();
       await user.type(screen.getByLabelText('Course code'), 'MME 2202');
@@ -278,20 +306,20 @@ describe('PrintFlow', () => {
       expect(line).toHaveTextContent('robot-arm-gear.stl');
       expect(line).toHaveTextContent('Class');
       expect(line).toHaveTextContent('MME 2202');
-      expect(line).toHaveTextContent('A gear');
+      expect(line).toHaveTextContent('A gear for my robot arm');
       expect(screen.queryByRole('button', { name: 'Continue' })).not.toBeInTheDocument();
 
       // Editing is still possible: the summary opens the answers again
       await user.click(line);
       const words = await screen.findByRole('textbox', { name: /tell us about it/i });
-      expect(words).toHaveValue('A gear');
+      expect(words).toHaveValue('A gear for my robot arm');
       pipeline.saveInputs.mockClear();
-      await user.type(words, ' for my robot');
+      await user.type(words, ' project');
       await user.tab();
       await waitFor(() =>
         expect(pipeline.saveInputs).toHaveBeenLastCalledWith(
           'job-9',
-          expect.objectContaining({ description: 'A gear for my robot' }),
+          expect.objectContaining({ description: 'A gear for my robot arm project' }),
         ),
       );
     });
@@ -301,7 +329,10 @@ describe('PrintFlow', () => {
       const { container } = render(<PrintFlow />);
       await chooseFile(container);
       await user.click(await screen.findByRole('radio', { name: /^Personal/ }));
-      await user.type(screen.getByRole('textbox', { name: /tell us about it/i }), 'A desk hook');
+      await user.type(
+        screen.getByRole('textbox', { name: /tell us about it/i }),
+        'A desk hook for my dorm room',
+      );
       expect(screen.getByRole('button', { name: 'Continue' })).toBeEnabled();
     });
   });
@@ -392,7 +423,10 @@ describe('PrintFlow', () => {
       await chooseFile(first.container);
       await user.click(await screen.findByRole('radio', { name: purposeName }));
       if (field) await user.type(screen.getByLabelText(field), value);
-      await user.type(screen.getByRole('textbox', { name: /tell us about it/i }), 'A thing');
+      await user.type(
+        screen.getByRole('textbox', { name: /tell us about it/i }),
+        'A thing for the shelf in my room',
+      );
       await user.click(screen.getByRole('button', { name: 'Continue' }));
       first.unmount();
       return user;
@@ -471,7 +505,10 @@ describe('PrintFlow', () => {
       const { container } = render(<PrintFlow />);
       await chooseFile(container);
       await user.click(await screen.findByRole('radio', { name: /^Personal/ }));
-      await user.type(screen.getByRole('textbox', { name: /tell us about it/i }), 'A desk hook');
+      await user.type(
+        screen.getByRole('textbox', { name: /tell us about it/i }),
+        'A desk hook for my dorm room',
+      );
       await user.tab();
       await vi.advanceTimersByTimeAsync(1000);
       await user.click(screen.getByRole('button', { name: 'Continue' }));
@@ -509,7 +546,7 @@ describe('PrintFlow', () => {
       await waitFor(() =>
         expect(pipeline.saveInputs).toHaveBeenLastCalledWith(
           'job-9',
-          expect.objectContaining({ description: 'A desk hook on a wall' }),
+          expect.objectContaining({ description: 'A desk hook for my dorm room on a wall' }),
         ),
       );
     });
@@ -597,7 +634,10 @@ describe('PrintFlow', () => {
         pipeline.saveInputs.mockClear();
         pipeline.saveInputs.mockRejectedValueOnce(new ApiError('RATE_LIMIT_EXCEEDED', 'Slow down'));
 
-        await user.type(screen.getByRole('textbox', { name: /tell us about it/i }), 'A desk hook');
+        await user.type(
+          screen.getByRole('textbox', { name: /tell us about it/i }),
+          'A desk hook for my dorm room',
+        );
         await user.tab();
         await vi.advanceTimersByTimeAsync(100);
         expect(pipeline.saveInputs).toHaveBeenCalledTimes(1);

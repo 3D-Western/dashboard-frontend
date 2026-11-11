@@ -214,3 +214,14 @@ export function shouldAskBeforeLoading(): boolean {
 export function hasSeparatePieces(highlights: { code: string }[] | undefined): boolean {
   return (highlights ?? []).some((h) => h.code === MULTI_PIECE_CODE);
 }
+
+/** One highlight per group (the first code of it that has a region), in group order; all without groups. */
+export function pickGroups(all: PartHighlight[], groups: string[][] | undefined): PartHighlight[] {
+  if (!groups) return all;
+  const picked: PartHighlight[] = [];
+  for (const group of groups) {
+    const found = group.map((code) => all.find((h) => h.code === code)).find(Boolean);
+    if (found) picked.push(found);
+  }
+  return picked;
+}

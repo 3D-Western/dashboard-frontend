@@ -24,6 +24,7 @@ import {
   cleanPurposeDetails,
   detailsComplete,
   loadRecentAnswers,
+  MIN_DESCRIPTION,
   optionFor,
   rememberAnswer,
   type RecentAnswer,
@@ -33,7 +34,6 @@ import { PRINT_MODEL_ACCEPT, REJECTED_FILE_MESSAGE, validateModelFile } from '@/
 import type { Purpose, StudentInputs, StudentStatus, UnratedPrint } from '@/types/pipeline';
 import { useJobUpload } from './useJobUpload';
 
-const MIN_DESCRIPTION = 2;
 /** The purpose and its details are saved this long after the last change. */
 const SAVE_DELAY_MS = 600;
 /**

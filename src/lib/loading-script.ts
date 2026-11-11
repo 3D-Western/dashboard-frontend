@@ -4,11 +4,12 @@
 
 import { shownSteps, type Dims } from '@/lib/preparing-steps';
 import { findingCards } from '@/lib/preparing-cards';
+import type { HandledNote } from '@/lib/story-cards';
 import type { StepProgress } from '@/types/pipeline';
 
 /** At most this many popups on the view at once. */
 export const MAX_POPUPS = 2;
-/** Least time between two popups, and after one that is a finding (so it can be read). */
+/** Least time between two popups, and after one that is a finding or a fixed note (so it can be read). */
 export const POPUP_GAP_MS = 3000;
 export const POPUP_GAP_AFTER_FINDING_MS = 5500;
 /** How long a popup stays. */
@@ -22,18 +23,26 @@ export const MAX_CLIMB_PER_S = 0.07;
 
 export interface LoadingEvent {
   id: string;
-  kind: 'step' | 'finding';
+  kind: 'step' | 'finding' | 'fixed';
   /** Small line above the text. */
   label: string;
   text: string;
   /** Findings are numbered in the order they were found. */
   n?: number;
+  /** The lesson code a finding or a fixed note is about. */
+  code?: string;
+  /** What the lesson card is called, to tell two notes of one code apart. */
+  title?: string;
 }
 
 const fmt = (n: number) => (n >= 10 ? Math.round(n).toString() : n.toFixed(1).replace(/\.0$/, ''));
 
 /** Everything the pipeline has reported that is worth a popup, in the order it happened. */
-export function collectEvents(steps: StepProgress[], dims: Dims | null): LoadingEvent[] {
+export function collectEvents(
+  steps: StepProgress[],
+  dims: Dims | null,
+  handled: readonly HandledNote[] = [],
+): LoadingEvent[] {
   const events: LoadingEvent[] = [];
   if (dims && dims.every((d) => Number.isFinite(d) && d > 0)) {
     events.push({
@@ -71,8 +80,26 @@ export function collectEvents(steps: StepProgress[], dims: Dims | null): Loading
         label: 'Found on your part',
         text: card.title,
         n,
+        code,
+        title: card.title,
       });
     }
+  }
+  // What the plan says was found and fixed (P-202), after the real steps. A note a step lesson already
+  // showed (same code and title) is not repeated.
+  const shownBefore = new Set(
+    events.filter((e) => e.kind === 'finding').map((e) => `${e.code}|${e.title}`),
+  );
+  for (const note of handled) {
+    if (shownBefore.has(`${note.code}|${note.title}`)) continue;
+    events.push({
+      id: note.id,
+      kind: 'fixed',
+      label: 'Found and fixed',
+      text: note.text,
+      code: note.code,
+      title: note.title,
+    });
   }
   return events;
 }
@@ -94,7 +121,7 @@ export function nextToShow(
   if (!next) return null;
   const last = shown[shown.length - 1];
   if (!last || force) return next;
-  const gap = last.event.kind === 'finding' ? POPUP_GAP_AFTER_FINDING_MS : POPUP_GAP_MS;
+  const gap = last.event.kind !== 'step' ? POPUP_GAP_AFTER_FINDING_MS : POPUP_GAP_MS;
   return now - last.at >= gap ? next : null;
 }
 

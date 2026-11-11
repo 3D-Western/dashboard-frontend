@@ -51,7 +51,18 @@ export function createMockPlan(overrides: Partial<Plan> = {}): Plan {
       brim: 'The base is narrow, and a brim helps it stay stuck to the plate.',
     },
     lessonCards: [
+      // handled for the student (a note while loading), not a story card
       createMockLessonCard(),
+      // consequential and still the student's to know about: the one story card
+      createMockLessonCard({
+        code: 'overhang.tab_hangs',
+        title: 'The tab on top hangs in the air',
+        body: 'The tab sticks out 4 mm over nothing. It prints best with a little support under it.',
+        severity: 'choice',
+        region: { bboxMm: [48, 4, 14, 64, 18, 17] },
+        consequential: true,
+      }),
+      // not consequential: only a line in the summary
       createMockLessonCard({
         code: 'surface.minor_stringing',
         title: 'Small gaps may leave fine strings',

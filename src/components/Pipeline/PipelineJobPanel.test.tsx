@@ -162,6 +162,39 @@ describe('Preparing your print', () => {
     }
   });
 
+  it('teaches what was found and fixed once the plan is in, before the story takes over (P-202)', async () => {
+    useFakeClock();
+    try {
+      api.getState.mockResolvedValue(createMockSnapshot());
+      const live = openStream();
+      render(<PipelineJobPanel jobId="job-1" />);
+      await screen.findByTestId('loading-view');
+      live.emit(
+        createMockEvent({
+          seq: 1,
+          type: 'plan',
+          studentStatus: 'needs_confirmation',
+          plan: createMockPlan(),
+        }),
+      );
+      const user = setup();
+      // The handled card (supports) is a note in the loading; the story only comes after
+      await playLoading(6000);
+      expect(screen.queryByTestId('story-view')).not.toBeInTheDocument();
+      await user.click(screen.getByRole('button', { name: /History/ }));
+      expect(
+        await screen.findByText(/Found and fixed: We added supports under the arm/),
+      ).toBeInTheDocument();
+
+      await playLoading(40_000);
+      expect(await screen.findByTestId('story-view')).toBeInTheDocument();
+      // ...and the story does not repeat it
+      expect(screen.getAllByTestId('story-card')).toHaveLength(1);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it('opens the one-line "Did you know" into its card, and History lists what was shown, a page at a time', async () => {
     api.getState.mockResolvedValue(
       createMockSnapshot({
@@ -303,35 +336,46 @@ describe('The story and the summary', () => {
   const toSummary = async (user: ReturnType<typeof setup>) =>
     user.click(await screen.findByRole('button', { name: 'Skip to summary' }));
 
-  it('steps through cards tagged by what they are, then the summary with time and grams', async () => {
+  it('steps through the cards that need the student, then the summary with time, grams and what was handled', async () => {
     api.getState.mockResolvedValue(reviewSnapshot());
     openStream();
     const user = setup();
     renderStory();
 
     await screen.findByTestId('story-view');
+    // The handled card (supports) is not in the story: it was taught while loading
+    expect(screen.getAllByTestId('story-card')).toHaveLength(1);
     const first = shownCard();
-    expect(within(first).getByText('Handled for you')).toBeInTheDocument();
-    expect(within(first).getByText('We added supports under the arm')).toBeInTheDocument();
-    expect(within(first).getByText('1 of 3')).toBeInTheDocument();
-    // The second card is in the page (for links) but not shown until the student steps to it
-    expect(document.getElementById('lesson-card-surface.minor_stringing')).toHaveAttribute(
-      'hidden',
-    );
-    await user.click(within(first).getByRole('button', { name: 'Next' }));
-    const second = shownCard();
-    expect(within(second).getByText('Worth knowing')).toBeInTheDocument();
-    expect(within(second).getByText('Small gaps may leave fine strings')).toBeInTheDocument();
+    expect(within(first).getByText('Worth knowing')).toBeInTheDocument();
+    expect(within(first).getByText('The tab on top hangs in the air')).toBeInTheDocument();
+    expect(within(first).getByText('1 of 2')).toBeInTheDocument();
 
-    await user.click(within(second).getByRole('button', { name: 'Summary' }));
+    await user.click(within(first).getByRole('button', { name: 'Summary' }));
     const summary = screen.getByTestId('story-summary');
     expect(summary).toBeVisible();
     expect(within(summary).getByText('3 h 25 min · 42 g')).toBeInTheDocument();
-    expect(within(summary).getByText('Handled for you')).toBeInTheDocument();
     expect(within(summary).getByText('Worth knowing')).toBeInTheDocument();
+    // everything else is one compact line each
+    expect(within(summary).getByText('Found and fixed')).toBeInTheDocument();
+    expect(within(summary).getByText('We added supports under the arm')).toBeInTheDocument();
+    expect(within(summary).getByText('Small gaps may leave fine strings')).toBeInTheDocument();
     expect(within(summary).getByRole('button', { name: 'Yes, print this' })).toBeEnabled();
-    // The pipeline's preview image stands in until the 3D view is up
+    // The pipeline's picture of the plate is only a fallback: with a 3D view in place it stays hidden
     expect(screen.getByAltText(/preview of your part/i)).toHaveAttribute('src', '/preview.png');
+  });
+
+  it('keeps the settings dialog to one level, and no dialog menu holds another', async () => {
+    api.getState.mockResolvedValue(reviewSnapshot());
+    openStream();
+    const user = setup();
+    renderStory();
+    await toSummary(user);
+    await user.click(screen.getByRole('button', { name: /specify settings/i }));
+    const dialog = await screen.findByRole('dialog', { name: /specify settings/i });
+    // the settings are in the dialog at once: nothing collapsed, nothing to open
+    expect(within(dialog).getByTestId('specify-settings')).toBeVisible();
+    expect(dialog.querySelector('[aria-expanded]')).toBeNull();
+    expect(screen.queryByText(/change print settings/i)).not.toBeInTheDocument();
   });
 
   it('leaves out anything a staff hold marked: a held part looks like preparing to the student (P-43)', async () => {
@@ -355,11 +399,10 @@ describe('The story and the summary', () => {
     const user = setup();
     renderStory();
     await toSummary(user);
-    await user.click(screen.getByRole('button', { name: /change print settings/i }));
-    const trigger = await screen.findByRole('button', { name: /specify settings/i });
-    expect(trigger).toHaveAttribute('aria-expanded', 'false');
-
-    await user.click(trigger);
+    await user.click(screen.getByRole('button', { name: /specify settings/i }));
+    // One level: the dialog is "Specify settings" and holds the settings, no menu to open first
+    const dialog = await screen.findByRole('dialog', { name: /specify settings/i });
+    expect(within(dialog).queryByRole('button', { name: /specify settings/i })).toBeNull();
 
     expect(screen.getByRole('radio', { name: 'Standard' })).toBeChecked();
     expect(screen.getByRole('spinbutton', { name: /infill/i })).toHaveValue(25);
@@ -496,7 +539,7 @@ describe('The story and the summary', () => {
     expect(within(card).getByText('Pick one to continue')).toBeInTheDocument();
     expect(within(card).getByText('Recommended')).toBeInTheDocument();
     expect(within(card).getByText('Sticks best.')).toBeInTheDocument();
-    expect(within(card).getByRole('button', { name: 'Next' })).toBeDisabled();
+    expect(within(card).getByRole('button', { name: 'Summary' })).toBeDisabled();
     await user.click(within(card).getByRole('button', { name: 'Skip to summary' }));
     expect(screen.getByRole('button', { name: 'Yes, print this' })).toBeDisabled();
     expect(screen.getByText('Make your choice on the cards first.')).toBeInTheDocument();
@@ -523,10 +566,9 @@ describe('The story and the summary', () => {
     const user = setup();
     renderStory();
     await toSummary(user);
-    await user.click(screen.getByRole('button', { name: /change print settings/i }));
-    await user.click(await screen.findByRole('button', { name: /specify settings/i }));
+    await user.click(screen.getByRole('button', { name: /specify settings/i }));
 
-    await user.click(screen.getByRole('radio', { name: 'Strong' }));
+    await user.click(await screen.findByRole('radio', { name: 'Strong' }));
     await user.click(screen.getByRole('button', { name: 'Update my plan' }));
 
     await waitFor(() => expect(api.saveInputs).toHaveBeenCalled());
