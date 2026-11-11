@@ -1539,12 +1539,14 @@
 }
 .sf-scrollwrap[data-more]::after {
   opacity: 1;
+  /* the fade ends where the list ends, just above the pill */
+  bottom: 32px;
 }
+/* In its own row under the list, so it never sits on top of a line of text (a short list on a phone). */
 .sf-morehint {
-  position: absolute;
-  left: 50%;
-  bottom: 4px;
-  transform: translateX(-50%);
+  align-self: center;
+  margin-top: 4px;
+  flex: none;
   z-index: 1;
   display: inline-flex;
   align-items: center;
